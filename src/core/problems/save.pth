@@ -1,0 +1,273 @@
+diff --git a/TChemPP b/TChemPP
+--- a/TChemPP
++++ b/TChemPP
+@@ -1 +1 @@
+-Subproject commit 8664cb7eab3b6be5a5d6bd663f1d3f68a788f81c
++Subproject commit 8664cb7eab3b6be5a5d6bd663f1d3f68a788f81c-dirty
+diff --git a/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM.cpp b/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM.cpp
+index c5b7891..e662306 100644
+--- a/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM.cpp
++++ b/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM.cpp
+@@ -242,6 +242,7 @@ AtmosphericChemistryE3SM::runDeviceBatch( /// thread block size
+  const ordinal_type m = problem_type::getNumberOfEquations(kmcd);
+ 
+  if (m < 128) {
++   printf("using m< 128 \n");
+    using value_type = Sacado::Fad::SLFad<real_type,128>;
+    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
+  } else if  (m < 256) {
+diff --git a/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM_CVODE.cpp b/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM_CVODE.cpp
+index 0d8a0a4..8401287 100644
+--- a/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM_CVODE.cpp
++++ b/code/tchem_atm/src/core/TChem_AtmosphericChemistryE3SM_CVODE.cpp
+@@ -201,7 +201,7 @@ namespace TChem
+            const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type, host_device_type>, host_device_type>& cvodes) {
+ #if defined(TINES_ENABLE_TPL_SUNDIALS)
+     const std::string profile_name = "TChem::AtmosphericChemistryE3SM::runHostBatch::kmcd array";
+-#if defined(TCHEM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
++#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+     TCHEM_CHECK_ERROR(true, "Error: Currently CVODE interface cannot take sacado fad implementation");    
+ #endif
+     using value_type = real_type;
+diff --git a/code/tchem_atm/src/core/impl/TChem_Impl_AdjustReactions.hpp b/code/tchem_atm/src/core/impl/TChem_Impl_AdjustReactions.hpp
+index 5554a31..6a33a0c 100644
+--- a/code/tchem_atm/src/core/impl/TChem_Impl_AdjustReactions.hpp
++++ b/code/tchem_atm/src/core/impl/TChem_Impl_AdjustReactions.hpp
+@@ -66,6 +66,8 @@ template <typename ValueType, typename DeviceType> struct AdjustReactions {
+         kfor(param._reaction_index) *= x(param._species_index);
+     }
+     });
++      // 
++    printf("After single kokkos \n ");  
+ 
+     member.team_barrier();
+ 
+@@ -79,7 +81,7 @@ template <typename ValueType, typename DeviceType> struct AdjustReactions {
+          const auto k1 = param._A1 * ats<value_type>::exp(param._C1 * t_1);
+          const auto k2 = param._A2 * ats<value_type>::exp(param._C2 * t_1);
+          const auto k3 = param._A3 * ats<value_type>::exp(param._C3 * t_1);
+-         const auto fc = k1*x(param._species_index_1) + k2*x(param._species_index_2) + k3*x(param._species_index_3);
++         const value_type fc = k1*x(param._species_index_1) + k2*x(param._species_index_2) + k3*x(param._species_index_3);
+          // printf("fc %e \n", fc);
+          // printf("k1 %e x %e \n", k1,x(param._species_index_1));
+          // printf("k2 %e x %e \n", k2,x(param._species_index_2));
+@@ -96,6 +98,8 @@ template <typename ValueType, typename DeviceType> struct AdjustReactions {
+ 
+     });
+ 
++     printf("After Secong parallel_for\n ");  
++
+ 
+ 
+   }
+diff --git a/code/tchem_atm/src/core/impl/TChem_Impl_AtmosphericChemistry_Problem.hpp b/code/tchem_atm/src/core/impl/TChem_Impl_AtmosphericChemistry_Problem.hpp
+index d3aed72..a489331 100644
+--- a/code/tchem_atm/src/core/impl/TChem_Impl_AtmosphericChemistry_Problem.hpp
++++ b/code/tchem_atm/src/core/impl/TChem_Impl_AtmosphericChemistry_Problem.hpp
+@@ -182,7 +182,7 @@ namespace Impl {
+              const real_type_2d_view_type& J) const
+   {
+ 
+-#if defined(TCHEM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
++#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+      computeSacadoJacobian(member, s, J);
+ #else
+      computeNumericalJacobian(member, s, J);
+diff --git a/code/tchem_atm/src/core/impl/TChem_Impl_KForwardJPL.hpp b/code/tchem_atm/src/core/impl/TChem_Impl_KForwardJPL.hpp
+index e8c6f88..5450e7b 100644
+--- a/code/tchem_atm/src/core/impl/TChem_Impl_KForwardJPL.hpp
++++ b/code/tchem_atm/src/core/impl/TChem_Impl_KForwardJPL.hpp
+@@ -58,6 +58,7 @@ template <typename ValueType, typename DeviceType> struct KForwardJPL {
+     // aux factor
+     const ordinal_type n_troe_jlp_reac = kmcd.JPL_Coef.extent(0);
+     // jpls
++    printf("Inside of KForwardJPL \n ");
+     Kokkos::parallel_for(
+         Tines::RangeFactory<value_type>::TeamVectorRange(member,
+                                                          n_troe_jlp_reac),
+@@ -96,7 +97,7 @@ template <typename ValueType, typename DeviceType> struct KForwardJPL {
+           // printf("kfor_t %e  \n", kfor(param._reaction_index));
+         });
+ 
+-
++        printf("Inside of A first parallel_for \n "); 
+         const ordinal_type n_ratio_troe_arrhenius_reac = kmcd.R_JPL_ArrheniusCoef.extent(0);
+ 
+ 
+@@ -143,6 +144,8 @@ template <typename ValueType, typename DeviceType> struct KForwardJPL {
+           // printf("kfor_t %e  \n", kfor(param._reaction_index));
+         });
+ 
++        printf("Inside of A Second parallel_for \n "); 
++
+   }
+   }; // KForwardJPL
+ } // namespace Impl
+diff --git a/code/tchem_atm/src/core/impl/TChem_Impl_NetProductionRates.hpp b/code/tchem_atm/src/core/impl/TChem_Impl_NetProductionRates.hpp
+index bb868d4..ffa85c3 100644
+--- a/code/tchem_atm/src/core/impl/TChem_Impl_NetProductionRates.hpp
++++ b/code/tchem_atm/src/core/impl/TChem_Impl_NetProductionRates.hpp
+@@ -46,6 +46,7 @@ struct NetProductionRates
+     /// const input from kinetic model
+     const kinetic_model_type& kmcd)
+   {
++    printf("computing RHS \n");
+   	const ordinal_type n_active_vars = kmcd.nSpec - kmcd.nConstSpec;
+ 
+     // set net production rate to be equal to external sources.
+@@ -55,9 +56,12 @@ struct NetProductionRates
+     });
+ 
+     // compute rate of progress
++     printf("computing B rop \n");
+   	using rateof_progress_type = TChem::Impl::RateofProgress<value_type, device_type >;
+     rateof_progress_type::team_invoke(member, t, p, x, photo_rates, rate_of_progress, kfor, kmcd);
+     member.team_barrier();
++    printf("computing A rop \n");
++
+ 
+     // compute net production rate, i.e. RHS or omega
+     auto rop = rate_of_progress;
+@@ -85,6 +89,7 @@ struct NetProductionRates
+       });
+ 
+     member.team_barrier();
++    printf("computing RHS end\n");
+ 
+ 
+   } // team_invoke
+@@ -111,6 +116,7 @@ struct NetProductionRates
+       const ordinal_type len = ats<value_type>::sacadoStorageCapacity();
+       // do not use either t or p, because they are real_type
+       const ordinal_type sacadoStorageDimension = ats<value_type>::sacadoStorageDimension(X(0));
++      printf("sacadoStorageDimension %d \n", sacadoStorageDimension);
+ 
+       auto ropFor = value_type_1d_view_type(w, kmcd.nReac, sacadoStorageDimension);
+       w += kmcd.nReac*len;
+@@ -126,6 +132,7 @@ struct NetProductionRates
+          [&](const ordinal_type& i) {
+         concX(i) = X(i);
+       });
++      member.team_barrier();
+       // constant variables
+       Kokkos::parallel_for(
+         Tines::RangeFactory<value_type>::TeamVectorRange(member, kmcd.nConstSpec),
+diff --git a/code/tchem_atm/src/core/impl/TChem_Impl_RateofProgress.hpp b/code/tchem_atm/src/core/impl/TChem_Impl_RateofProgress.hpp
+index 25e62b8..b9f0023 100644
+--- a/code/tchem_atm/src/core/impl/TChem_Impl_RateofProgress.hpp
++++ b/code/tchem_atm/src/core/impl/TChem_Impl_RateofProgress.hpp
+@@ -65,7 +65,7 @@ struct RateofProgress
+     const kinetic_model_type& kmcd)
+   {
+ 
+-
++    printf("Inside rop \n");
+     // set photo rates:
+     const ordinal_type n_photo_rates = photo_rates.extent(0);
+      Kokkos::parallel_for(
+@@ -74,11 +74,13 @@ struct RateofProgress
+      });
+     member.team_barrier();
+ 
++    printf("Inside B ReactionRates \n");
++
+     // compute reaction constants
+     using reation_rates_type = TChem::Impl::ReactionRates<value_type, device_type >;
+     reation_rates_type::team_invoke( member, t, p, concX, kfor, kmcd);
+ 
+-
++    printf("Inside A ReactionRates \n");
+    
+     member.team_barrier();    
+     // compute rate of progresses
+diff --git a/code/tchem_atm/src/core/impl/TChem_Impl_ReactionRates.hpp b/code/tchem_atm/src/core/impl/TChem_Impl_ReactionRates.hpp
+index 847ba8e..be3942f 100644
+--- a/code/tchem_atm/src/core/impl/TChem_Impl_ReactionRates.hpp
++++ b/code/tchem_atm/src/core/impl/TChem_Impl_ReactionRates.hpp
+@@ -67,13 +67,16 @@ struct ReactionRates
+     using kForwardJPL_type = TChem::Impl::KForwardJPL<value_type, device_type >;
+ 
+     const value_type m = x(kmcd.M_index);
+-
++    printf("inside reaction rates \n"); 
+      // reactions constants
+     kForward_type::team_invoke( member, t, p, kfor, kmcd);
++     printf("A kForward_type \n "); 
+     member.team_barrier();
+     kForwardJPL_type::team_invoke(member, t, m, kfor, kmcd);
++    printf("A kForwardJPL_type \n "); 
+     member.team_barrier();
+     AdjustReactions_type::team_invoke(member, t, x, kfor, kmcd);
++    printf("A AdjustReactions_type \n "); 
+ 
+   } // team_invoke_detail
+ };
+diff --git a/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_CVODE.hpp b/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_CVODE.hpp
+index 2441f1c..5c6f881 100644
+--- a/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_CVODE.hpp
++++ b/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_CVODE.hpp
+@@ -59,7 +59,7 @@ namespace Impl {
+       realtype_1d_view_type uu(u_data, m);
+       realtype_2d_view_type JJ(problem->_work_cvode.data(), m, m);
+ 
+-#if defined(TCHEM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
++#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+       Kokkos::abort("Error: Sacado cannot be used with CVODE");
+ #else
+       problem->computeNumericalJacobian(member, uu, JJ);
+diff --git a/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_Problem.hpp b/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_Problem.hpp
+index d0bfc04..0961e87 100644
+--- a/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_Problem.hpp
++++ b/code/tchem_atm/src/core/problems/TChem_Impl_AtmosphericChemistryE3SM_Problem.hpp
+@@ -93,6 +93,8 @@ namespace Impl {
+       const ordinal_type workspace_size =
+       (src_workspace_size + 2*m)*ats<value_type>::sacadoStorageCapacity();
+ 
++      printf("ats<value_type>::sacadoStorageCapacity() %d \n ", ats<value_type>::sacadoStorageCapacity());
++
+       return workspace_size;
+ 
+     }
+@@ -133,6 +135,7 @@ namespace Impl {
+ 			       const value_type_1d_view_type& f) const
+     {
+     if (_kmcd.nConstSpec > 0 ) {
++      printf(" usign constant .. \n");
+       Impl::NetProductionRates<value_type, device_type>
+       ::team_invoke_sacado(member, _temperature, _pressure, x,_photo_rates,_external_sources, _const_concentration, f, _work,  _kmcd);
+     } else {
+@@ -151,13 +154,17 @@ namespace Impl {
+ 				       const real_type_2d_view_type& J) const
+     {
+ 
++
+       const ordinal_type len = ats<value_type>::sacadoStorageCapacity();
++      printf("Computing Sacado Jacobian len %d \n", len); 
+       const ordinal_type m = getNumberOfEquations();
+ 
+       real_type* wptr = _work.data() + (_work.span() - 2*m*len );
+       value_type_1d_view_type x(wptr, m, m+1); wptr += m*len;
+       value_type_1d_view_type f(wptr, m, m+1); wptr += m*len;
+ 
++      // printf("x %d %d \n", x.extent(0), x.extent(1)); 
++
+       Kokkos::parallel_for
+ 	(Kokkos::TeamVectorRange(member, m),
+ 	 [=](const int &i) {
+@@ -176,6 +183,7 @@ namespace Impl {
+ 	     });
+ 	 });
+       member.team_barrier();
++      printf("After computin Sacado \n"); 
+     }
+ 
+   //
+@@ -187,7 +195,7 @@ namespace Impl {
+              const real_type_2d_view_type& J) const
+   {
+ 
+-#if defined(TCHEM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
++#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+      computeSacadoJacobian(member, s, J);
+ #else
+      computeNumericalJacobian(member, s, J);

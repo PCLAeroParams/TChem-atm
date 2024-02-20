@@ -1,0 +1,6 @@
+[submodule "external/Tines"]
+	path = external/Tines
+	url = https://github.com/sandialabs/Tines.git
+[submodule "external/Skywalker"]
+	path = external/Skywalker
+	url = https://github.com/eagles-project/skywalker.git

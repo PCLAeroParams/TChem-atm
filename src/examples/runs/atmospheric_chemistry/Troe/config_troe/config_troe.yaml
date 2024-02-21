@@ -50,6 +50,9 @@ reactions:
     B: 1.0
   type: TROE
   time_unit: min
+constant_species:
+- description: tracer-CONSTANT
+  name: M 
 species:
 - description: A 
   name: A

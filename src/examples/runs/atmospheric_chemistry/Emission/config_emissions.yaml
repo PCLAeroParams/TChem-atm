@@ -39,6 +39,9 @@ sources:
     emission_rate: 12.3e-2 
   species: B 
   type: EMISSION
+constant_species:
+- description: tracer-CONSTANT
+  name: M 
 species:
 - description: A 
   name: A

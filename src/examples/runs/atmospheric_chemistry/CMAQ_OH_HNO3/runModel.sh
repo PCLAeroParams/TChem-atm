@@ -1,4 +1,4 @@
-exec=$TCHEM_INSTALL_PATH/example/TChem_AtmosphericChemistry.x
+exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistry.x
 
 run_this="$exec --chemfile=config_oh_hno3.yaml \
           --outputfile=CMAQ_OH_HNO3.dat \

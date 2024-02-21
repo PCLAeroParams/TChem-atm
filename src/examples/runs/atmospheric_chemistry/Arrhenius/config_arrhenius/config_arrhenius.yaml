@@ -18,6 +18,9 @@ initial_state:
   B: 
     initial_value: [0.0, 0.0, 0.0, 0.0, 0.0]
     units: mol m-3
+  M: 
+    initial_value: [0.0, 0.0, 0.0, 0.0, 0.0]
+    units: mol m-3
 model_info:
   chemistry_time_step:
     units: sec
@@ -65,6 +68,8 @@ reactions:
 constant_species:
 - description: tracer-CONSTANT
   name: D
+- description: tracer-CONSTANT
+  name: M 
 species:
 - description: A 
   name: A

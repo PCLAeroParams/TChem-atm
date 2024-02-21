@@ -4,3 +4,6 @@
 [submodule "external/Skywalker"]
 	path = external/Skywalker
 	url = https://github.com/eagles-project/skywalker.git
+[submodule "external/Sundials"]
+	path = external/Sundials
+	url = https://github.com/LLNL/sundials.git

@@ -1,4 +1,4 @@
-exec=$TCHEM_INSTALL_PATH/example/TChem_AtmosphericChemistry.x
+exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistry.x
 
 run_this="$exec --chemfile=config_troe/config_troe.yaml \
           --outputfile=Troe.dat \

@@ -52,6 +52,9 @@ reactions:
     B: 1.0
   type: CMAQ_H2O2 
   time_unit: min
+constant_species:
+- description: tracer-CONSTANT
+  name: M 
 species:
 - description: A 
   name: A

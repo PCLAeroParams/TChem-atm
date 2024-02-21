@@ -264,6 +264,8 @@ initial_state:
 constant_species:
 - description: methane
   name: CH4
+- description: M 
+  name: M 
 - description: molecular oxygen
   name: O2
 - description: water vapor

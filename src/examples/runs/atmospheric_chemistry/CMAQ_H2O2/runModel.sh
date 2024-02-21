@@ -1,4 +1,4 @@
-exec=$TCHEM_INSTALL_PATH/example/TChem_AtmosphericChemistry.x
+exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistry.x
 
 run_this="$exec --chemfile=config_cmaq_h2o2.yaml \
           --outputfile=CMAQ_H2O2.dat \

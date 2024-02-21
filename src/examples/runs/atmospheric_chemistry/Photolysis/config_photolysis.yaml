@@ -46,6 +46,9 @@ reactions:
   reactants:
     B: 1.0
   type: ARRHENIUS
+constant_species:
+- description: tracer-CONSTANT
+  name: M 
 species:
 - description: A 
   name: A

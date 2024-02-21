@@ -1,4 +1,4 @@
-exec=$TCHEM_INSTALL_PATH/example/TChem_AtmosphericChemistry.x
+exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistry.x
 
 run_this="$exec --chemfile=config_photolysis.yaml \
           --outputfile=Photolysis.dat \

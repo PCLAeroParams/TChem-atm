@@ -1,0 +1,26 @@
+ {
+ "setrxt" : {
+ "wall_time" :    7.11992383E-04
+ },
+ "usrrxt" : {
+ "wall_time" :    1.37999654E-04
+ },
+ "adjrxt" : {
+ "wall_time" :    6.19888306E-05
+ },
+ "O1D_to_2OH_adj_and_phtadj" : {
+ "wall_time" :    1.47998333E-04
+ },
+ "imp_sol" : {
+ "wall_time" :    4.06000018E-03
+ },
+ "before_exp_sol" : {
+ "wall_time" :    1.99675560E-06
+ },
+ "exp_sol" : {
+ "wall_time" :    1.01698935E-03
+ },
+ "total_time" : {
+ "wall_time" :    6.13896549E-03
+ }
+ }

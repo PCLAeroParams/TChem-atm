@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #=======================================================================================
-# example script to download, build, install, & test: 
-#     openblas, kokkos, gtest, tines, tchem, csplib
+# example script to download, build, install, & test:
+#     openblas, kokkos, gtest, sundials, skywalker
 #=======================================================================================
 # User configuration  -- begin
 
@@ -11,23 +11,17 @@
 # JFLAG is for makefile compilation on multiple cores, here 4
 # if CUDA="ON", make sure nvcc is in your system PATH
 
-MY_CC=gcc-11
-MY_CXX=g++-11
-MY_FC=gfortran-11
+MY_CC=gcc
+MY_CXX=g++
+MY_FC=gfortran
 JFLAG="-j 40"
-CUDA="OFF" 
+CUDA="OFF"
 
-# will clone repos under REPO_BASE
 # will build under BUILD_BASE
 # will install under INSTALL_BASE
 # example: as follows under .
-ROOT=/Users/odiazib/Documents/p-clap/TChem-atm/external
-REPO_BASE=$ROOT/Tines/ext
-BUILD_BASE=${PWD}/TPLs/build
-INSTALL_BASE=${PWD}/TPLs/install
+ROOT=/path/to/tchem/
 # User configuration  -- end
-#=======================================================================================
-
 #=======================================================================================
 # OpenBLAS
 # nb. to make sure this openblas gets used when running outside this script
@@ -36,6 +30,12 @@ INSTALL_BASE=${PWD}/TPLs/install
 #    export LIBRARY_PATH="${LIBRARY_PATH}:${OPENBLAS_INSTALL_PATH}/lib"
 # on linux need this
 #    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${OPENBLAS_INSTALL_PATH}/lib"
+
+get_submodules() {
+  echo "Getting submodules:"
+  run_this="cd $TCHEM_BASE;git submodule update --init --recursive;cd -"
+  eval $run_this
+}
 
 build_openblas (){
 echo "Building OpenBLAS:"
@@ -62,7 +62,6 @@ cmake \
     -D Kokkos_ENABLE_SERIAL=ON \
     -D Kokkos_ENABLE_OPENMP=ON \
     -D Kokkos_ENABLE_CUDA=${CUDA} \
-    -D Kokkos_ENABLE_DEPRECATED_CODE=OFF \
     -D Kokkos_ENABLE_CUDA_CONSTEXPR=${CUDA} \
     -D Kokkos_ENABLE_CUDA_LAMBDA=${CUDA} \
     ${KOKKOS_REPOSITORY_PATH}
@@ -137,46 +136,58 @@ cmake \
     ${SKYWALKER_REPOSITORY_PATH}
 make ${JFLAG} install
 }
-build_install_tines(){
-echo "Building tines:"
-mkdir ${TINES_BUILD_PATH}
-mkdir ${TINES_INSTALL_PATH}
-cd ${TINES_BUILD_PATH}
-#    -D TINES_ENABLE_SHARED_BUILD=ON \
-cmake \
-    -D CMAKE_INSTALL_PREFIX="${TINES_INSTALL_PATH}" \
-    -D CMAKE_CXX_COMPILER="${KOKKOS_CXX_COMPILER}" \
-    -D CMAKE_CXX_FLAGS="-g" \
-    -D CMAKE_C_COMPILER="${MY_CC}" \
-    -D CMAKE_EXE_LINKER_FLAGS="-lgfortran" \
-    -D TINES_ENABLE_DEBUG=OFF \
-    -D TINES_ENABLE_VERBOSE=OFF \
-    -D CMAKE_BUILD_TYPE=RELEASE \
-    -D TINES_ENABLE_TEST=ON \
-    -D TINES_ENABLE_EXAMPLE=ON \
-    -D SUNDIALS_INSTALL_PATH="${SUNDIALS_INSTALL_PATH}" \
-    -D YAML_INSTALL_PATH="${YAML_INSTALL_PATH}" \
-    -D KOKKOS_INSTALL_PATH="${KOKKOS_INSTALL_PATH}" \
-    -D GTEST_INSTALL_PATH="${GTEST_INSTALL_PATH}" \
-    -D OPENBLAS_INSTALL_PATH="${OPENBLAS_INSTALL_PATH}" \
-    ${TINES_REPOSITORY_PATH}/src
-make ${JFLAG} install
-# if using e.g. yum or apt-get installed openblas, may need this:
-# Not needed when using above installed openblas and macport version on osx
-#    -D LAPACKE_INSTALL_PATH="${LAPACKE_INSTALL_PATH}" \
-}
-
 #=======================================================================================
 
 #=======================================================================================
 # main
+
+TCHEM_BASE=$ROOT/TChem-atm/external
+REPO_BASE=$TCHEM_BASE/Tines/ext
+
+
+
+if [ "${CUDA}" = "ON" ]; then
+    BUILD_BASE=${PWD}/DEVICE/build
+    INSTALL_BASE=${PWD}/DEVICE/install
+else
+    BUILD_BASE=${PWD}/TPLs/build
+    INSTALL_BASE=${PWD}/TPLs/install
+fi
+
 mkdir -p ${BUILD_BASE}
 mkdir -p ${INSTALL_BASE}
-OPENBLAS_REPOSITORY_PATH=${REPO_BASE}/OpenBLAS
-OPENBLAS_INSTALL_PATH=${INSTALL_BASE}/openblas
-#build_openblas
-#install_openblas
-#
+# Note: git submodule update --init --recursive
+get_submodules
+
+#only build for host
+if [ "${CUDA}" = "OFF" ]; then
+  # clone tpls
+  OPENBLAS_REPOSITORY_PATH=${REPO_BASE}/OpenBLAS
+  OPENBLAS_INSTALL_PATH=${INSTALL_BASE}/openblas
+  build_openblas
+  install_openblas
+
+  GTEST_REPOSITORY_PATH=${REPO_BASE}/gtest
+  GTEST_BUILD_PATH=${BUILD_BASE}/gtest
+  GTEST_INSTALL_PATH=${INSTALL_BASE}/gtest
+  build_install_gtest
+  #
+  YAML_REPOSITORY_PATH=${REPO_BASE}/yaml
+  YAML_BUILD_PATH=${BUILD_BASE}/yaml
+  YAML_INSTALL_PATH=${INSTALL_BASE}/yaml
+  build_install_yaml
+
+  SUNDIALS_REPOSITORY_PATH=$TCHEM_BASE/Sundials
+  SUNDIALS_BUILD_PATH=${BUILD_BASE}/sundials
+  SUNDIALS_INSTALL_PATH=${INSTALL_BASE}/sundials
+  build_install_sundials
+
+  SKYWALKER_REPOSITORY_PATH=$TCHEM_BASE/Skywalker
+  SKYWALKER_BUILD_PATH=${BUILD_BASE}/skywalker
+  SKYWALKER_INSTALL_PATH=${INSTALL_BASE}/skywalker
+  build_install_skywalker
+fi
+
 KOKKOS_REPOSITORY_PATH=${REPO_BASE}/kokkos
 KOKKOS_BUILD_PATH=${BUILD_BASE}/kokkos
 KOKKOS_INSTALL_PATH=${INSTALL_BASE}/kokkos
@@ -187,32 +198,7 @@ else
     KOKKOS_CXX_COMPILER="${MY_CXX}"
     KOKKOS_CXX_REPO_COMPILER="${MY_CXX}"
 fi
-#build_install_kokkos
-#
-GTEST_REPOSITORY_PATH=${REPO_BASE}/gtest
-GTEST_BUILD_PATH=${BUILD_BASE}/gtest
-GTEST_INSTALL_PATH=${INSTALL_BASE}/gtest
-#build_install_gtest
-#
-YAML_REPOSITORY_PATH=${REPO_BASE}/yaml
-YAML_BUILD_PATH=${BUILD_BASE}/yaml
-YAML_INSTALL_PATH=${INSTALL_BASE}/yaml
-#build_install_yaml
+build_install_kokkos
 
-SUNDIALS_REPOSITORY_PATH=$ROOT/sundials
-SUNDIALS_BUILD_PATH=${BUILD_BASE}/sundials
-SUNDIALS_INSTALL_PATH=${INSTALL_BASE}/sundials
-#get_sundials
-#build_install_sundials
-
-SKYWALKER_REPOSITORY_PATH=$ROOT/Skywalker
-SKYWALKER_BUILD_PATH=${BUILD_BASE}/skywalker
-SKYWALKER_INSTALL_PATH=${INSTALL_BASE}/skywalker
-#build_install_skywalker
-
-TINES_REPOSITORY_PATH=$ROOT/Tines
-TINES_BUILD_PATH=${BUILD_BASE}/tines
-TINES_INSTALL_PATH=${INSTALL_BASE}/tines
-build_install_tines
 
 exit

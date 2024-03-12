@@ -19,6 +19,13 @@ main(int argc, char* argv[])
 
     using host_device_type      = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
 
+    std::string chemFile="test.yaml";
+
+    /// construct kmd and use the view for testing
+    TChem::AerosolModelData amd = TChem::AerosolModelData(chemFile);
+    const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
+
+
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, host_device_type >;
     using SIMPOL_constant_type = TChem::Impl::SIMPOL_constant<real_type, host_device_type >;
 

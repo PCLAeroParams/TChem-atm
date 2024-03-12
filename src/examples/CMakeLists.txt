@@ -10,6 +10,7 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_NetProductionRates.cpp
   TChem_RateofProgress.cpp
   TChem_Linozv3_StratosphereChemSolver.cpp
+  TChem_SIMPOL.cpp
 )
 
 IF(TCHEM_ATM_ENABLE_CVODE)

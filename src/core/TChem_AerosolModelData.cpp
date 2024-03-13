@@ -38,7 +38,7 @@ int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
     // implimentation of parser
     nSpec_=2;
     nSpec_gas_=1;
-    nParticles_=1;
+    nParticles_=2;
     molecular_weigths_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weigths"), nSpec_);
     auto molecular_weigths_host = molecular_weigths_.view_host();
     molecular_weigths_host(0)=0.04607;

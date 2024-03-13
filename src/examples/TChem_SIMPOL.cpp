@@ -39,7 +39,8 @@ main(int argc, char* argv[])
     real_type KGM3_TO_PPM_=0;
     real_type equil_constant=0;
 
-    SIMPOL_constant_type::team_invoke(member, t, p, alpha, mfp_m, KGM3_TO_PPM_, equil_constant);
+    SIMPOL_constant_type::team_invoke(member, t,
+     p, alpha, mfp_m, KGM3_TO_PPM_, equil_constant, amcd);
 
     printf("alpha %e \n", alpha);
     printf("mfp_m %e \n", mfp_m);
@@ -60,25 +61,25 @@ main(int argc, char* argv[])
     state(2) = H2O_aq/number_conc;
 
     using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
-    real_type_1d_view_type molecular_weigths("molecular_weigths", nSpec);
-    real_type_1d_view_type density("density", nSpec);
-    Kokkos::deep_copy(density, 1e3);
+    // real_type_1d_view_type molecular_weigths("molecular_weigths", nSpec);
+    // real_type_1d_view_type density("density", nSpec);
+    // Kokkos::deep_copy(density, 1e3);
     value_type_1d_view_type omega("omega", nSpec);
 
-    molecular_weigths(0)=0.04607;
-    molecular_weigths(1)=0.04607;
-    molecular_weigths(2)=0.01801;
+    // molecular_weigths(0)=0.04607;
+    // molecular_weigths(1)=0.04607;
+    // molecular_weigths(2)=0.01801;
 
 
-    using ordinal_type_1d_view_type = typename SIMPOL_single_particle_type::ordinal_type_1d_view_type;
-    ordinal_type_1d_view_type species_type("species_type", nSpec);
-    Kokkos::deep_copy(species_type, 1);
-    species_type(0)=-1;
+    // using ordinal_type_1d_view_type = typename SIMPOL_single_particle_type::ordinal_type_1d_view_type;
+    // ordinal_type_1d_view_type species_type("species_type", nSpec);
+    // Kokkos::deep_copy(species_type, 1);
+    // species_type(0)=-1;
+    ordinal_type i_part=0;
 
 
     SIMPOL_single_particle_type
-    ::invoke_team(member, t, p, number_conc, state, molecular_weigths,
-                  density, species_type, omega);
+    ::invoke_team(member, i_part, t, p, number_conc, state, omega, amcd);
 
 
 

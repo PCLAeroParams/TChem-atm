@@ -16,35 +16,7 @@ struct SIMPOL_constant
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
 
-  //FIXME: output mfp_m
-  // FIXME: inputs
-  KOKKOS_INLINE_FUNCTION static
-  void getInputParameters(real_type& DIFF_COEFF_,
-                         real_type& MW_ )
-  {
-    // from gas species
-    DIFF_COEFF_=0.95E-05; // m2 s-1
-    MW_=0.04607; //
-  }
-
-  KOKKOS_INLINE_FUNCTION static
-  void getInputKineticParameters(  // FIXME: inputs
-  real_type& N_star,
-  bool& compute_alpha,
-  real_type& B1_,
-  real_type& B2_,
-  real_type& B3_,
-  real_type& B4_)
-  {
-      // FIXME: inputs
-  N_star=2.55; //only gas species
-  // reaction info
-  compute_alpha=true;
-  B1_= -1.97E+03;
-  B2_=2.91E+00;
-  B3_=1.96E-03;
-  B4_=-4.96E-01;
-  }
+  using aerosol_model_data_type= AerosolModel_ConstData<device_type>;
 
   KOKKOS_INLINE_FUNCTION static ordinal_type getWorkSpaceSize()
   {
@@ -102,17 +74,20 @@ struct SIMPOL_constant
     real_type& alpha,
     real_type& mfp_m,
     real_type& KGM3_TO_PPM_,
-    real_type& equil_constant
+    real_type& equil_constant,
+    const aerosol_model_data_type& amcd
     )
     {
 
-  real_type DIFF_COEFF_=0;
-  real_type MW_=0;
+  real_type DIFF_COEFF_=amcd.DIFF_COEFF_;
+  real_type MW_=amcd.MW_;
 
-  getInputParameters(DIFF_COEFF_, MW_ );
-  real_type N_star, B1_, B2_, B3_, B4_;
-  bool compute_alpha=false;
-  getInputKineticParameters(N_star, compute_alpha, B1_, B2_, B3_, B4_);
+  real_type N_star=amcd.N_star;
+  real_type B1_=amcd.B1_;
+  real_type B2_=amcd.B2_;
+  real_type B3_=amcd.B3_;
+  real_type B4_=amcd.B4_;
+  bool compute_alpha=amcd.compute_alpha;
 
   //FIXME: output
   alpha = 0.1;

@@ -9,12 +9,6 @@
 /// Minimum mass assumed density [kg m-3]
 #define MINIMUM_DENSITY_ 1800.0L
 
-#define CHEM_SPEC_UNKNOWN_TYPE 0
-#define CHEM_SPEC_VARIABLE 1
-#define CHEM_SPEC_CONSTANT 2
-#define CHEM_SPEC_PSSA 3
-#define CHEM_SPEC_ACTIVITY_COEFF 4
-
 #define I_PART amcd.nSpec_gas + i_spec + i_part*amcd.nSpec
 
 #include "TChem_Util.hpp"

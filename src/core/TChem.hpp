@@ -30,6 +30,7 @@ Sandia National Laboratories, Livermore, CA, USA
 #include "TChem_AtmosphericChemistryE3SM_ExplicitEuler.hpp"
 #include "TChem_AtmosphericChemistryE3SM_ImplicitEuler.hpp"
 #include "TChem_ReactionRates.hpp"
+#include "TChem_ReactionTypes.hpp"
 #include "TChem_RateofProgress.hpp"
 #include "TChem_NetProductionRates.hpp"
 #include "TChem_Linv3StratosphereSolver.hpp"

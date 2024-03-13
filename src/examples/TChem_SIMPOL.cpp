@@ -39,8 +39,10 @@ main(int argc, char* argv[])
     real_type KGM3_TO_PPM_=0;
     real_type equil_constant=0;
 
+    printf("amcd.simpol_params(0).B1 %e \n", amcd.simpol_params(0).B1);
+
     SIMPOL_constant_type::team_invoke(member, t,
-     p, alpha, mfp_m, KGM3_TO_PPM_, equil_constant, amcd);
+     p, alpha, mfp_m, KGM3_TO_PPM_, equil_constant, amcd.simpol_params(0));
 
     printf("alpha %e \n", alpha);
     printf("mfp_m %e \n", mfp_m);
@@ -83,11 +85,12 @@ main(int argc, char* argv[])
     // ordinal_type_1d_view_type species_type("species_type", nSpec);
     // Kokkos::deep_copy(species_type, 1);
     // species_type(0)=-1;
+    ordinal_type i_simpol=0;
     for (int i_part = 0; i_part < amcd.nParticles; i_part++)
     {
       printf("----Working on particle No %d ---\n", i_part);
     SIMPOL_single_particle_type
-    ::invoke_team(member, i_part, t, p, number_conc, state, omega, amcd);
+    ::invoke_team(member, i_part,i_simpol, t, p, number_conc, state, omega, amcd);
     }
 
   printf("---RHSs--\n");

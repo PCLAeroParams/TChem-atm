@@ -75,21 +75,20 @@ struct SIMPOL_constant
     real_type& mfp_m,
     real_type& KGM3_TO_PPM_,
     real_type& equil_constant,
-    const aerosol_model_data_type& amcd
+    const SIMPOL_PhaseTransferType& simpol_params
     )
     {
 
-  real_type DIFF_COEFF_=amcd.DIFF_COEFF_;
-  real_type MW_=amcd.MW_;
+  real_type DIFF_COEFF_=simpol_params.diffusion_coeff;
+  real_type MW_=simpol_params.molecular_weight;
 
-  real_type N_star=amcd.N_star;
-  real_type B1_=amcd.B1_;
-  real_type B2_=amcd.B2_;
-  real_type B3_=amcd.B3_;
-  real_type B4_=amcd.B4_;
-  bool compute_alpha=amcd.compute_alpha;
+  real_type N_star=simpol_params.N_star;
+  real_type B1_=simpol_params.B1;
+  real_type B2_=simpol_params.B2;
+  real_type B3_=simpol_params.B3;
+  real_type B4_=simpol_params.B4;
+  bool compute_alpha=simpol_params.compute_alpha;
 
-  //FIXME: output
   alpha = 0.1;
 
   if (compute_alpha) {

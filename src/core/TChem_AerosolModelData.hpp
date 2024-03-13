@@ -2,7 +2,7 @@
 #define __TCHEM_KINETIC_AEROSOL_MODEL_DATA__HPP__
 
 #include "TChem_Util.hpp"
-
+#include "TChem_ReactionTypes.hpp"
 #include "yaml-cpp/yaml.h"
 #include <iostream>
 
@@ -17,6 +17,7 @@ namespace TChem {
   ordinal_type nParticles_;
   // aerosol molecular weigths and density
   real_type_1d_dual_view molecular_weigths_, aerosol_density_;
+  simplo_phase_transfer_type_1d_dual_view simpol_params_;
 
   public:
 
@@ -41,17 +42,9 @@ namespace TChem {
 
     using amcd_real_type_1d_view = ConstUnmanaged<real_type_1d_view_type>;
 
-    ordinal_type GAS_SPEC_;
-    ordinal_type AERO_SPEC_i_phase;
-    real_type DIFF_COEFF_;
-    real_type MW_;
-    //
-    real_type N_star;
-    bool compute_alpha;
-    real_type B1_;
-    real_type B2_;
-    real_type B3_;
-    real_type B4_;
+    using simplo_phase_transfer_type_1d_view_type =  Tines::value_type_1d_view<SIMPOL_PhaseTransferType,device_type>;
+    using amcd_simplo_phase_transfer_type_1d_view = ConstUnmanaged<simplo_phase_transfer_type_1d_view_type>;
+    amcd_simplo_phase_transfer_type_1d_view simpol_params;
 
     ordinal_type nSpec;
     ordinal_type nSpec_gas;
@@ -65,27 +58,13 @@ namespace TChem {
    template<typename SpT>
   AerosolModel_ConstData<SpT> create_AerosolModelConstData(const AerosolModelData & amd) {
     AerosolModel_ConstData<SpT> data;
-        // FIXME: input parameters
-    data.GAS_SPEC_=0;
-    data.AERO_SPEC_i_phase=1;
-    // data.num_of_phases =1;
-        // from gas species
-    data.DIFF_COEFF_=0.95E-05; // m2 s-1
-    data.MW_=0.04607; //
-    // FIXME: inputs
-    data.N_star=2.55; //only gas species
-    // reaction info
-    data.compute_alpha=true;
-    data.B1_= -1.97E+03;
-    data.B2_=2.91E+00;
-    data.B3_=1.96E-03;
-    data.B4_=-4.96E-01;
-    //
+
     data.nSpec_gas=amd.nSpec_gas_;
     data.nSpec=amd.nSpec_;
     data.nParticles=amd.nParticles_;
     data.molecular_weigths = amd.molecular_weigths_.template view<SpT>();
     data.aerosol_density = amd.aerosol_density_.template view<SpT>();
+    data.simpol_params = amd.simpol_params_.template view<SpT>();
 
   return data;
   }

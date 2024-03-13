@@ -18,6 +18,7 @@
 #define I_PART amcd.nSpec_gas + i_spec + i_part*amcd.nSpec
 
 #include "TChem_Util.hpp"
+#include "TChem_ReactionTypes.hpp"
 #include "TChem_Impl_SIMPOL_constant.hpp"
 
 namespace TChem {
@@ -165,6 +166,7 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   KOKKOS_INLINE_FUNCTION static
   void invoke_team(const MemberType& member,
     const ordinal_type i_part,
+    const ordinal_type i_simpol,
     const real_type& t,
     const real_type& p,
     const real_type& number_conc,
@@ -173,13 +175,13 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
     const aerosol_model_data_type& amcd
     )
   {
+
+  const SIMPOL_PhaseTransferType simpol_params = amcd.simpol_params(i_simpol);
     // FIXME: input parameters
-  ordinal_type GAS_SPEC_=amcd.GAS_SPEC_;
-  ordinal_type AERO_SPEC_i_phase=amcd.AERO_SPEC_i_phase;
-  // ordinal_type num_of_phases =1;
-    //FIXME: inputs
-  real_type DIFF_COEFF_=amcd.DIFF_COEFF_;
-  real_type MW_=amcd.DIFF_COEFF_;
+  ordinal_type GAS_SPEC_=simpol_params.gas_sp_index;
+  ordinal_type AERO_SPEC_i_phase=simpol_params.aerosol_sp_index;
+  real_type DIFF_COEFF_=simpol_params.diffusion_coeff;
+  real_type MW_=simpol_params.molecular_weight;
 
   using SIMPOL_constant_type
    = TChem::Impl::SIMPOL_constant<value_type, device_type >;
@@ -190,7 +192,7 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   real_type EQUIL_CONST_=0.0;
   real_type KGM3_TO_PPM_=0.0;
   SIMPOL_constant_type::team_invoke( member, t, p, alpha,
-    mfp_m, KGM3_TO_PPM_, EQUIL_CONST_, amcd);
+    mfp_m, KGM3_TO_PPM_, EQUIL_CONST_, simpol_params);
 
   // Compute radious
   value_type radius =1;
@@ -225,7 +227,6 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
 
    printf("cond_rate %e \n", cond_rate);
 
-
   //FIXME: to be done
   // Get the activity coefficient (if one exists)
   value_type act_coeff = 1.0;
@@ -241,22 +242,20 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   printf("evap_rate %e \n", evap_rate);
 
   // Calculate the evaporation and condensation rates
-  cond_rate *= state(amcd.GAS_SPEC_);
-  evap_rate *= state(amcd.AERO_SPEC_i_phase+i_part*amcd.nSpec);
+  cond_rate *= state(GAS_SPEC_);
+  evap_rate *= state(AERO_SPEC_i_phase+i_part*amcd.nSpec);
   // // per-particle mass concentration rates
   value_type diff = - evap_rate + cond_rate;
 
-  printf("state(GAS_SPEC_) %e \n", state(amcd.GAS_SPEC_));
-  printf("state(%d) %e \n",AERO_SPEC_i_phase, state(amcd.AERO_SPEC_i_phase+i_part*amcd.nSpec));
+  printf("state(GAS_SPEC_) %e \n", state(GAS_SPEC_));
+  printf("state(%d) %e \n",AERO_SPEC_i_phase, state(AERO_SPEC_i_phase+i_part*amcd.nSpec));
   printf("diff %e \n",diff);
   printf("A evap_rate %e \n", evap_rate);
   printf("A cond_rate %e \n", cond_rate);
 
   // Change in the gas-phase is evaporation - condensation (ppm/s)
   Kokkos::atomic_add(&omega(GAS_SPEC_), -number_conc * diff);
-  Kokkos::atomic_add(&omega(amcd.AERO_SPEC_i_phase+i_part*amcd.nSpec), diff / KGM3_TO_PPM_);
-#if 0
-#endif
+  Kokkos::atomic_add(&omega(AERO_SPEC_i_phase+i_part*amcd.nSpec), diff / KGM3_TO_PPM_);
   }
 
 };

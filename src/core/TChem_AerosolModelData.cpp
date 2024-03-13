@@ -36,6 +36,25 @@ void AerosolModelData::initFile(const std::string &mechfile,
 
 int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
     // implimentation of parser
+    nSpec_=2;
+    nSpec_gas_=1;
+    nParticles_=1;
+    molecular_weigths_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weigths"), nSpec_);
+    auto molecular_weigths_host = molecular_weigths_.view_host();
+    molecular_weigths_host(0)=0.04607;
+    molecular_weigths_host(1)=0.01801;
+
+    aerosol_density_= real_type_1d_dual_view(do_not_init_tag("AMD::aerosol_density_"), nSpec_);
+    auto aerosol_density_host = aerosol_density_.view_host();
+    aerosol_density_host(0)=1e3;
+    aerosol_density_host(1)=1e3;
+
+    molecular_weigths_.modify_host();
+    aerosol_density_.modify_host();
+
+    molecular_weigths_.sync_device();
+    molecular_weigths_.sync_device();
+
     return 0;
 }
 

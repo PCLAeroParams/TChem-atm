@@ -15,8 +15,7 @@
 #define CHEM_SPEC_PSSA 3
 #define CHEM_SPEC_ACTIVITY_COEFF 4
 
-// FIXME: NUM_STATE_VAR_
-#define NUM_STATE_VAR_ 3
+#define I_PART amcd.nSpec_gas + i_spec + i_part*amcd.nParticles
 
 #include "TChem_Util.hpp"
 #include "TChem_Impl_SIMPOL_constant.hpp"
@@ -35,6 +34,9 @@ struct SIMPOL_single_particle
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using ordinal_type_1d_view_type = Tines::value_type_1d_view<ordinal_type,device_type>;
+  using aerosol_model_data_type= AerosolModel_ConstData<device_type>;
+
+  using const_real_type_1d_view_type = Tines::value_type_1d_view<const real_type,device_type>;
 
   KOKKOS_INLINE_FUNCTION static ordinal_type getWorkSpaceSize()
   {
@@ -44,62 +46,55 @@ struct SIMPOL_single_particle
 
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static void
-  aero_phase_get_volume__m3_m3(const MemberType& member,
+  aero_phase_get_volume(const MemberType& member,
+                        const ordinal_type i_part,
                         const value_type_1d_view_type& state,
-                        const real_type_1d_view_type& density,
-                        const ordinal_type_1d_view_type& species_type,
-                        value_type& volume)
+                        value_type& volume,
+                        const aerosol_model_data_type& amcd)
    {
      // Sum the mass and MW
    volume = MINIMUM_MASS_ / MINIMUM_DENSITY_;
-  for (int i_spec = 0; i_spec < NUM_STATE_VAR_; i_spec++) {
-    if (species_type(i_spec) == CHEM_SPEC_VARIABLE ||
-        species_type(i_spec) == CHEM_SPEC_CONSTANT ||
-        species_type(i_spec) == CHEM_SPEC_PSSA) {
-      volume += state(i_spec) / density(i_spec);
-    }
+  for (int i_spec = 0; i_spec < amcd.nSpec; i_spec++) {
+      volume += state(I_PART) / amcd.aerosol_density(i_spec);
   }
 
   }
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static void effective_radius(
     const MemberType& member,
+    const ordinal_type i_part,
     const real_type& t,
     const real_type& p,
     const value_type_1d_view_type& state,
-    const ordinal_type& num_of_phases,
-    const real_type_1d_view_type& density,
-    const ordinal_type_1d_view_type& species_type,
-    value_type& radius)
+    value_type& radius,
+    const aerosol_model_data_type& amcd
+    )
     {
     radius=0.0;
-    for (int i_phase = 0; i_phase < num_of_phases; ++i_phase) {
+    // for (int i_phase = 0; i_phase < num_of_phases; ++i_phase) {
     value_type volume=0.0;
-    aero_phase_get_volume__m3_m3(member, state, density, species_type, volume );
+    aero_phase_get_volume(member, i_part, state, volume, amcd );
     radius += volume;
-    }//
+    // }//
     radius = ats<value_type>::pow((radius * 3.0 / 4.0 / PI()), 1.0 / 3.0);
     }
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static void
-  aero_phase_get_mass__kg_m3(const MemberType& member,
+  aero_phase_get_mass(const MemberType& member,
+                             const ordinal_type i_part,
                              const value_type_1d_view_type& state,
-                             const real_type_1d_view_type& molecular_weigths,
-                             const ordinal_type_1d_view_type& species_type,
                              value_type&MW,
-                             value_type&mass
+                             value_type&mass,
+                             const aerosol_model_data_type& amcd
                              )
   {
      // Sum the mass and MW
   mass = MINIMUM_MASS_;
   value_type moles = MINIMUM_MASS_ / MINIMUM_MW_;
-  for (int i_spec = 0; i_spec < NUM_STATE_VAR_; i_spec++) {
-    if (species_type(i_spec) == CHEM_SPEC_VARIABLE ||
-        species_type(i_spec) == CHEM_SPEC_CONSTANT ||
-        species_type(i_spec) == CHEM_SPEC_PSSA) {
-      mass += state(i_spec);
-      moles += state(i_spec) / molecular_weigths(i_spec);
-    }
+  for (int i_spec = 0; i_spec < amcd.nSpec; i_spec++) {
+      mass += state(I_PART);
+      moles += state(I_PART) / amcd.molecular_weigths(i_spec);
+    // }
   }
   MW = mass / moles;
   }
@@ -165,44 +160,29 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
                                              alpha);
 }
 
-  // FIXME:
-KOKKOS_INLINE_FUNCTION
-static void get_inputParameters(ordinal_type& num_of_phases,
-                      ordinal_type& GAS_SPEC_,
-                      ordinal_type& AERO_SPEC_i_phase)
-   {
-    num_of_phases =1;
-    GAS_SPEC_=0;
-    AERO_SPEC_i_phase=1;
-   }
-
   // update RHS
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static
   void invoke_team(const MemberType& member,
+    const ordinal_type i_part,
     const real_type& t,
     const real_type& p,
     const real_type& number_conc,
     const value_type_1d_view_type& state,
-    const real_type_1d_view_type& molecular_weigths,
-    const real_type_1d_view_type& density,
-    const ordinal_type_1d_view_type& species_type,
-    const value_type_1d_view_type& omega
+    const value_type_1d_view_type& omega,
+    const aerosol_model_data_type& amcd
     )
   {
     // FIXME: input parameters
-  ordinal_type GAS_SPEC_=0;
-  ordinal_type AERO_SPEC_i_phase=1;
-  ordinal_type num_of_phases =1;
-  get_inputParameters(num_of_phases, GAS_SPEC_, AERO_SPEC_i_phase);
+  ordinal_type GAS_SPEC_=amcd.GAS_SPEC_;
+  ordinal_type AERO_SPEC_i_phase=amcd.AERO_SPEC_i_phase;
+  // ordinal_type num_of_phases =1;
+    //FIXME: inputs
+  real_type DIFF_COEFF_=amcd.DIFF_COEFF_;
+  real_type MW_=amcd.DIFF_COEFF_;
 
   using SIMPOL_constant_type
    = TChem::Impl::SIMPOL_constant<value_type, device_type >;
-
-  //FIXME: inputs
-  real_type DIFF_COEFF_=1;
-  real_type MW_=1;
-  SIMPOL_constant_type::getInputParameters(DIFF_COEFF_, MW_ );
 
      // aerosol phase (m3/#/s)
   real_type mfp_m =0.0;
@@ -210,12 +190,16 @@ static void get_inputParameters(ordinal_type& num_of_phases,
   real_type EQUIL_CONST_=0.0;
   real_type KGM3_TO_PPM_=0.0;
   SIMPOL_constant_type::team_invoke( member, t, p, alpha,
-    mfp_m, KGM3_TO_PPM_, EQUIL_CONST_);
+    mfp_m, KGM3_TO_PPM_, EQUIL_CONST_, amcd);
 
   // Compute radious
   value_type radius =1;
-  effective_radius(member, t, p, state,
-                  num_of_phases, density, species_type, radius);
+  // const_real_type_1d_view_type aerosol_density =;
+
+  effective_radius(member, i_part, t, p,
+                  state,
+                  radius,
+                  amcd);
   printf("radius %e \n", radius);
 
    // Get the particle number concentration (#/m3)
@@ -223,8 +207,12 @@ static void get_inputParameters(ordinal_type& num_of_phases,
    value_type aero_phase_avg_MW=0;
    // Get the total mass of the aerosol phase (kg/m3)
    value_type aero_phase_mass=0;
-   aero_phase_get_mass__kg_m3(member, state, molecular_weigths, species_type,
-                              aero_phase_avg_MW, aero_phase_mass );
+   aero_phase_get_mass(member,
+                       i_part,
+                       state,
+                       aero_phase_avg_MW,
+                       aero_phase_mass,
+                       amcd );
 
   printf("aero_phase_mass %e \n", aero_phase_mass);
   printf("aero_phase_avg_MW %e \n", aero_phase_avg_MW);
@@ -232,7 +220,8 @@ static void get_inputParameters(ordinal_type& num_of_phases,
    // Calculate the rate constant for diffusion limited mass transfer to the
 
    value_type cond_rate =
-   gas_aerosol_transition_rxn_rate_constant(DIFF_COEFF_, mfp_m, radius, alpha);
+   gas_aerosol_transition_rxn_rate_constant(DIFF_COEFF_,
+    mfp_m, radius, alpha);
 
    printf("cond_rate %e \n", cond_rate);
 
@@ -252,20 +241,20 @@ static void get_inputParameters(ordinal_type& num_of_phases,
   printf("evap_rate %e \n", evap_rate);
 
   // Calculate the evaporation and condensation rates
-  cond_rate *= state(GAS_SPEC_);
-  evap_rate *= state(AERO_SPEC_i_phase);
+  cond_rate *= state(amcd.GAS_SPEC_);
+  evap_rate *= state(amcd.AERO_SPEC_i_phase+i_part*amcd.nParticles);
   // // per-particle mass concentration rates
   value_type diff = - evap_rate + cond_rate;
 
-  printf("state(GAS_SPEC_) %e \n", state(GAS_SPEC_));
-  printf("state(%d) %e \n",AERO_SPEC_i_phase, state(AERO_SPEC_i_phase));
+  printf("state(GAS_SPEC_) %e \n", state(amcd.GAS_SPEC_));
+  printf("state(%d) %e \n",AERO_SPEC_i_phase, state(amcd.AERO_SPEC_i_phase+i_part*amcd.nParticles));
   printf("diff %e \n",diff);
   printf("A evap_rate %e \n", evap_rate);
   printf("A cond_rate %e \n", cond_rate);
 
   // Change in the gas-phase is evaporation - condensation (ppm/s)
   omega(GAS_SPEC_) = -number_conc * diff;
-  omega(AERO_SPEC_i_phase) = diff / KGM3_TO_PPM_;
+  omega(amcd.AERO_SPEC_i_phase+i_part*amcd.nParticles) = diff / KGM3_TO_PPM_;
 
   for (int i = 0; i < 3; i++)
   {

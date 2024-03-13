@@ -48,23 +48,31 @@ main(int argc, char* argv[])
     printf("equil_constant %e \n", equil_constant);
 
     using value_type_1d_view_type = typename SIMPOL_single_particle_type::value_type_1d_view_type;
-    ordinal_type nSpec=3;
     real_type number_conc = 1.3e6; // particle number concentration (#/cc)
     // initial concentration
     real_type ethanol=0.1;
     real_type ethanol_aq = 1.0e-8 ;
     real_type H2O_aq = 1.4e-2;
+    ordinal_type ntotal_species = amcd.nSpec_gas + amcd.nSpec*amcd.nParticles;
 
-    value_type_1d_view_type state("state", nSpec);
+    value_type_1d_view_type state("state", ntotal_species);
+    // gas species
     state(0) = ethanol;
-    state(1) = ethanol_aq/number_conc;
-    state(2) = H2O_aq/number_conc;
+    // aerosol_species
+    // printf("ntotal_species %d \n", ntotal_species);
+    for (int i = 0; i < amcd.nParticles; i++)
+    {
+      // printf("f %d \n", 1+amcd.nSpec*i);
+      // printf("s %d \n", 2+amcd.nSpec*i);
+      state(1+amcd.nSpec*i) = ethanol_aq/number_conc;
+      state(2+amcd.nSpec*i) = H2O_aq/number_conc;
+    }
 
     using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
     // real_type_1d_view_type molecular_weigths("molecular_weigths", nSpec);
     // real_type_1d_view_type density("density", nSpec);
     // Kokkos::deep_copy(density, 1e3);
-    value_type_1d_view_type omega("omega", nSpec);
+    value_type_1d_view_type omega("omega", ntotal_species);
 
     // molecular_weigths(0)=0.04607;
     // molecular_weigths(1)=0.04607;
@@ -75,12 +83,23 @@ main(int argc, char* argv[])
     // ordinal_type_1d_view_type species_type("species_type", nSpec);
     // Kokkos::deep_copy(species_type, 1);
     // species_type(0)=-1;
-    ordinal_type i_part=0;
-
-
+    for (int i_part = 0; i_part < amcd.nParticles; i_part++)
+    {
+      printf("----Working on particle No %d ---\n", i_part);
     SIMPOL_single_particle_type
     ::invoke_team(member, i_part, t, p, number_conc, state, omega, amcd);
+    }
 
+  printf("---RHSs--\n");
+  printf("omega(%d) %e \n",0,omega(0));
+  for (ordinal_type i_part = 0; i_part < amcd.nParticles; i_part++)
+  {
+    ordinal_type is = amcd.nSpec_gas + i_part*amcd.nSpec;
+    for (ordinal_type i = 0; i < amcd.nSpec; i++)
+    {
+      printf("omega(%d) %e \n",is+i,omega(is+i));
+    }
+  }
 
 
 

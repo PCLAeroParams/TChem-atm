@@ -15,7 +15,7 @@
 #define CHEM_SPEC_PSSA 3
 #define CHEM_SPEC_ACTIVITY_COEFF 4
 
-#define I_PART amcd.nSpec_gas + i_spec + i_part*amcd.nParticles
+#define I_PART amcd.nSpec_gas + i_spec + i_part*amcd.nSpec
 
 #include "TChem_Util.hpp"
 #include "TChem_Impl_SIMPOL_constant.hpp"
@@ -242,25 +242,19 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
 
   // Calculate the evaporation and condensation rates
   cond_rate *= state(amcd.GAS_SPEC_);
-  evap_rate *= state(amcd.AERO_SPEC_i_phase+i_part*amcd.nParticles);
+  evap_rate *= state(amcd.AERO_SPEC_i_phase+i_part*amcd.nSpec);
   // // per-particle mass concentration rates
   value_type diff = - evap_rate + cond_rate;
 
   printf("state(GAS_SPEC_) %e \n", state(amcd.GAS_SPEC_));
-  printf("state(%d) %e \n",AERO_SPEC_i_phase, state(amcd.AERO_SPEC_i_phase+i_part*amcd.nParticles));
+  printf("state(%d) %e \n",AERO_SPEC_i_phase, state(amcd.AERO_SPEC_i_phase+i_part*amcd.nSpec));
   printf("diff %e \n",diff);
   printf("A evap_rate %e \n", evap_rate);
   printf("A cond_rate %e \n", cond_rate);
 
   // Change in the gas-phase is evaporation - condensation (ppm/s)
-  omega(GAS_SPEC_) = -number_conc * diff;
-  omega(amcd.AERO_SPEC_i_phase+i_part*amcd.nParticles) = diff / KGM3_TO_PPM_;
-
-  for (int i = 0; i < 3; i++)
-  {
-    printf("omega(%d) %e \n",i,omega(i));
-  }
-
+  Kokkos::atomic_add(&omega(GAS_SPEC_), -number_conc * diff);
+  Kokkos::atomic_add(&omega(amcd.AERO_SPEC_i_phase+i_part*amcd.nSpec), diff / KGM3_TO_PPM_);
 #if 0
 #endif
   }

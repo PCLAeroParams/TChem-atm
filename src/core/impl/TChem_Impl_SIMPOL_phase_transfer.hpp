@@ -163,7 +163,7 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
     const ordinal_type i_simpol,
     const real_type& t,
     const real_type& p,
-    const real_type& number_conc,
+    const real_type_1d_view_type& number_conc,
     const value_type_1d_view_type& state,
     const value_type_1d_view_type& omega,
     const aerosol_model_data_type& amcd
@@ -248,7 +248,7 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   printf("A cond_rate %e \n", cond_rate);
 
   // Change in the gas-phase is evaporation - condensation (ppm/s)
-  Kokkos::atomic_add(&omega(GAS_SPEC_), -number_conc * diff);
+  Kokkos::atomic_add(&omega(GAS_SPEC_), -number_conc(i_part) * diff);
   Kokkos::atomic_add(&omega(AERO_SPEC_i_phase+i_part*amcd.nSpec), diff / KGM3_TO_PPM_);
   }
 

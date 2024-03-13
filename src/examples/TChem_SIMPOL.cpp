@@ -50,7 +50,9 @@ main(int argc, char* argv[])
     printf("equil_constant %e \n", equil_constant);
 
     using value_type_1d_view_type = typename SIMPOL_single_particle_type::value_type_1d_view_type;
-    real_type number_conc = 1.3e6; // particle number concentration (#/cc)
+    using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
+    real_type_1d_view_type number_conc("number_conc", amcd.nParticles);
+    Kokkos::deep_copy(number_conc, 1.3e6); // particle number concentration (#/cc)
     // initial concentration
     real_type ethanol=0.1;
     real_type ethanol_aq = 1.0e-8 ;
@@ -66,25 +68,12 @@ main(int argc, char* argv[])
     {
       // printf("f %d \n", 1+amcd.nSpec*i);
       // printf("s %d \n", 2+amcd.nSpec*i);
-      state(1+amcd.nSpec*i) = ethanol_aq/number_conc;
-      state(2+amcd.nSpec*i) = H2O_aq/number_conc;
+      state(1+amcd.nSpec*i) = ethanol_aq/number_conc(i);
+      state(2+amcd.nSpec*i) = H2O_aq/number_conc(i);
     }
 
-    using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
-    // real_type_1d_view_type molecular_weigths("molecular_weigths", nSpec);
-    // real_type_1d_view_type density("density", nSpec);
-    // Kokkos::deep_copy(density, 1e3);
     value_type_1d_view_type omega("omega", ntotal_species);
 
-    // molecular_weigths(0)=0.04607;
-    // molecular_weigths(1)=0.04607;
-    // molecular_weigths(2)=0.01801;
-
-
-    // using ordinal_type_1d_view_type = typename SIMPOL_single_particle_type::ordinal_type_1d_view_type;
-    // ordinal_type_1d_view_type species_type("species_type", nSpec);
-    // Kokkos::deep_copy(species_type, 1);
-    // species_type(0)=-1;
     ordinal_type i_simpol=0;
     for (int i_part = 0; i_part < amcd.nParticles; i_part++)
     {

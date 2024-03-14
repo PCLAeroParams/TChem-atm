@@ -19,7 +19,7 @@ main(int argc, char* argv[])
 
     using host_device_type      = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
 
-    std::string chemFile="test.yaml";
+    std::string chemFile="test_SIMPOL_phase_transfer.yaml";
 
     /// construct kmd and use the view for testing
     TChem::AerosolModelData amd = TChem::AerosolModelData(chemFile);

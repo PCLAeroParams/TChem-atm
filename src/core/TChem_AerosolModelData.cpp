@@ -35,40 +35,127 @@ void AerosolModelData::initFile(const std::string &mechfile,
 }
 
 int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
-    // implimentation of parser
-    nSpec_=2;
+    // implementation of parser
+    // FIXME: I need to get the number of gas species from gas mechanism
     nSpec_gas_=1;
-    nParticles_=5;
-    molecular_weigths_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weigths"), nSpec_);
-    auto molecular_weigths_host = molecular_weigths_.view_host();
-    molecular_weigths_host(0)=0.04607;
-    molecular_weigths_host(1)=0.01801;
+    // FIXME: I maybe need to add a map of gas species as an input in initChem
+    // 1. let's make a map of aerosol species and gas species.
+    std::map<std::string, int> aerosol_sp_name_idx;
+    int i_aero_sp=0;
+    // 2. FIXME: we maybe need to created a list with gas species from gas mechanism
+    std::map<std::string, int> gas_sp_name_idx;
+    std::vector<YAML::Node> gas_sp_info;
+    int i_gas_sp=0;
+    // 3. get molecular weitghs and density of aerosol_species
+    std::vector<real_type> mw_aerosol_sp, density_aero_sp;
+    for (auto const &item : root["NCAR-version"] ) {
+      auto type =item["type"].as<std::string>();
+      if (type=="CHEM_SPEC"){
+        const auto sp_name = item["name"].as<std::string>();
+        if (item["phase"]){
+           auto phase_name =item["phase"].as<std::string>();
+           if (phase_name == "AEROSOL" ){
+            // std::cout <<"sp_name " << sp_name<< item["phase"]<<"\n";
+             aerosol_sp_name_idx.insert(std::pair<std::string, int>(sp_name, i_aero_sp));
+             i_aero_sp++;
+            //  std::cout <<"molecular weight" << item["molecular weight [kg mol-1]"]<<"\n";
+             mw_aerosol_sp.push_back(item["molecular weight [kg mol-1]"].as<real_type>());
+             density_aero_sp.push_back(item["density [kg m-3]"].as<real_type>());
+           }
+        } else
+        {
+          gas_sp_name_idx.insert(std::pair<std::string, int>(sp_name, i_gas_sp));
+          gas_sp_info.push_back(item);
+          i_gas_sp++;
+        }// phase
+      } // if CHEM_SPEC
 
-    aerosol_density_= real_type_1d_dual_view(do_not_init_tag("AMD::aerosol_density_"), nSpec_);
-    auto aerosol_density_host = aerosol_density_.view_host();
-    aerosol_density_host(0)=1e3;
-    aerosol_density_host(1)=1e3;
+      if (type=="AERO_REP_SINGLE_PARTICLE"){
+        nParticles_= item["maximum computational particles"].as<int>();
+      }// AERO_REP_SINGLE_PARTICLE
 
-    //
-    ordinal_type nSimpol_tran=1;
+    } // item loop
 
+    std::vector<SIMPOL_PhaseTransferType> simpol_info;
+    for (auto const &item : root["NCAR-version"]) {
+      auto type =item["type"].as<std::string>();
+      if (type=="MECHANISM"){
+       auto reactions = item["reactions"];
+       auto reaction_type = reactions["type"].as<std::string>();
+       if (reaction_type=="SIMPOL_PHASE_TRANSFER")
+       {
+        SIMPOL_PhaseTransferType simpol_info_at;
+        simpol_info_at.B1 = reactions["B"][0].as<real_type>();
+        simpol_info_at.B2 = reactions["B"][1].as<real_type>();
+        simpol_info_at.B3 = reactions["B"][2].as<real_type>();
+        simpol_info_at.B4 = reactions["B"][3].as<real_type>();
+        // getting aerosol and gas species index.
+        const auto aero_sp = reactions["aerosol-phase species"].as<std::string>();
+         auto it = aerosol_sp_name_idx.find(aero_sp);
+         if (it != aerosol_sp_name_idx.end()) {
+          // aerosol species are place after gas species.
+          //Note: that we do not use number of particles here.
+          simpol_info_at.aerosol_sp_index = it->second + nSpec_gas_;
+          } else {
+          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp);
+          TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
+         }
+
+         const auto gas_sp = reactions["gas-phase species"].as<std::string>();
+         if (it != gas_sp_name_idx.end()) {
+          //
+          simpol_info_at.gas_sp_index = it->second;
+          } else {
+          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", gas_sp);
+          TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
+         }
+         simpol_info.push_back(simpol_info_at);
+       }
+      }
+    }// item loop
+
+
+    // number of aerosol species
+    nSpec_= density_aero_sp.size();
+
+    ordinal_type nSimpol_tran=simpol_info.size();
+    // update simpol
     simpol_params_ = simplo_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran);
     const auto simpol_params_host = simpol_params_.view_host();
 
-    SIMPOL_PhaseTransferType simpol_params_host_at_i;
-    // auto simpol_params_host_at_i = simpol_params_host(0);
-    simpol_params_host_at_i.aerosol_sp_index=1;
-    simpol_params_host_at_i.B1= -1.97E+03;
-    simpol_params_host_at_i.B2=2.91E+00;
-    simpol_params_host_at_i.B3=1.96E-03;
-    simpol_params_host_at_i.B4=-4.96E-01;
+    for (ordinal_type isimpol = 0; isimpol < nSimpol_tran; isimpol++)
+    {
+      // SIMPOL_PhaseTransferType simpol_params_host_at_i;
+      auto simpol_params_host_at_i = simpol_info[isimpol];
+      // FIXME: Assuming that gas info is provided in the conf yaml
+      // If gas species exit in gas mechanism, we maybe have an issue.
+      // It is possible that is information is given in gas mechanism conf file.
+      // get gas properties for simpol transfer.
+      auto gas_sp_at_i = gas_sp_info[isimpol];
 
-    simpol_params_host_at_i.gas_sp_index=0;
-    simpol_params_host_at_i.diffusion_coeff=0.95E-05; // m2 s-;
-    simpol_params_host_at_i.N_star=2.55;
-    simpol_params_host_at_i.compute_alpha=true;
-    simpol_params_host_at_i.molecular_weight=0.04607;
-    simpol_params_host(0)=simpol_params_host_at_i;
+      simpol_params_host_at_i.diffusion_coeff=gas_sp_at_i["diffusion coeff [m2 s-1]"].as<real_type>(); // m2 s-;
+      if (gas_sp_at_i["N star"]) {
+        simpol_params_host_at_i.N_star=gas_sp_at_i["N star"].as<real_type>();
+        simpol_params_host_at_i.compute_alpha=true;
+      } else {
+        simpol_params_host_at_i.compute_alpha=false;
+        simpol_params_host_at_i.N_star=999;
+      }
+      simpol_params_host_at_i.molecular_weight=gas_sp_at_i["molecular weight [kg mol-1]"].as<real_type>();
+      // save simpol_params_host_at_i in kokkos array
+      simpol_params_host(isimpol)=simpol_params_host_at_i;
+    } // nsimpol
+
+
+    molecular_weigths_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weigths"), nSpec_);
+    auto molecular_weigths_host = molecular_weigths_.view_host();
+    aerosol_density_= real_type_1d_dual_view(do_not_init_tag("AMD::aerosol_density_"), nSpec_);
+    auto aerosol_density_host = aerosol_density_.view_host();
+    for (int i = 0; i < nSpec_; i++)
+    {
+      molecular_weigths_host(i) = mw_aerosol_sp[i];
+      aerosol_density_host(i) = density_aero_sp[i];
+    }
 
     molecular_weigths_.modify_host();
     aerosol_density_.modify_host();

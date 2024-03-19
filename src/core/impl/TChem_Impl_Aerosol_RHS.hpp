@@ -46,7 +46,7 @@ struct Aerosol_RHS
     // FIXME: number of simpol is hard-coded to one.
     ordinal_type i_simpol=0;
     SIMPOL_single_particle_type
-    ::invoke_team(member, i_part,i_simpol,
+    ::team_invoke(member, i_part,i_simpol,
                   t, p, number_conc,
                   state, omega,
                   amcd);

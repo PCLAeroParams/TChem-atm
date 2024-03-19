@@ -158,7 +158,7 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   // update RHS
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static
-  void invoke_team(const MemberType& member,
+  void team_invoke(const MemberType& member,
     const ordinal_type i_part,
     const ordinal_type i_simpol,
     const real_type& t,

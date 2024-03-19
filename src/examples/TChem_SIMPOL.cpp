@@ -79,7 +79,7 @@ main(int argc, char* argv[])
     {
       printf("----Working on particle No %d ---\n", i_part);
     SIMPOL_single_particle_type
-    ::invoke_team(member, i_part,i_simpol, t, p, number_conc, state, omega, amcd);
+    ::team_invoke(member, i_part,i_simpol, t, p, number_conc, state, omega, amcd);
     }
 
   printf("---RHSs--\n");

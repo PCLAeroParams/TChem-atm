@@ -156,8 +156,14 @@ namespace TChem
       t_out_at_i() = t;
       dt_out_at_i() = dt;
 
-      for (ordinal_type i=0;i<m;++i)
+      // active gas species
+      for (ordinal_type i=0;i<n_active_gas_species;++i)
         Ys_out(i) = vals(i);
+      // particle species
+      // Ys_out also contains invariant species
+      for (ordinal_type i=n_active_gas_species;i<total_n_species;++i)
+        Ys_out(i+kmcd.nConstSpec)=vals(i);
+
       temperature_out() =temperature;
 
     }

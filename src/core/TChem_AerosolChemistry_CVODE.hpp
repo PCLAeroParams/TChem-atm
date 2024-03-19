@@ -1,8 +1,9 @@
 #ifndef __TCHEM_AEROSOL_CHEMISTRY_CVODE_HPP__
 #define __TCHEM_AEROSOL_CHEMISTRY_CVODE_HPP__
 
-#include "TChem_KineticModelData.hpp"
+
 #include "TChem_Util.hpp"
+#include "TChem_KineticModelData.hpp"
 #include "TChem_Impl_AerosolChemistry_CVODE.hpp"
 #include "TChem_Impl_AerosolChemistry.hpp"
 
@@ -51,8 +52,8 @@ struct AerosolChemistry_CVODE
            const real_type_1d_view_host& dt_out,
            const real_type_2d_view_host& state_out,
            /// const data from kinetic model
-           const Tines::value_type_1d_view<KineticModelNCAR_ConstData<interf_host_device_type>, interf_host_device_type>& kmcds,
-           const Tines::value_type_1d_view<AerosolModel_ConstData<interf_host_device_type>, interf_host_device_type>& amcds,
+           const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd,
+           const AerosolModel_ConstData<interf_host_device_type>& amcd,
            const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type, host_device_type>, host_device_type>& cvodes);
 
 };

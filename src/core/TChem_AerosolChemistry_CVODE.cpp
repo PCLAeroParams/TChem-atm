@@ -68,9 +68,9 @@ namespace TChem
                                        per_team_extent);
       auto wptr = work.data();
       const real_type_1d_view_type ww(wptr, work.extent(0));
-
-      Impl::StateVector<real_type_1d_view_type> sv_at_i(kmcd.nSpec, state_at_i);
-      Impl::StateVector<real_type_1d_view_type> sv_out_at_i(kmcd.nSpec,
+      const ordinal_type total_n_species = kmcd.nSpec + amcd.nParticles*amcd.nSpec;
+      Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
+      Impl::StateVector<real_type_1d_view_type> sv_out_at_i(total_n_species,
                                                         state_out_at_i);
       TCHEM_CHECK_ERROR(!sv_at_i.isValid(),
                         "Error: input state vector is not valid");
@@ -88,10 +88,13 @@ namespace TChem
       const real_type pressure = sv_at_i.Pressure();
       const real_type density = sv_at_i.Density();
       const real_type_1d_view_type Ys = sv_at_i.MassFractions();
+      const ordinal_type n_active_gas_species = kmcd.nSpec - kmcd.nConstSpec;
       const auto activeYs = real_type_1d_view_type(Ys.data(),
-                              kmcd.nSpec - kmcd.nConstSpec );
-      const auto constYs  = real_type_1d_view_type(Ys.data()
-                            + kmcd.nSpec - kmcd.nConstSpec,  kmcd.nSpec );
+                              n_active_gas_species );
+      const auto constYs  = real_type_1d_view_type(Ys.data(),
+                            n_active_gas_species,  kmcd.nSpec );
+      const auto partYs  = real_type_1d_view_type(Ys.data(),
+                            kmcd.nSpec, total_n_species );
 
       const real_type_0d_view_type temperature_out(sv_out_at_i.TemperaturePtr());
       const real_type_0d_view_type pressure_out(sv_out_at_i.PressurePtr());
@@ -130,8 +133,12 @@ namespace TChem
       problem._pressure =pressure;
       problem._const_concentration= constYs;
       problem._number_conc =number_conc_at_i;
-      for (ordinal_type i=0;i<m;++i)
+      // active gas species
+      for (ordinal_type i=0;i<n_active_gas_species;++i)
         vals(i) = activeYs(i);
+      // particle species
+      for (ordinal_type i=n_active_gas_species;i<total_n_species;++i)
+        vals(i) = partYs(i-n_active_gas_species);
 
       real_type t = t_out_at_i(), dt = 0;
       cvode.initialize(t,

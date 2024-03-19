@@ -1,5 +1,3 @@
-#include "TChem_Util.hpp"
-
 #include "TChem_AerosolChemistry_CVODE.hpp"
 
 namespace TChem
@@ -24,8 +22,8 @@ namespace TChem
           const Tines::value_type_1d_view<real_type, DeviceType>& dt_out,
           const Tines::value_type_2d_view<real_type, DeviceType>& state_out,
           /// const data from kinetic model
-          const Tines::value_type_1d_view<KineticModelNCAR_ConstData<DeviceType>,DeviceType>& kmcds,
-          const Tines::value_type_1d_view<AerosolModel_ConstData<DeviceType>,DeviceType>& amcds,
+          const KineticModelNCAR_ConstData<DeviceType>& kmcd,
+          const AerosolModel_ConstData<DeviceType>& amcd,
           const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type,DeviceType>,DeviceType>& cvodes) {
     Kokkos::Profiling::pushRegion(profile_name);
 #if defined(TINES_ENABLE_TPL_SUNDIALS)
@@ -36,7 +34,7 @@ namespace TChem
 
     using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type,DeviceType>;
     const ordinal_type level = 1;
-    const ordinal_type per_team_extent = AerosolChemistry_CVODE::getWorkSpaceSize(kmcds(0),amcds(0));
+    const ordinal_type per_team_extent = AerosolChemistry_CVODE::getWorkSpaceSize(kmcd,amcd);
 
     /// this assumes host space
     Kokkos::parallel_for
@@ -44,8 +42,6 @@ namespace TChem
        policy,
        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
   const ordinal_type i = member.league_rank();
-  const auto kmcd = (kmcds.extent(0) == 1 ? kmcds(0) : kmcds(i));
-  const auto amcd = (amcds.extent(0) == 1 ? amcds(0) : amcds(i));
         auto cvode = cvodes(i);
 
   const auto tadv_at_i = tadv(i);
@@ -188,8 +184,8 @@ namespace TChem
           t_out,        \
           dt_out,       \
           state_out,        \
-          kmcds,        \
-          amcds,        \
+          kmcd,        \
+          amcd,        \
           cvodes)
 
   void
@@ -206,8 +202,8 @@ namespace TChem
            const real_type_1d_view_host& dt_out,
            const real_type_2d_view_host& state_out,
            /// const data from kinetic model
-           const Tines::value_type_1d_view<KineticModelNCAR_ConstData<interf_host_device_type>, interf_host_device_type>& kmcds,
-           const Tines::value_type_1d_view<AerosolModel_ConstData<interf_host_device_type>, interf_host_device_type>& amcds,
+           const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd,
+           const AerosolModel_ConstData<interf_host_device_type>& amcd,
            const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type, host_device_type>, host_device_type>& cvodes) {
 #if defined(TINES_ENABLE_TPL_SUNDIALS)
     const std::string profile_name = "TChem::AerosolChemistry::runHostBatch::kmcd array";

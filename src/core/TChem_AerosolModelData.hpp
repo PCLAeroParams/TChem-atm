@@ -1,5 +1,5 @@
-#ifndef __TCHEM_KINETIC_AEROSOL_MODEL_DATA_HPP__
-#define __TCHEM_KINETIC_AEROSOL_MODEL_DATA__HPP__
+#ifndef __TCHEM_AEROSOL_MODEL_DATA_HPP__
+#define __TCHEM_AEROSOL_MODEL_DATA_HPP__
 
 #include "TChem_Util.hpp"
 #include "TChem_ReactionTypes.hpp"

@@ -41,7 +41,6 @@ OPTION(TCHEM_ATM_ENABLE_VERBOSE "Flag to enable TChem_atm verbose flag" OFF)
 OPTION(TCHEM_ATM_ENABLE_DEBUG "Flag to enable TChem_atm debug flag" OFF)
 OPTION(TCHEM_ATM_ENABLE_INSTALL "Flag to enable install exports for TCHEM_ATM" ON)
 OPTION(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY "Flag to enable sacado jacobian for atmospheric chemistry" OFF)
-OPTION(TCHEM_ATM_ENABLE_CVODE "Flag to enable CVODE solver" OFF)
 OPTION(TCHEM_ATM_ENABLE_SKYWALKER "Flag to enable Skywalker" OFF)
 
 OPTION(KOKKOS_INSTALL_PATH "Path to Kokkos installation")
@@ -121,7 +120,7 @@ IF (TCHEM_ATM_ENABLE_TEST)
   LIST(APPEND TCHEM_ATM_LINK_LIBRARIES ${TCHEM_ATM_INTERNAL_GTEST_TARGET})
 ENDIF()
 
-## skywalker 
+## skywalker
 
 if (TCHEM_ATM_ENABLE_SKYWALKER)
 IF(TARGET skywalker)

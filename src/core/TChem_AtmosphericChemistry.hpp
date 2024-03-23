@@ -142,22 +142,23 @@ namespace AtmChemistry {
   setScenarioConditions(const std::string& filename,
              const Tines::value_type_1d_view<char [LENGTHOFSPECNAME + 1],interf_host_device_type>& speciesNamesHost,
              const ordinal_type& nSpec,
+             const ordinal_type& stateVecDim,
              real_type_2d_view_host& state_host,
              int& nBatch);
-  // read photolysis reactions values from a yaml file. 
+  // read photolysis reactions values from a yaml file.
   void
   setScenarioConditionsPhotolysisReactions(const std::string& filename,
              const ordinal_type& nBatch,
-             // output 
+             // output
              real_type_2d_view_host& photo_rates_host,
              ordinal_type& count_photo_rates
              );
 
-  // read external forcing from a yaml file. 
-  void 
+  // read external forcing from a yaml file.
+  void
   setScenarioConditionsExternalForcing(const std::string& filename,
              const Tines::value_type_1d_view<char [LENGTHOFSPECNAME + 1],interf_host_device_type>& speciesNamesHost,
-             // output 
+             // output
              real_type_2d_view_host& external_forcing_host,
              ordinal_type& count_ext_forcing);
 

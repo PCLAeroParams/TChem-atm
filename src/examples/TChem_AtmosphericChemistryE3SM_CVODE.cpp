@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
   {
     const bool detail = false;
 
-    // by default use input condition from chemFile 
+    // by default use input condition from chemFile
     if (inputFile == "None") {
        inputFile=chemFile;
     }
@@ -154,21 +154,21 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host state_scenario_host;
     ordinal_type nbacth_files=0;
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
 
     // read photolysis reaction values
-    // we assume photolysis reaction  are computed by another tool. 
+    // we assume photolysis reaction  are computed by another tool.
     real_type_2d_view_host photo_rates_scenario_host;
     ordinal_type n_photo_rates = 0;
     TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(inputFile,
              nbacth_files,
-             // output 
+             // output
              photo_rates_scenario_host,
              n_photo_rates
              );
-    // read external forcing 
+    // read external forcing
     ordinal_type count_ext_forcing=0;
-    
+
     const ordinal_type n_active_vars = kmcd.nSpec - kmcd.nConstSpec;
     printf("Number of species %d \n", kmcd.nSpec);
     printf("Number of const species %d \n", kmcd.nConstSpec);
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host external_sources_scenario_host("external_sources_host",nbacth_files,n_active_vars);
     TChem::AtmChemistry::setScenarioConditionsExternalForcing(inputFile,
              speciesNamesHost,
-             // output 
+             // output
              external_sources_scenario_host,
              count_ext_forcing);
 
@@ -216,16 +216,16 @@ int main(int argc, char *argv[]) {
       }
 
     } else {
-      nBatch = nbacth_files; 
+      nBatch = nbacth_files;
       state = state_scenario_host;
 
       if (n_photo_rates > 0 )
       {
-        photo_rates = photo_rates_scenario_host; 
+        photo_rates = photo_rates_scenario_host;
       }  // n_photo_rates
 
-      
-      if (count_ext_forcing >  0) {  
+
+      if (count_ext_forcing >  0) {
         external_sources= external_sources_scenario_host;
       } else {
         // make sure that external source are zero.
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
       // if (team_size > 0 && vector_size > 0) {
       //   policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
       // } else if (team_size > 0 && vector_size < 0) {
-      // // only set team size 
+      // // only set team size
       //  policy = policy_type(exec_space_instance, nBatch,  team_size);
       // }
           using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
       cvodes = Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type>("cvodes", nBatch);
       for (ordinal_type i=0;i<nBatch;++i)
         cvodes(i).create(n_active_vars);
-    }      
+    }
 
         ordinal_type number_of_equations(0);
 
@@ -316,11 +316,11 @@ int main(int argc, char *argv[]) {
         real_type_1d_view_host tol_newton("tol newton", 2);
 
         real_type_2d_view_host fac("fac", nBatch, number_of_equations);
-        
-        
+
+
 
         /// tune tolerence
-        { 
+        {
           for (ordinal_type i = 0, iend = tol_time.extent(0); i < iend; ++i) {
             tol_time(i, 0) = atol_time;
             tol_time(i, 1) = rtol_time;
@@ -342,8 +342,6 @@ int main(int argc, char *argv[]) {
 
         time_advance_type_1d_view_host tadv("tadv", nBatch);
         Kokkos::deep_copy(tadv, tadv_default);
-
-
 
         ordinal_type iter = 0;
 
@@ -399,7 +397,7 @@ int main(int argc, char *argv[]) {
 
       }
     }
-    
+
     fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
     fprintf(fout_times, "} \n "); // reaction rates
 

@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
   {
     const bool detail = false;
 
-    // by default use input condition from chemFile 
+    // by default use input condition from chemFile
     if (inputFile == "None") {
        inputFile=chemFile;
     }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 #if defined(TCHEM_ATM_ENABLE_EXPLICIT_EULER)
   printf("   TChem is running ATM model box with explicit euler \n");
 #elif defined(TCHEM_ATM_ENABLE_IMPLICIT_EULER)
-  printf("   TChem is running ATM model box with implicit euler \n");  
+  printf("   TChem is running ATM model box with implicit euler \n");
 #else
   printf("   TChem is running ATM model box with with TrBDF2 \n");
 #endif
@@ -155,21 +155,21 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host state_scenario_host;
     ordinal_type nbacth_files=0;
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec,stateVecDim, state_scenario_host, nbacth_files);
 
     // read photolysis reaction values
-    // we assume photolysis reaction  are computed by another tool. 
+    // we assume photolysis reaction  are computed by another tool.
     real_type_2d_view_host photo_rates_scenario_host;
     ordinal_type n_photo_rates = 0;
     TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(inputFile,
              nbacth_files,
-             // output 
+             // output
              photo_rates_scenario_host,
              n_photo_rates
              );
-    // read external forcing 
+    // read external forcing
     ordinal_type count_ext_forcing=0;
-    
+
     const ordinal_type n_active_vars = kmcd.nSpec - kmcd.nConstSpec;
     printf("Number of species %d \n", kmcd.nSpec);
     printf("Number of const species %d \n", kmcd.nConstSpec);
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host external_sources_scenario_host("external_sources_host",nbacth_files,n_active_vars);
     TChem::AtmChemistry::setScenarioConditionsExternalForcing(inputFile,
              speciesNamesHost,
-             // output 
+             // output
              external_sources_scenario_host,
              count_ext_forcing);
 
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
       }
 
     } else {
-      nBatch = nbacth_files; 
+      nBatch = nbacth_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
       state_host = state_scenario_host;
@@ -237,7 +237,7 @@ int main(int argc, char *argv[]) {
       }  // n_photo_rates
 
       external_sources = real_type_2d_view("external_sources", nBatch, n_active_vars);
-      if (count_ext_forcing >  0) {  
+      if (count_ext_forcing >  0) {
         Kokkos::deep_copy(external_sources, external_sources_scenario_host);
       } else {
         // make sure that external source are zero.
@@ -289,7 +289,7 @@ int main(int argc, char *argv[]) {
     if (team_size > 0 && vector_size > 0) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
-      // only set team size 
+      // only set team size
        policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 
@@ -306,7 +306,7 @@ int main(int argc, char *argv[]) {
 
 #if defined(TCHEM_ATM_ENABLE_EXPLICIT_EULER)
       per_team_extent = TChem::AtmosphericChemistryE3SM_ExplicitEuler::getWorkSpaceSize(kmcd);
-      // FIXME: it look like this computation is incorrect. 
+      // FIXME: it look like this computation is incorrect.
 // #elif defined(TCHEM_ATM_ENABLE_IMPLICIT_EULER)
 //       per_team_extent = TChem::AtmosphericChemistryE3SM_ImplicitEuler::getWorkSpaceSize(kmcd);
 #else
@@ -333,15 +333,15 @@ int main(int argc, char *argv[]) {
         real_type_1d_view tol_newton("tol newton", 2);
 
         real_type_2d_view fac("fac", nBatch, number_of_equations);
-        
-        
+
+
 
         /// tune tolerence
         {
           auto tol_time_host = Kokkos::create_mirror_view(tol_time);
           auto tol_newton_host = Kokkos::create_mirror_view(tol_newton);
 
-          
+
           for (ordinal_type i = 0, iend = tol_time.extent(0); i < iend; ++i) {
             tol_time_host(i, 0) = atol_time;
             tol_time_host(i, 1) = rtol_time;
@@ -414,19 +414,19 @@ int main(int argc, char *argv[]) {
               policy, tadv, state, photo_rates,external_sources, t, dt, state,
               kmcd);
           exec_space_instance.fence();
-#elif defined(TCHEM_ATM_ENABLE_IMPLICIT_EULER)   
+#elif defined(TCHEM_ATM_ENABLE_IMPLICIT_EULER)
           timer.reset();
           TChem::AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch(
               policy, tol_newton, tol_time, fac, tadv, state, photo_rates,external_sources, t, dt, state,
               kmcd);
-          exec_space_instance.fence();   
+          exec_space_instance.fence();
 #else
           timer.reset();
           TChem::AtmosphericChemistryE3SM::runDeviceBatch(
               policy, tol_newton, tol_time, fac, tadv, state, photo_rates,external_sources, t, dt, state,
               kmcd);
           exec_space_instance.fence();
-#endif          
+#endif
           const real_type t_device_batch = timer.seconds();
           fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iter,
                   t_device_batch);
@@ -463,9 +463,9 @@ int main(int argc, char *argv[]) {
 
       }
     }
-    
+
     fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
-    fprintf(fout_times, "} \n "); // reaction rates  
+    fprintf(fout_times, "} \n "); // reaction rates
 
     fclose(fout);
     fprintf(fout_times, "}\n "); // end index time

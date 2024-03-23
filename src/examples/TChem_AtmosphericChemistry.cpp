@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     FILE *fout = fopen(outputFile.c_str(), "w");
     // read scenario condition from yaml file
     real_type_2d_view_host state_host;
-    TChem::AtmChemistry ::setScenarioConditions(chemFile, speciesNamesHost, kmcd.nSpec, state_host, nBatch);
+    TChem::AtmChemistry ::setScenarioConditions(chemFile, speciesNamesHost, kmcd.nSpec, stateVecDim, state_host, nBatch);
 
     real_type_2d_view state("StateVector Devices", nBatch, stateVecDim);
 
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
     if (team_size > 0 && vector_size > 0) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
-      // only set team size 
+      // only set team size
        policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 

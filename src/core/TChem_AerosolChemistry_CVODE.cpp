@@ -31,7 +31,7 @@ namespace TChem
 
     using real_type_0d_view_type = Tines::value_type_0d_view<real_type, DeviceType>;
     using real_type_1d_view_type = Tines::value_type_1d_view<real_type, DeviceType>;
-
+    using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
     using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type,DeviceType>;
     const ordinal_type level = 1;
     const ordinal_type per_team_extent = AerosolChemistry_CVODE::getWorkSpaceSize(kmcd,amcd);
@@ -58,7 +58,6 @@ namespace TChem
         Kokkos::subview(state_out, i, Kokkos::ALL());
       const real_type_1d_view_type fac_at_i =
         Kokkos::subview(fac, i, Kokkos::ALL());
-
       const real_type_0d_view_type dt_out_at_i = Kokkos::subview(dt_out, i);
       Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                        per_team_extent);
@@ -88,9 +87,8 @@ namespace TChem
       const auto activeYs = real_type_1d_view_type(Ys.data(),
                               n_active_gas_species );
       const auto constYs  = real_type_1d_view_type(Ys.data(),
-                            n_active_gas_species,  kmcd.nSpec );
-      const auto partYs  = real_type_1d_view_type(Ys.data(),
-                            kmcd.nSpec, total_n_species );
+                            +n_active_gas_species,  kmcd.nSpec );
+       const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(kmcd.nSpec, total_n_species));
 
       const real_type_0d_view_type temperature_out(sv_out_at_i.TemperaturePtr());
       const real_type_0d_view_type pressure_out(sv_out_at_i.PressurePtr());
@@ -130,11 +128,14 @@ namespace TChem
       problem._const_concentration= constYs;
       problem._number_conc =number_conc_at_i;
       // active gas species
-      for (ordinal_type i=0;i<n_active_gas_species;++i)
+      for (ordinal_type i=0;i<n_active_gas_species;++i){
         vals(i) = activeYs(i);
-      // particle species
-      for (ordinal_type i=n_active_gas_species;i<total_n_species;++i)
+      }
+
+      for (ordinal_type i=n_active_gas_species;i<total_n_species- kmcd.nConstSpec;++i)
+      {
         vals(i) = partYs(i-n_active_gas_species);
+      }
 
       real_type t = t_out_at_i(), dt = 0;
       cvode.initialize(t,
@@ -146,7 +147,8 @@ namespace TChem
       cvode.setProblem(problem);
       for (ordinal_type iter=0;iter<max_num_time_iterations && t<=t_end;++iter) {
         const real_type t_prev = t;
-        cvode.advance(t_end, t, -1);
+        // FIXME: third argument in cvode.advance must be an input.
+        cvode.advance(t_end, t, 1);
         dt = t - t_prev;
       }
       t_out_at_i() = t;

@@ -134,9 +134,11 @@ int main(int argc, char *argv[]) {
     using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
 
     /// construct kmd and use the view for testing
+    printf("kmd parsing ...\n");
     TChem::KineticModelData kmd(chemFile);
     const auto kmcd = TChem::createNCAR_KineticModelConstData<host_device_type>(kmd);
 
+    printf("amd parsing ...\n");
     TChem::AerosolModelData amd(aeroFile);
     const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
 
@@ -150,6 +152,8 @@ int main(int argc, char *argv[]) {
     printf("Number of Aerosol Species %d \n", amcd.nSpec);
     printf("Number of Aerosol Particles %d \n", amcd.nParticles);
 
+    printf("stateVecDim %d \n", stateVecDim);
+
     const auto speciesNamesHost = Kokkos::create_mirror_view(kmcd.speciesNames);
     Kokkos::deep_copy(speciesNamesHost, kmcd.speciesNames);
 
@@ -157,13 +161,18 @@ int main(int argc, char *argv[]) {
     // read scenario condition from yaml file
    // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
-    ordinal_type nbacth_files=0;
-    TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, state_scenario_host, nbacth_files);
+    ordinal_type nbacth_files=1;
+#if 1
 
-    const ordinal_type n_active_vars = kmcd.nSpec - kmcd.nConstSpec;
+    printf("conditions parsing ...\n");
+    TChem::AtmChemistry::setScenarioConditions(inputFile,
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
+#endif
+    const ordinal_type n_active_vars = total_n_species - kmcd.nConstSpec;
     printf("Number of const species %d \n", kmcd.nConstSpec);
     // Note: We allocate external_sources_scenario_host
+
+    // state_scenario_host =real_type_2d_view_host("state_scenario_host",nBatch,stateVecDim );
 
     real_type_2d_view_host state;
     real_type_2d_view_host num_concentration;
@@ -182,6 +191,28 @@ int main(int argc, char *argv[]) {
       nBatch = nbacth_files;
       state = state_scenario_host;
     }
+
+    num_concentration = real_type_2d_view_host("num_concentration",nBatch, amcd.nParticles );
+    Kokkos::deep_copy(num_concentration, 1.3e6);
+    printf("state(2) %e \n", state(0,2));
+    printf("state(3) %e \n", state(0,3));
+    printf("state(4) %e \n", state(0,4));
+    // state(0,3)=0.1;
+    real_type ethanol_aq = 1.0e-8 ;
+    real_type H2O_aq = 1.4e-2;
+    // aerosol_species
+    // printf("ntotal_species %d \n", ntotal_species);
+    for (int i = 0; i < amcd.nParticles; i++)
+    {
+      // printf("f %d \n", 1+amcd.nSpec*i);
+      // printf("s %d \n", 2+amcd.nSpec*i);
+      state(0,5+amcd.nSpec*i) = ethanol_aq/num_concentration(0,i);
+      state(0,6+amcd.nSpec*i) = H2O_aq/num_concentration(0,i);
+    }
+
+
+
+    printf("Number of nbacth %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,
                          const real_type_1d_view_host _t,
                          const real_type_1d_view_host _dt,

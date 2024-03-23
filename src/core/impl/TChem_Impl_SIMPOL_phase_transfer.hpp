@@ -196,7 +196,7 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
                   state,
                   radius,
                   amcd);
-  printf("radius %e \n", radius);
+
 
    // Get the particle number concentration (#/m3)
    // Get the total mass of the aerosol phase (kg/mol)
@@ -210,16 +210,12 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
                        aero_phase_mass,
                        amcd );
 
-  printf("aero_phase_mass %e \n", aero_phase_mass);
-  printf("aero_phase_avg_MW %e \n", aero_phase_avg_MW);
 
    // Calculate the rate constant for diffusion limited mass transfer to the
 
    value_type cond_rate =
    gas_aerosol_transition_rxn_rate_constant(DIFF_COEFF_,
     mfp_m, radius, alpha);
-
-   printf("cond_rate %e \n", cond_rate);
 
   //FIXME: to be done
   // Get the activity coefficient (if one exists)
@@ -231,9 +227,8 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   value_type evap_rate =
         cond_rate *  act_coeff * (EQUIL_CONST_ * aero_phase_avg_MW / aero_phase_mass);
 
-  printf("act_coeff %e \n", act_coeff);
-  printf("EQUIL_CONST_ %e \n", EQUIL_CONST_);
-  printf("evap_rate %e \n", evap_rate);
+
+
 
   // Calculate the evaporation and condensation rates
   cond_rate *= state(GAS_SPEC_);
@@ -241,11 +236,21 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   // // per-particle mass concentration rates
   value_type diff = - evap_rate + cond_rate;
 
+#if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
+  printf("radius %e \n", radius);
+  printf("aero_phase_mass %e \n", aero_phase_mass);
+  printf("aero_phase_avg_MW %e \n", aero_phase_avg_MW);
+  printf("cond_rate %e \n", cond_rate);
+  printf("act_coeff %e \n", act_coeff);
+  printf("EQUIL_CONST_ %e \n", EQUIL_CONST_);
+  printf("evap_rate %e \n", evap_rate);
   printf("state(GAS_SPEC_) %e \n", state(GAS_SPEC_));
   printf("state(%d) %e \n",AERO_SPEC_i_phase, state(AERO_SPEC_i_phase+i_part*amcd.nSpec));
   printf("diff %e \n",diff);
   printf("A evap_rate %e \n", evap_rate);
   printf("A cond_rate %e \n", cond_rate);
+#endif
+
 
   // Change in the gas-phase is evaporation - condensation (ppm/s)
   Kokkos::atomic_add(&omega(GAS_SPEC_), -number_conc(i_part) * diff);

@@ -38,6 +38,13 @@ struct Aerosol_RHS
     const aerosol_model_data_type& amcd
     )
   {
+    // FIXME
+    // We may need to set to zero omega in other place when I couple this code with gas chemistry
+    // set net production rate to be equal to external sources.
+    Kokkos::parallel_for(
+      Tines::RangeFactory<value_type>::TeamVectorRange(member, omega.extent(0)), [&](const ordinal_type& i) {
+      omega(i) = 0.0;
+    });
 
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<value_type, device_type >;
 
@@ -52,7 +59,22 @@ struct Aerosol_RHS
                   amcd);
     }
 
+#if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
+  printf("omega.extent(0) %d \n",omega.extent(0));
+  printf("---RHSs--\n");
+  printf("omega(%d) %e \n",0,omega(0));
+  for (ordinal_type i_part = 0; i_part < amcd.nParticles; i_part++)
+  {
+    ordinal_type is = amcd.nSpec_gas + i_part*amcd.nSpec;
+    for (ordinal_type i = 0; i < amcd.nSpec; i++)
+    {
+      printf("omega(%d) %e \n",is+i,omega(is+i));
+    }
   }
+#endif
+  }
+
+
 
 };
 } // namespace Impl

@@ -77,7 +77,9 @@ main(int argc, char* argv[])
     ordinal_type i_simpol=0;
     for (int i_part = 0; i_part < amcd.nParticles; i_part++)
     {
-      printf("----Working on particle No %d ---\n", i_part);
+#if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
+    printf("----Working on particle No %d ---\n", i_part);
+#endif
     SIMPOL_single_particle_type
     ::team_invoke(member, i_part,i_simpol, t, p, number_conc, state, omega, amcd);
     }

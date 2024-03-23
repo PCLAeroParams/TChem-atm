@@ -60,20 +60,20 @@ int main(int argc, char *argv[]) {
     const ordinal_type stateVecDim = TChem::Impl::getStateVectorSize(kmcd.nSpec);
     const auto speciesNamesHost = kmd.sNames_.view_host();
 
-    
+
     // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
     ordinal_type nbacth_files=0;
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
 
     // read photolysis reaction values
-    // we assume photolysis reaction  are computed by another tool. 
+    // we assume photolysis reaction  are computed by another tool.
     real_type_2d_view_host photo_rates_scenario_host;
     ordinal_type n_photo_rates = 0;
     TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(inputFile,
              nbacth_files,
-             // output 
+             // output
              photo_rates_scenario_host,
              n_photo_rates
              );
@@ -106,20 +106,20 @@ int main(int argc, char *argv[]) {
       } // n_photo_rates
 
     } else {
-      nBatch = nbacth_files; 
+      nBatch = nbacth_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
 
       if (n_photo_rates > 0 )
       {
-        nBatch = nbacth_files; 
+        nBatch = nbacth_files;
         photo_rates = real_type_2d_view("StateVector Devices", nBatch, n_photo_rates);
         Kokkos::deep_copy(photo_rates, photo_rates_scenario_host);
 
       }  // n_photo_rates
     }
 
-    // output 
+    // output
     real_type_2d_view rate_of_progress("rate_of_progress", nBatch, kmcd.nReac);
 
     using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
     if (team_size > 0 && vector_size > 0) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
-      // only set team size 
+      // only set team size
        policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(fout_times, "}\n ");// end index time
     fclose(fout_times);
-    
+
 
 
 
@@ -187,4 +187,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
- 	

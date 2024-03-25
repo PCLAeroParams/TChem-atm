@@ -7,19 +7,35 @@ namespace TChem {
 
 
 AerosolModelData::AerosolModelData(const std::string &mechfile,
+                                   const ordinal_type n_active_gas_species,
+                                   const ordinal_type n_inv_gas_species,
  std::ostream& echofile) {
+    setGasParameters(n_active_gas_species, n_inv_gas_species);
     initFile(mechfile, echofile);
 }
 
-AerosolModelData::AerosolModelData(const std::string &mechfile) {
+AerosolModelData::AerosolModelData(const std::string &mechfile,
+                                   const ordinal_type n_active_gas_species,
+                                   const ordinal_type n_inv_gas_species) {
     std::ofstream echofile;
     echofile.open("kmod.echo");
-    initFile(mechfile,echofile);
+    setGasParameters(n_active_gas_species, n_inv_gas_species);
+    initFile(mechfile ,echofile);
     echofile.close();
 }
 
+void AerosolModelData::setGasParameters(const ordinal_type n_active_gas_species,
+                                        const ordinal_type n_inv_gas_species){
+      // implementation of parser
+  // FIXME: I need to get the number of gas species from gas mechanism
+  // FIXME: I maybe need to add a map of gas species as an input in initChem
+  nSpec_gas_=n_active_gas_species;
+  nConstSpec_gas_=n_inv_gas_species;
+  is_gas_parameters_set_=true;
+  printf("Setting gas parameters... nSpec_gas_ %d  nConstSpec_gas_%d \n", nSpec_gas_, nConstSpec_gas_);
+ }
 void AerosolModelData::initFile(const std::string &mechfile,
-                                    std::ostream& echofile){
+                                std::ostream& echofile){
 
   YAML::Node doc = YAML::LoadFile(mechfile);
   // FIXME: add error checking in yaml parser
@@ -34,14 +50,14 @@ void AerosolModelData::initFile(const std::string &mechfile,
   }
 }
 
-int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
-    // implementation of parser
-    // FIXME: I need to get the number of gas species from gas mechanism
-    nSpec_gas_=1;
-    nConstSpec_gas_=1;
-    // FIXME: I maybe need to add a map of gas species as an input in initChem
+int AerosolModelData::initChem(YAML::Node &root,
+                               std::ostream& echofile) {
+
+
     // 1. let's make a map of aerosol species and gas species.
     // std::map<std::string, int> aerosol_sp_name_idx_;
+    TCHEM_CHECK_ERROR(!is_gas_parameters_set_,"Error: gas parameters are not set use: setGasParameters(n_active_gas) ." );
+
     int i_aero_sp=0;
     // 2. FIXME: we maybe need to created a list with gas species from gas mechanism
     std::map<std::string, int> gas_sp_name_idx;

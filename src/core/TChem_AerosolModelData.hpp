@@ -22,19 +22,28 @@ namespace TChem {
 
   // only use this map in host
   std::map<std::string, int> aerosol_sp_name_idx_;
+  bool is_gas_parameters_set_{false};
 
   public:
 
-    AerosolModelData(const std::string& mechfile, std::ostream& echofile);
-    AerosolModelData(const std::string& mechfile);
+    AerosolModelData(const std::string& mechfile,
+                     const ordinal_type n_active_gas_species,
+                     const ordinal_type n_inv_gas_species,
+                    std::ostream& echofile);
+    AerosolModelData(const std::string& mechfile,
+                     const ordinal_type n_active_gas_species,
+                     const ordinal_type n_inv_gas_species);
 
       /// constructor and destructor
   AerosolModelData() = default;
   AerosolModelData(const AerosolModelData& b) = default;
   ~AerosolModelData() = default;
 
-  void initFile(const std::string &mechfile, std::ostream& echofile);
+  void initFile(const std::string &mechfile,
+                std::ostream& echofile);
   ordinal_type initChem(YAML::Node& doc, std::ostream& echofile);
+  void setGasParameters(const ordinal_type n_active_gas_species,
+                                        const ordinal_type n_inv_gas_species);
   void scenarioConditionParticles(const std::string &mechfile,
                                   const ordinal_type nBatch,
                                   real_type_2d_view_host& num_concentration,

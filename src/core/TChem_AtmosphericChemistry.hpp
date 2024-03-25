@@ -134,8 +134,6 @@ struct AtmosphericChemistry
 
 };
 
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
-
 namespace AtmChemistry {
 
   void
@@ -164,7 +162,7 @@ namespace AtmChemistry {
 
 
 } // namespace Atomospheric Chemistry
-#endif
+
 
 } // namespace TChem
 

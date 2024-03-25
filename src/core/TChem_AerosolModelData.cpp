@@ -38,9 +38,10 @@ int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
     // implementation of parser
     // FIXME: I need to get the number of gas species from gas mechanism
     nSpec_gas_=1;
+    nConstSpec_gas_=1;
     // FIXME: I maybe need to add a map of gas species as an input in initChem
     // 1. let's make a map of aerosol species and gas species.
-    std::map<std::string, int> aerosol_sp_name_idx;
+    // std::map<std::string, int> aerosol_sp_name_idx_;
     int i_aero_sp=0;
     // 2. FIXME: we maybe need to created a list with gas species from gas mechanism
     std::map<std::string, int> gas_sp_name_idx;
@@ -56,7 +57,7 @@ int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
            auto phase_name =item["phase"].as<std::string>();
            if (phase_name == "AEROSOL" ){
             // std::cout <<"sp_name " << sp_name<< item["phase"]<<"\n";
-             aerosol_sp_name_idx.insert(std::pair<std::string, int>(sp_name, i_aero_sp));
+             aerosol_sp_name_idx_.insert(std::pair<std::string, int>(sp_name, i_aero_sp));
              i_aero_sp++;
             //  std::cout <<"molecular weight" << item["molecular weight [kg mol-1]"]<<"\n";
              mw_aerosol_sp.push_back(item["molecular weight [kg mol-1]"].as<real_type>());
@@ -91,8 +92,8 @@ int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
         simpol_info_at.B4 = reactions["B"][3].as<real_type>();
         // getting aerosol and gas species index.
         const auto aero_sp = reactions["aerosol-phase species"].as<std::string>();
-         auto it = aerosol_sp_name_idx.find(aero_sp);
-         if (it != aerosol_sp_name_idx.end()) {
+         auto it = aerosol_sp_name_idx_.find(aero_sp);
+         if (it != aerosol_sp_name_idx_.end()) {
           // aerosol species are place after gas species.
           //Note: that we do not use number of particles here.
           simpol_info_at.aerosol_sp_index = it->second + nSpec_gas_;
@@ -168,6 +169,61 @@ int AerosolModelData::initChem(YAML::Node &root, std::ostream& echofile) {
     return 0;
 }
 
+void AerosolModelData::scenarioConditionParticles(const std::string &mechfile,
+                                                  const ordinal_type nBatch,
+                                                  real_type_2d_view_host& num_concentration,
+                                                  real_type_2d_view_host& state)
+{
+  YAML::Node root = YAML::LoadFile(mechfile);
+
+  if (root["particles"]){
+
+    auto num_conc_info = root["particles"]["num_concentration"]["initial_value"];
+    num_concentration = real_type_2d_view_host("num_concentration",nBatch, nParticles_ );
+    // loop over batch
+    for (ordinal_type ibatch = 0; ibatch < nBatch; ibatch++)
+    {
+      // Note: we assume all particles have equal num_concentration
+      const auto value = num_conc_info[ibatch].as<real_type>();
+      auto num_con_ibatch = Kokkos::subview(num_concentration, ibatch, Kokkos::ALL());
+      Kokkos::deep_copy(num_con_ibatch,value);
+    }
+
+    // read initial conditions for part concentraion
+    auto initial_state = root["particles"]["initial_state"];
+    // density, pressure, temperature, active gas species, and invariant gas species
+    const ordinal_type initial_index = 3 +nSpec_gas_+nConstSpec_gas_;
+    for (auto const& sp_cond : initial_state) {
+      auto species_name = sp_cond.first.as<std::string>();
+      auto it = aerosol_sp_name_idx_.find(species_name);
+      if (it == aerosol_sp_name_idx_.end()) {
+          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", species_name);
+          TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
+      }
+      const ordinal_type species_idx = it->second;
+      std::cout << species_idx << "\n";
+      auto species_info = initial_state[species_name]["initial_value"];
+
+      for (ordinal_type ibatch = 0; ibatch < nBatch; ibatch++)
+      {
+       const auto value = species_info[ibatch].as<real_type>();
+       auto state_ibatch = Kokkos::subview(state, ibatch, Kokkos::ALL());
+       auto num_con_ibatch = Kokkos::subview(num_concentration, ibatch, Kokkos::ALL());
+       for (int ipart = 0; ipart < nParticles_; ipart++)
+      {
+      state_ibatch(initial_index+nSpec_*ipart+species_idx) = value/num_con_ibatch(ipart);
+    }
+    } // batches
+
+  }
+
+
+
+
+
+  }
+
+}
 
 
 

@@ -22,7 +22,9 @@ main(int argc, char* argv[])
     std::string chemFile="test_SIMPOL_phase_transfer.yaml";
 
     /// construct kmd and use the view for testing
-    TChem::AerosolModelData amd = TChem::AerosolModelData(chemFile);
+    const ordinal_type n_active_gas_species=1;
+    const ordinal_type n_inv_gas_species=0;
+    TChem::AerosolModelData amd = TChem::AerosolModelData(chemFile, n_active_gas_species, n_inv_gas_species);
     const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
 
 

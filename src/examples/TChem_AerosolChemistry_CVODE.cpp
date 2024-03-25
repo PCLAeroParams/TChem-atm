@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
   std::string aeroFile("aero.yaml");
   std::string outputFile("AerosolChemistry.dat");
   std::string inputFile("None");
+  std::string input_file_particles("None");
   bool use_cloned_samples(false);
   bool use_cvode(false);
   /// parse command line arguments
@@ -73,6 +74,8 @@ int main(int argc, char *argv[]) {
                                &aeroFile);
   opts.set_option<std::string>("inputfile", "Chem file name e.g., chem.inp",
                                &inputFile);
+  opts.set_option<std::string>("inputfile_particles", "input file name e.g., chem.inp",
+                               &input_file_particles);
   opts.set_option<real_type>("tbeg", "Time begin", &tbeg);
   opts.set_option<real_type>("tend", "Time end", &tend);
   opts.set_option<real_type>("dtmin", "Minimum time step size", &dtmin);
@@ -125,7 +128,10 @@ int main(int argc, char *argv[]) {
     if (inputFile == "None") {
        inputFile=chemFile;
     }
-
+    // check first in chem file
+    if (input_file_particles == "None") {
+       input_file_particles=chemFile;
+    }
     printf("   TChem is running ATM model box with CVODE\n");
 
     TChem::exec_space().print_configuration(std::cout, detail);
@@ -173,10 +179,10 @@ int main(int argc, char *argv[]) {
     // Note: We allocate external_sources_scenario_host
 
     // state_scenario_host =real_type_2d_view_host("state_scenario_host",nBatch,stateVecDim );
+    real_type_2d_view_host num_concentration;
+    amd.scenarioConditionParticles(input_file_particles, nBatch, num_concentration, state_scenario_host);
 
     real_type_2d_view_host state;
-    real_type_2d_view_host num_concentration;
-
     if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
       // only clone samples if nbacth_files is 1
       printf("-------------------------------------------------------\n");
@@ -192,25 +198,23 @@ int main(int argc, char *argv[]) {
       state = state_scenario_host;
     }
 
-    num_concentration = real_type_2d_view_host("num_concentration",nBatch, amcd.nParticles );
-    Kokkos::deep_copy(num_concentration, 1.3e6);
-    printf("state(2) %e \n", state(0,2));
-    printf("state(3) %e \n", state(0,3));
-    printf("state(4) %e \n", state(0,4));
-    // state(0,3)=0.1;
-    real_type ethanol_aq = 1.0e-8 ;
-    real_type H2O_aq = 1.4e-2;
-    // aerosol_species
-    // printf("ntotal_species %d \n", ntotal_species);
-    for (int i = 0; i < amcd.nParticles; i++)
-    {
-      // printf("f %d \n", 1+amcd.nSpec*i);
-      // printf("s %d \n", 2+amcd.nSpec*i);
-      state(0,5+amcd.nSpec*i) = ethanol_aq/num_concentration(0,i);
-      state(0,6+amcd.nSpec*i) = H2O_aq/num_concentration(0,i);
-    }
-
-
+   // num_concentration = real_type_2d_view_host("num_concentration",nBatch, amcd.nParticles );
+    // Kokkos::deep_copy(num_concentration, 1.3e6);
+    // printf("state(2) %e \n", state(0,2));
+    // printf("state(3) %e \n", state(0,3));
+    // printf("state(4) %e \n", state(0,4));
+    // // state(0,3)=0.1;
+    // real_type ethanol_aq = 1.0e-8 ;
+    // real_type H2O_aq = 1.4e-2;
+    // // aerosol_species
+    // // printf("ntotal_species %d \n", ntotal_species);
+    // for (int i = 0; i < amcd.nParticles; i++)
+    // {
+    //   // printf("f %d \n", 1+amcd.nSpec*i);
+    //   // printf("s %d \n", 2+amcd.nSpec*i);
+    //   state(0,5+amcd.nSpec*i) = ethanol_aq/num_concentration(0,i);
+    //   state(0,6+amcd.nSpec*i) = H2O_aq/num_concentration(0,i);
+    // }
 
     printf("Number of nbacth %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,

@@ -13,11 +13,15 @@ namespace TChem {
   // number of species per aerosol
   ordinal_type nSpec_;
   ordinal_type nSpec_gas_;
+  ordinal_type nConstSpec_gas_;
   // number of particles
   ordinal_type nParticles_;
   // aerosol molecular weigths and density
   real_type_1d_dual_view molecular_weigths_, aerosol_density_;
   simplo_phase_transfer_type_1d_dual_view simpol_params_;
+
+  // only use this map in host
+  std::map<std::string, int> aerosol_sp_name_idx_;
 
   public:
 
@@ -31,6 +35,10 @@ namespace TChem {
 
   void initFile(const std::string &mechfile, std::ostream& echofile);
   ordinal_type initChem(YAML::Node& doc, std::ostream& echofile);
+  void scenarioConditionParticles(const std::string &mechfile,
+                                  const ordinal_type nBatch,
+                                  real_type_2d_view_host& num_concentration,
+                                  real_type_2d_view_host& state);
   };
 
   template<typename DeviceType>

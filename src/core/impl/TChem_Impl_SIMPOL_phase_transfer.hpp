@@ -227,9 +227,6 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   value_type evap_rate =
         cond_rate *  act_coeff * (EQUIL_CONST_ * aero_phase_avg_MW / aero_phase_mass);
 
-
-
-
   // Calculate the evaporation and condensation rates
   cond_rate *= state(GAS_SPEC_);
   evap_rate *= state(AERO_SPEC_i_phase+i_part*amcd.nSpec);

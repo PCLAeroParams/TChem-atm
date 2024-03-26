@@ -94,10 +94,10 @@ namespace Impl {
       const ordinal_type src_workspace_size
       = Aerosol_RHS<value_type, device_type>::getWorkSpaceSize(kmcd, amcd);
       const ordinal_type m = getNumberOfEquations(kmcd,amcd);
-
-      const ordinal_type workspace_size = src_workspace_size;
+      // src term + jacobian
+      const ordinal_type workspace_size = (src_workspace_size + 2*m);
       // FIXME: sacado work_space
-      // (src_workspace_size + 2*m)*ats<value_type>::sacadoStorageCapacity();
+      // *ats<value_type>::sacadoStorageCapacity();
 
       return workspace_size;
 

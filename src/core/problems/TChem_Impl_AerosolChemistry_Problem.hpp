@@ -91,11 +91,12 @@ namespace Impl {
     const aerosol_model_data_type& amcd)
     {
 
-      // const ordinal_type src_workspace_size
-      // = ReactionRatesAerosol<value_type, device_type>::getWorkSpaceSize(kmcd, amcd);
-      // const ordinal_type m = getNumberOfEquations(kmcd,amcd);
+      const ordinal_type src_workspace_size
+      = Aerosol_RHS<value_type, device_type>::getWorkSpaceSize(kmcd, amcd);
+      const ordinal_type m = getNumberOfEquations(kmcd,amcd);
 
-      const ordinal_type workspace_size = 0;
+      const ordinal_type workspace_size = src_workspace_size;
+      // FIXME: sacado work_space
       // (src_workspace_size + 2*m)*ats<value_type>::sacadoStorageCapacity();
 
       return workspace_size;
@@ -114,7 +115,9 @@ namespace Impl {
                                                 const real_type_1d_view_type& f) const
     {
       Impl::Aerosol_RHS<real_type, device_type>
-        ::team_invoke(member, _temperature, _pressure, _number_conc, x, f, _amcd);
+        ::team_invoke(member, _temperature, _pressure,
+                      _number_conc, x,
+                      _const_concentration,  f, _work, _kmcd, _amcd);
       member.team_barrier();
 
     }

@@ -9,7 +9,7 @@ namespace Impl {
 
 template<typename ValueType, typename DeviceType>
 struct NetProductionRates
-{  
+{
 	  using value_type = ValueType;
   using device_type = DeviceType;
   using scalar_type = typename ats<value_type>::scalar_type;

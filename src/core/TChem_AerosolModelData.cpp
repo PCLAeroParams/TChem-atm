@@ -23,12 +23,11 @@ AerosolModelData::AerosolModelData(const std::string &mechfile,
 }
 
 void AerosolModelData::setGasParameters(const KineticModelData& kmd){
-      // implementation of parser
-  // FIXME: I need to get the number of gas species from gas mechanism
   // FIXME: I maybe need to add a map of gas species as an input in initChem
   const ordinal_type n_active_species = kmd.nSpec_- kmd.nConstSpec_;
   nSpec_gas_=n_active_species;
-  nConstSpec_gas_=kmd.nConstSpec_;//n_inv_gas_species;
+  nConstSpec_gas_=kmd.nConstSpec_;//
+  // maps from kmd has order of gas species.
   gas_sp_name_idx_ = kmd.species_indx_;
   is_gas_parameters_set_=true;
   printf("Setting gas parameters... nSpec_gas_ %d  nConstSpec_gas_%d \n", nSpec_gas_, nConstSpec_gas_);
@@ -51,21 +50,24 @@ void AerosolModelData::initFile(const std::string &mechfile,
 
 int AerosolModelData::initChem(YAML::Node &root,
                                std::ostream& echofile) {
-    // 1. let's make a map of aerosol species and gas species.
+
     TCHEM_CHECK_ERROR(!is_gas_parameters_set_,"Error: gas parameters are not set use: setGasParameters(n_active_gas) ." );
 
-    //gas_idx_sp_name : given index return name
+    //gas_idx_sp_name : given index return spacies name
     std::map<int, std::string> gas_idx_sp_name;
     for (std::map<std::string, int>::iterator
          i = gas_sp_name_idx_.begin();
          i != gas_sp_name_idx_.end(); ++i)
     gas_idx_sp_name[i->second] = i->first;
 
+    // 1. let's make a map of aerosol species and gas species.
     // given the name of species return the YAML::NODE
     std::map<std::string, YAML::Node> gas_sp_info;
-    // 3. get molecular weitghs and density of aerosol_species
+    // 2. get molecular weitghs and density of aerosol_species
     std::vector<real_type> mw_aerosol_sp, density_aero_sp;
     int i_aero_sp=0;
+    // loops over species, only make map from aerosol species.
+    // we assume that map of gas species was previously created in kmd.
     for (auto const &item : root["NCAR-version"] ) {
       auto type =item["type"].as<std::string>();
       if (type=="CHEM_SPEC"){
@@ -90,18 +92,18 @@ int AerosolModelData::initChem(YAML::Node &root,
         }// phase
       } // if CHEM_SPEC
 
-
+    // get number of particles
       if (type=="AERO_REP_SINGLE_PARTICLE"){
         nParticles_= item["maximum computational particles"].as<int>();
       }// AERO_REP_SINGLE_PARTICLE
 
     } // item loop
-
     printf("Done with species...\n");
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();
       if (type=="MECHANISM"){
+        // loop over reactions
        auto reactions = item["reactions"];
        for (auto const &ireac : reactions) {
         // std::cout <<"reactions " << ireac<<"\n";
@@ -134,11 +136,13 @@ int AerosolModelData::initChem(YAML::Node &root,
             //
             simpol_info_at.gas_sp_index = it_gas->second;
             } else {
-            printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", gas_sp);
-            TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
+            printf("Error : species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER\n", gas_sp);
+            TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting aerosol model" );
           }
           simpol_info.push_back(simpol_info_at);
          }//ireac
+       } else {
+        printf("Warning : TChem did not parse this reaction type %s \n", reaction_type.c_str());
        }
       }
     }// item loop

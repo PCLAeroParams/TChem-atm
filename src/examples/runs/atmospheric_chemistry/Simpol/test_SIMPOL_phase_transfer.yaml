@@ -29,11 +29,11 @@ NCAR-version:
   type: AERO_REP_SINGLE_PARTICLE
 - name: SIMPOL.1 phase transfer
   reactions:
-    B: [-1970.0, 2.91, 0.00196, -0.496]
-    aerosol phase: aqueous aerosol
-    aerosol-phase species: ethanol_aq
-    gas-phase species: ethanol
-    type: SIMPOL_PHASE_TRANSFER
+    - B: [-1970.0, 2.91, 0.00196, -0.496]
+      aerosol phase: aqueous aerosol
+      aerosol-phase species: ethanol_aq
+      gas-phase species: ethanol
+      type: SIMPOL_PHASE_TRANSFER
   type: MECHANISM
 note: Diffusion coefficient and N* for ethanol taken from CAPRAM 2.4 reduced
 

@@ -45,11 +45,9 @@ struct Aerosol_RHS
     const aerosol_model_data_type& amcd
     )
   {
-    // FIXME
-    // We may need to set to zero omega in other place when I couple this code with gas chemistry
-    // set net production rate to be equal to external sources.
+   // set omega(rhs) to zero, because we are using Kokkos::atomic_add.
     Kokkos::parallel_for(
-      Tines::RangeFactory<real_type>::TeamVectorRange(member, omega.extent(0)),
+      Kokkos::TeamThreadRange(member, omega.extent(0)),
        [&](const ordinal_type& i) {
       omega(i) = 0.0;
     });
@@ -67,8 +65,9 @@ struct Aerosol_RHS
     // 2. update RHS of gas and aerosol species
     member.team_barrier();
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, device_type >;
-    for (int i_part = 0; i_part < amcd.nParticles; i_part++)
-    {
+    Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(member, amcd.nParticles),
+       [&](const ordinal_type& i_part) {
     for (size_t i_simpol = 0; i_simpol < amcd.nSimpol_tran; i_simpol++)
     {
     SIMPOL_single_particle_type
@@ -77,7 +76,7 @@ struct Aerosol_RHS
                   state, omega,
                   amcd);
     }// i_simpol
-    }// i_part
+    });// i_part
 
 #if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
   printf("omega.extent(0) %d \n",omega.extent(0));

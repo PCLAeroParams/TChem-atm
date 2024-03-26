@@ -19,6 +19,7 @@ namespace TChem {
   // aerosol molecular weigths and density
   real_type_1d_dual_view molecular_weigths_, aerosol_density_;
   simplo_phase_transfer_type_1d_dual_view simpol_params_;
+  ordinal_type nSimpol_tran_;
 
   // only use this map in host
   std::map<std::string, int> aerosol_sp_name_idx_;
@@ -66,6 +67,7 @@ namespace TChem {
     ordinal_type nSpec;
     ordinal_type nSpec_gas;
     ordinal_type nParticles;
+    ordinal_type nSimpol_tran;
 
     amcd_real_type_1d_view molecular_weigths;
     amcd_real_type_1d_view aerosol_density;
@@ -79,10 +81,10 @@ namespace TChem {
     data.nSpec_gas=amd.nSpec_gas_;
     data.nSpec=amd.nSpec_;
     data.nParticles=amd.nParticles_;
+    data.nSimpol_tran=amd.nSimpol_tran_;
     data.molecular_weigths = amd.molecular_weigths_.template view<SpT>();
     data.aerosol_density = amd.aerosol_density_.template view<SpT>();
     data.simpol_params = amd.simpol_params_.template view<SpT>();
-
   return data;
   }
 

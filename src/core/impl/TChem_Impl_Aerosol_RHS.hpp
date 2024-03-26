@@ -2,7 +2,7 @@
 #define __TCHEM_IMPL_AEROSOL_RHS_HPP__
 
 #include "TChem_Impl_SIMPOL_phase_transfer.hpp"
-
+#include "TChem_Impl_ReactionRatesAerosol.hpp"
 namespace TChem {
 namespace Impl {
   template<typename ValueType, typename DeviceType>
@@ -21,20 +21,27 @@ struct Aerosol_RHS
 
   using const_real_type_1d_view_type = Tines::value_type_1d_view<const real_type,device_type>;
 
-  KOKKOS_INLINE_FUNCTION static ordinal_type getWorkSpaceSize()
+  using kinetic_model_data_type= KineticModelNCAR_ConstData<device_type>;
+
+  KOKKOS_INLINE_FUNCTION static ordinal_type getWorkSpaceSize(const kinetic_model_data_type& kmcd,
+                                                              const aerosol_model_data_type& amcd)
   {
-    ordinal_type workspace_size=0;
+    using reaction_rates_gas = TChem::Impl::ReactionRatesAerosol<real_type, device_type >;
+    ordinal_type workspace_size=reaction_rates_gas::getWorkSpaceSize(kmcd);
     return workspace_size;
   }
-    // update RHS
+    // update RHS using real_type, i.e., no sacado
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static
   void team_invoke(const MemberType& member,
     const real_type& t,
     const real_type& p,
     const real_type_1d_view_type& number_conc,
-    const value_type_1d_view_type& state,
-    const value_type_1d_view_type& omega,
+    const real_type_1d_view_type& state,
+    const real_type_1d_view_type& const_X,
+    const real_type_1d_view_type& omega,
+    const real_type_1d_view_type& work,
+    const kinetic_model_data_type& kmcd,
     const aerosol_model_data_type& amcd
     )
   {
@@ -42,13 +49,24 @@ struct Aerosol_RHS
     // We may need to set to zero omega in other place when I couple this code with gas chemistry
     // set net production rate to be equal to external sources.
     Kokkos::parallel_for(
-      Tines::RangeFactory<value_type>::TeamVectorRange(member, omega.extent(0)),
+      Tines::RangeFactory<real_type>::TeamVectorRange(member, omega.extent(0)),
        [&](const ordinal_type& i) {
       omega(i) = 0.0;
     });
-
-    using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<value_type, device_type >;
-
+    // 1. update RHS of gas species
+    using reaction_rates_gas = TChem::Impl::ReactionRatesAerosol<real_type, device_type >;
+    reaction_rates_gas::team_invoke(member,
+                         t,
+                         p,
+                         state,
+                         const_X,
+                         omega,
+                         // work arrays
+                         work,
+                         kmcd);
+    // 2. update RHS of gas and aerosol species
+    member.team_barrier();
+    using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, device_type >;
     for (int i_part = 0; i_part < amcd.nParticles; i_part++)
     {
     for (size_t i_simpol = 0; i_simpol < amcd.nSimpol_tran; i_simpol++)

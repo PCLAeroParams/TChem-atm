@@ -73,7 +73,7 @@ namespace TChem {
     using kmcd_arrhenius_reaction_type_1d_view = ConstUnmanaged<arrhenius_reaction_type_1d_view_type>;
     using kmcd_cmaq_h2o2_reaction_type_1d_view= ConstUnmanaged<cmaq_h2o2_reaction_type_1d_view_type>;
 
-    // e3sm implementation of troe reaction 
+    // e3sm implementation of troe reaction
     using kmcd_jpl_reaction_type_1d_view_1d_view = ConstUnmanaged<jpl_reaction_type_1d_view_type>;
 
     using kmcd_r_jpl_arrhenius_reaction_type_1d_view = ConstUnmanaged<r_jpl_arrhenius_reaction_type_1d_view_type>;
@@ -100,7 +100,7 @@ namespace TChem {
 
     kmcd_emission_source_type_1d_view_type EmissionCoef;
     ordinal_type M_index;
-   
+
 
     ordinal_type nSpec;
     ordinal_type nReac;
@@ -135,7 +135,7 @@ namespace TChem {
     data.nConstSpec = kmd.nConstSpec_;
     data.CONV_PPM = kmd.CONV_PPM_;
     data.convExponent = kmd.convExponent_.template view<SpT>();
-    // 
+    //
     data.JPL_Coef = kmd.JPL_Coef_.template view<SpT>();
     data.R_JPL_ArrheniusCoef = kmd.R_JPL_ArrheniusCoef_.template view<SpT>();
     data.adjust_reaction =kmd.adjust_reaction_.template view<SpT>();

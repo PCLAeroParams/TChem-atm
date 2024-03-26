@@ -7,30 +7,29 @@ namespace TChem {
 
 
 AerosolModelData::AerosolModelData(const std::string &mechfile,
-                                   const ordinal_type n_active_gas_species,
-                                   const ordinal_type n_inv_gas_species,
+                                   const KineticModelData& kmd,
  std::ostream& echofile) {
-    setGasParameters(n_active_gas_species, n_inv_gas_species);
+    setGasParameters(kmd);
     initFile(mechfile, echofile);
 }
 
 AerosolModelData::AerosolModelData(const std::string &mechfile,
-                                   const ordinal_type n_active_gas_species,
-                                   const ordinal_type n_inv_gas_species) {
+                                   const KineticModelData& kmd) {
     std::ofstream echofile;
     echofile.open("kmod.echo");
-    setGasParameters(n_active_gas_species, n_inv_gas_species);
+    setGasParameters(kmd);
     initFile(mechfile ,echofile);
     echofile.close();
 }
 
-void AerosolModelData::setGasParameters(const ordinal_type n_active_gas_species,
-                                        const ordinal_type n_inv_gas_species){
+void AerosolModelData::setGasParameters(const KineticModelData& kmd){
       // implementation of parser
   // FIXME: I need to get the number of gas species from gas mechanism
   // FIXME: I maybe need to add a map of gas species as an input in initChem
-  nSpec_gas_=n_active_gas_species;
-  nConstSpec_gas_=n_inv_gas_species;
+  const ordinal_type n_active_species = kmd.nSpec_- kmd.nConstSpec_;
+  nSpec_gas_=n_active_species;
+  nConstSpec_gas_=kmd.nConstSpec_;//n_inv_gas_species;
+  gas_sp_name_idx_ = kmd.species_indx_;
   is_gas_parameters_set_=true;
   printf("Setting gas parameters... nSpec_gas_ %d  nConstSpec_gas_%d \n", nSpec_gas_, nConstSpec_gas_);
  }
@@ -53,16 +52,20 @@ void AerosolModelData::initFile(const std::string &mechfile,
 int AerosolModelData::initChem(YAML::Node &root,
                                std::ostream& echofile) {
     // 1. let's make a map of aerosol species and gas species.
-    // std::map<std::string, int> aerosol_sp_name_idx_;
     TCHEM_CHECK_ERROR(!is_gas_parameters_set_,"Error: gas parameters are not set use: setGasParameters(n_active_gas) ." );
 
-    int i_aero_sp=0;
-    // 2. FIXME: we maybe need to created a list with gas species from gas mechanism
-    std::map<std::string, int> gas_sp_name_idx;
-    std::vector<YAML::Node> gas_sp_info;
-    int i_gas_sp=0;
+    //gas_idx_sp_name : given index return name
+    std::map<int, std::string> gas_idx_sp_name;
+    for (std::map<std::string, int>::iterator
+         i = gas_sp_name_idx_.begin();
+         i != gas_sp_name_idx_.end(); ++i)
+    gas_idx_sp_name[i->second] = i->first;
+
+    // given the name of species return the YAML::NODE
+    std::map<std::string, YAML::Node> gas_sp_info;
     // 3. get molecular weitghs and density of aerosol_species
     std::vector<real_type> mw_aerosol_sp, density_aero_sp;
+    int i_aero_sp=0;
     for (auto const &item : root["NCAR-version"] ) {
       auto type =item["type"].as<std::string>();
       if (type=="CHEM_SPEC"){
@@ -81,9 +84,9 @@ int AerosolModelData::initChem(YAML::Node &root,
            }
         } else
         {
-          gas_sp_name_idx.insert(std::pair<std::string, int>(sp_name, i_gas_sp));
-          gas_sp_info.push_back(item);
-          i_gas_sp++;
+          // save YAML::NODE, we need it in simpol.
+          // order of species can be different in gas conf file and aero mech file.
+          gas_sp_info.insert(std::pair<std::string, YAML::Node>(sp_name,item));
         }// phase
       } // if CHEM_SPEC
 
@@ -115,20 +118,21 @@ int AerosolModelData::initChem(YAML::Node &root,
           // getting aerosol and gas species index.
           const auto aero_sp = ireac["aerosol-phase species"].as<std::string>();
           // std::cout <<"aero_sp " << aero_sp<<"\n";
-          auto it = aerosol_sp_name_idx_.find(aero_sp);
-          if (it != aerosol_sp_name_idx_.end()) {
+          auto it_aero = aerosol_sp_name_idx_.find(aero_sp);
+          if (it_aero != aerosol_sp_name_idx_.end()) {
            // aerosol species are place after gas species.
            //Note: that we do not use number of particles here.
-           simpol_info_at.aerosol_sp_index = it->second + nSpec_gas_;
+           simpol_info_at.aerosol_sp_index = it_aero->second + nSpec_gas_;
            } else {
            printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp);
            TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
           }
 
            const auto gas_sp = ireac["gas-phase species"].as<std::string>();
-           if (it != gas_sp_name_idx.end()) {
+           auto it_gas = gas_sp_name_idx_.find(gas_sp);
+           if (it_gas != gas_sp_name_idx_.end()) {
             //
-            simpol_info_at.gas_sp_index = it->second;
+            simpol_info_at.gas_sp_index = it_gas->second;
             } else {
             printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", gas_sp);
             TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
@@ -153,11 +157,12 @@ int AerosolModelData::initChem(YAML::Node &root,
     {
       // SIMPOL_PhaseTransferType simpol_params_host_at_i;
       auto simpol_params_host_at_i = simpol_info[isimpol];
-      // FIXME: Assuming that gas info is provided in the conf yaml
-      // If gas species exit in gas mechanism, we maybe have an issue.
-      // It is possible that is information is given in gas mechanism conf file.
-      // get gas properties for simpol transfer.
-      auto gas_sp_at_i = gas_sp_info[isimpol];
+      // get name of gas species
+      auto sp_name = gas_idx_sp_name[simpol_params_host_at_i.gas_sp_index];
+      // get YAML::NODE using sp_name gas species
+      auto gas_sp_at_i = gas_sp_info[sp_name];
+      // std::cout <<"gas_sp_index " << simpol_params_host_at_i.gas_sp_index<<"\n";
+      // std::cout <<"sp_name " << sp_name<<"\n";
       // std::cout <<"gas_sp_at_i " << gas_sp_at_i<<"\n";
 
       simpol_params_host_at_i.diffusion_coeff=gas_sp_at_i["diffusion coeff [m2 s-1]"].as<real_type>(); // m2 s-;

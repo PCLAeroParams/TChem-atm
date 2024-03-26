@@ -145,8 +145,7 @@ int main(int argc, char *argv[]) {
     const auto kmcd = TChem::createNCAR_KineticModelConstData<host_device_type>(kmd);
 
     printf("amd parsing ...\n");
-    const ordinal_type n_active_species = kmcd.nSpec- kmcd.nConstSpec;
-    TChem::AerosolModelData amd(aeroFile, n_active_species , kmcd.nConstSpec);
+    TChem::AerosolModelData amd(aeroFile, kmd);
     const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
 
     const ordinal_type total_n_species =kmcd.nSpec + amcd.nSpec * amcd.nParticles;

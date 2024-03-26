@@ -4,6 +4,7 @@
 #include "TChem_Util.hpp"
 #include "TChem_ReactionTypes.hpp"
 #include "yaml-cpp/yaml.h"
+#include "TChem_KineticModelData.hpp"
 #include <iostream>
 
 namespace TChem {
@@ -23,17 +24,16 @@ namespace TChem {
 
   // only use this map in host
   std::map<std::string, int> aerosol_sp_name_idx_;
+  std::map<std::string, int> gas_sp_name_idx_;
   bool is_gas_parameters_set_{false};
 
   public:
 
     AerosolModelData(const std::string& mechfile,
-                     const ordinal_type n_active_gas_species,
-                     const ordinal_type n_inv_gas_species,
+                     const KineticModelData& kmd,
                     std::ostream& echofile);
     AerosolModelData(const std::string& mechfile,
-                     const ordinal_type n_active_gas_species,
-                     const ordinal_type n_inv_gas_species);
+                     const KineticModelData& kmd);
 
       /// constructor and destructor
   AerosolModelData() = default;
@@ -43,8 +43,7 @@ namespace TChem {
   void initFile(const std::string &mechfile,
                 std::ostream& echofile);
   ordinal_type initChem(YAML::Node& doc, std::ostream& echofile);
-  void setGasParameters(const ordinal_type n_active_gas_species,
-                                        const ordinal_type n_inv_gas_species);
+  void setGasParameters(const KineticModelData& kmd);
   void scenarioConditionParticles(const std::string &mechfile,
                                   const ordinal_type nBatch,
                                   real_type_2d_view_host& num_concentration,

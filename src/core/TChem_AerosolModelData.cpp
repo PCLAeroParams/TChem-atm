@@ -135,17 +135,18 @@ int AerosolModelData::initChem(YAML::Node &root,
            if (it_gas != gas_sp_name_idx_.end()) {
             //
             simpol_info_at.gas_sp_index = it_gas->second;
-            } else {
+           } else {
             printf("Error : species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER\n", gas_sp);
             TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting aerosol model" );
           }
           simpol_info.push_back(simpol_info_at);
-         }//ireac
-       } else {
+         } else {
         printf("Warning : TChem did not parse this reaction type %s \n", reaction_type.c_str());
-       }
+       }// ireac
       }
     }// item loop
+
+    } // item
     printf("Done with reactions/phase trans...\n");
 
     // number of aerosol species
@@ -168,7 +169,6 @@ int AerosolModelData::initChem(YAML::Node &root,
       // std::cout <<"gas_sp_index " << simpol_params_host_at_i.gas_sp_index<<"\n";
       // std::cout <<"sp_name " << sp_name<<"\n";
       // std::cout <<"gas_sp_at_i " << gas_sp_at_i<<"\n";
-
       simpol_params_host_at_i.diffusion_coeff=gas_sp_at_i["diffusion coeff [m2 s-1]"].as<real_type>(); // m2 s-;
       if (gas_sp_at_i["N star"]) {
         simpol_params_host_at_i.N_star=gas_sp_at_i["N star"].as<real_type>();

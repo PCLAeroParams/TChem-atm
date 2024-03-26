@@ -52,8 +52,6 @@ void AerosolModelData::initFile(const std::string &mechfile,
 
 int AerosolModelData::initChem(YAML::Node &root,
                                std::ostream& echofile) {
-
-
     // 1. let's make a map of aerosol species and gas species.
     // std::map<std::string, int> aerosol_sp_name_idx_;
     TCHEM_CHECK_ERROR(!is_gas_parameters_set_,"Error: gas parameters are not set use: setGasParameters(n_active_gas) ." );
@@ -68,9 +66,11 @@ int AerosolModelData::initChem(YAML::Node &root,
     for (auto const &item : root["NCAR-version"] ) {
       auto type =item["type"].as<std::string>();
       if (type=="CHEM_SPEC"){
+        // std::cout <<"sp_name " << item["name"]<<"\n";
         const auto sp_name = item["name"].as<std::string>();
         if (item["phase"]){
            auto phase_name =item["phase"].as<std::string>();
+          //  std::cout <<"sp_name " << sp_name<< item["phase"]<<"\n";
            if (phase_name == "AEROSOL" ){
             // std::cout <<"sp_name " << sp_name<< item["phase"]<<"\n";
              aerosol_sp_name_idx_.insert(std::pair<std::string, int>(sp_name, i_aero_sp));
@@ -87,60 +87,70 @@ int AerosolModelData::initChem(YAML::Node &root,
         }// phase
       } // if CHEM_SPEC
 
+
       if (type=="AERO_REP_SINGLE_PARTICLE"){
         nParticles_= item["maximum computational particles"].as<int>();
       }// AERO_REP_SINGLE_PARTICLE
 
     } // item loop
 
+    printf("Done with species...\n");
+
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();
       if (type=="MECHANISM"){
        auto reactions = item["reactions"];
-       auto reaction_type = reactions["type"].as<std::string>();
-       if (reaction_type=="SIMPOL_PHASE_TRANSFER")
-       {
-        SIMPOL_PhaseTransferType simpol_info_at;
-        simpol_info_at.B1 = reactions["B"][0].as<real_type>();
-        simpol_info_at.B2 = reactions["B"][1].as<real_type>();
-        simpol_info_at.B3 = reactions["B"][2].as<real_type>();
-        simpol_info_at.B4 = reactions["B"][3].as<real_type>();
-        // getting aerosol and gas species index.
-        const auto aero_sp = reactions["aerosol-phase species"].as<std::string>();
-         auto it = aerosol_sp_name_idx_.find(aero_sp);
-         if (it != aerosol_sp_name_idx_.end()) {
-          // aerosol species are place after gas species.
-          //Note: that we do not use number of particles here.
-          simpol_info_at.aerosol_sp_index = it->second + nSpec_gas_;
-          } else {
-          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp);
-          TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
-         }
+       for (auto const &ireac : reactions) {
+        // std::cout <<"reactions " << ireac<<"\n";
+         auto reaction_type = ireac["type"].as<std::string>();
+        //  std::cout <<"reactions " << reaction_type<<"\n";
+         if (reaction_type=="SIMPOL_PHASE_TRANSFER")
+         {
+          SIMPOL_PhaseTransferType simpol_info_at;
 
-         const auto gas_sp = reactions["gas-phase species"].as<std::string>();
-         if (it != gas_sp_name_idx.end()) {
-          //
-          simpol_info_at.gas_sp_index = it->second;
-          } else {
-          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", gas_sp);
-          TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
-         }
-         simpol_info.push_back(simpol_info_at);
+          simpol_info_at.B1 = ireac["B"][0].as<real_type>();
+          simpol_info_at.B2 = ireac["B"][1].as<real_type>();
+          simpol_info_at.B3 = ireac["B"][2].as<real_type>();
+          simpol_info_at.B4 = ireac["B"][3].as<real_type>();
+          // getting aerosol and gas species index.
+          const auto aero_sp = ireac["aerosol-phase species"].as<std::string>();
+          // std::cout <<"aero_sp " << aero_sp<<"\n";
+          auto it = aerosol_sp_name_idx_.find(aero_sp);
+          if (it != aerosol_sp_name_idx_.end()) {
+           // aerosol species are place after gas species.
+           //Note: that we do not use number of particles here.
+           simpol_info_at.aerosol_sp_index = it->second + nSpec_gas_;
+           } else {
+           printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp);
+           TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
+          }
+
+           const auto gas_sp = ireac["gas-phase species"].as<std::string>();
+           if (it != gas_sp_name_idx.end()) {
+            //
+            simpol_info_at.gas_sp_index = it->second;
+            } else {
+            printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", gas_sp);
+            TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
+          }
+          simpol_info.push_back(simpol_info_at);
+         }//ireac
        }
       }
     }// item loop
-
+    printf("Done with reactions/phase trans...\n");
 
     // number of aerosol species
     nSpec_= density_aero_sp.size();
 
-    ordinal_type nSimpol_tran=simpol_info.size();
+    nSimpol_tran_=simpol_info.size();
+    printf("Number of Simpol phase transfer %d \n",nSimpol_tran_ );
     // update simpol
-    simpol_params_ = simplo_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran);
+    simpol_params_ = simplo_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran_);
     const auto simpol_params_host = simpol_params_.view_host();
 
-    for (ordinal_type isimpol = 0; isimpol < nSimpol_tran; isimpol++)
+    for (ordinal_type isimpol = 0; isimpol < nSimpol_tran_; isimpol++)
     {
       // SIMPOL_PhaseTransferType simpol_params_host_at_i;
       auto simpol_params_host_at_i = simpol_info[isimpol];
@@ -149,6 +159,7 @@ int AerosolModelData::initChem(YAML::Node &root,
       // It is possible that is information is given in gas mechanism conf file.
       // get gas properties for simpol transfer.
       auto gas_sp_at_i = gas_sp_info[isimpol];
+      // std::cout <<"gas_sp_at_i " << gas_sp_at_i<<"\n";
 
       simpol_params_host_at_i.diffusion_coeff=gas_sp_at_i["diffusion coeff [m2 s-1]"].as<real_type>(); // m2 s-;
       if (gas_sp_at_i["N star"]) {

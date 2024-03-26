@@ -42,7 +42,8 @@ struct Aerosol_RHS
     // We may need to set to zero omega in other place when I couple this code with gas chemistry
     // set net production rate to be equal to external sources.
     Kokkos::parallel_for(
-      Tines::RangeFactory<value_type>::TeamVectorRange(member, omega.extent(0)), [&](const ordinal_type& i) {
+      Tines::RangeFactory<value_type>::TeamVectorRange(member, omega.extent(0)),
+       [&](const ordinal_type& i) {
       omega(i) = 0.0;
     });
 
@@ -50,14 +51,15 @@ struct Aerosol_RHS
 
     for (int i_part = 0; i_part < amcd.nParticles; i_part++)
     {
-    // FIXME: number of simpol is hard-coded to one.
-    ordinal_type i_simpol=0;
+    for (size_t i_simpol = 0; i_simpol < amcd.nSimpol_tran; i_simpol++)
+    {
     SIMPOL_single_particle_type
     ::team_invoke(member, i_part,i_simpol,
                   t, p, number_conc,
                   state, omega,
                   amcd);
-    }
+    }// i_simpol
+    }// i_part
 
 #if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
   printf("omega.extent(0) %d \n",omega.extent(0));

@@ -95,7 +95,6 @@ int AerosolModelData::initChem(YAML::Node &root,
     } // item loop
 
     printf("Done with species...\n");
-
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();

@@ -103,14 +103,14 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
 
   auto sNamesHost = sNames_.view_host();
 
-  std::map<std::string, int> species_indx;
+  // std::map<std::string, int> species_indx_;
   int sp_i(0);
   // non constant species
   for (auto const &sp : species_names) {
     std::string sp_name = sp["name"].as<std::string>();
     // std::transform(sp_name.begin(),
     // sp_name.end(),sp_name.begin(), ::toupper);
-    species_indx.insert(std::pair<std::string, int>(sp_name, sp_i));
+    species_indx_.insert(std::pair<std::string, int>(sp_name, sp_i));
     char *specNm = &*sp_name.begin();
     strncat(&sNamesHost(sp_i, 0), specNm, LENGTHOFSPECNAME);
     sp_i++;
@@ -123,18 +123,18 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
     std::string sp_name = sp["name"].as<std::string>();
     // std::transform(sp_name.begin(),
     // sp_name.end(),sp_name.begin(), ::toupper);
-    species_indx.insert(std::pair<std::string, int>(sp_name, sp_i));
+    species_indx_.insert(std::pair<std::string, int>(sp_name, sp_i));
     char *specNm = &*sp_name.begin();
     strncat(&sNamesHost(sp_i, 0), specNm, LENGTHOFSPECNAME);
     sp_i++;
   }
 
-  // M species index 
+  // M species index
   {
     //Note: Name of M species is hard-coded to M
-  auto it = species_indx.find("M");
+  auto it = species_indx_.find("M");
 
-  if (it != species_indx.end()) {
+  if (it != species_indx_.end()) {
     M_index_ = it->second;
     // reacSidxHost(i, count) = it->second;
   } else {
@@ -194,9 +194,9 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
       reacNreacHost(countReac) = reactants.size();
       for (auto const &reac : reactants) {
         // get species index
-        it = species_indx.find(reac.first.as<std::string>());
+        it = species_indx_.find(reac.first.as<std::string>());
 
-        if (it != species_indx.end()) {
+        if (it != species_indx_.end()) {
           reactants_sp.insert(std::pair<ordinal_type, real_type>(it->second, reac.second.as<real_type>()));
           // reacSidxHost(i, count) = it->second;
         } else {
@@ -218,9 +218,9 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
       reacNprodHost(countReac) = products.size();
       for (auto const &prod : products) {
         // get species index
-        it = species_indx.find(prod.first.as<std::string>());
+        it = species_indx_.find(prod.first.as<std::string>());
 
-        if (it != species_indx.end()) {
+        if (it != species_indx_.end()) {
           products_sp.insert(std::pair<ordinal_type, real_type>(it->second, prod.second.as<real_type>()));
         } else {
           // NOTE: it is okay if a species is not register as long the reaction where this specie is involve is only a fwd reactions.
@@ -264,18 +264,18 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
     } else if (reaction_type == "JPL") {
       countJPL_Reac++;
     } else if (reaction_type == "R_JPL_ARRHENIUS") {
-      countR_JPL_ArrheniusReac++;  
+      countR_JPL_ArrheniusReac++;
     } else if (reaction_type == "PHOTO_RATE") {
-      countR_Phot_Reac++;  
+      countR_Phot_Reac++;
     } else {
       printf("Error: reaction type does not exit \n ");
       printf("Reaction No: %d type %s \n", countReac, reaction_type.c_str());
       exit(1);
     }
-    // adjust reaction section 
+    // adjust reaction section
     if (reaction["adjust_reaction"]){
       count_adjust_reaction += reaction["adjust_reaction"].size();
-    } 
+    }
 
     countReac++;
   }
@@ -502,8 +502,8 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
       count_cmaq_h2o2++;
 
     } // end "CMAQ_H2O2"
-    
-    // parser of JPL, which is the troe implementation in e3sm code. 
+
+    // parser of JPL, which is the troe implementation in e3sm code.
 
     if (reaction_type == "JPL") {
       auto rate_coefficients = reaction["coefficients"];
@@ -576,7 +576,7 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
 
     } // end "JPL"
 
-    // ratio JPL ARRHENIUS 
+    // ratio JPL ARRHENIUS
 
     if (reaction_type == "R_JPL_ARRHENIUS") {
 
@@ -755,13 +755,13 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
 
     } // end troe type
 
-    // adjust reaction 
+    // adjust reaction
     if (reaction["adjust_reaction"]){
 
       for (auto const &iadjust_reaction : reaction["adjust_reaction"]) {
         auto sp_name = iadjust_reaction.as<std::string>();
-        it = species_indx.find(sp_name);
-        if (it != species_indx.end()) {
+        it = species_indx_.find(sp_name);
+        if (it != species_indx_.end()) {
           adjust_reactionType adjust_reaction;
           adjust_reaction._species_index = it->second;
           adjust_reaction._reaction_index= ireac;
@@ -773,7 +773,7 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
           printf("species does not exit %s in adjust_reaction for reaction No %d\n", sp_name.c_str(), ireac);
           exit(1);
         }
-      } //   
+      } //
 
     }  // adjust_reaction
 
@@ -783,10 +783,10 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
 
   if (root["modifier_prod_O1D"]) {
 
-    // NOTE: only one item in this type of modifier. 
+    // NOTE: only one item in this type of modifier.
     number_of_prod_O1D_=1;
     prod_O1D_ = prod_O1D_type_1d_dual_view(do_not_init_tag("KMD::prod_O1D_"), 1);
- 
+
 
     auto modifier_prod_O1D = root["modifier_prod_O1D"];
     auto prod_O1D_host = prod_O1D_.view_host();
@@ -837,8 +837,8 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
       auto sp_name1_y = modifier_prod_O1D["species_name_1"];
 
       auto sp_name1 = sp_name1_y.as<std::string>();
-      it = species_indx.find(sp_name1);
-      if (it != species_indx.end()) {
+      it = species_indx_.find(sp_name1);
+      if (it != species_indx_.end()) {
           prod_O1D._species_index_1 = it->second;
           // printf("In modifier_prod_O1D; name %s , index %d \n ", sp_name1.c_str(), it->second );
       } else {
@@ -850,8 +850,8 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
       auto sp_name2_y = modifier_prod_O1D["species_name_2"];
 
       auto sp_name2 = sp_name2_y.as<std::string>();
-      it = species_indx.find(sp_name2);
-      if (it != species_indx.end()) {
+      it = species_indx_.find(sp_name2);
+      if (it != species_indx_.end()) {
           prod_O1D._species_index_2 = it->second;
           // printf("In modifier_prod_O1D; name %s , index %d \n ", sp_name2.c_str(), it->second );
       } else {
@@ -863,8 +863,8 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
       auto sp_name3_y = modifier_prod_O1D["species_name_3"];
 
       auto sp_name3 = sp_name3_y.as<std::string>();
-      it = species_indx.find(sp_name3);
-      if (it != species_indx.end()) {
+      it = species_indx_.find(sp_name3);
+      if (it != species_indx_.end()) {
           prod_O1D._species_index_3 = it->second;
           // printf("In modifier_prod_O1D; name %s , index %d \n ", sp_name3.c_str(), it->second );
       } else {
@@ -872,7 +872,7 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
           printf("species does not exit %s in modifier_prod_O1D\n", sp_name3.c_str());
           exit(1);
       }
-      // FIXME: pass a reaction identifier, and then get the reaction index. 
+      // FIXME: pass a reaction identifier, and then get the reaction index.
       prod_O1D._photolysis_reaction_index = modifier_prod_O1D["photolysis_reaction_index"].as<ordinal_type>() ;
       int count(0);
       for (auto const &ireac : modifier_prod_O1D["reaction_list"]) {
@@ -880,11 +880,11 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
         count++;
       }
 
-      prod_O1D_host(0) = prod_O1D; 
+      prod_O1D_host(0) = prod_O1D;
 
       prod_O1D_.modify_host();
       prod_O1D_.sync_device();
-        
+
   }  // prod_O1D
 
   ordinal_type countEmissionSources(0);
@@ -917,8 +917,8 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
 
       if (source["species"]) {
         // get species index
-        it = species_indx.find(source["species"].as<std::string>());
-        if (it != species_indx.end()) {
+        it = species_indx_.find(source["species"].as<std::string>());
+        if (it != species_indx_.end()) {
           emission_source._species_index = it->second;
         } else {
           printf("Yaml : Error when interpreting kinetic model  !!!");

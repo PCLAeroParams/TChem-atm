@@ -71,7 +71,7 @@ namespace TChem {
     arrhenius_reaction_type_1d_dual_view ArrheniusCoef_;
     cmaq_h2o2_type_1d_dual_view CMAQ_H2O2Coef_;
     jpl_reaction_type_1d_dual_view JPL_Coef_;
-    
+
     r_jpl_arrhenius_reaction_type_1d_dual_view R_JPL_ArrheniusCoef_;
     adjust_reaction_type_1d_dual_view adjust_reaction_;
 
@@ -85,6 +85,8 @@ namespace TChem {
     ordinal_type_1d_dual_view convExponent_;
     // index of M species
     ordinal_type M_index_;
+    // return index of gas species
+    std::map<std::string, int> species_indx_;
 
   public:
       /**

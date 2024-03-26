@@ -141,7 +141,7 @@ int AerosolModelData::initChem(YAML::Node &root,
           }
           simpol_info.push_back(simpol_info_at);
          } else {
-        printf("Warning : TChem did not parse this reaction type %s \n", reaction_type.c_str());
+        printf("Warning : TChem (amd) did not parse this reaction type %s \n", reaction_type.c_str());
        }// ireac
       }
     }// item loop

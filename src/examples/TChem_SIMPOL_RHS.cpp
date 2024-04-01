@@ -7,6 +7,7 @@ using real_type_1d_view = TChem::real_type_1d_view;
 using real_type_2d_view = TChem::real_type_2d_view;
 using real_type_2d_view_host = TChem::real_type_2d_view_host;
 
+#define TCHEM_TEST_IMPL_SACADO
 int
 main(int argc, char* argv[])
 {
@@ -30,9 +31,14 @@ main(int argc, char* argv[])
     TChem::AerosolModelData amd = TChem::AerosolModelData(aerochemFile, kmd);
     const auto amcd = TChem::create_AerosolModelConstData<device_type>(amd);
 
+#if defined(TCHEM_TEST_IMPL_SACADO)
     // length of value type is needed at compilation time.
     using value_type = Sacado::Fad::SLFad<real_type,128>;
+#else
+   using value_type = real_type;
+#endif
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<value_type, device_type >;
+
 
     using value_type_1d_view_type = typename SIMPOL_single_particle_type::value_type_1d_view_type;
     using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
@@ -44,11 +50,15 @@ main(int argc, char* argv[])
     ordinal_type ntotal_species = amcd.nSpec_gas + amcd.nSpec*amcd.nParticles;
 
     value_type_1d_view_type state("state", ntotal_species);
+    // by defaul view are initialized with zeros.
     value_type_1d_view_type omega("omega", ntotal_species);
-    Kokkos::deep_copy(omega, zero);
-    // this view is used to copy value of omega; omegas has value and its derivices.
-    real_type_1d_view_type omega_out("omega", ntotal_species);
 
+#if defined(TCHEM_TEST_IMPL_SACADO)
+    // this view is used to copy value of omega; omegas has value and its derivatives.
+    real_type_1d_view_type omega_out("omega", ntotal_species);
+#else
+    auto omega_out = omega;
+#endif
     const auto exec_space_instance = TChem::exec_space();
 
     using policy_type =
@@ -87,9 +97,12 @@ main(int argc, char* argv[])
           ::team_invoke(member, i_part,i_simpol, t, p, number_conc, state, omega, amcd);
         });
         member.team_barrier();
+#if defined(TCHEM_TEST_IMPL_SACADO)
         //copy values of omega
         for (ordinal_type i = 0; i < ntotal_species; i++)
-          omega_out(i) =omega(i).val();
+          omega_out(i) = omega(i).val();
+#endif
+
   });
   // we need to copy data from device to host.
   auto omega_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), omega_out);

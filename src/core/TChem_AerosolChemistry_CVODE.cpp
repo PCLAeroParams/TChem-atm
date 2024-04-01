@@ -159,7 +159,8 @@ namespace TChem
         Ys_out(i) = vals(i);
       // particle species
       // Ys_out also contains invariant species
-      for (ordinal_type i=n_active_gas_species;i<total_n_species;++i)
+      // total_n_species includes invariant species
+      for (ordinal_type i=n_active_gas_species;i<total_n_species-kmcd.nConstSpec;++i)
         Ys_out(i+kmcd.nConstSpec)=vals(i);
 
       temperature_out() =temperature;

@@ -147,9 +147,9 @@ transition_regime_correction_factor(real_type mean_free_path__m,
  *  @param alpha Mass accomodation coefficient [unitless]
  */
 KOKKOS_INLINE_FUNCTION
-static real_type gas_aerosol_transition_rxn_rate_constant(
+static value_type gas_aerosol_transition_rxn_rate_constant(
     real_type diffusion_coeff__m2_s, real_type mean_free_path__m,
-    real_type radius__m, real_type alpha) {
+    value_type radius__m, real_type alpha) {
   return 4.0 * PI() * radius__m * diffusion_coeff__m2_s *
          transition_regime_correction_factor(mean_free_path__m, radius__m,
                                              alpha);
@@ -178,11 +178,11 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
   real_type MW_=simpol_params.molecular_weight;
 
   using SIMPOL_constant_type
-   = TChem::Impl::SIMPOL_constant<value_type, device_type >;
+   = TChem::Impl::SIMPOL_constant<real_type, device_type >;
 
      // aerosol phase (m3/#/s)
   real_type mfp_m =0.0;
-  value_type alpha= 0.0;
+  real_type alpha= 0.0;
   real_type EQUIL_CONST_=0.0;
   real_type KGM3_TO_PPM_=0.0;
   SIMPOL_constant_type::team_invoke( member, t, p, alpha,
@@ -190,8 +190,6 @@ static real_type gas_aerosol_transition_rxn_rate_constant(
 
   // Compute radious
   value_type radius =1;
-  // const_real_type_1d_view_type aerosol_density =;
-
   effective_radius(member, i_part, t, p,
                   state,
                   radius,

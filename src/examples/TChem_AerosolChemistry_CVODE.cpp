@@ -168,17 +168,12 @@ int main(int argc, char *argv[]) {
    // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
     ordinal_type nbacth_files=1;
-#if 1
-
     printf("conditions parsing ...\n");
     TChem::AtmChemistry::setScenarioConditions(inputFile,
      speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
-#endif
     const ordinal_type n_active_vars = total_n_species - kmcd.nConstSpec;
     printf("Number of const species %d \n", kmcd.nConstSpec);
-    // Note: We allocate external_sources_scenario_host
 
-    // state_scenario_host =real_type_2d_view_host("state_scenario_host",nBatch,stateVecDim );
     real_type_2d_view_host num_concentration;
     amd.scenarioConditionParticles(input_file_particles, nBatch, num_concentration, state_scenario_host);
 
@@ -197,25 +192,6 @@ int main(int argc, char *argv[]) {
       nBatch = nbacth_files;
       state = state_scenario_host;
     }
-
-   // num_concentration = real_type_2d_view_host("num_concentration",nBatch, amcd.nParticles );
-    // Kokkos::deep_copy(num_concentration, 1.3e6);
-    // printf("state(2) %e \n", state(0,2));
-    // printf("state(3) %e \n", state(0,3));
-    // printf("state(4) %e \n", state(0,4));
-    // // state(0,3)=0.1;
-    // real_type ethanol_aq = 1.0e-8 ;
-    // real_type H2O_aq = 1.4e-2;
-    // // aerosol_species
-    // // printf("ntotal_species %d \n", ntotal_species);
-    // for (int i = 0; i < amcd.nParticles; i++)
-    // {
-    //   // printf("f %d \n", 1+amcd.nSpec*i);
-    //   // printf("s %d \n", 2+amcd.nSpec*i);
-    //   state(0,5+amcd.nSpec*i) = ethanol_aq/num_concentration(0,i);
-    //   state(0,6+amcd.nSpec*i) = H2O_aq/num_concentration(0,i);
-    // }
-
     printf("Number of nbacth %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,
                          const real_type_1d_view_host _t,
@@ -257,13 +233,7 @@ int main(int argc, char *argv[]) {
       /// team policy
       policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
 
-      // if (team_size > 0 && vector_size > 0) {
-      //   policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
-      // } else if (team_size > 0 && vector_size < 0) {
-      // // only set team size
-      //  policy = policy_type(exec_space_instance, nBatch,  team_size);
-      // }
-          using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
+    using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
     Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type> cvodes;
 
     if (use_cvode) {
@@ -325,8 +295,6 @@ int main(int argc, char *argv[]) {
 
         time_advance_type_1d_view_host tadv("tadv", nBatch);
         Kokkos::deep_copy(tadv, tadv_default);
-
-
 
         ordinal_type iter = 0;
 

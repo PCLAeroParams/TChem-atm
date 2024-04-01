@@ -78,7 +78,7 @@ int AerosolModelData::initChem(YAML::Node &root,
           //  std::cout <<"sp_name " << sp_name<< item["phase"]<<"\n";
            if (phase_name == "AEROSOL" ){
             // std::cout <<"sp_name " << sp_name<< item["phase"]<<"\n";
-             aerosol_sp_name_idx_.insert(std::pair<std::string, int>(sp_name, i_aero_sp));
+             aerosol_sp_name_idx_[sp_name] = i_aero_sp;
              i_aero_sp++;
             //  std::cout <<"molecular weight" << item["molecular weight [kg mol-1]"]<<"\n";
              mw_aerosol_sp.push_back(item["molecular weight [kg mol-1]"].as<real_type>());

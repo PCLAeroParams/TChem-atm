@@ -34,28 +34,6 @@ main(int argc, char* argv[])
     const auto member = Tines::HostSerialTeamMember();
     real_type t = 272.5; // K
     real_type p = 101253.3; // pa
- #if 0
-    using SIMPOL_constant_type = TChem::Impl::SIMPOL_constant<real_type, host_device_type >;
-
-
-    // inputs
-
-    // outputs
-    real_type alpha=0;
-    real_type mfp_m=0;
-    real_type KGM3_TO_PPM_=0;
-    real_type equil_constant=0;
-
-    printf("amcd.simpol_params(0).B1 %e \n", amcd.simpol_params(0).B1);
-
-    SIMPOL_constant_type::team_invoke(member, t,
-     p, alpha, mfp_m, KGM3_TO_PPM_, equil_constant, amcd.simpol_params(0));
-
-    printf("alpha %e \n", alpha);
-    printf("mfp_m %e \n", mfp_m);
-    printf("KGM3_TO_PPM_ %e \n", KGM3_TO_PPM_);
-    printf("equil_constant %e \n", equil_constant);
-#endif
     using value_type_1d_view_type = typename SIMPOL_single_particle_type::value_type_1d_view_type;
     using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
     real_type_1d_view_type number_conc("number_conc", amcd.nParticles);

@@ -56,7 +56,7 @@ main(int argc, char* argv[])
 
     /// team policy
     ordinal_type nBatch =1;
-    policy_type policy(exec_space_instance, nBatch, 1,1);
+    policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
     Kokkos::parallel_for
       ("SIMPOL RHS",
        policy,
@@ -69,7 +69,7 @@ main(int argc, char* argv[])
        real_type ethanol_aq = 1.0e-8 ;
        real_type H2O_aq = 1.4e-2;
 
-           // gas species
+       // gas species
        state(0) = ethanol;
        // aerosol_species
        for (int i = 0; i < amcd.nParticles; i++)
@@ -80,11 +80,12 @@ main(int argc, char* argv[])
        member.team_barrier();
 
        ordinal_type i_simpol=0;
-        for (int i_part = 0; i_part < amcd.nParticles; i_part++)
-        {
-          SIMPOL_single_particle_type
+       Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(member, amcd.nParticles),
+       [&](const ordinal_type& i_part) {
+           SIMPOL_single_particle_type
           ::team_invoke(member, i_part,i_simpol, t, p, number_conc, state, omega, amcd);
-        }
+        });
         member.team_barrier();
         //copy values of omega
         for (ordinal_type i = 0; i < ntotal_species; i++)

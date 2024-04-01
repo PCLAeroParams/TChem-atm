@@ -19,23 +19,26 @@ main(int argc, char* argv[])
     TChem::host_exec_space().print_configuration(std::cout, detail);
 
     using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
-
+    // input files need to located in same directory as the executable.
     std::string chemFile ="config_gas.yaml";
     std::string aerochemFile="test_SIMPOL_phase_transfer.yaml";
 
-    /// construct kmd and use the view for testing
+    /// construct kmd; gas phase
     TChem::KineticModelData kmd(chemFile);
     const auto kmcd = TChem::createNCAR_KineticModelConstData<device_type>(kmd);
-
+    // construct amd; aerosols
     TChem::AerosolModelData amd = TChem::AerosolModelData(aerochemFile, kmd);
     const auto amcd = TChem::create_AerosolModelConstData<device_type>(amd);
 
-    // using value_type = typename real_type;// Sacado::Fad::SLFad<real_type,12>;
-    using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, device_type >;
+    // length of value type is needed at compilation time.
+    using value_type = Sacado::Fad::SLFad<real_type,128>;
+    using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<value_type, device_type >;
 
     using value_type_1d_view_type = typename SIMPOL_single_particle_type::value_type_1d_view_type;
     using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
+
     real_type_1d_view_type number_conc("number_conc", amcd.nParticles);
+    // assuming constant number concentration
     Kokkos::deep_copy(number_conc, 1.3e6); // particle number concentration (#/cc)
 
     ordinal_type ntotal_species = amcd.nSpec_gas + amcd.nSpec*amcd.nParticles;
@@ -45,7 +48,6 @@ main(int argc, char* argv[])
     Kokkos::deep_copy(omega, zero);
     // this view is used to copy value of omega; omegas has value and its derivices.
     real_type_1d_view_type omega_out("omega", ntotal_species);
-
 
     const auto exec_space_instance = TChem::exec_space();
 
@@ -86,26 +88,15 @@ main(int argc, char* argv[])
         member.team_barrier();
         //copy values of omega
         for (ordinal_type i = 0; i < ntotal_species; i++)
-          omega_out(i) =omega(i);//.val();
-
-
+          omega_out(i) =omega(i).val();
   });
   // we need to copy data from device to host.
-  auto omega_host = Kokkos::create_mirror_view(omega_out);
-  // deep_copy(out, in)
-  Kokkos::deep_copy(omega_host,omega_out);
-
-  printf("---RHSs--\n");
-  std::cout << "omega(0) : "<< omega_host(0) << "\n";
-  for (ordinal_type i_part = 0; i_part < amcd.nParticles; i_part++)
-  {
-    ordinal_type is = amcd.nSpec_gas + i_part*amcd.nSpec;
-    for (ordinal_type i = 0; i < amcd.nSpec; i++)
-    {
-      // printf("omega(%d) %e \n",is+i,omega(is+i));
-      std::cout << "omega("<<is+i<<") : "<< omega_host(is+i) << "\n";
-    }
-  }
+  auto omega_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), omega_out);
+  //save results to a file.
+  std::string outputFile ="Simpol_RHS.txt";
+  FILE *fout = fopen(outputFile.c_str(), "w");
+  TChem::Test::writeReactionRates(outputFile, omega_host.extent(0), omega_host);
+  fclose(fout);
 
   }
   Kokkos::finalize();

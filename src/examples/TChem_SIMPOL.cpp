@@ -17,16 +17,17 @@ main(int argc, char* argv[])
     TChem::exec_space().print_configuration(std::cout, detail);
     TChem::host_exec_space().print_configuration(std::cout, detail);
 
-    using host_device_type      = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
 
-    std::string chemFile="test_SIMPOL_phase_transfer.yaml";
+    std::string chemFile ="config_gas.yaml";
+    std::string aerochemFile="test_SIMPOL_phase_transfer.yaml";
 
     /// construct kmd and use the view for testing
-    const ordinal_type n_active_gas_species=1;
-    const ordinal_type n_inv_gas_species=0;
-    TChem::AerosolModelData amd = TChem::AerosolModelData(chemFile, n_active_gas_species, n_inv_gas_species);
-    const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
+    TChem::KineticModelData kmd(chemFile);
+    const auto kmcd = TChem::createNCAR_KineticModelConstData<host_device_type>(kmd);
 
+    TChem::AerosolModelData amd = TChem::AerosolModelData(aerochemFile, kmd);
+    const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
 
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, host_device_type >;
     using SIMPOL_constant_type = TChem::Impl::SIMPOL_constant<real_type, host_device_type >;
@@ -65,11 +66,8 @@ main(int argc, char* argv[])
     // gas species
     state(0) = ethanol;
     // aerosol_species
-    // printf("ntotal_species %d \n", ntotal_species);
     for (int i = 0; i < amcd.nParticles; i++)
     {
-      // printf("f %d \n", 1+amcd.nSpec*i);
-      // printf("s %d \n", 2+amcd.nSpec*i);
       state(1+amcd.nSpec*i) = ethanol_aq/number_conc(i);
       state(2+amcd.nSpec*i) = H2O_aq/number_conc(i);
     }
@@ -96,9 +94,6 @@ main(int argc, char* argv[])
       printf("omega(%d) %e \n",is+i,omega(is+i));
     }
   }
-
-
-
 
   }
   Kokkos::finalize();

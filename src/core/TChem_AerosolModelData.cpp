@@ -198,7 +198,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     simpol_params_.modify_host();
 
     molecular_weigths_.sync_device();
-    molecular_weigths_.sync_device();
+    aerosol_density_.sync_device();
     simpol_params_.sync_device();
 
     return 0;

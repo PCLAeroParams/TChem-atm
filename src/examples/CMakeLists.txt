@@ -11,6 +11,7 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_RateofProgress.cpp
   TChem_Linozv3_StratosphereChemSolver.cpp
   TChem_SIMPOL.cpp
+  TChem_SIMPOL_RHS_HostSacado.cpp
   TChem_AtmosphericChemistryE3SM_CVODE.cpp
   TChem_AerosolChemistry_CVODE.cpp
 )

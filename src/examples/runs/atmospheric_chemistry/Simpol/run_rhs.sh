@@ -1,2 +1,2 @@
-exec=../HOST/RELEASE/install/tchem_atm/examples/TChem_SIMPOL.x
+exec=$TCHEM_INSTALL_PATH/examples/TChem_SIMPOL_RHS_Host.x
 ./$exec

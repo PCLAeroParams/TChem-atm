@@ -22,7 +22,7 @@ namespace TChem {
   simplo_phase_transfer_type_1d_dual_view simpol_params_;
   ordinal_type nSimpol_tran_;
 
-  // only use this map in host
+  // only use aerosol_sp_name_idx_ and  gas_sp_name_idx_ only in host.
   std::map<std::string, int> aerosol_sp_name_idx_;
   std::map<std::string, int> gas_sp_name_idx_;
   bool is_gas_parameters_set_{false};

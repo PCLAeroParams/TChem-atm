@@ -304,6 +304,25 @@ int main(int argc, char *argv[]) {
 
         for (ordinal_type k = 0; k < kmcd.nSpec; k++)
           fprintf(fout, "%s \t", &speciesNamesHost(k, 0));
+        //given aero idx return species name
+        std::map<int, std::string> aero_idx_sp_name;
+        for (std::map<std::string, int>::iterator
+           i = amd.aerosol_sp_name_idx_.begin();
+          i != amd.aerosol_sp_name_idx_.end(); ++i)
+          aero_idx_sp_name[i->second] = i->first;
+
+        for (ordinal_type ipart = 0; ipart < amd.nParticles_; ipart++)
+        {
+          for (ordinal_type isp = 0; isp < amd.nSpec_; isp++)
+          {
+            // std::cout << "species Name : "<< aero_idx_sp_name[i] << "\n";
+            auto aero_sp_name = aero_idx_sp_name[isp]+"_p"+std::to_string(ipart);
+            fprintf(fout, "%s \t", aero_sp_name.c_str());
+          }// isp
+        }// ipar
+
+
+
         fprintf(fout, "\n");
         writeState(-1, t, dt, state, fout);
 

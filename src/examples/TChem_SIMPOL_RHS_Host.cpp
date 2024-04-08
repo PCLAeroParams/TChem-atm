@@ -22,7 +22,7 @@ main(int argc, char* argv[])
     std::string chemFile ="config_gas.yaml";
     std::string aerochemFile="test_SIMPOL_phase_transfer.yaml";
 
-    /// construct kmd and use the view for testing
+    // construct kmd and use the view for testing
     TChem::KineticModelData kmd(chemFile);
     const auto kmcd = TChem::createNCAR_KineticModelConstData<host_device_type>(kmd);
 

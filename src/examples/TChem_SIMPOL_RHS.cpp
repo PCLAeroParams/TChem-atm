@@ -106,7 +106,7 @@ main(int argc, char* argv[])
   });
   // we need to copy data from device to host.
   auto omega_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), omega_out);
-  //save results to a file.
+  // save results to a file.
   std::string outputFile ="Simpol_RHS.txt";
   FILE *fout = fopen(outputFile.c_str(), "w");
   TChem::Test::writeReactionRates(outputFile, omega_host.extent(0), omega_host);

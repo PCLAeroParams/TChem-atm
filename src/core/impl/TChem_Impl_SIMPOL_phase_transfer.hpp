@@ -188,7 +188,7 @@ static value_type gas_aerosol_transition_rxn_rate_constant(
   SIMPOL_constant_type::team_invoke( member, t, p, alpha,
     mfp_m, KGM3_TO_PPM_, EQUIL_CONST_, simpol_params);
 
-  // Compute radious
+  // Compute radius
   value_type radius =1;
   effective_radius(member, i_part, t, p,
                   state,

@@ -1,2 +1,3 @@
 exec=$TCHEM_INSTALL_PATH/examples/TChem_SIMPOL_RHS.x
-./$exec
+echo $exec
+eval $exec

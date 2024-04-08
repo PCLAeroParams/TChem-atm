@@ -64,7 +64,7 @@ main(int argc, char* argv[])
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
-    /// team policy
+    // team policy
     ordinal_type nBatch =1;
     policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
     Kokkos::parallel_for

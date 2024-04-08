@@ -155,7 +155,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     nSimpol_tran_=simpol_info.size();
     printf("Number of Simpol phase transfer %d \n",nSimpol_tran_ );
     // update simpol
-    simpol_params_ = simplo_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran_);
+    simpol_params_ = simpol_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran_);
     const auto simpol_params_host = simpol_params_.view_host();
 
     for (ordinal_type isimpol = 0; isimpol < nSimpol_tran_; isimpol++)

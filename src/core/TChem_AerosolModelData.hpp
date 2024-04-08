@@ -61,7 +61,7 @@ namespace TChem {
 
     using simpol_phase_transfer_type_1d_view_type =  Tines::value_type_1d_view<SIMPOL_PhaseTransferType,device_type>;
     using amcd_simpol_phase_transfer_type_1d_view = ConstUnmanaged<simpol_phase_transfer_type_1d_view_type>;
-    amcd_simplo_phase_transfer_type_1d_view simpol_params;
+    amcd_simpol_phase_transfer_type_1d_view simpol_params;
 
     ordinal_type nSpec;
     ordinal_type nSpec_gas;

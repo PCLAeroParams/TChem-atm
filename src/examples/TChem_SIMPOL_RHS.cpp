@@ -82,11 +82,11 @@ main(int argc, char* argv[])
        // gas species
        state(0) = ethanol;
        // aerosol species
-       for (int i = 0; i < amcd.nParticles; i++)
+       for (int i_part = 0; i_part < amcd.nParticles; i_part++)
        {
-        state(1+amcd.nSpec*i) = ethanol_aq/number_conc(i);
-        state(2+amcd.nSpec*i) = H2O_aq/number_conc(i);
-       }
+        state(1+amcd.nSpec*i_part) = ethanol_aq/number_conc(i_part);
+        state(2+amcd.nSpec*i_part) = H2O_aq/number_conc(i_part);
+       }// i_part
        member.team_barrier();
 
        ordinal_type i_simpol=0;

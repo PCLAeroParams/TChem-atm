@@ -65,10 +65,10 @@ main(int argc, char* argv[])
     // gas species
     state(0) = ethanol;
     // aerosol_species
-    for (int i = 0; i < amcd.nParticles; i++)
+    for (int i_part = 0; i_part < amcd.nParticles; i_part++)
     {
-      state(1+amcd.nSpec*i) = ethanol_aq/number_conc(i);
-      state(2+amcd.nSpec*i) = H2O_aq/number_conc(i);
+      state(1+amcd.nSpec*i_part) = ethanol_aq/number_conc(i_part);
+      state(2+amcd.nSpec*i_part) = H2O_aq/number_conc(i_part);
     }
 
     value_type_1d_view_type omega("omega", ntotal_species);

@@ -189,7 +189,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     auto aerosol_density_host = aerosol_density_.view_host();
     for (int i = 0; i < nSpec_; i++)
     {
-      molecular_weigths_host(i) = mw_aerosol_sp[i];
+      molecular_weights_host(i) = mw_aerosol_sp[i];
       aerosol_density_host(i) = density_aero_sp[i];
     }
 

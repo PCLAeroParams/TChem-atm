@@ -81,7 +81,7 @@ main(int argc, char* argv[])
 
        // gas species
        state(0) = ethanol;
-       // aerosol_species
+       // aerosol species
        for (int i = 0; i < amcd.nParticles; i++)
        {
         state(1+amcd.nSpec*i) = ethanol_aq/number_conc(i);

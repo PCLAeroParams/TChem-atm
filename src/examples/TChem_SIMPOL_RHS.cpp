@@ -50,7 +50,7 @@ main(int argc, char* argv[])
     ordinal_type ntotal_species = amcd.nSpec_gas + amcd.nSpec*amcd.nParticles;
 
     value_type_1d_view_type state("state", ntotal_species);
-    // by defaul view are initialized with zeros.
+    // by default view are initialized with zeros.
     value_type_1d_view_type omega("omega", ntotal_species);
 
 #if defined(TCHEM_TEST_IMPL_SACADO)

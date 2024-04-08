@@ -9,7 +9,7 @@
 /// Minimum mass assumed density [kg m-3]
 #define MINIMUM_DENSITY_ 1800.0L
 
-#define I_PART amcd.nSpec_gas + i_spec + i_part*amcd.nSpec
+#define I_SPEC_IN_PART amcd.nSpec_gas + i_spec + i_part*amcd.nSpec
 
 #include "TChem_Util.hpp"
 #include "TChem_ReactionTypes.hpp"
@@ -50,7 +50,7 @@ struct SIMPOL_single_particle
      // Sum the mass and MW
    volume = MINIMUM_MASS_ / MINIMUM_DENSITY_;
   for (int i_spec = 0; i_spec < amcd.nSpec; i_spec++) {
-      volume += state(I_PART) / amcd.aerosol_density(i_spec);
+      volume += state(I_SPEC_IN_PART) / amcd.aerosol_density(i_spec);
   }
 
   }
@@ -87,8 +87,8 @@ struct SIMPOL_single_particle
   mass = MINIMUM_MASS_;
   value_type moles = MINIMUM_MASS_ / MINIMUM_MW_;
   for (int i_spec = 0; i_spec < amcd.nSpec; i_spec++) {
-      mass += state(I_PART);
-      moles += state(I_PART) / amcd.molecular_weights(i_spec);
+      mass += state(I_SPEC_IN_PART);
+      moles += state(I_SPEC_IN_PART) / amcd.molecular_weights(i_spec);
     // }
   }
   MW = mass / moles;

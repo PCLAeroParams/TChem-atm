@@ -88,7 +88,7 @@ struct SIMPOL_single_particle
   value_type moles = MINIMUM_MASS_ / MINIMUM_MW_;
   for (int i_spec = 0; i_spec < amcd.nSpec; i_spec++) {
       mass += state(I_PART);
-      moles += state(I_PART) / amcd.molecular_weigths(i_spec);
+      moles += state(I_PART) / amcd.molecular_weights(i_spec);
     // }
   }
   MW = mass / moles;

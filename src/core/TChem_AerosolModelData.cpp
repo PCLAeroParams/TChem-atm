@@ -183,7 +183,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     } // nsimpol
 
 
-    molecular_weigths_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weigths"), nSpec_);
+    molecular_weights_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weights"), nSpec_);
     auto molecular_weights_host = molecular_weights_.view_host();
     aerosol_density_= real_type_1d_dual_view(do_not_init_tag("AMD::aerosol_density_"), nSpec_);
     auto aerosol_density_host = aerosol_density_.view_host();

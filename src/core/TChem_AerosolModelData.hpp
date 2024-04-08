@@ -81,7 +81,7 @@ namespace TChem {
     data.nSpec=amd.nSpec_;
     data.nParticles=amd.nParticles_;
     data.nSimpol_tran=amd.nSimpol_tran_;
-    data.molecular_weigths = amd.molecular_weigths_.template view<SpT>();
+    data.molecular_weights = amd.molecular_weights_.template view<SpT>();
     data.aerosol_density = amd.aerosol_density_.template view<SpT>();
     data.simpol_params = amd.simpol_params_.template view<SpT>();
   return data;

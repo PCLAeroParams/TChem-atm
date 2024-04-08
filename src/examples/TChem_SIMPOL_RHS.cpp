@@ -94,7 +94,7 @@ main(int argc, char* argv[])
       Kokkos::TeamThreadRange(member, amcd.nParticles),
        [&](const ordinal_type& i_part) {
            SIMPOL_single_particle_type
-          ::team_invoke(member, i_part,i_simpol, t, p, number_conc, state, omega, amcd);
+          ::team_invoke(member, i_part, i_simpol, t, p, number_conc, state, omega, amcd);
         });
         member.team_barrier();
 #if defined(TCHEM_TEST_IMPL_SACADO)

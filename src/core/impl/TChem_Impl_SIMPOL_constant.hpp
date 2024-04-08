@@ -119,7 +119,7 @@ struct SIMPOL_constant
   // SIMPOL.1 vapor pressure [Pa]
   real_type vp = B1_ / t + B2_ + B3_ * t +
               B4_ * ats<real_type>::log(t);
-  vp = 101325.0 * ats<real_type>::pow(10, vp);
+  vp = ATMPA() * ats<real_type>::pow(10, vp);
 
   /* Set the kg/m3 -> ppm conversion prefactor (multiply by T/P to get
     ! conversion)

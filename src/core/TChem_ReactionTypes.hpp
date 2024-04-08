@@ -21,7 +21,7 @@ struct SIMPOL_PhaseTransferType{
   real_type molecular_weight;
 };
 
-using simplo_phase_transfer_type_1d_dual_view =
+using simpol_phase_transfer_type_1d_dual_view =
  Tines::value_type_1d_dual_view<SIMPOL_PhaseTransferType, exec_space>;
 
 } // namespace TChem

@@ -18,7 +18,7 @@ namespace TChem {
   // number of particles
   ordinal_type nParticles_;
   // aerosol molecular weights and density
-  real_type_1d_dual_view molecular_weigths_, aerosol_density_;
+  real_type_1d_dual_view molecular_weights_, aerosol_density_;
   simplo_phase_transfer_type_1d_dual_view simpol_params_;
   ordinal_type nSimpol_tran_;
 

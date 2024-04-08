@@ -193,7 +193,7 @@ int AerosolModelData::initChem(YAML::Node &root,
       aerosol_density_host(i) = density_aero_sp[i];
     }
 
-    molecular_weigths_.modify_host();
+    molecular_weights_.modify_host();
     aerosol_density_.modify_host();
     simpol_params_.modify_host();
 

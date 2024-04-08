@@ -68,7 +68,7 @@ namespace TChem {
     ordinal_type nParticles;
     ordinal_type nSimpol_tran;
 
-    amcd_real_type_1d_view molecular_weigths;
+    amcd_real_type_1d_view molecular_weights;
     amcd_real_type_1d_view aerosol_density;
 
    };

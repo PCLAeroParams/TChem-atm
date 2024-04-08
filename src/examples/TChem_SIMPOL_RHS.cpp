@@ -24,7 +24,7 @@ main(int argc, char* argv[])
     std::string chemFile ="config_gas.yaml";
     std::string aerochemFile="test_SIMPOL_phase_transfer.yaml";
 
-    /// construct kmd; gas phase
+    // construct kmd; gas phase
     TChem::KineticModelData kmd(chemFile);
     const auto kmcd = TChem::createNCAR_KineticModelConstData<device_type>(kmd);
     // construct amd; aerosols

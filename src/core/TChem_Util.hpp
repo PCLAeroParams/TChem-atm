@@ -1195,6 +1195,47 @@ static inline bool compareFilesValues(const std::string &filename1, const std::s
 
 } // namespace Test
 
+/** Calculate the mean speed of a gas-phase species
+ * [ \f$\mbox{m}\,\mbox{s}^{-1}\f$ ] :
+ * \f[
+ *   v = \sqrt{\frac{8RT}{\pi MW}}
+ * \f]
+ * where R is the ideal gas constant [\f$\mbox{J}\, \mbox{K}^{-1}\,
+ * \mbox{mol}^{-1}\f$], T is temperature [K], and MW is the molecular weight of
+ * the gas-phase species
+ * [\f$\mbox{kg}\, \mbox{mol}^{-1}\f$]
+ * @param temperature__K Temperature [K]
+ * @param mw__kg_mol Molecular weight of the gas-phase species [\f$\mbox{kg}\,
+ * \mbox{mol}^{-1}\f$]
+ */
+ KOKKOS_INLINE_FUNCTION static
+ real_type mean_speed__m_s(const real_type t,
+                          const real_type mw) {
+  return sqrt(8.0 * RUNIV * t / (PI() * mw));
+}
+
+  /** Calculate the mean free path of a gas-phase species [m]
+ * \f[
+ *   \lambda = 3.0 D_g / v
+ * \f]
+ * where \f$D_g\f$ is the gas-phase diffusion coefficient
+ * [\f$\mbox{m}^2\,\mbox{s}^{-1}\f$] and
+ * \f$v\f$ is the mean speed of the gas-phase molecules
+ * [ \f$\mbox{m}\,\mbox{s}^{-1}\f$ ].
+ *
+ * @param diffusion_coeff__m2_s Diffusion coefficient of the gas species
+ * [\f$\mbox{m}^2\, \mbox{s}^{-1}\f$]
+ * @param temperature__K Temperature [K]
+ * @param mw__kg_mol Molecular weight of the gas-phase species [\f$\mbox{kg}\,
+ * \mbox{mol}^{-1}\f$]
+ */
+ KOKKOS_INLINE_FUNCTION static real_type mean_free_path_m(const real_type diffusion_coeff__m2_s,
+                                       const real_type t,
+                                       const real_type mw) {
+  return 3.0 * diffusion_coeff__m2_s /
+         mean_speed__m_s(t, mw);
+}
+
 } // namespace TChem
 
 #endif

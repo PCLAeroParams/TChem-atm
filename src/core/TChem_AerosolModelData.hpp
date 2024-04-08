@@ -59,7 +59,7 @@ namespace TChem {
 
     using amcd_real_type_1d_view = ConstUnmanaged<real_type_1d_view_type>;
 
-    using simplo_phase_transfer_type_1d_view_type =  Tines::value_type_1d_view<SIMPOL_PhaseTransferType,device_type>;
+    using simpol_phase_transfer_type_1d_view_type =  Tines::value_type_1d_view<SIMPOL_PhaseTransferType,device_type>;
     using amcd_simplo_phase_transfer_type_1d_view = ConstUnmanaged<simplo_phase_transfer_type_1d_view_type>;
     amcd_simplo_phase_transfer_type_1d_view simpol_params;
 

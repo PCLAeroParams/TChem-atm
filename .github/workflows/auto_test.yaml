@@ -53,15 +53,15 @@ jobs:
     - name: Building Kokkos (${{ matrix.build-type }}, ${{ matrix.fp-precision }} precision)
       run: |
         cmake -S tchem_dir/external/Tines/ext/kokkos -B kokkos_build \
-        -DCMAKE_INSTALL_PREFIX="kokkos_install" \
-        -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
-        -DCMAKE_CXX_COMPILER=g++ \
-        -DCMAKE_CXX_FLAGS="-fopenmp -g" \
-        -DKokkos_ENABLE_SERIAL=ON \
-        -DKokkos_ENABLE_OPENMP=ON \
-        -DKokkos_ENABLE_CUDA=OFF \
-        -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
-        -DKokkos_ENABLE_CUDA_LAMBDA=OFF
-      cd kokkos_build
-      make -j
-      make install
+          -DCMAKE_INSTALL_PREFIX="kokkos_install" \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="-fopenmp -g" \
+          -DKokkos_ENABLE_SERIAL=ON \
+          -DKokkos_ENABLE_OPENMP=ON \
+          -DKokkos_ENABLE_CUDA=OFF \
+          -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
+          -DKokkos_ENABLE_CUDA_LAMBDA=OFF
+        cd kokkos_build
+        make -j
+        make install

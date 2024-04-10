@@ -1,19 +1,67 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-on: [push]
-jobs:
-  Explore-GitHub-Actions:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
-        uses: actions/checkout@v4
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+name: auto_test
 
+# This action is triggered:
+# 1. when someone creates a pull request for a merge to the main branch
+# 2. when changes are merged into the main branch (via a pull request)
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Below are jobs, each of which runs sequentially.
+jobs:
+  # This job builds the box model and runs our test suite.
+  build:
+    # A build matrix storing all desired configurations.
+    strategy:
+      matrix:
+        os: [ubuntu-22.04] #, macos-latest]
+        build-type: [Debug, Release]
+        fp-precision: [single, double]
+
+    runs-on: ${{ matrix.os }}
+
+    # Environment variables
+    env:
+      CI: 1   # indicates that we are running in a CI environment.
+
+    # Steps for building and running tests.
+    steps:
+
+    - name: Installing dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+        autoconf \
+        clang-format \
+        cmake \
+        gcc \
+        g++ \
+        git \
+        lcov \
+        make \
+        libopenblas-dev \
+        pkg-config \
+        ca-certificates
+
+    - name: Checking out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        path: tchem_dir
+
+    - name: Building Kokkos (${{ matrix.build-type }}, ${{ matrix.fp-precision }} precision)
+      run: |
+        cmake -S tchem_dir/external/Tines/ext/kokkos -B kokkos_build \
+        -DCMAKE_INSTALL_PREFIX="kokkos_install" \
+        -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+        -DCMAKE_CXX_COMPILER=g++ \
+        -DCMAKE_CXX_FLAGS="-fopenmp -g" \
+        -DKokkos_ENABLE_SERIAL=ON \
+        -DKokkos_ENABLE_OPENMP=ON \
+        -DKokkos_ENABLE_CUDA=OFF \
+        -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
+        -DKokkos_ENABLE_CUDA_LAMBDA=OFF
+      cd kokkos_build
+      make -j
+      make install

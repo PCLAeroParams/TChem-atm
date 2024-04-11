@@ -140,7 +140,8 @@ jobs:
 
     - name: Building TChem (${{ matrix.build-type }}, ${{ matrix.sacado-on }} sacado)
       run: |
-        cmake -S tchem_dir/src -B tchem_build -I tchem_install  \
+        cmake -S tchem_dir/src -B tchem_build \
+          -DCMAKE_INSTALL_PREFIX=tchem_install \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_CXX_FLAGS="-g" \
           -DCMAKE_C_COMPILER=gcc \

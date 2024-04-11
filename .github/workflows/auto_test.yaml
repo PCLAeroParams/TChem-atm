@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04] #, macos-latest]
         build-type: [Release, Debug] #
-        fp-precision: [ "double"]
+        fp-precision: [double]
         sacado-on: [ON, OFF]
 
     runs-on: ${{ matrix.os }}
@@ -125,7 +125,7 @@ jobs:
           -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
           -DTINES_ENABLE_DEBUG=OFF \
           -DTINES_ENABLE_VERBOSE=OFF \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+          -DCMAKE_BUILD_TYPE=${{matrix.build-type}} \
           -DTINES_ENABLE_TEST=OFF \
           -DTINES_ENABLE_EXAMPLE=OFF \
           -DSUNDIALS_INSTALL_PATH=`pwd`/sundials_install \
@@ -145,7 +145,6 @@ jobs:
           -DCMAKE_CXX_FLAGS="-g" \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
-          -DTCHEM_ATM_ENABLE_REAL_TYPE = ${{ matrix.fp-precision }} \
           -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
           -DTCHEM_ATM_ENABLE_VERBOSE=OFF \
           -DTCHEM_ATM_ENABLE_TEST=ON \

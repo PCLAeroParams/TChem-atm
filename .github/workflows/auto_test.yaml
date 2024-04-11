@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04] #, macos-latest]
         build-type: [Release, Debug] #
-        fp-precision: [ double]
+        fp-precision: [ "double"]
         sacado-on: [ON, OFF]
 
     runs-on: ${{ matrix.os }}

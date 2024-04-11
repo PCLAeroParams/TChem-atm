@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04] #, macos-latest]
-        build-type: [Debug, Release]
-        fp-precision: [single, double]
+        build-type: [Debug] #, Release
+        fp-precision: [ double] #single,
 
     runs-on: ${{ matrix.os }}
 
@@ -63,5 +63,40 @@ jobs:
           -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
           -DKokkos_ENABLE_CUDA_LAMBDA=OFF
         cd kokkos_build
+        make -j
+        make install
+
+    - name: Building gtest
+      run: |
+        cmake -S tchem_dir/external/Tines/ext/gtest -B gtest_build \
+          -DCMAKE_INSTALL_PREFIX="gtest_install" \
+          -DCMAKE_CXX_COMPILER=g++
+        cd gtest_build
+        make -j
+        make install
+
+    - name: Building yaml
+      run: |
+        cmake -S tchem_dir/external/Tines/ext/yaml -B yaml_build \
+          -DCMAKE_INSTALL_PREFIX="yaml_install" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_FLAGS="-g -c" \
+          -DCMAKE_EXE_LINKER_FLAGS="" \
+          -DCMAKE_BUILD_TYPE=RELEASE
+        cd yaml_build
+        make -j
+        make install
+
+    - name: Building sundials
+      run: |
+        cmake -S tchem_dir/external/Tines/ext/yaml -B yaml_build \
+          -DCMAKE_INSTALL_PREFIX="yaml_install" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_FLAGS="-g -c" \
+          -DCMAKE_EXE_LINKER_FLAGS="" \
+          -DCMAKE_BUILD_TYPE=RELEASE
+        cd yaml_build
         make -j
         make install

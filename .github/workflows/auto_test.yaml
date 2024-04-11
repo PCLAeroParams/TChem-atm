@@ -90,7 +90,7 @@ jobs:
 
     - name: Building sundials
       run: |
-        cmake -S tchem_dir/Sundials -B sundials_build \
+        cmake -S tchem_dir/external/Sundials -B sundials_build \
           -DCMAKE_INSTALL_PREFIX="sundials_install" \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_C_COMPILER=gcc \
@@ -105,7 +105,7 @@ jobs:
 
     - name: Building Skywalker
       run: |
-        cmake -S tchem_dir/Skywalker -B skywalker_build \
+        cmake -S tchem_dir/external/Skywalker -B skywalker_build \
           -DCMAKE_INSTALL_PREFIX="skywalker_install" \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_C_COMPILER=gcc \

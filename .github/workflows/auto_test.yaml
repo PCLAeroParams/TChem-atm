@@ -131,12 +131,30 @@ jobs:
           -DSUNDIALS_INSTALL_PATH=`pwd`/sundials_install \
           -DYAML_INSTALL_PATH=`pwd`/yaml_install \
           -DKOKKOS_INSTALL_PATH=`pwd`/kokkos_install \
-          -DOPENBLAS_INSTALL_PATH=`/usr/lib/x86_64-linux-gnu/` \
+          -DOPENBLAS_INSTALL_PATH=`/usr/lib64` \
           -DGTEST_INSTALL_PATH=`pwd`/gtest_install
         cd tines_build
         make -j
         make install
 
-    - name: Finding paths
-      run : |
-        dpkg -L libopenblas-dev
+    - name: Building TChem
+      run: |
+        cmake -S tchem_dir/src -B tchem_build \
+          -DCMAKE_INSTALL_PREFIX="tchem_install" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="-g" \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+          -DTCHEM_ATM_ENABLE_VERBOSE=OFF \
+          -DTCHEM_ATM_ENABLE_TEST=ON \
+          -DTCHEM_ATM_ENABLE_EXAMPLE=ON \
+          -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=OFF\
+          -DKOKKOS_INSTALL_PATH=`pwd`/kokkos_install \
+          -DTINES_INSTALL_PATH=`pwd`/tines_install \
+          -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
+          -DSKYWALKER_INSTALL_PATH=`pwd`/skywalker_install \
+          -DGTEST_INSTALL_PATH=`pwd`/gtest_install"
+        cd tchem_build
+        make -j
+        make install

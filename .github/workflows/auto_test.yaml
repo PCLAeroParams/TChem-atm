@@ -135,6 +135,7 @@ jobs:
         cd tines_build
         make -j
         make install
-  - name: Finding paths
+
+    - name: Finding paths
       run : |
         dpkg -L libopenblas-dev

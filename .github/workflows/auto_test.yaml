@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04] #, macos-latest]
-        build-type: [Debug] #, Release
+        build-type: [Release] #, Debug
         fp-precision: [ double] #single,
 
     runs-on: ${{ matrix.os }}
@@ -158,3 +158,7 @@ jobs:
         cd tchem_build
         make -j
         make install
+    - name: Running test TChem
+      run: |
+        cd tchem_build
+        ctest

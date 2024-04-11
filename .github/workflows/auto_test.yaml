@@ -17,8 +17,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04] #, macos-latest]
-        build-type: [Release] #, Debug
-        fp-precision: [ double] #single,
+        build-type: [Release, Debug] #
+        fp-precision: [ double]
+        sacado-on: [ON, OFF]
 
     runs-on: ${{ matrix.os }}
 
@@ -50,7 +51,7 @@ jobs:
         submodules: recursive
         path: tchem_dir
 
-    - name: Building Kokkos (${{ matrix.build-type }}, ${{ matrix.fp-precision }} precision)
+    - name: Building Kokkos (${{ matrix.build-type }})
       run: |
         cmake -S tchem_dir/external/Tines/ext/kokkos -B kokkos_build \
           -DCMAKE_INSTALL_PREFIX="kokkos_install" \
@@ -109,13 +110,12 @@ jobs:
           -DCMAKE_INSTALL_PREFIX="skywalker_install" \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_C_COMPILER=gcc \
-          -DSKYWALKER_PRECISION=${{ matrix.fp-precision }} \
           -DCMAKE_BUILD_TYPE=RELEASE
         cd skywalker_build
         make -j
         make install
 
-    - name: Building Tines
+    - name: Building Tines (${{ matrix.build-type }})
       run: |
         cmake -S tchem_dir/external/Tines/src -B tines_build \
           -DCMAKE_INSTALL_PREFIX="tines_install" \
@@ -137,7 +137,7 @@ jobs:
         make -j
         make install
 
-    - name: Building TChem
+    - name: Building TChem (${{ matrix.build-type }}, ${{ matrix.fp-precision }} precision, ${{ matrix.sacado-on }} sacado)
       run: |
         cmake -S tchem_dir/src -B tchem_build \
           -DCMAKE_INSTALL_PREFIX="tchem_install" \
@@ -145,11 +145,12 @@ jobs:
           -DCMAKE_CXX_FLAGS="-g" \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+          -DTCHEM_ATM_ENABLE_REAL_TYPE = ${{ matrix.fp-precision }} \
           -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
           -DTCHEM_ATM_ENABLE_VERBOSE=OFF \
           -DTCHEM_ATM_ENABLE_TEST=ON \
           -DTCHEM_ATM_ENABLE_EXAMPLE=ON \
-          -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=OFF\
+          -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=${{ matrix.sacado-on }}\
           -DKOKKOS_INSTALL_PATH=`pwd`/kokkos_install \
           -DTINES_INSTALL_PATH=`pwd`/tines_install \
           -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
@@ -158,7 +159,7 @@ jobs:
         cd tchem_build
         make -j
         make install
-    - name: Running test TChem
+    - name: Testing TChem
       run: |
         cd tchem_build
         ctest

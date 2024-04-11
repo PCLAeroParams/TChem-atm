@@ -53,7 +53,7 @@ jobs:
     - name: Building Kokkos (${{ matrix.build-type }}, ${{ matrix.fp-precision }} precision)
       run: |
         cmake -S tchem_dir/external/Tines/ext/kokkos -B kokkos_build \
-          -DCMAKE_INSTALL_PREFIX="kokkos_install" \
+          -DCMAKE_INSTALL_PREFIX=kokkos_install \
           -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_CXX_FLAGS="-fopenmp -g" \
@@ -130,7 +130,7 @@ jobs:
           -DTINES_ENABLE_EXAMPLE=OFF \
           -DSUNDIALS_INSTALL_PATH=sundials_install \
           -DYAML_INSTALL_PATH=yaml_install \
-          -DKOKKOS_INSTALL_PATH="kokkos_install" \
+          -DKOKKOS_INSTALL_PATH=kokkos_install \
           -DGTEST_INSTALL_PATH=gtest_install
         cd tines_build
         make -j

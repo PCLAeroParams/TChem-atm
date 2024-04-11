@@ -130,7 +130,7 @@ jobs:
           -DTINES_ENABLE_EXAMPLE=OFF \
           -DSUNDIALS_INSTALL_PATH=sundials_install \
           -DYAML_INSTALL_PATH=yaml_install \
-          -DKOKKOS_INSTALL_PATH=kokkos_install \
+          -DKOKKOS_INSTALL_PATH=tchem_dir/kokkos_install \
           -DGTEST_INSTALL_PATH=gtest_install
         cd tines_build
         make -j

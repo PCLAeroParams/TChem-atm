@@ -90,13 +90,48 @@ jobs:
 
     - name: Building sundials
       run: |
-        cmake -S tchem_dir/external/Tines/ext/yaml -B yaml_build \
-          -DCMAKE_INSTALL_PREFIX="yaml_install" \
+        cmake -S tchem_dir/Sundials -B sundials_build \
+          -DCMAKE_INSTALL_PREFIX="sundials_install" \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_FLAGS="-g -c" \
+          -DCMAKE_CXX_FLAGS="-g" \
+          -DCMAKE_C_FLAGS="-g" \
           -DCMAKE_EXE_LINKER_FLAGS="" \
+          -DENABLE_CALIPER:BOOL=OFF \
           -DCMAKE_BUILD_TYPE=RELEASE
-        cd yaml_build
+        cd sundials_build
+        make -j
+        make install
+
+    - name: Building Skywalker
+      run: |
+        cmake -S tchem_dir/Skywalker -B skywalker_build \
+          -DCMAKE_INSTALL_PREFIX="skywalker_install" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_C_COMPILER=gcc \
+          -DSKYWALKER_PRECISION=${{ matrix.fp-precision }} \
+          -DCMAKE_BUILD_TYPE=RELEASE
+        cd skywalker_build
+        make -j
+        make install
+
+    - name: Building Tines
+      run: |
+        cmake -S tchem_dir/external/Tines -B tines_build \
+          -DCMAKE_INSTALL_PREFIX="tines_install" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="-g" \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+          -DTINES_ENABLE_DEBUG=OFF \
+          -DTINES_ENABLE_VERBOSE=OFF \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+          -DTINES_ENABLE_TEST=OFF \
+          -DTINES_ENABLE_EXAMPLE=OFF \
+          -DSUNDIALS_INSTALL_PATH=sundials_install \
+          -DYAML_INSTALL_PATH=yaml_install \
+          -DKOKKOS_INSTALL_PATH=kokkos_install \
+          -DGTEST_INSTALL_PATH=kokkos_install
+        cd tines_build
         make -j
         make install

@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04] #, macos-latest]
         build-type: [Release, Debug] #
-        fp-precision: [double]
+        fp-precision: [single,double]
         sacado-on: [ON, OFF]
 
     runs-on: ${{ matrix.os }}
@@ -110,6 +110,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX="skywalker_install" \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_C_COMPILER=gcc \
+          -DSKYWALKER_PRECISION=${{matrix.fp-precision}} \
           -DCMAKE_BUILD_TYPE=RELEASE
         cd skywalker_build
         make -j

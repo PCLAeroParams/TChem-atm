@@ -131,6 +131,7 @@ jobs:
           -DSUNDIALS_INSTALL_PATH=`pwd`/sundials_install \
           -DYAML_INSTALL_PATH=`pwd`/yaml_install \
           -DKOKKOS_INSTALL_PATH=`pwd`/kokkos_install \
+          -DOPENBLAS_INSTALL_PATH=${OPENBLAS_ROOT} \
           -DGTEST_INSTALL_PATH=`pwd`/gtest_install
         cd tines_build
         make -j

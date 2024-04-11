@@ -117,7 +117,7 @@ jobs:
 
     - name: Building Tines
       run: |
-        cmake -S tchem_dir/external/Tines -B tines_build \
+        cmake -S tchem_dir/external/Tines/src -B tines_build \
           -DCMAKE_INSTALL_PREFIX="tines_install" \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_CXX_FLAGS="-g" \

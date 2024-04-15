@@ -1,4 +1,3 @@
-
 #ifndef __TCHEM_TEST_SIMPOL_RHS_HPP__
 #define __TCHEM_TEST_SIMPOL_RHS_HPP__
 

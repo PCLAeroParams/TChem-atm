@@ -4,7 +4,7 @@ SET(TCHEM_ATM_TEST_SOURCES "")
 # Append examples that work for all device types
 LIST(APPEND TCHEM_ATM_TEST_SOURCES
      TChem_Test_Driver.cpp
-     TChem_Test_Simpol_RHS_Host.cpp
+     TChem_Test_Simpol_RHS.cpp
     )
 
 FOREACH(TCHEM_ATM_TEST_SOURCES ${TCHEM_ATM_TEST_SOURCES} )

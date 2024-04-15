@@ -10,7 +10,7 @@ using real_type_1d_view = TChem::real_type_1d_view;
 using real_type_2d_view = TChem::real_type_2d_view;
 using real_type_2d_view_host = TChem::real_type_2d_view_host;
 
-TEST(SimpolRHS, single)
+TEST(SimpolRHS, single_host)
 {
     using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
 

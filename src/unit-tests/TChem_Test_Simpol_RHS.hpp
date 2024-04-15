@@ -1,3 +1,7 @@
+
+#ifndef __TCHEM_TEST_SIMPOL_RHS_HPP__
+#define __TCHEM_TEST_SIMPOL_RHS_HPP__
+
 #include "TChem.hpp"
 #include "TChem_Impl_SIMPOL_constant.hpp"
 #include "TChem_Impl_SIMPOL_phase_transfer.hpp"
@@ -8,21 +12,14 @@ using real_type_2d_view = TChem::real_type_2d_view;
 using real_type_2d_view_host = TChem::real_type_2d_view_host;
 
 #define TCHEM_TEST_IMPL_SACADO
-int
-main(int argc, char* argv[])
+
+TEST(SimpolRHS, Device)
 {
-  Kokkos::initialize(argc, argv);
-  {
-    const bool detail = false;
     constexpr real_type zero=0.0;
-
-    TChem::exec_space().print_configuration(std::cout, detail);
-    TChem::host_exec_space().print_configuration(std::cout, detail);
-
     using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
     // input files need to located in same directory as the executable.
-    std::string chemFile ="config_gas.yaml";
-    std::string aerochemFile="test_SIMPOL_phase_transfer.yaml";
+    std::string chemFile ="../examples/runs/atmospheric_chemistry/Simpol/config_gas.yaml";
+    std::string aerochemFile="../examples/runs/atmospheric_chemistry/Simpol/test_SIMPOL_phase_transfer.yaml";
 
     // construct kmd; gas phase
     TChem::KineticModelData kmd(chemFile);
@@ -107,12 +104,19 @@ main(int argc, char* argv[])
   // we need to copy data from device to host.
   auto omega_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), omega_out);
   // save results to a file.
-  std::string outputFile ="Simpol_RHS.txt";
+  std::string outputFile ="Simpol_RHS_DEVICE.txt";
   FILE *fout = fopen(outputFile.c_str(), "w");
   TChem::Test::writeReactionRates(outputFile, omega_host.extent(0), omega_host);
   fclose(fout);
-
-  }
-  Kokkos::finalize();
-  return 0;
 }
+
+TEST(SimpolRHS, verification_device)
+{
+ /// pass test with a relative error of
+  const real_type threshold =1e-12;
+  EXPECT_TRUE(TChem::Test::compareFilesValues("Simpol_RHS_DEVICE.txt",
+          "references/partmc_integration/simpol/Simpol_RHS_HOST.txt",threshold)
+        );
+}
+
+#endif

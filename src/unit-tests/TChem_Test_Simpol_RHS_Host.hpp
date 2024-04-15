@@ -1,5 +1,5 @@
-#ifndef __TCHEM_TEST_RATE_OF_PROGRESS_HPP__
-#define __TCHEM_TEST_RATE_OF_PROGRESS_HPP__
+#ifndef __TCHEM_TEST_SIMPOL_RHS_HOST_HPP__
+#define __TCHEM_TEST_SIMPOL_RHS_HOST_HPP__
 
 #include "TChem.hpp"
 #include "TChem_Impl_SIMPOL_constant.hpp"
@@ -84,7 +84,7 @@ TEST(SimpolRHS, single_host)
   TChem::Test::writeReactionRates(outputFile, omega.extent(0), omega);
   fclose(fout);
 }
-TEST(SimpolRHS, verification)
+TEST(SimpolRHS, verification_host)
 {
  /// pass test with a relative error of
   const real_type threshold =1e-12;

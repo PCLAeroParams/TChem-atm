@@ -20,6 +20,7 @@ Sandia National Laboratories, Livermore, CA, USA
 ===================================================================================== */
 #include <gtest/gtest.h>
 #include "TChem_Test_Simpol_RHS_Host.hpp"
+#include "TChem_Test_Simpol_RHS.hpp"
 int
 main(int argc, char* argv[])
 {

@@ -58,28 +58,28 @@ int main(int argc, char *argv[]) {
     const ordinal_type stateVecDim = TChem::Impl::getStateVectorSize(kmcd.nSpec);
     const auto speciesNamesHost = kmd.sNames_.view_host();
 
-    
+
     // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
     ordinal_type nbacth_files=0;
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
 
 
     // read photolysis reaction values
-    // we assume photolysis reaction  are computed by another tool. 
+    // we assume photolysis reaction  are computed by another tool.
     real_type_2d_view_host photo_rates_scenario_host;
     ordinal_type n_photo_rates = 0;
     TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(inputFile,
              nbacth_files,
-             // output 
+             // output
              photo_rates_scenario_host,
              n_photo_rates
              );
 
-    // read external forcing 
+    // read external forcing
     ordinal_type count_ext_forcing=0;
-    
+
     const ordinal_type n_active_vars = kmcd.nSpec - kmcd.nConstSpec;
     printf("Number of species %d \n", kmcd.nSpec);
     printf("Number of const species %d \n", kmcd.nConstSpec);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host external_sources_scenario_host("external_sources_host",nbacth_files,n_active_vars);
     TChem::AtmChemistry::setScenarioConditionsExternalForcing(inputFile,
              speciesNamesHost,
-             // output 
+             // output
              external_sources_scenario_host,
              count_ext_forcing);
 
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
 
       external_sources = real_type_2d_view("external_sources", nBatch, n_active_vars);
       if (count_ext_forcing >  0) {
-        
+
         auto external_sources_host = Kokkos::create_mirror_view(external_sources);
         auto external_sources_scenario_host_at_0 = Kokkos::subview(external_sources_scenario_host, 0, Kokkos::ALL);
         auto external_sources_host_at_0 = Kokkos::subview(external_sources_host, 0, Kokkos::ALL);
@@ -134,21 +134,21 @@ int main(int argc, char *argv[]) {
       }
 
     } else {
-      nBatch = nbacth_files; 
+      nBatch = nbacth_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
 
       if (n_photo_rates > 0 )
       {
-        nBatch = nbacth_files; 
+        nBatch = nbacth_files;
         photo_rates = real_type_2d_view("StateVector Devices", nBatch, n_photo_rates);
         Kokkos::deep_copy(photo_rates, photo_rates_scenario_host);
 
       }  // n_photo_rates
-      
+
       external_sources = real_type_2d_view("external_sources", nBatch, n_active_vars);
       if (count_ext_forcing >  0) {
-        
+
         Kokkos::deep_copy(external_sources, external_sources_scenario_host);
       } else {
         // make sure that external source are zero.
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
 
     }
 
-    // output 
+    // output
     real_type_2d_view net_production_rates("net_production_rates", nBatch, kmcd.nSpec);
 
     using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
     if (team_size > 0 && vector_size > 0) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
-      // only set team size 
+      // only set team size
        policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(fout_times, "}\n ");// end index time
     fclose(fout_times);
-    
+
 
 
 
@@ -227,4 +227,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
- 	

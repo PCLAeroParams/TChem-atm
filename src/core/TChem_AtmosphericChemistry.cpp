@@ -408,6 +408,7 @@ AtmosphericChemistry::runHostBatch( /// thread block size
   TChem::AtmChemistry::setScenarioConditions(const std::string& filename,
              const Tines::value_type_1d_view<char [LENGTHOFSPECNAME + 1],interf_host_device_type>& speciesNamesHost,
              const ordinal_type& nSpec,
+             const ordinal_type& stateVecDim,
              real_type_2d_view_host& state_host,
              // real_type_2d_view_host& photo_rates_host,
              int& nBatch)
@@ -443,7 +444,7 @@ AtmosphericChemistry::runHostBatch( /// thread block size
     }
 
     // 3. set state vector with initial values
-    state_host = real_type_2d_view_host("StateVector host", nBatch, nSpec + 3);
+    state_host = real_type_2d_view_host("StateVector host", nBatch, stateVecDim);
 
     const int n_spec_int = varnames.size();
     Kokkos::parallel_for(
@@ -488,7 +489,7 @@ AtmosphericChemistry::runHostBatch( /// thread block size
 void
 TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(const std::string& filename,
              const ordinal_type& nBatch,
-             // output 
+             // output
              real_type_2d_view_host& photo_rates_host,
              ordinal_type& count_photo_rates
              )
@@ -499,7 +500,7 @@ TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(const std::string&
 
     count_photo_rates=0;
     if (root["photolysis_rates"]){
-      auto photo_rates_info = root["photolysis_rates"]; 
+      auto photo_rates_info = root["photolysis_rates"];
       // first get number of photo_rates
       for (auto const& ireac_photo : photo_rates_info) {
         count_photo_rates++;
@@ -512,32 +513,32 @@ TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(const std::string&
         // get list of values
         auto photo_rate_values = photo_rates_info["r_"+ std::to_string(ireac)]["value"];
         int nBatch_photo_reation = photo_rate_values.size();
-        // check if number of photo values per reaction is equal to number of conditions 
+        // check if number of photo values per reaction is equal to number of conditions
         if (nBatch_photo_reation == nBatch)
         {
           // std::cout << photo_rate_values << "\n";
           for (int ibacth = 0; ibacth < nBatch; ++ibacth)
           {
-            photo_rates_host(ibacth, ireac) = photo_rate_values[ibacth].as<real_type>(); 
+            photo_rates_host(ibacth, ireac) = photo_rate_values[ibacth].as<real_type>();
           }
         } else {
           printf("Error number of values in photo reaction is different than number of conditions");
           exit(1);
         }
-        
+
       }
       printf(" Total number of photolysis rates %d, total number of samples %d  \n", count_photo_rates, nBatch );
 
     } // end photolysis_rates
-   
+
 
 
 } // setScenarioConditions_photolysis_reactions
 
-void 
+void
 TChem::AtmChemistry::setScenarioConditionsExternalForcing(const std::string& filename,
              const Tines::value_type_1d_view<char [LENGTHOFSPECNAME + 1],interf_host_device_type>& speciesNamesHost,
-             // output 
+             // output
              real_type_2d_view_host& external_forcing_host,
              ordinal_type& count_ext_forcing)
 {
@@ -548,9 +549,9 @@ YAML::Node root = YAML::LoadFile(filename);
 count_ext_forcing=0;
 if (root["external_forcing"]){
   auto ext_forcing_info = root["external_forcing"];
-  printf(" TChem is reading external forcing from %s  \n",filename.c_str() ); 
+  printf(" TChem is reading external forcing from %s  \n",filename.c_str() );
   // first get number of photo_rates
-  
+
   const ordinal_type n_active_vars = external_forcing_host.extent(1);
   const ordinal_type nBatch = external_forcing_host.extent(0);
 
@@ -565,21 +566,21 @@ if (root["external_forcing"]){
     auto second = iext_forcing.second;
     auto sp_name = second["species_name"].as<std::string>();
     ordinal_type sp_idx = -1;
-    // search for specie index 
-    // Note: we assume that active species are list fist in speciesNamesHost. 
+    // search for specie index
+    // Note: we assume that active species are list fist in speciesNamesHost.
     for (ordinal_type i = 0; i < n_active_vars; i++) {
       if (strncmp(&speciesNamesHost(i, 0), (sp_name).c_str(),
         LENGTHOFSPECNAME) == 0) {
         sp_idx =i;
             // printf("species %s index %d \n", &speciesNamesHost(i, 0), i);
         break;
-        } 
+        }
       }
-      // check if species exits. 
+      // check if species exits.
       if (sp_idx < 0 ){
         printf("species %s does not exits in tchem species lists.\n",(sp_name).c_str());
         exit(1);
-      } 
+      }
 
       // copy vales to host view
       auto ext_forcing_values = second["value"];
@@ -589,7 +590,7 @@ if (root["external_forcing"]){
       {
         for (int ibacth = 0; ibacth < nBatch; ++ibacth)
         {
-            external_forcing_host(ibacth, sp_idx) = ext_forcing_values[ibacth].as<real_type>(); 
+            external_forcing_host(ibacth, sp_idx) = ext_forcing_values[ibacth].as<real_type>();
         }
         } else {
           printf("Error number of values in external forcing is different than number of conditions");
@@ -597,7 +598,7 @@ if (root["external_forcing"]){
         }
 
         count_ext_forcing++;
-  } // end ext forcing yaml loop 
+  } // end ext forcing yaml loop
   printf(" Total number of external forcing %d, total number of samples %d  \n", count_ext_forcing, nBatch );
 
 } // external_forcing

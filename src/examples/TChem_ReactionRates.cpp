@@ -54,12 +54,12 @@ int main(int argc, char *argv[]) {
     const ordinal_type stateVecDim = TChem::Impl::getStateVectorSize(kmcd.nSpec);
     const auto speciesNamesHost = kmd.sNames_.view_host();
 
-    
+
     // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
     ordinal_type nbacth_files=0;
     TChem::AtmChemistry::setScenarioConditions(chemFile,
-     speciesNamesHost, kmcd.nSpec, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
 
     real_type_2d_view state;
 
@@ -76,12 +76,12 @@ int main(int argc, char *argv[]) {
       TChem::Test::cloneView(state_host);
       Kokkos::deep_copy(state, state_host);
     } else {
-      nBatch = nbacth_files; 
+      nBatch = nbacth_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
     }
 
-    // output 
+    // output
     real_type_2d_view kfwd("kfwd", nBatch, kmcd.nReac);
 
     using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
     if (team_size > 0 && vector_size > 0) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
-      // only set team size 
+      // only set team size
        policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(fout_times, "}\n ");// end index time
     fclose(fout_times);
-    
+
 
 
 
@@ -138,4 +138,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
- 	

@@ -18,24 +18,24 @@ Questions? Contact Cosmin Safta at <csafta@sandia.gov>, or
 
 Sandia National Laboratories, Livermore, CA, USA
 ===================================================================================== */
-#ifndef __TCHEM_HPP__
-#define __TCHEM_HPP__
+#include <gtest/gtest.h>
+#include "TChem_Test_Simpol_RHS_Host.hpp"
+#include "TChem_Test_Simpol_RHS.hpp"
+int
+main(int argc, char* argv[])
+{
+  int r_val(0);
+  Kokkos::initialize(argc, argv);
+  {
+    const bool detail = false;
 
-#include "TChem_Util.hpp"
-#include "TChem_KineticModelData.hpp"
-#include "TChem_AerosolModelData.hpp"
-#include "TChem_AerosolChemistry_CVODE.hpp"
-#include "TChem_AtmosphericChemistry.hpp"
-#include "TChem_AtmosphericChemistryE3SM.hpp"
-#include "TChem_AtmosphericChemistryE3SM_CVODE.hpp"
-#include "TChem_AtmosphericChemistryE3SM_ExplicitEuler.hpp"
-#include "TChem_AtmosphericChemistryE3SM_ImplicitEuler.hpp"
-#include "TChem_ReactionRates.hpp"
-#include "TChem_ReactionTypes.hpp"
-#include "TChem_RateofProgress.hpp"
-#include "TChem_NetProductionRates.hpp"
-#include "TChem_Linv3StratosphereSolver.hpp"
+    TChem::exec_space().print_configuration(std::cout, detail);
+    TChem::host_exec_space().print_configuration(std::cout, detail);
 
+    ::testing::InitGoogleTest(&argc, argv);
+    r_val = RUN_ALL_TESTS();
+  }
+  Kokkos::finalize();
 
-
-#endif
+  return r_val;
+}

@@ -19,15 +19,15 @@ Questions? Contact Cosmin Safta at <csafta@sandia.gov>, or
 Sandia National Laboratories, Livermore, CA, USA
 ===================================================================================== */
 
-#include "TChem_CommandLineParser.hpp" 
-#include "TChem.hpp" 
-#include "TChem_Impl_ReactionRates.hpp" 
-#include "TChem_Impl_KForward.hpp" 
-#include "TChem_Impl_KForwardJPL.hpp" 
-#include "TChem_Impl_AdjustReactions.hpp" 
-#include "TChem_Impl_RateofProgress.hpp" 
-#include "TChem_Impl_NetProductionRates.hpp" 
-#include "TChem_AtmosphericChemistry.hpp" 
+#include "TChem_CommandLineParser.hpp"
+#include "TChem.hpp"
+#include "TChem_Impl_ReactionRates.hpp"
+#include "TChem_Impl_KForward.hpp"
+#include "TChem_Impl_KForwardJPL.hpp"
+#include "TChem_Impl_AdjustReactions.hpp"
+#include "TChem_Impl_RateofProgress.hpp"
+#include "TChem_Impl_NetProductionRates.hpp"
+#include "TChem_AtmosphericChemistry.hpp"
 
 using ordinal_type = TChem::ordinal_type;
 using real_type = TChem::real_type;
@@ -109,14 +109,15 @@ main(int argc, char* argv[])
     value_type_1d_view_type omega("omega", kmcd.nSpec);
 
     value_type_1d_view_type work("work", 3*kmcd.nReac);
+    const ordinal_type stateVecDim = kmcd.nSpec +3;
 
     // read scenario condition from yaml file
     real_type_2d_view_host state_host;
     TChem::AtmChemistry
          ::setScenarioConditions(chemFile, speciesNamesHost,
-                                 kmcd.nSpec, state_host, nBatch );
+                                 kmcd.nSpec, stateVecDim, state_host, nBatch );
 
-    
+
     // TODO:
     // create a map or dic that returns the index of a variable in the state vector.
     // for example "temperature" -> 2 or "M" -> 76+3
@@ -129,7 +130,7 @@ main(int argc, char* argv[])
         Kokkos::subview(state_host, 0, range_type(3, 3 + kmcd.nSpec));
 
     const auto m = x(kmcd.M_index);
-    
+
     printf("Using value of m = %e \n", m);
 
     kForward_type::team_invoke(member, t, p, kfor, kmcd);
@@ -141,11 +142,11 @@ main(int argc, char* argv[])
 
     std::string output_file_kfor_wadjust_reaction(prefixPath + "kfwd_wadjust_reactions.dat");
     using AdjustReactions_type = TChem::Impl::AdjustReactions<real_type, host_device_type >;
-    
-    printf("x(%d)  %e \n", kmcd.M_index,m);    
+
+    printf("x(%d)  %e \n", kmcd.M_index,m);
 
     AdjustReactions_type::team_invoke(member, t, x, kfor, kmcd);
-          
+
     TChem::Test::writeReactionRates(output_file_kfor_wadjust_reaction, kmcd.nReac, kfor);
 
     using ReactionRates_type = TChem::Impl::ReactionRates<real_type, host_device_type >;
@@ -186,7 +187,7 @@ main(int argc, char* argv[])
     // {
     //   printf("%.15e, & ! (%d) %s \n",x(i),i,&speciesNamesHost(i, 0));
     // }
-    // //  invariants 
+    // //  invariants
     // printf("Invariants \n");
     // for (int i = 73; i < kmcd.nSpec; ++i)
     // {

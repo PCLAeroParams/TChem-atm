@@ -3,6 +3,7 @@
 
 #include "TChem_Impl_SIMPOL_phase_transfer.hpp"
 #include "TChem_Impl_ReactionRatesAerosol.hpp"
+#include "TChem_Impl_ToyProcess.hpp"
 namespace TChem {
 namespace Impl {
   template<typename ValueType, typename DeviceType>
@@ -77,6 +78,23 @@ struct Aerosol_RHS
                   amcd);
     }// i_simpol
     });// i_part
+
+    using toy_process_type = TChem::Impl::ToyProcess<real_type, device_type >;
+     Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(member, amcd.nParticles),
+       [&](const ordinal_type& i_part) {
+    for (size_t i_toy = 0; i_toy < amcd.nToy_process; i_toy++)
+    {
+    toy_process_type
+    ::team_invoke(member, i_part,i_toy,
+                  t, p, number_conc,
+                  state, omega,
+                  amcd);
+    }// i_toy
+    });// i_part
+
+
+
 
 #if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
   printf("omega.extent(0) %d \n",omega.extent(0));

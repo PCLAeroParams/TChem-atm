@@ -1,0 +1,28 @@
+NCAR-version:
+- type: RELATIVE_TOLERANCE
+  value: 1.0e-15
+- N star: 2.55
+  absolute tolerance: 1.0e-20
+  diffusion coeff [m2 s-1]: 9.5e-06
+  molecular weight [kg mol-1]: 0.04607
+  name: A 
+  type: CHEM_SPEC
+- absolute tolerance: 1.0e-20
+  density [kg m-3]: 1000.0
+  molecular weight [kg mol-1]: 0.04607
+  name: B 
+  phase: AEROSOL
+  type: CHEM_SPEC
+- maximum computational particles: 1 
+  name: my aero rep 2
+  type: AERO_REP_SINGLE_PARTICLE
+- name: toy_process 
+  reactions:
+    - A : 1
+      B : 2 
+      aerosol-phase species: B 
+      gas-phase species: A 
+      type: TOY_PROCESS
+  type: MECHANISM
+note: Diffusion coefficient and N* for ethanol taken from CAPRAM 2.4 reduced
+

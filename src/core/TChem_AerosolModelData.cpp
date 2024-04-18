@@ -100,6 +100,9 @@ int AerosolModelData::initChem(YAML::Node &root,
     } // item loop
     printf("Done with species...\n");
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
+
+    std::vector<ToyProcessType> toy_info;
+
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();
       if (type=="MECHANISM"){
@@ -140,7 +143,38 @@ int AerosolModelData::initChem(YAML::Node &root,
             TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting aerosol model" );
           }
           simpol_info.push_back(simpol_info_at);
-         } else {
+         } else if (reaction_type=="TOY_PROCESS")
+         {
+          ToyProcessType toy_info_at;
+          toy_info_at.A = ireac["A"].as<real_type>();
+          toy_info_at.B = ireac["B"].as<real_type>();
+          // getting aerosol and gas species index.
+          const auto aero_sp = ireac["aerosol-phase species"].as<std::string>();
+          // std::cout <<"aero_sp " << aero_sp<<"\n";
+          auto it_aero = aerosol_sp_name_idx_.find(aero_sp);
+          if (it_aero != aerosol_sp_name_idx_.end()) {
+           // aerosol species are place after gas species.
+           //Note: that we do not use number of particles here.
+           toy_info_at.aerosol_sp_index = it_aero->second + nSpec_gas_;
+           } else {
+           printf("species does not exit %s in reactants of TOY_PROCESS reaction No \n", aero_sp);
+           TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
+          }
+
+          const auto gas_sp = ireac["gas-phase species"].as<std::string>();
+           auto it_gas = gas_sp_name_idx_.find(gas_sp);
+           if (it_gas != gas_sp_name_idx_.end()) {
+            //
+            toy_info_at.gas_sp_index = it_gas->second;
+           } else {
+            printf("Error : species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER\n", gas_sp);
+            TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting aerosol model" );
+          }
+          toy_info.push_back(toy_info_at);
+
+         }
+
+         else {
         printf("Warning : TChem (amd) did not parse this reaction type %s \n", reaction_type.c_str());
        }// ireac
       }
@@ -182,11 +216,22 @@ int AerosolModelData::initChem(YAML::Node &root,
       simpol_params_host(isimpol)=simpol_params_host_at_i;
     } // nsimpol
 
+    nToy_process_= toy_info.size();
+    printf("Number of toy processes %d \n",nToy_process_ );
+    // update simpol
+    toy_params_ = toy_process_1d_dual_view(do_not_init_tag("AMD::toy_params_"), nToy_process_);
+    const auto toy_params_host = toy_params_.view_host();
+
+    for (ordinal_type itoy = 0; itoy < nToy_process_; itoy++)
+    {
+      toy_params_host(itoy)=toy_info[itoy];
+    } // toy_process
 
     molecular_weights_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weights"), nSpec_);
     auto molecular_weights_host = molecular_weights_.view_host();
     aerosol_density_= real_type_1d_dual_view(do_not_init_tag("AMD::aerosol_density_"), nSpec_);
     auto aerosol_density_host = aerosol_density_.view_host();
+
     for (int i = 0; i < nSpec_; i++)
     {
       molecular_weights_host(i) = mw_aerosol_sp[i];
@@ -196,10 +241,12 @@ int AerosolModelData::initChem(YAML::Node &root,
     molecular_weights_.modify_host();
     aerosol_density_.modify_host();
     simpol_params_.modify_host();
+    toy_params_.modify_host();
 
     molecular_weights_.sync_device();
     aerosol_density_.sync_device();
     simpol_params_.sync_device();
+    toy_params_.sync_device();
 
     return 0;
 }

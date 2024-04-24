@@ -28,15 +28,14 @@ struct ToyProcess
     template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static void team_invoke(
     const MemberType& member,
-    const real_type& t,
-    const real_type& p,
     const ordinal_type i_part,
     const ordinal_type i_toy,
+    const real_type& t,
+    const real_type& p,
     const real_type_1d_view_type& number_conc,
     const value_type_1d_view_type& state,
     const value_type_1d_view_type& omega,
     const aerosol_model_data_type& amcd
-
     )
     {
       // 1. Let's compute the reaction/mass transfer constant

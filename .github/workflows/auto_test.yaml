@@ -1,4 +1,4 @@
-name: auto_test_new
+name: auto_test
 
 # This action is triggered:
 # 1. when someone creates a pull request for a merge to the main branch
@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04] #, macos-latest]
-        build-type: [Release, Debug] #
+        build-type: [Release, Debug]
         sacado-on: [ON, OFF]
         #fp-precision: [double] # single is not working for tchem.
 

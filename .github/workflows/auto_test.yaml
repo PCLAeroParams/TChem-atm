@@ -33,7 +33,6 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: recursive
-        path: tchem_dir
     - name: Building TChem (${{ matrix.build-type }}, ${{ matrix.sacado-on }} sacado)
       run: docker build -f Dockerfile -t tchem . --build-arg BUILD_TYPE=${{ matrix.build-type }} --build-arg SACADO=${{ matrix.sacado-on }}
     - name: Testing TChem

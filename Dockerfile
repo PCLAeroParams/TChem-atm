@@ -1,5 +1,10 @@
 FROM ubuntu:22.04
 
+ARG BUILD_TYPE=RELEASE
+ARG SACADO=ON
+RUN echo "BUILD TYPE:" ${BUILD_TYPE}
+RUN echo "SACADO:" ${SACADO}
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         autoconf \
@@ -19,7 +24,7 @@ COPY . /tchem_dir/
 
 RUN cmake -S /tchem_dir/external/Tines/ext/kokkos -B /build/kokkos_build \
           -DCMAKE_INSTALL_PREFIX="/install/kokkos_install" \
-          -DCMAKE_BUILD_TYPE=RELEASE \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_CXX_FLAGS="-fopenmp -g" \
           -DKokkos_ENABLE_SERIAL=ON \
@@ -81,7 +86,7 @@ RUN cmake -S /tchem_dir/external/Tines/src -B /build/tines_build \
           -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
           -DTINES_ENABLE_DEBUG=OFF \
           -DTINES_ENABLE_VERBOSE=OFF \
-          -DCMAKE_BUILD_TYPE=RELEASE \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DTINES_ENABLE_TEST=OFF \
           -DTINES_ENABLE_EXAMPLE=OFF \
           -DSUNDIALS_INSTALL_PATH=/install/sundials_install \
@@ -99,11 +104,11 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DCMAKE_CXX_FLAGS="-g" \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
-          -DCMAKE_BUILD_TYPE=RELEASE \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DTCHEM_ATM_ENABLE_VERBOSE=OFF \
           -DTCHEM_ATM_ENABLE_TEST=ON \
           -DTCHEM_ATM_ENABLE_EXAMPLE=ON \
-          -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=ON\
+          -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=${SACADO} \
           -DKOKKOS_INSTALL_PATH=/install/kokkos_install \
           -DTINES_INSTALL_PATH=/install/tines_install \
           -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
@@ -113,3 +118,6 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
 WORKDIR /tchem_build
 RUN make -j \
     && make install
+
+WORKDIR /tchem_install
+ENV TCHEM_INSTALL_PATH=/tchem_install/

@@ -1,4 +1,4 @@
-name: auto_test
+name: auto_test_new
 
 # This action is triggered:
 # 1. when someone creates a pull request for a merge to the main branch
@@ -29,138 +29,12 @@ jobs:
 
     # Steps for building and running tests.
     steps:
-
-    - name: Installing dependencies
-      run: |
-        sudo apt-get update && sudo apt-get install -y --no-install-recommends \
-        autoconf \
-        clang-format \
-        cmake \
-        gcc \
-        g++ \
-        git \
-        lcov \
-        make \
-        libopenblas-dev \
-        pkg-config \
-        ca-certificates
-
     - name: Checking out repository
       uses: actions/checkout@v2
       with:
         submodules: recursive
         path: tchem_dir
-
-    - name: Building Kokkos (${{ matrix.build-type }})
-      run: |
-        cmake -S tchem_dir/external/Tines/ext/kokkos -B kokkos_build \
-          -DCMAKE_INSTALL_PREFIX="kokkos_install" \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_CXX_FLAGS="-fopenmp -g" \
-          -DKokkos_ENABLE_SERIAL=ON \
-          -DKokkos_ENABLE_OPENMP=ON \
-          -DKokkos_ENABLE_CUDA=OFF \
-          -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
-          -DKokkos_ENABLE_CUDA_LAMBDA=OFF
-        cd kokkos_build
-        make -j
-        make install
-
-    - name: Building gtest
-      run: |
-        cmake -S tchem_dir/external/Tines/ext/gtest -B gtest_build \
-          -DCMAKE_INSTALL_PREFIX="gtest_install" \
-          -DCMAKE_CXX_COMPILER=g++
-        cd gtest_build
-        make -j
-        make install
-
-    - name: Building yaml
-      run: |
-        cmake -S tchem_dir/external/Tines/ext/yaml -B yaml_build \
-          -DCMAKE_INSTALL_PREFIX="yaml_install" \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_FLAGS="-g -c" \
-          -DCMAKE_EXE_LINKER_FLAGS="" \
-          -DCMAKE_BUILD_TYPE=RELEASE
-        cd yaml_build
-        make -j
-        make install
-
-    - name: Building sundials
-      run: |
-        cmake -S tchem_dir/external/Sundials -B sundials_build \
-          -DCMAKE_INSTALL_PREFIX="sundials_install" \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_FLAGS="-g" \
-          -DCMAKE_C_FLAGS="-g" \
-          -DCMAKE_EXE_LINKER_FLAGS="" \
-          -DENABLE_CALIPER:BOOL=OFF \
-          -DCMAKE_BUILD_TYPE=RELEASE
-        cd sundials_build
-        make -j
-        make install
-
-    - name: Building Skywalker
-      run: |
-        cmake -S tchem_dir/external/Skywalker -B skywalker_build \
-          -DCMAKE_INSTALL_PREFIX="skywalker_install" \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_C_COMPILER=gcc \
-          -DSKYWALKER_PRECISION=double \
-          -DCMAKE_BUILD_TYPE=RELEASE
-        cd skywalker_build
-        make -j
-        make install
-
-    - name: Building Tines (${{ matrix.build-type }})
-      run: |
-        cmake -S tchem_dir/external/Tines/src -B tines_build \
-          -DCMAKE_INSTALL_PREFIX="tines_install" \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_CXX_FLAGS="-g" \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
-          -DTINES_ENABLE_DEBUG=OFF \
-          -DTINES_ENABLE_VERBOSE=OFF \
-          -DCMAKE_BUILD_TYPE=${{matrix.build-type}} \
-          -DTINES_ENABLE_TEST=OFF \
-          -DTINES_ENABLE_EXAMPLE=OFF \
-          -DSUNDIALS_INSTALL_PATH=`pwd`/sundials_install \
-          -DYAML_INSTALL_PATH=`pwd`/yaml_install \
-          -DKOKKOS_INSTALL_PATH=`pwd`/kokkos_install \
-          -DOPENBLAS_INSTALL_PATH=`/usr/lib64` \
-          -DGTEST_INSTALL_PATH=`pwd`/gtest_install
-        cd tines_build
-        make -j
-        make install
-
     - name: Building TChem (${{ matrix.build-type }}, ${{ matrix.sacado-on }} sacado)
-      run: |
-        cmake -S tchem_dir/src -B tchem_build \
-          -DCMAKE_INSTALL_PREFIX=tchem_install \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DCMAKE_CXX_FLAGS="-g" \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
-          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
-          -DTCHEM_ATM_ENABLE_VERBOSE=OFF \
-          -DTCHEM_ATM_ENABLE_TEST=ON \
-          -DTCHEM_ATM_ENABLE_EXAMPLE=ON \
-          -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=${{ matrix.sacado-on }}\
-          -DKOKKOS_INSTALL_PATH=`pwd`/kokkos_install \
-          -DTINES_INSTALL_PATH=`pwd`/tines_install \
-          -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
-          -DTCHEM_ATM_ENABLE_REAL_TYPE="double" \
-          -DSKYWALKER_INSTALL_PATH=`pwd`/skywalker_install \
-          -DGTEST_INSTALL_PATH=`pwd`/gtest_install
-        cd tchem_build
-        make -j
-        make install
+      run: docker build -f Dockerfile -t tchem . --build-arg BUILD_TYPE=${{ matrix.build-type }} --build-arg SACADO=${{ matrix.sacado-on }}
     - name: Testing TChem
-      run: |
-        cd tchem_build
-        ctest
+      run: docker run -t tchem bash -c 'cd /tchem_build; ctest'

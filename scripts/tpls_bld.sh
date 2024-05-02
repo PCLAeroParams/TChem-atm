@@ -144,14 +144,12 @@ make ${JFLAG} install
 TCHEM_BASE=$ROOT/TChem-atm/external
 REPO_BASE=$TCHEM_BASE/Tines/ext
 
-
-
 if [ "${CUDA}" = "ON" ]; then
     BUILD_BASE=${PWD}/DEVICE/build
     INSTALL_BASE=${PWD}/DEVICE/install
 else
-    BUILD_BASE=${PWD}/TPLs/build
-    INSTALL_BASE=${PWD}/TPLs/install
+    BUILD_BASE=${PWD}/HOST/build
+    INSTALL_BASE=${PWD}/HOST/install
 fi
 
 mkdir -p ${BUILD_BASE}

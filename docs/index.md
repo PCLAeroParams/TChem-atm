@@ -9,9 +9,12 @@ Software Design:
   * Numerical Jacobians and SACADO analytic Jacobians for all models.
   * Couples to external ODE solvers. e.g., Tines, Sundials(CVODE).
 
+
 ## Installation
 The [Installation](installation.md) guide shows you how to build and install
   TChem-atm on your own machine or on a supported high-performance platform.
+
+## [Computational Methodology](methodology.md)
 
 ## Reaction types
 

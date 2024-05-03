@@ -4,11 +4,13 @@ nav:
  - 'index.md'
  - 'installation.md'
  - 'methodology.md'
+ - 'input.md'
 
 edit_uri: ""
 
 theme:
   name: material
+  palette:
   palette:
   - media: "(prefers-color-scheme: light)"
     scheme: default
@@ -17,7 +19,6 @@ theme:
       name: Switch to dark mode
   - media: "(prefers-color-scheme: dark)"
     scheme: slate
-    primary: cyan
     toggle:
       icon: material/weather-night
       name: Switch to light mode
@@ -26,18 +27,17 @@ theme:
     - navigation.instant
     - navigation.sections
     - navigation.top
-  markdown_extensions:
-    - admonition
-    - pymdownx.highlight
-    - pymdownx.superfences
-    - pymdownx.tabbed:
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - mdx_math
+  - pymdownx.tabbed:
       alternate_style: true
-    - mdx_math
-    - pymdownx.arithmatex:
+  - pymdownx.arithmatex:
       generic: true
-    - tables
-  extra_javascript:
-    - mathjax.js
-    - https://polyfill.io/v3/polyfill.min.js?features=es6
-    - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-  repo_url: https://github.com/PCLAeroParams/TChem-atm
+extra_javascript:
+  - javascript/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+repo_url: https://github.com/PCLAeroParams/TChem-atm

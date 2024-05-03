@@ -11,7 +11,7 @@ environmental_conditions:
   air_concetration:
     initial_value: 1.0
 initial_state:
-  A: 
+  A:
    initial_value: [1.0]
    units: mol m-3
 model_info:
@@ -29,7 +29,7 @@ model_info:
   cells: 1
 reactions:
 - coefficients:
-    k0_A: 4.0e-18 
+    k0_A: 4.0e-18
   products:
     B: 1.0
   reactants:
@@ -52,11 +52,11 @@ reactions:
   time_unit: min
 constant_species:
 - description: tracer-CONSTANT
-  name: M 
+  name: M
 species:
-- description: A 
+- description: A
   name: A
-- description: B 
+- description: B
   name: B
-- description: C 
+- description: C
   name: C

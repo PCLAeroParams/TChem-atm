@@ -1,4 +1,5 @@
 TChem-atm  requires the following third-party libraries:
+
   * [Tines](https://github.com/sandialabs/Tines.git)
     * [BLAS/LAPACK](http://www.openblas.net)
     * [YAML](https://github.com/jbeder/yaml-cpp)
@@ -18,19 +19,21 @@ TChem-atm is open source code available in [github](https://github.com/PCLAeroPa
 ### Building and installing third-party libraries.
 
 The script [``scripts/tpls_bld.sh``](tpls_bld.sh) clones, builds, and installs the TChem's third-party libraries. To use this script, ones must provide the compiler information using:
+
 ```bash
 MY_CC=gcc # c++ compiler
 MY_CXX=g++ # c++ compiler
 MY_FC=gfortran # fortran compiler
 ```
+
 to build/install with CUDA ``ON`` or ``OFF` using:
+
 ```
 CUDA="OFF" # ON/OFF to compile TChem with NVIDIA-GPUs
 ```
 and the root directory to install/build the third-party libraries;
-``
-ROOT=/path/to/tchem/
-``.
+``ROOT=/path/to/tchem/``
+
 These variables are located in the top section of the ``scripts/tpls_bld.sh``. This ``scripts/tpls_bld.sh`` initializes the submodules and install/build the third-party libries in the ``$ROOT/HOST`` or ``$ROOT/DEVICE`` directory for ``CUDA =OFF`` or ``CUDA=ON``. Because Kokkos can be installed/built for both CUDA ``ON`` and ``OFF``, it will be installed in both director ``$ROOT/HOST`` and  ``$ROOT/DEVICE`` and the other libraries will be installed in  ``$ROOT/HOST``. Hence, one must run this script using CUDA=OFF to install all third party libraries and run it a second time using CUDA=ON, if a NVIDIA GPUs is aviable.
 
 ## Building and install TChem-atm and Tines
@@ -40,8 +43,8 @@ MY_CC=gcc # c++ compiler
 MY_CXX=g++ # c++ compiler
 MY_FC=gfortran # fortran compiler
 ```
-to build/install with CUDA ``ON`` or ``OFF` using:
-```
+to build/install with CUDA ``ON`` or ``OFF`` using:
+```bash
 CUDA="OFF" # ON/OFF to compile TChem with NVIDIA-GPUs
 ```
 In addition, this script adds the option to turn ON/OFF automatic differenciation using SACADO library using ``SACADO="ON"`` or ``SACADO="OFF"``.

@@ -40,6 +40,7 @@ OPTION(TCHEM_ATM_ENABLE_EXAMPLE "Flag to enable unit examples" ON)
 OPTION(TCHEM_ATM_ENABLE_VERBOSE "Flag to enable TChem_atm verbose flag" OFF)
 OPTION(TCHEM_ATM_ENABLE_DEBUG "Flag to enable TChem_atm debug flag" OFF)
 OPTION(TCHEM_ATM_ENABLE_INSTALL "Flag to enable install exports for TCHEM_ATM" ON)
+OPTION(TCHEM_ENABLE_FORTRAN "Flag to enable fortran binding" ON)
 OPTION(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY "Flag to enable sacado jacobian for atmospheric chemistry" OFF)
 OPTION(TCHEM_ATM_ENABLE_SKYWALKER "Flag to enable Skywalker" OFF)
 
@@ -143,6 +144,10 @@ IF (SKYWALKER_INSTALL_PATH)
 ENDIF()
 ENDIF()
 
+# Fortran
+IF (TCHEM_ENABLE_FORTRAN)
+  ENABLE_LANGUAGE(Fortran)
+ENDIF()
 
 #
 # Linking libraries used in example and test

@@ -1,27 +1,34 @@
 # Input files
+## Gas gas chemistry input file
+
+The YAML input file for atmospheric chemistry consists of five sections:
+
+* ``environmental_conditions``: pressure and  temperature of individual cells.
+* ``initial_state``: initial species concentration within the cells.
+* ``reactions``: list of reactions with rate parameters and reaction type.
+* ``constant_species``: species that are part of reaction mechanism, but are assumed constant.
+e.g., invariant species.
+* ``species``: list of species names.
+
+For example, for the toy reaction $A \rightarrow B$, simulation with N cells, one reaction, and three species
+
 ```yaml
 NCAR-version: v1.0
 environmental_conditions:
   pressure:
     evolving: false
-    initial_value: [101253.3, 92834.4, 90328.4, 100495.4, 96943.4]
+    initial_value: [P1, ..., PN]
     units: Pa
   temperature:
     evolving: false
-    initial_value: [272.5, 248.3, 301.3, 276.0, 245.1]
+    initial_value: [T1, ..., TN]
     units: K
 initial_state:
-  D:
-    initial_value: [1.2, 17.0, 13.0, 9.0, 4.0]
-    units: molecules m-3
   A:
-    initial_value: [1.0, 2.0, 3.0, 4.0, 5.0]
-    units: mol m-3
-  B:
-    initial_value: [0.0, 0.0, 0.0, 0.0, 0.0]
+    initial_value: [A1, .., AN]
     units: mol m-3
   M:
-    initial_value: [0.0, 0.0, 0.0, 0.0, 0.0]
+    initial_value: [M1, .., MN]
     units: mol m-3
 reactions:
 - coefficients:
@@ -29,34 +36,8 @@ reactions:
     B: 1.0
   reactants:
     A: 1.0
-    D: 1.0
-  type: ARRHENIUS
-- coefficients:
-    A: 1476.0
-    Ea: 5.5e-21
-    B: 150.0
-    E: 0.15
-  products:
-    B: 1.0
-  reactants:
-    A: 1.0
-  type: ARRHENIUS
-  time_unit: min
-- coefficients:
-    A: 21.0
-    C: -4000.0
-    B: 11.0
-    D: 315.0
-    E: 0.05
-  products:
-    C: 1.0
-    D: 1.0
-  reactants:
-    B: 1.0
   type: ARRHENIUS
 constant_species:
-- description: tracer-CONSTANT
-  name: D
 - description: tracer-CONSTANT
   name: M
 species:
@@ -64,6 +45,10 @@ species:
   name: A
 - description: B
   name: B
-- description: C
-  name: C
 ```
+
+A description of the reaction types currently implemented in TChem-atm is presented in [Methodology section](methodology.md). In addition, a set of examples of input files is presented under ``/src/examples/runs/atmopheric_chemistry``.
+
+## Gas-Particle chemistry input file.
+
+## Initial condition input file for particles.

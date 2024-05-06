@@ -1,6 +1,7 @@
 TChem-atm  requires the following third-party libraries:
 
   * [Tines](https://github.com/sandialabs/Tines.git)
+    * [Sacado](https://docs.trilinos.org/dev/packages/sacado/doc/html/index.html)
     * [BLAS/LAPACK](http://www.openblas.net)
     * [YAML](https://github.com/jbeder/yaml-cpp)
     * [Sundials](https://github.com/LLNL/sundials.git)

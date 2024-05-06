@@ -1,14 +1,14 @@
-TChem compute the source term or the right hand side of the gas species, $k$ equation:
+TChem computes the source term or the right hand side of the $k$ gas-species equation:
 
 <!-- \begin{equation}\label{eq:ode_vmr} -->
 $$
 \newcommand{\dif}{\mathrm{d}}
-\newcommand{\eee}{E3SM}
+\newcommand{\eee}{\mathrm{E3SM}}
   \frac{\dif{} \eta_k}{\dif{} t}=\dot{\omega}_k,
 $$
 <!-- \end{equation} -->
 
-and its associated Jacobian matrix , $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which is evaluated using either finite differences or automatic automatic differentiation via the Tines or the Sacado Libraries. Futhermore, TChem has interface to solve the a system of ordinary differential equations (ODEs) in order to time advance the volumetric mixing ratio (vmr, $\eta_k$ ) of gas species, $k$.
+and its associated Jacobian matrix , $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which is evaluated using either finite differences or automatic automatic differentiation via the Tines or the Sacado Libraries. Futhermore, TChem has interface to solve the system of ordinary differential equations (ODEs) in order to time advance the volumetric mixing ratio (vmr, $\eta_k$ ) of gas species, $k$.
 
 The net production rate of species $k$, $\dot{\omega}_k$, or the right hand side of the vmr equation is computed using:
 
@@ -28,7 +28,7 @@ where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction cons
 Note that in $\eee{}$`s CAMPP solver only forward reaction calculations are employed, and the single reaction constant values depend on the type of reaction.
 
 
-## Reaction types
+## **Reaction types**
 Currently, TChem-atm can reproduce gas chemistry for two complex reaction mechanisms: the gas chemistry of $\eee{}$ v3, i.e., the UCI chemistry(University of California Irvine), and the Carbon Bond 2005 chemical mechanism, which is well-formulated for urban to remote troposphere conditions~\cite{Dawson2022,Yarwood2005}. To represent, these mechanism, TChem-atm has Troe, Arrhenius, Troe-Arrenious ratio, and  Custom-H2O2 types.
 
 Next, we present the expresion for the forward rate contant of the reaction types that are implemented in TChem-atm. In these equations, $\mathrm{T}$, $\mathrm{P}$, $[M]$ correspond to the temperature, pressure, and air concentration.
@@ -241,7 +241,7 @@ $$
 ```
 ### usr_DMS_OH
 
-The reaction type ``usr_DMS_OH`` is part of the UCI mechanism and is hard-code in the [``mo_usrrxt``](https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L683) submodule in \eee's code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type, using the following configuration.
+The reaction type ``usr_DMS_OH`` is part of the UCI mechanism and is hard-code in the [``mo_usrrxt``](https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L683) submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type, using the following configuration.
 
 ```yaml
 - coefficients:
@@ -265,7 +265,7 @@ The reaction type ``usr_DMS_OH`` is part of the UCI mechanism and is hard-code i
 ```
 
 ### usr_SO2_OH
-The reaction type ``usr_SO2_OH`` is part of the UCI mechanism and is hard-code in the [``mo_usrrxt``](https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L693) submodule in \eee's code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type, using the following configuration.
+The reaction type ``usr_SO2_OH`` is part of the UCI mechanism and is hard-code in the [``mo_usrrxt``](https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L693) submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type, using the following configuration.
 
 ```yaml
 - coefficients:
@@ -323,8 +323,8 @@ modifier_prod_O1D:
   - 24
   photolysis_reaction_index: 0
 ```
-
-Here, under ``coefficients``, the kinetic parameter are presented. The species involved in this factor are listed with `species_name_1` to `species_name_2`. Note that TChem will find the index of this species. The ``reaction_list`` presents the index of reaction, where this modifier is applied. Finally, ``photolysis_reaction_index`` is the index of the $\mathrm{prod_{O1D}}$ reaction.
+Here, under ``coefficients``, the kinetic parameter are presented. The species involved in this fac
+tor are listed with `species_name_1` to `species_name_2`. Note that TChem will find the index of this species. The ``reaction_list`` presents the index of reaction, where this modifier is applied. Finally, ``photolysis_reaction_index`` is the index of the $\mathrm{prod_{O1D}}$ reaction.
 
 Note, future work will convert ``reaction_list`` from a list of index to reaction ids. Thus, one does not need to known the index of these reaction before running a TChem simulation. Furthermore, ``photolysis_reaction_index`` will be converted from index to reaction id.
 

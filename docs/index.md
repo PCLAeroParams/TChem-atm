@@ -21,19 +21,14 @@ A brief description of TChem-atm approach is presented in [here](methodology.md)
 # Input file
 A description of input files employ is [here](input.md)
 
-## Tests
+# Examples
 
-## Examples
-
-## Implimentation
-
-## Acknowledgements
+# Acknowledgements
 TChem has developed using the following founding sources:
-* LDRD sandia
+* LDRD sandia P-CLAP
+* QTI-LDRD
 * The [EAGLES project](https://climatemodeling.science.energy.gov/projects/enabling-aerosol-cloud-interactions-global-convection-permitting-scales-eagles), which was funded by
 the Office of Science's [Biological and Environmental
 Research](https://science.osti.gov/ber) Program.
-* ECC
-
-The source code is available on
+* ECC The source code is available on
 [GitHub](https://github.com/PCLAeroParams/TChem-atm).

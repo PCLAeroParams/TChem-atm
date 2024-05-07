@@ -11,6 +11,8 @@ Software Design:
 
 ![TChem](figures/TChem_atm.png)
 
+TChem-atm has a parser for a YAML input file that constructs a kinetic model constant data object that contains relevant parameters for the computation of the chemical source terms. TChem-atm computes the reaction constants and rate of progress for all the reactions listed in the input files. Then, it computes the net production rate or source terms for all species listed in the input files. TChem-atm automatically calculates the Jacobian matrix for the source terms using either finite differences (numerical Jacobian) or automatic differentiation (analytical Jacobian via SACADO). Furthermore, the computation of the source term and associated Jacobian is independent of the time integration solver in TChem-atm. Therefore, TChem-atm has an interface for time integration (Box model) for the Tines and CVODE libraries. Finally, TChem has a batched interface for evaluating the source term, Jacobian matrix, and time integration.
+
 # **Citations**
 * [TChem: A performance portable parallel software
 toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/article/pii/S0010465522003472)

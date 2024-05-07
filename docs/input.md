@@ -1,5 +1,5 @@
-# Input files
-## Gas gas chemistry input file
+# **Input files**
+## **Gas chemistry input file**
 
 The YAML input file for atmospheric chemistry consists of five sections:
 
@@ -49,6 +49,7 @@ species:
 
 A description of the reaction types currently implemented in TChem-atm is presented in [Methodology section](methodology.md). In addition, a set of examples of input files is presented under ``/src/examples/runs/atmopheric_chemistry``.
 
-## Gas-Particle chemistry input file.
+<!-- Future work -->
+<!-- ## Gas-Particle chemistry input file. -->
 
-## Initial condition input file for particles.
+<!-- ## Initial condition input file for particles. -->

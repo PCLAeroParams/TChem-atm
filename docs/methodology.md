@@ -1,4 +1,6 @@
-TChem computes the source term or the right hand side of the $k$ gas-species equation:
+# **Methodology**
+
+TChem-atm computes the source term or the right hand side of the $k$ gas-species equation:
 
 <!-- \begin{equation}\label{eq:ode_vmr} -->
 $$
@@ -8,28 +10,32 @@ $$
 $$
 <!-- \end{equation} -->
 
-and its associated Jacobian matrix , $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which is evaluated using either finite differences or automatic automatic differentiation via the Tines or the Sacado Libraries. Futhermore, TChem has interface to solve the system of ordinary differential equations (ODEs) in order to time advance the volumetric mixing ratio (vmr, $\eta_k$ ) of gas species, $k$.
+and its associated Jacobian matrix , $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which is evaluated using either finite differences or automatic automatic differentiation via the Tines or the Sacado Library. Futhermore, TChem-atm has an interface for Tines or CVODE (ODE(ordinary differential equations) solver) to time advance the volumetric mixing ratio (vmr, $\eta_k$ ) of gas species, $k$.
 
-The net production rate of species $k$, $\dot{\omega}_k$, or the right hand side of the vmr equation is computed using:
+The net production rate of species $k$, $\dot{\omega}_k$, or the right hand side of the previous equation is computed using:
 
-\begin{equation}\label{eq:net_production_rates}
+<!-- \begin{equation}\label{eq:net_production_rates} -->
+$$
   \dot{\omega}_k=\sum_{i=1}^{N_{\text{react}}}\nu_{ki}q_i,\quad \nu_{ki}=\nu''_{ki}-\nu'_{ki},
-\end{equation}
+$$
+<!-- \end{equation} -->
 
 where $q_i$ is the rate of progress of reaction $i$, $N_{\text{react}}$ is the number of reactions, $\nu''_{ki}$ and $\nu'_{ki}$ are the stoichiometric coefficients of species $k$ in reaction $i$ for the reactant and product sides of the reaction, respectively.
 
 Finally, the rate of progress of reaction $i$ is computed as
 
-\begin{equation}\label{eq:rate_of_progress}
+<!-- \begin{equation}\label{eq:rate_of_progress} -->
+$$
   q_i={k_f}_i\prod_{j=1}^{N_{\text{spec}}}\eta_j^{\nu'_{ji}},
-\end{equation}
+$$
+<!-- \end{equation} -->
 
-where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction constant of reaction $i$.
-Note that in $\eee{}$`s CAMPP solver only forward reaction calculations are employed, and the single reaction constant values depend on the type of reaction.
+where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction constant of reaction $i$. There are different type of expresions to compute ${k_f}_i$. Next, we present the reaction types that are aviable in TChem-atm.
 
+<!-- Note that in $\eee{}$`s CAMPP solver only forward reaction calculations are employed, and the single reaction constant values depend on the type of reaction. -->
 
 ## **Reaction types**
-Currently, TChem-atm can reproduce gas chemistry for two complex reaction mechanisms: the gas chemistry of $\eee{}$ v3, i.e., the UCI chemistry(University of California Irvine), and the Carbon Bond 2005 chemical mechanism, which is well-formulated for urban to remote troposphere conditions~\cite{Dawson2022,Yarwood2005}. To represent, these mechanism, TChem-atm has Troe, Arrhenius, Troe-Arrenious ratio, and  Custom-H2O2 types.
+Currently, TChem-atm can reproduce gas chemistry for two complex reaction mechanisms: the gas chemistry of $\eee{}$ v3, i.e., the UCI chemistry(University of California Irvine), and the Carbon Bond 2005 chemical mechanism, which is well-formulated for urban to remote troposphere conditions([Dawson](https://gmd.copernicus.org/articles/15/3663/2022/),[Yarwood](https://www.camx.com/Files/CB05_Final_Report_120805.pdf)). To represent, these mechanism, TChem-atm has Troe, Arrhenius, Troe-Arrenious ratio, and  Custom-H2O2 types.
 
 Next, we present the expresion for the forward rate contant of the reaction types that are implemented in TChem-atm. In these equations, $\mathrm{T}$, $\mathrm{P}$, $[M]$ correspond to the temperature, pressure, and air concentration.
 
@@ -328,6 +334,7 @@ tor are listed with `species_name_1` to `species_name_2`. Note that TChem will f
 
 Note, future work will convert ``reaction_list`` from a list of index to reaction ids. Thus, one does not need to known the index of these reaction before running a TChem simulation. Furthermore, ``photolysis_reaction_index`` will be converted from index to reaction id.
 
-## Gas and Particule interaction
+<!--Future work-->
+<!-- ## Gas and Particule interaction
 
-### Simpol mass transfer
+### Simpol mass transfer -->

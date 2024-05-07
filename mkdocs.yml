@@ -1,4 +1,4 @@
-site_name: "TChem-atm: a kinetic solver for atmospheric chemistry"
+site_name: "TChem-atm: a performance portable toolkit for atmospheric chemistry mechanisms"
 
 nav:
  - 'index.md'

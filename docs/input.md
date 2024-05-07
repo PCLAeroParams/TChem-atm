@@ -3,14 +3,15 @@
 
 The YAML input file for atmospheric chemistry consists of five sections:
 
-* ``environmental_conditions``: pressure and  temperature of individual cells.
+* ``environmental_conditions``: pressure and temperature of individual cells.
 * ``initial_state``: initial species concentration within the cells.
 * ``reactions``: list of reactions with rate parameters and reaction type.
-* ``constant_species``: species that are part of reaction mechanism, but are assumed constant.
+* ``constant_species``: species that are part of the reaction mechanism but are assumed constant.
 e.g., invariant species.
 * ``species``: list of species names.
 
 For example, for the toy reaction $A \rightarrow B$, simulation with N cells, one reaction, and three species
+
 
 ```yaml
 NCAR-version: v1.0

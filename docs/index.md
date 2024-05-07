@@ -1,5 +1,5 @@
 # **Overview**
-TChem-atm computes source terms and Jacobian matrices for chemical systems. It is performance-portable software toolkit for complex kinetic models and it is designed and implemented using [Kokkos](https://github.com/kokkos/kokkos.git)(a performance portable parallel programming model).
+TChem-atm computes source terms and Jacobian matrices for chemical systems. It is a performance-portable software toolkit for complex kinetic mechanisms. We designed and implemented TChem-atm using [Kokkos](https://github.com/kokkos/kokkos.git)(a performance-portable parallel programming model).
 
 Software Design:
 
@@ -40,21 +40,20 @@ toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/a
 ```
 
 # **Installation**
-The [Installation](installation.md) guide shows you how to build and install
-  TChem-atm on your own machine or on a supported high-performance platform.
+The [installation](installation.md) guide shows you how to obtain, build, and install TChem-atm and its third-party libraries.
 
 # **Theorycal background**
-A brief description of TChem-atm approach is presented in [here](methodology.md).
+The TChem-atm approach is briefly described in [Methodoly section](methodology.md).
 
 # **Input file**
-A description of input files employ is [here](input.md)
+A description of input files is presented in [Input file section](input.md).
 
 # **Examples**
 
-List of examples can be found [here](examples.md).
+A list of examples can be found [here](examples.md).
 
 # **Acknowledgements**
-TChem has developed using the following founding sources:
+TChem has developed using the following funding sources:
 
 * Sandia Laboratory Directed Research and Development (LDRD) project "Bridging aerosol representations across scales with physics-constrained statistical learning."
 

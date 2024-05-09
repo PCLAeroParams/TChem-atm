@@ -43,7 +43,7 @@ toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/a
 # **Installation**
 The [installation](installation.md) guide demonstrates how to obtain, build, and install TChem-atm along with its third-party libraries.
 
-# **Theorycal background**
+# **Theoretical Background**
 he TChem-atm approach is briefly described in the [Methodoly section](methodology.md).
 
 # **Input file**
@@ -54,7 +54,7 @@ A description of input files is presented in the [Input file section](input.md).
 A list of examples can be found [here](examples.md).
 
 # **Acknowledgements**
-TChem has been developed using the following funding sources:
+TChem-atm has been developed using the following funding sources:
 
 * Sandia Laboratory Directed Research and Development (LDRD) project "Bridging aerosol representations across scales with physics-constrained statistical learning."
 

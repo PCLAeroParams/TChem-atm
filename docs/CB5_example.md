@@ -1,5 +1,5 @@
 # **Carbon Bound 5**
-We adapted the carbon bound 5 reaction mechanism from the [CAMP chemistry code](https://github.com/open-atmos/camp/tree/main/mechanisms/cb05cl_ae5).
+We adapted the Carbon Bound 5 reaction mechanism from the [CAMP chemistry code](https://github.com/open-atmos/camp/tree/main/mechanisms/cb05cl_ae5).
 
 Mechanism details:
 
@@ -12,7 +12,7 @@ Mechanism details:
 
 The mechanism in the CAMP solver has 26 photolysis reactions, which we replace with Arrhenius-type reactions with energy = 0  and temperature coefficient = 1.
 
-Scripts to run and plot the outputs of this example are at: ``src/examples/runs/atmospheric_chemistry/CB05CL_AE5``. The bash script to run this mechanism is :
+Scripts to run and plot the outputs of this example are at: ``src/examples/runs/atmospheric_chemistry/CB05CL_AE5``. The bash script to run this mechanism is shown below:
 
 
 ```bash
@@ -34,11 +34,11 @@ echo $run_this
 eval $run_this
 ```
 
-Here, the ``TChem_AtmosphericChemistry.x`` executable is a box model that time integrates a list of species using the mechanism file from input ``chemfile``, which in this case is the ``config_full_gas.yaml ``. The box model only considers chemical reactions. The executable saves the time profiles for the species in ``outputfile=full_gas.dat``. In the example directory, the jupyter-notebook ``PlotFullGas`` plots the time profiles of each species from the TChem-atm and CAMP outputs. Note that the CAMP output was previously computed and saved in the TChem-atm repo.
+Here, the ``TChem_AtmosphericChemistry.x`` executable is a box model that integrates in time a list of species using the mechanism file from input ``chemfile``, which in this case is the ``config_full_gas.yaml``. The box model only considers chemical reactions. The executable saves the time profiles for the species in ``outputfile=full_gas.dat``. In the example directory, the jupyter-notebook ``PlotFullGas`` plots the time profiles of each species from the TChem-atm and CAMP outputs. Note that the CAMP output was previously computed and saved in the TChem-atm repository.
 
-The ``TChem_AtmosphericChemistry.x`` executable allows to change time integration parameters of the [TrBDF2 solver](https://github.com/sandialabs/Tines?tab=readme-ov-file#timeintegration). First, the newton solver parameters are the
-absolute (``atol-newton``), relative tolerance (``rtol-newton``), and the maximum number of newton iterations (``max-newton-iterations``). Second, the time step size is controlled using the ``tol-time`` parameter and the maximum (``dtmax``) and minimum (``dtmin``) time step. Third, the parameters ``tend`` or ``max-time-iterations`` will end the simulation. Finally, one can get additional help from the ``TChem_AtmosphericChemistry.x`` executable using ``TChem_AtmosphericChemistry.x --help``.
+The ``TChem_AtmosphericChemistry.x`` executable allows to change time integration parameters of the [TrBDF2 solver](https://github.com/sandialabs/Tines?tab=readme-ov-file#timeintegration). First, the Newton solver parameters are the
+absolute (``atol-newton``), relative tolerance (``rtol-newton``), and the maximum number of iterations (``max-newton-iterations``). Second, the time step size is controlled using the ``tol-time`` parameter and the maximum (``dtmax``) and minimum (``dtmin``) time step values. Third, the parameters either ``tend`` or ``max-time-iterations`` will end the simulation. Finally, one can get additional help information from the ``TChem_AtmosphericChemistry.x`` executable using ``TChem_AtmosphericChemistry.x --help``.
 
 
 ![TChem-atm vs CAMP](figures/carbonB5TChemvsCAMP.png)
-Comparing of TChem-atm and CAMP outputs using the carbon bound 5 mechanism.
+Comparing TChem-atm and CAMP outputs using the Carbon Bound 5 mechanism.

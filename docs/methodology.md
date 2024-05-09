@@ -19,9 +19,7 @@ $$
 $$
 <!-- \end{equation} -->
 
-where $q_i$ is the rate of progress of reaction $i$, $N_{\text{react}}$ is the number of reactions, $\nu''_{ki}$ and $\nu'_{ki}$ are the stoichiometric coefficients of species $k$ in reaction $i$ for the reactant and product sides of the reaction, respectively.
-
-Finally, the rate of progress of reaction $i$ is computed as
+where $q_i$ is the rate of progress of reaction $i$, $N_{\text{react}}$ is the number of reactions, and $\nu''_{ki}$/$\nu'_{ki}$ are the stoichiometric coefficients of species $k$ in reaction $i$ for the reactant/product sides of the reaction, respectively. The rate of progress of reaction $i$, $q_i$, is computed as
 
 <!-- \begin{equation}\label{eq:rate_of_progress} -->
 $$
@@ -29,7 +27,7 @@ $$
 $$
 <!-- \end{equation} -->
 
-where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction constant of reaction $i$. Different types of expressions compute ${k_f}_i$. Next, we present the reaction types that are available in TChem-atm.
+where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction constant of reaction $i$. The reaction constant ${k_f}_i$ can take several functional forms depending on the reaction type. We present below the reaction types that are available in TChem-atm.
 
 <!-- Note that in $\eee{}$`s CAMPP solver, only forward reaction calculations are employed, and the single reaction constant values depend on the type of reaction. -->
 

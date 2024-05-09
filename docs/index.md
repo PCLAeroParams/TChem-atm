@@ -44,7 +44,7 @@ toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/a
 The [installation](installation.md) guide demonstrates how to obtain, build, and install TChem-atm along with its third-party libraries.
 
 # **Theoretical Background**
-he TChem-atm approach is briefly described in the [Methodoly section](methodology.md).
+The TChem-atm approach is briefly described in the [Methodoly section](methodology.md).
 
 # **Input file**
 A description of input files is presented in the [Input file section](input.md).
@@ -56,9 +56,7 @@ A list of examples can be found [here](examples.md).
 # **Acknowledgements**
 TChem-atm has been developed using the following funding sources:
 
-* Sandia Laboratory Directed Research and Development (LDRD) project "Bridging aerosol representations across scales with physics-constrained statistical learning."
-
-* Sandia LDRD project "Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver."
+* Sandia Laboratory Directed Research and Development (LDRD) projects "Bridging aerosol representations across scales with physics-constrained statistical learning" and "Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver."
 
 * The [EAGLES project](https://climatemodeling.science.energy.gov/projects/enabling-aerosol-cloud-interactions-global-convection-permitting-scales-eagles), which was funded by
 the Office of Science's [Biological and Environmental

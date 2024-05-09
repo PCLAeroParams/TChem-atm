@@ -1,18 +1,17 @@
 # **Overview**
-TChem-atm computes source terms and Jacobian matrices for chemical systems. It is a performance-portable software toolkit for complex kinetic mechanisms. We designed and implemented TChem-atm using [Kokkos](https://github.com/kokkos/kokkos.git)(a performance-portable parallel programming model).
+TChem-atm computes source terms and Jacobian matrices for chemical systems. It is a performance-portable software toolkit designed for complex kinetic mechanisms. We designed and implemented TChem-atm using [Kokkos](https://github.com/kokkos/kokkos.git).
 
 Software Design:
 
   * Modern C++.
-  * Kokkos programming model for performance-portability.
-  * CMAKE build system.
+  * Kokkos programming model for performance portability.
+  * CMake build system.
   * Numerical Jacobians and SACADO analytic Jacobians for all models.
-  * Couples to external ODE solvers. e.g., Tines, Sundials(CVODE).
+  * Coupling to external ODE solvers, e.g., Tines, Sundials (CVODE).
 
 ![TChem](figures/TChem_atm.png)
 
-TChem-atm has a parser for a YAML input file that constructs a kinetic model constant data object that contains relevant parameters for the computation of the chemical source terms. TChem-atm computes the reaction constants and rate of progress for all the reactions listed in the input files. Then, it computes the net production rate or source terms for all species listed in the input files. TChem-atm automatically calculates the Jacobian matrix for the source terms using either finite differences (numerical Jacobian) or automatic differentiation (analytical Jacobian via SACADO). Furthermore, the computation of the source term and associated Jacobian is independent of the time integration solver in TChem-atm. Therefore, TChem-atm has an interface for time integration (Box model) for the Tines and CVODE libraries. Finally, TChem has a batched interface for evaluating the source term, Jacobian matrix, and time integration.
-
+TChem-atm includes a parser for a YAML input file that constructs a kinetic model constant data object containing relevant parameters for the computation of the chemical source terms. It computes the reaction constants and rate of progress for all the reactions listed in the input files. Then, it calculates the net production rate or source terms for all species mentioned in the input files. TChem-atm automatically calculates the Jacobian matrix for the source terms using either finite differences (numerical Jacobian) or automatic differentiation (analytical Jacobian via SACADO). Furthermore, the computation of the source term and associated Jacobian is independent of the time integration solver in TChem-atm. Therefore, TChem-atm provides an interface for time integration (Box model) for the Tines and CVODE libraries. Finally, TChem-atm features a batched interface for evaluating the source term, Jacobian matrix, and time integration.
 # **Citations**
 * [TChem: A performance portable parallel software
 toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/article/pii/S0010465522003472)
@@ -42,20 +41,20 @@ toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/a
 ```
 
 # **Installation**
-The [installation](installation.md) guide shows you how to obtain, build, and install TChem-atm and its third-party libraries.
+The [installation](installation.md) guide demonstrates how to obtain, build, and install TChem-atm along with its third-party libraries.
 
 # **Theorycal background**
-The TChem-atm approach is briefly described in [Methodoly section](methodology.md).
+he TChem-atm approach is briefly described in the [Methodoly section](methodology.md).
 
 # **Input file**
-A description of input files is presented in [Input file section](input.md).
+A description of input files is presented in the [Input file section](input.md).
 
 # **Examples**
 
 A list of examples can be found [here](examples.md).
 
 # **Acknowledgements**
-TChem has developed using the following funding sources:
+TChem has been developed using the following funding sources:
 
 * Sandia Laboratory Directed Research and Development (LDRD) project "Bridging aerosol representations across scales with physics-constrained statistical learning."
 

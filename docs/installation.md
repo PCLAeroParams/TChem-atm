@@ -39,16 +39,18 @@ These variables are located in the top section of the ``scripts/tpls_bld.sh`` sc
 
 This script initializes the submodules and installs/builds the third-party libraries in the ``$ROOT/HOST`` or ``$ROOT/DEVICE`` directory, depending on whether ``CUDA=OFF`` or ``CUDA=ON``. Since Kokkos can be installed/built with both CUDA ``ON`` and ``OFF``, this script installs it in both ``$ROOT/HOST`` and ``$ROOT/DEVICE``, while the other libraries are installed in ``$ROOT/HOST``. Therefore, one must run this script using ``CUDA=OFF`` to install all third-party libraries and run it a second time with ``CUDA=ON`` if an NVIDIA GPU is available.
 
-## **Building and install TChem-atm and Tines**
-The script [``scripts/build_script.sh``](build_script.sh) builds and installs the TChem-atm and Tines. Similar to the third-party libraries script, in the ``scripts/build_script.sh`` one must provide the compiler information:
+## **Building and installing TChem-atm and Tines**
+The script ``scripts/build_script.sh`` builds and installs TChem-atm and Tines. Similar to the script for third-party libraries, in ``scripts/build_script.sh``, one must provide the compiler information:
+
 ```bash
-MY_CC=gcc # c++ compiler
-MY_CXX=g++ # c++ compiler
-MY_FC=gfortran # fortran compiler
+MY_CC=gcc # C++ compiler
+MY_CXX=g++ # C++ compiler
+MY_FC=gfortran # Fortran compiler
 ```
-to build/install with CUDA ``ON`` or ``OFF`` using:
-```bash
-CUDA="OFF" # ON/OFF to compile TChem with NVIDIA-GPUs
-```
-In addition, this script adds the option to turn ON/OFF automatic differentiation using the SACADO library using ``SACADO="ON"`` or ``SACADO="OFF"``.
-The installation-path the third-party libraries, ``INSTALL_BASE_HOST`` and the ``ROOT=/path/to/tchem``, where TChem-atm and Tines are installed. If CUDA is ON, libraries will be installed in the ``ROOT/DEVICE`` directory. Otherwise, they will install in the ``ROOT/HOST`` directory.
+To build/install with CUDA ON or OFF, use:
+
+``CUDA="OFF" # Set to ON/OFF to compile TChem with NVIDIA-GPUs``
+
+In addition, this script adds the option to turn ``SACADO="ON"`` or ``SACADO="OFF"`` for enabling or disabling automatic differentiation using the SACADO library.
+
+The installation path for the third-party libraries is specified by ``INSTALL_BASE_HOST``, and ``ROOT=/path/to/tchem-atm`` is where TChem-atm and Tines are installed. If CUDA is ``ON``, libraries will be installed in the ``ROOT/DEVICE`` directory. Otherwise, they will be installed in the ``ROOT/HOST`` directory.

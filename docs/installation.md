@@ -29,7 +29,7 @@ MY_FC=gfortran # Fortran compiler
 To build/install with CUDA ``ON`` or ``OFF``, use:
 
 ``
-CUDA # Set to ON/OFF to compile TChem-atm with or without NVIDIA-GPUs support.
+CUDA="ON" # Set to ON/OFF to compile TChem-atm with or without NVIDIA-GPUs support.
 ``
 Additionally, specify the root directory for installing/building the third-party libraries:
 
@@ -47,9 +47,9 @@ MY_CC=gcc # C++ compiler
 MY_CXX=g++ # C++ compiler
 MY_FC=gfortran # Fortran compiler
 ```
-To build/install with CUDA ON or OFF, use:
+To build/install with CUDA ON (or OFF), use:
 
-``CUDA="OFF" # Set to ON/OFF to compile TChem with NVIDIA-GPUs``
+``CUDA="ON" # Set to ON/OFF to compile TChem with NVIDIA-GPUs``
 
 In addition, this script adds the option to turn ``SACADO="ON"`` or ``SACADO="OFF"`` for enabling or disabling automatic differentiation using the SACADO library.
 

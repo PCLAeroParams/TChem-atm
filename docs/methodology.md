@@ -9,7 +9,7 @@ $$
 $$
 <!-- \end{equation} -->
 
-and its associated Jacobian matrix, $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which is evaluated using either finite differences or automatic differentiation via the Tines or the Sacado Library. Furthermore, TChem-atm has an interface for Tines or CVODE (ODE(ordinary differential equations) solver) to time advance the volumetric mixing ratio (vmr, $\eta_k$ ) of gas species, $k$.
+and its associated Jacobian matrix, $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which is evaluated using either finite differences or automatic differentiation via the Tines library or the Sacado library. Furthermore, TChem-atm has an interface for Tines or CVODE (ODE(ordinary differential equations) solver) to advance in time the volumetric mixing ratio (vmr, $\eta_k$ ) of gas species, $k$.
 
 The net production rate of species $k$, $\dot{\omega}_k$, or the right-hand side of the previous equation is computed using:
 
@@ -33,7 +33,7 @@ where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction cons
 
 
 ## **Reaction types**
-Currently, TChem-atm can reproduce gas chemistry for two complex reaction mechanisms: the gas chemistry of $\eee{}$ v3, i.e., the UCI chemistry(University of California Irvine), and the Carbon Bond 2005 chemical mechanism, which is well-formulated for urban to remote troposphere conditions([Dawson](https://gmd.copernicus.org/articles/15/3663/2022/),[Yarwood](https://www.camx.com/Files/CB05_Final_Report_120805.pdf)). To represent, these mechanism, TChem-atm has Troe, Arrhenius, Troe-Arrenious ratio, and  Custom-H2O2 types.
+Currently, TChem-atm can reproduce gas chemistry for two complex reaction mechanisms: the gas chemistry of $\eee{}$ v3, i.e., the UCI chemistry (University of California Irvine), and the Carbon Bond 2005 chemical mechanism, which is well-formulated for urban to remote troposphere conditions ([Dawson](https://gmd.copernicus.org/articles/15/3663/2022/),[Yarwood](https://www.camx.com/Files/CB05_Final_Report_120805.pdf)). To represent these mechanisms, TChem-atm implements Troe, Arrhenius, Troe-Arrenious ratio, and Custom-H2O2 reaction types.
 
 Next, we present the expression for the forward rate constant of the reaction types implemented in TChem-atm. In these equations, $\mathrm{T}$, $\mathrm{P}$, $[M]$ correspond to the temperature, pressure, and air concentration.
 
@@ -42,7 +42,7 @@ Next, we present the expression for the forward rate constant of the reaction ty
 The Arrhenius type (``type: ARRHENIUS``) is computed by
 
 $$
-k_f = A \mathrm{exp} \Big( \frac{C}{\mathrm{T}} \Big)  \frac{\mathrm{T}}{D}^B (1+ E\mathrm{P})
+k_f = A \mathrm{exp} \Big( \frac{C}{\mathrm{T}} \Big)  \frac{\mathrm{T}}{D}^B (1+ E\,\mathrm{P})
 $$
 
 Where, $A$, $B$, $C$, and $D$ are kinetic constants. As an example of the following reaction from the carbon bond 5 mechanism,

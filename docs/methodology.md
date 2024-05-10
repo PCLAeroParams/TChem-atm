@@ -45,13 +45,13 @@ $$
 k_f = A \mathrm{exp} \Big( \frac{C}{\mathrm{T}} \Big)  \frac{\mathrm{T}}{D}^B (1+ E\,\mathrm{P})
 $$
 
-Where, $A$, $B$, $C$, and $D$ are kinetic constants. As an example of the following reaction from the carbon bond 5 mechanism,
+Where, $A$, $B$, $C$, and $D$ are kinetic constants. As an example, the following reaction from the Carbon Bond 5 mechanism,
 
 $$
-O_3 + NO \rightarrow NO_2 + O_2
+O_3 + NO \rightarrow NO_2 + O_2,
 $$
 
-The kinetic constants must be provided using the following YAML configuration:
+has the following information provided using the following YAML configuration:
 
 ```yaml
 - MUSICA_name: R3
@@ -76,17 +76,17 @@ Note that in the previous reaction, $O_2$ is not considered a product in the com
 The Troe type (``type: TROE``) is computed by
 
 $$
-k_f=\frac{k_0[M]}{1+\frac{k_0[M]}{k_{\infty}}}F_c^{\big(1+\big(\frac{log_{10} \big(\frac{k_0[M]}{k_{\infty}} \big)}{N}\big)^2 \big)^{-1}},
+k_f=\frac{k_0[M]}{1+\frac{k_0[M]}{k_{\infty}}}F_c^{\left(1+\left(\frac{log_{10} \big(\frac{k_0[M]}{k_{\infty}} \big)}{N}\right)^2 \right)^{-1}},
 $$
 
 where, the $k_0$ and $k_{\infty}$ are computed with the following Arrhenius expresion.
 
 $$
-k_0 = k_{0_A} \mathrm{exp} \Big( \frac{k_{0_C}}{\mathrm{T}} \Big)  \frac{\mathrm{T}}{300}^{k_{0_B}}
+k_0 = k_{0_A} \mathrm{exp} \Big( \frac{k_{0_C}}{\mathrm{T}} \Big)  \left(\frac{\mathrm{T}}{300}\right)^{k_{0_B}}
 $$
 
 $$
-k_{\infty} = k_{\infty_A} \mathrm{exp} \Big( \frac{k_{\infty_C}}{\mathrm{T}} \Big)  \frac{\mathrm{T}}{300}^{k_{\infty_B}}
+k_{\infty} = k_{\infty_A} \mathrm{exp} \Big( \frac{k_{\infty_C}}{\mathrm{T}} \Big) \left(\frac{\mathrm{T}}{300}\right)^{k_{\infty_B}}
 $$
 
 As an example of one reaction from the carbon bond 5 mechanism,
@@ -153,7 +153,7 @@ The rate constant for the custom H2O2 type (``type: CMAQ_H2O2``) can not be expr
 
 $$
 k_f = A_1 \mathrm{exp} \Big( \frac{C_1}{\mathrm{T}} \Big)
-\frac{\mathrm{T}}{300}^{B_1} + A_2 \mathrm{exp} \Big ( \frac{C_2}{\mathrm{T}} \Big) \frac{\mathrm{T}}{300}^{B_2} \mathrm{conv}
+\left(\frac{\mathrm{T}}{300}\right)^{B_1} + A_2 \mathrm{exp} \Big ( \frac{C_2}{\mathrm{T}} \Big) \left(\frac{\mathrm{T}}{300}\right)^{B_2} \mathrm{conv}
 $$
 
 where, $\mathrm{conv} = \frac{N_A}{R \times 10^{-12}} \frac{P}{T}$ and $N_A=6.02214179 \times 10^{23}$ is Avogadro's number ($\mathrm{mole}^{-1}$) and $R=8.314472$ is the universal gas constant ($J \mathrm{mole}^{-1}K^{-1}$).
@@ -306,9 +306,9 @@ $$
 where, $fc$
 
 $$
-fc = A1 \mathrm{exp} \Big(\frac{C1}{\mathrm{T}} \Big) * [\mathrm{N_2}] +
-A2 \mathrm{exp} \Big(\frac{C2}{\mathrm{T}} \Big) * [\mathrm{O_2}] +
-A3 \mathrm{exp} \Big(\frac{C3}{\mathrm{T}} \Big) * [\mathrm{H_2O}]
+fc = A1\, \mathrm{exp} \Big(\frac{C1}{\mathrm{T}} \Big) * [\mathrm{N_2}] +
+A2\, \mathrm{exp} \Big(\frac{C2}{\mathrm{T}} \Big) * [\mathrm{O_2}] +
+A3\, \mathrm{exp} \Big(\frac{C3}{\mathrm{T}} \Big) * [\mathrm{H_2O}]
 $$
 
 The YAML configuration for this modifier is :

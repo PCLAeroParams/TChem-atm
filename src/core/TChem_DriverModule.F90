@@ -22,7 +22,11 @@ interface
   end function
   subroutine TChem_getStateVector(array) bind(c, name="TChem_getStateVector")
     use iso_c_binding
-    real(kind=c_double) :: array(67)
+    real(kind=c_double) :: array(*)
+  end subroutine
+  subroutine TChem_setStateVector(array) bind(c, name="TChem_setStateVector")
+    use iso_c_binding
+    real(kind=c_double) :: array(*)
   end subroutine
      subroutine TChem_setAllStateVectorHost(arg_state_vector) bind(C, &
           name="TChem_setAllStateVectorHost")
@@ -35,6 +39,8 @@ contains
 
   subroutine test
     use iso_c_binding
+
+    print*, 'we are doing some chemistry'
 
   end subroutine test
 

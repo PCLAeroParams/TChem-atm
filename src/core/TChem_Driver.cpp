@@ -103,18 +103,42 @@ void TChem::Driver::createStateVector() {
   }
 }
 
-void TChem::Driver::getStateVector() { //TChem::real_type *view){
+auto TChem::Driver::getStateVector() { //TChem::real_type *view){
   printf("in TChem::Driver::getStateVector\n");
-  auto state_scenario_host_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL); 
+  auto state_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL); 
   for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
-     printf("%e\n", state_scenario_host_at_0(k));
+     printf("%e\n", state_at_0(k));
   }
+  return state_at_0;
 }
 
 void TChem_getStateVector(TChem::real_type *state){
   state[0] = 100.0;
   state[50] = 50.0;
-  g_tchem->getStateVector(); //&state);
+  auto q = g_tchem->getStateVector(); //&state);
+  for (ordinal_type k = 0; k < 67; k++){ 
+  printf("in TChem_getStateVector %e\n", q[k]);
+  state[k] = q[k];
+  }
+}
+
+void TChem_setStateVector(double *array){
+  g_tchem->setStateVector();
+  for (ordinal_type k = 0; k < 67; k++){
+     printf("in setStateVector %e\n", array[k]);
+  }
+}
+
+void TChem::Driver::setStateVector() { //TChem::real_type *view){
+  printf("in TChem::Driver::setStateVector\n");
+  for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
+     _state(0,k) = 1.0;
+  }
+//  auto state_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL);
+//  for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
+//     printf("%e\n", state_at_0(k));
+//  }
+//  return state_at_0;
 }
 
 void TChem_getSpeciesNames(){

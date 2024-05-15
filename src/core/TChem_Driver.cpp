@@ -14,20 +14,6 @@ using ordinal_type = TChem::ordinal_type;
 
 static TChem::Driver *g_tchem = nullptr;
 
-void normal_vec(int n, real_type x[]) {
-  for (int i = 0; i<n; ++i) x[i] = 1.0; //rnorm();
-}
-
-void call_something(int n){
-   printf("Printing in TChem c++ code\n");
-   printf("%f\n", TChem::CONV_PPM);
-   printf("%f\n", TChem::PI());
-}
-
-void do_something(int n){
-//   printf("Kokkos initialized: %s\n", Kokkos::is_initialized ? "true" : "false");
-}
-
 void initialize_kokkos(const char * chemFile){
 
   g_tchem = new TChem::Driver();
@@ -60,36 +46,13 @@ void initialize_kokkos(const char * chemFile){
 
   g_tchem->createGasKineticModel(chemFile);
   g_tchem->createGasKineticModelConstData();
+  g_tchem->createStateVector();
+  g_tchem->getSpeciesNames();
+  g_tchem->getLengthOfStateVector();
 
-/*  TChem::KineticModelData kmd(chemFile);
-  const auto kmcd = TChem::createNCAR_KineticModelConstData<device_type>(kmd);
-  const ordinal_type stateVecDim = TChem::Impl::getStateVectorSize(kmcd.nSpec);
-  printf("Testing input %s \n", chemFile);
-  printf("Number of Species %d \n", kmcd.nSpec);
-  printf("Number of Reactions %d \n", kmcd.nReac);
-
-  printf("done making the kmd\n"); */
-
-/*  std::string species_names[kmcd.nSpec];
-
-  printf("Get the gas species\n");
-
-  const auto speciesNamesHost = Kokkos::create_mirror_view(kmcd.speciesNames);
-  Kokkos::deep_copy(speciesNamesHost, kmcd.speciesNames);
-  for (ordinal_type k = 0; k < kmcd.nSpec; k++)
-  {
-     species_names[k] = &speciesNamesHost(k,0);
-     printf("%s \n", species_names[k].c_str());
-  }
-
-  printf("more testing\n"); */
-
-/*  TChem::Driver tchem;
-  tchem.createGasKineticModel(chemFile);
-  const auto kmcd_new = TChem::createNCAR_KineticModelConstData<device_type>(tchem._kmd);
-  printf("Number of Species %d \n", kmcd_new.nSpec);
-  printf("Number of Reactions %d \n", kmcd_new.nReac);
-  printf("%s \n", tchem._chem_file.c_str()); */
+//  real_type_2d_view_host_type state;
+//  g_tchem->getStateVectorHost();
+//  g_tchem->getAllStateVectorHost(state);
   
 }
 
@@ -116,18 +79,6 @@ void TChem::Driver::createGasKineticModelConstData() {
   printf("Number of Species %d \n", _kmcd.nSpec);
   printf("Number of Reactions %d \n", _kmcd.nReac);
 
-  std::string species_names[_kmcd.nSpec];
-
-  printf("Get the gas species\n");
-
-  const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd.speciesNames);
-  Kokkos::deep_copy(speciesNamesHost, _kmcd.speciesNames);
-  for (ordinal_type k = 0; k < _kmcd.nSpec; k++)
-  {
-     species_names[k] = &speciesNamesHost(k,0);
-     printf("%s \n", species_names[k].c_str());
-  }
-
   printf("End creating kmcd \n");
 
 }
@@ -141,3 +92,68 @@ void TChem::Driver::freeGasKineticModel() {
   _chem_file = std::string();
   _therm_file = std::string();
 }
+
+void TChem::Driver::createStateVector() {
+  // FIXME: add error checking
+  const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd.nSpec);
+  const ordinal_type nBatch = 1;
+  _state = real_type_2d_view_host("state dev", nBatch, len);
+  for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
+    _state(0,k) = k*k;
+  }
+}
+
+void TChem::Driver::getStateVector() { //TChem::real_type *view){
+  printf("in TChem::Driver::getStateVector\n");
+  auto state_scenario_host_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL); 
+  for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
+     printf("%e\n", state_scenario_host_at_0(k));
+  }
+}
+
+void TChem_getStateVector(TChem::real_type *state){
+  state[0] = 100.0;
+  state[50] = 50.0;
+  g_tchem->getStateVector(); //&state);
+}
+
+void TChem_getSpeciesNames(){
+  g_tchem->getSpeciesNames();
+}
+
+void TChem::Driver::getSpeciesNames(){
+  std::string species_names[_kmcd.nSpec];
+  const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd.speciesNames);
+  Kokkos::deep_copy(speciesNamesHost, _kmcd.speciesNames);
+  for (ordinal_type k = 0; k < _kmcd.nSpec; k++)
+  {
+     species_names[k] = &speciesNamesHost(k,0);
+     printf("%s \n", species_names[k].c_str());
+  }
+}
+
+ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd.nSpec;}
+
+// FIXME: add error checking
+ordinal_type TChem_getNumberOfSpecies(){
+   ordinal_type nSpec = g_tchem->getNumberOfSpecies();
+   return nSpec;
+}
+
+int TChem_getLengthOfStateVector() { return g_tchem == nullptr ? -1 : g_tchem->getLengthOfStateVector(); }
+
+ordinal_type TChem::Driver::getLengthOfStateVector() const {
+//  TCHEM_CHECK_ERROR(!_is_gasphase_kmcd_created, "const Kinetic model first needs to be created");
+  return Impl::getStateVectorSize(_kmcd.nSpec);
+}
+
+void TChem_setAllStateVectorHost(TChem::real_type *state) {
+  printf("Done!");
+//  if (g_tchem != nullptr) {
+//    const int m0 = TChem_getNumberOfSamples();
+//    const int m1 = TChem_getLengthOfStateVector();
+//    g_tchem->setStateVectorHost(real_type_2d_view_host(state, m0, m1));
+//  }
+}
+
+

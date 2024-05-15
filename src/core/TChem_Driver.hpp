@@ -1,9 +1,7 @@
 #include <TChem_KineticModelData.hpp>
 #include <TChem_KineticModelNCAR_ConstData.hpp>
+#include <TChem_Util.hpp>
 
-extern "C" void normal_vec(int n, double x[]);
-extern "C" void call_something(int n);
-extern "C" void do_something(int n);
 extern "C" void initialize_kokkos(const char * filename);
 extern "C" void finalize_kokkos();
 
@@ -15,19 +13,43 @@ public:
    using device_type      = typename Tines::UseThisDevice<exec_space>::type;
 
    std::string _chem_file, _therm_file;
-   TChem::KineticModelData _kmd;
-   TChem::KineticModelNCAR_ConstData<host_device_type> _kmcd;
-   real_type_2d_view_host state_host;
+   real_type_2d_view_host _state;
 
+   void createStateVector();
+   ordinal_type getLengthOfStateVector() const;
+   void getStateVector(); //TChem::real_type &view);
+
+   // 
+   TChem::KineticModelData _kmd;
+   TChem::KineticModelNCAR_ConstData<host_device_type> _kmcd;   
    void createGasKineticModel(const std::string &chem_file);
    void createGasKineticModelConstData();
 
+   ordinal_type getNumberOfSpecies();
+   void getSpeciesNames();
+
+   // Clean up
    void freeAll();
    void freeGasKineticModel();
 
+   // Diagnostics
    void printSpecies();
+
+   // time integration
+   real_type_1d_view _t;
+   real_type_1d_view _dt;
+   real_type_2d_view _tol_time;
+   real_type_1d_view _tol_newton;
+   real_type_2d_view _fac;
+
+   void setTimeAdvance();
 
 };
 }
 
-extern "C" int TChem_getNumberOfSpecies();
+extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
+extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
+extern "C" std::string TChem_getSpeciesName(TChem::ordinal_type index);
+extern "C" void TChem_setAllStateVectorHost(TChem::real_type *state);
+extern "C" int TChem_getLengthOfStateVector();
+extern "C" void TChem_getStateVector(TChem::real_type *array);

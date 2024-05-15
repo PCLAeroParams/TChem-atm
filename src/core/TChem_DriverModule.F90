@@ -1,30 +1,40 @@
 module TChemDriver
 
 interface
-  subroutine call_something(n) bind(c, name="call_something")
-    use iso_c_binding
-    integer(kind=c_int), intent(in) :: n
-  end subroutine call_something
-  subroutine do_something(n) bind(c, name="do_something")
-    use iso_c_binding
-    integer(kind=c_int), intent(in) :: n
-  end subroutine do_something
   subroutine initialize_kokkos(arg_chemfile) bind(c, name="initialize_kokkos")
     use iso_c_binding
     character(kind=c_char) :: arg_chemfile(*)
   end subroutine initialize_kokkos
   subroutine finalize_kokkos() bind(c, name="finalize_kokkos")
   end subroutine finalize_kokkos
+  subroutine getAllStateVectorHost(state_vector) bind(c)
+    use iso_c_binding
+    type(c_ptr) :: state_vector
+  end subroutine
+  function TChem_getNumberOfSpecies() bind(c, name="TChem_getNumberOfSpecies")
+    use iso_c_binding
+    integer(kind=c_int) :: TChem_getNumberOfSpecies
+  end function
+  function TChem_getSpeciesName(index) bind(c)
+    use iso_c_binding
+    integer(kind=c_int) :: index
+    character(kind=c_char), dimension(50) :: TChem_TChem_getSpeciesName
+  end function
+  subroutine TChem_getStateVector(array) bind(c, name="TChem_getStateVector")
+    use iso_c_binding
+    real(kind=c_double) :: array(67)
+  end subroutine
+     subroutine TChem_setAllStateVectorHost(arg_state_vector) bind(C, &
+          name="TChem_setAllStateVectorHost")
+       use iso_c_binding, only: c_ptr
+       type(c_ptr), value :: arg_state_vector
+     end subroutine TChem_setAllStateVectorHost
 end interface
 
 contains
 
   subroutine test
     use iso_c_binding
-    integer, parameter :: n = 5
-
-!    call call_something(n)
-    call do_something(n)
 
   end subroutine test
 
@@ -37,27 +47,6 @@ contains
     print*, 'in TChemDriver: ', chemFile
 
     call initialize_kokkos(chemFile//c_null_char)
-
-  end subroutine
-
-  integer function TChem_getNumberOfSpecies()
-
-     TChem_getNumberOfSpecies = 67
-
-  end function
-
-  subroutine TChem_getNamesOfSpecies()
-
-  end subroutine
-
-  subroutine TChem_getAllStateVectorHost() !state_vector)
-
-    use iso_c_binding
-
-    real(kind=c_double), dimension(:), allocatable, target :: state_vector
-
-    integer,        parameter :: nbatch = 1
-    integer :: len_state_vector
 
   end subroutine
 

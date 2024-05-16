@@ -293,9 +293,9 @@ TChem-atm requires the following third-party libraries:
 
 These third-party libraries are submodules in TChem-atm. Thus, we can initialize them using the following command:
 
-\begin{lstlisting}[language=bash]
+\begin{verbatim}
 git submodule update --init --recursive
-\end{lstlisting}
+\end{verbatim}
 
 \section{Obtaning TChem-atm}
 
@@ -305,17 +305,17 @@ TChem-atm is open-source code available on [GitHub](https://github.com/sandialab
 
 The script ``scripts/tpls\_bld.sh`` clones, builds, and installs TChem-atm's third-party libraries. To use this script, one must provide compiler information as follows:
 
-\begin{lstlisting}[language=bash]
+\begin{verbatim}
 MY_CC=gcc # C++ compiler
 MY_CXX=g++ # C++ compiler
 MY_FC=gfortran # Fortran compiler
-\end{lstlisting}
+\end{verbatim}
 
 To build/install with CUDA ``ON`` or ``OFF``, use:
 
-\begin{lstlisting}[language=bash]
+\begin{verbatim}
 CUDA="ON" # Set to ON/OFF to compile TChem-atm with or without NVIDIA-GPUs support.
-\end{lstlisting}
+\end{verbatim}
 
 Additionally, specify the root directory for installing/building the third-party libraries:
 
@@ -329,11 +329,11 @@ This script initializes the submodules and installs/builds the third-party libra
 
 The script ``scripts/build\_script.sh`` builds and installs TChem-atm and Tines. Similar to the script for third-party libraries, in ``scripts/build\_script.sh``, one must provide the compiler information:
 
-\begin{lstlisting}[language=bash]
+\begin{verbatim}
 MY_CC=gcc # C++ compiler
 MY_CXX=g++ # C++ compiler
 MY_FC=gfortran # Fortran compiler
-\end{lstlisting}
+\end{verbatim}
 
 To build/install with CUDA ON (or OFF), use:
 
@@ -344,6 +344,7 @@ In addition, this script adds the option to turn ``SACADO="ON" or ``SACADO="OFF"
 The installation path for the third-party libraries is specified by ``INSTALL\_BASE\_HOST``, and ``ROOT=/path/to/tchem-atm`` is where TChem-atm and Tines are installed. If CUDA is ``ON``, libraries will be installed in the ``ROOT/DEVICE`` directory. Otherwise, they will be installed in the ``ROOT/HOST`` directory.
 
 \chapter{Theoretical Background}
+\label{ch:theo}
 TChem-atm computes the source term or the right-hand side of the $k$ gas-species equation:
 
 \begin{equation}\label{eq:ode_vmr}
@@ -677,6 +678,240 @@ modifier_prod_O1D:
 Here, under ``coefficients``, the kinetic parameters are presented. The species involved in this factor are listed with `species\_name\_1` to `species\_name\_2`. Note that TChem will find the index of this species. The ``reaction\_list`` presents the index of reaction, where this modifier is applied. Finally, ``photolysis\_reaction\_index`` is the index of the $\mathrm{prod_{O1D}}$ reaction.
 
 Future work will convert ``reaction\_list`` from a list of indexes to reaction IDs. Thus, one does not need to know the index of each reaction before running a TChem simulation. Furthermore, ``photolysis\_reaction\_index`` will be converted from index to reaction ID.
+
+\chapter{Input file}
+
+\subsection{Gas chemistry input file}
+
+The YAML input file for atmospheric chemistry consists of five sections:
+
+\begin{itemize}
+\item ``environmental\_conditions``: pressure and temperature of individual cells.
+\item ``initial\_state``: initial species concentration within the cells.
+\item ``reactions``: list of reactions with rate parameters and reaction type.
+\item ``constant\_species``: species that are part of the reaction mechanism but are assumed constant.
+e.g., invariant species.
+\item ``species``: list of species names.
+\end{itemize}
+
+For example, for the toy reaction $A \rightarrow B$, simulation with N cells, one reaction, and three species
+
+
+\begin{lstlisting}[language=yaml]
+NCAR-version: v1.0
+environmental_conditions:
+  pressure:
+    evolving: false
+    initial_value: [P1, ..., PN]
+    units: Pa
+  temperature:
+    evolving: false
+    initial_value: [T1, ..., TN]
+    units: K
+initial_state:
+  A:
+    initial_value: [A1, .., AN]
+    units: mol m-3
+  M:
+    initial_value: [M1, .., MN]
+    units: mol m-3
+reactions:
+- coefficients:
+  products:
+    B: 1.0
+  reactants:
+    A: 1.0
+  type: ARRHENIUS
+constant_species:
+- description: tracer-CONSTANT
+  name: M
+species:
+- description: A
+  name: A
+- description: B
+  name: B
+\end{lstlisting}
+
+A description of the reaction types currently implemented in TChem-atm is presented in theoretical background section~\ref{ch:theo}. In addition, a set of examples of input files is presented under ``/src/examples/runs/atmopheric\_chemistry``.
+
+\chapter{Examples}
+\section{Carbon Bond 5}
+
+We adapted the Carbon Bound 5 reaction mechanism from the FIXME
+%[CAMP chemistry code](https://github.com/open-atmos/camp/tree/main/mechanisms/cb05cl_ae5).
+
+Mechanism details:
+
+\begin{itemize}
+\item Number of Species: 67
+\item Number of Reactions: 187
+\item Arrhenius type reactions: 168
+\item CMAQ\_H2O2 type reactions : 3
+\item Troe type reactions: 16
+\item Sources e.g., EMISSION: 14
+\end{itemize}
+
+The mechanism in the CAMP solver has 26 photolysis reactions, which we replace with Arrhenius-type reactions with energy = 0  and temperature coefficient = 1.
+
+Scripts to run and plot the outputs of this example are at: ``src/examples/runs/atmospheric\_chemistry/CB05CL\_AE5``. The bash script to run this mechanism is shown below:
+
+
+\begin{verbatim}
+exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistry.x
+
+run_this="$exec --chemfile=config_full_gas.yaml \
+          --outputfile=full_gas.dat \
+          --time-iterations-per-interval=10 \
+          --tol-time=1e-10 \
+          --dtmin=1e-20 \
+          --dtmax=10 \
+          --tend=600\
+          --atol-newton=1e-18 \
+          --rtol-newton=1e-8 \
+          --max-newton-iterations=20 \
+          --max-time-iterations=20000"
+
+echo $run_this
+eval $run_this
+\end{verbatim}
+
+Here, the ``TChem\_AtmosphericChemistry.x`` executable is a box model that integrates in time a list of species using the mechanism file from input ``chemfile``, which in this case is the ``config\_full\_gas.yaml``. The box model only considers chemical reactions. The executable saves the time profiles for the species in ``outputfile=full\_gas.dat``. In the example directory, the jupyter-notebook ``PlotFullGas`` plots the time profiles of each species from the TChem-atm and CAMP outputs. Note that the CAMP output was previously computed and saved in the TChem-atm repository.
+
+The ``TChem\_AtmosphericChemistry.x`` executable allows to change time integration parameters of the 
+FIXME 
+% [TrBDF2 solver](https://github.com/sandialabs/Tines?tab=readme-ov-file#timeintegration).
+ First, the Newton solver parameters are the
+absolute (``atol-newton``), relative tolerance (``rtol-newton``), and the maximum number of iterations (``max-newton-iterations``). Second, the time step size is controlled using the ``tol-time`` parameter and the maximum (``dtmax``) and minimum (``dtmin``) time step values. Third, the parameters either ``tend`` or ``max-time-iterations`` will end the simulation. Finally, one can get additional help information from the ``TChem\_AtmosphericChemistry.x`` executable using ``TChem\_AtmosphericChemistry.x --help``.
+
+
+FIXME
+%![TChem-atm vs CAMP](figures/carbonB5TChemvsCAMP.png)
+Comparing TChem-atm and CAMP outputs using the Carbon Bound 5 mechanism.
+
+\section{UCI-E3SM version 3 chemistry}
+
+E3SM version 3 uses the UCI mechanism to model gas chemistry using separate reaction mechanisms for the Troposphere and Stratosphere. As part of the Sandia LDRD project "Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver"[CITE], we created TChem-atm input files for the UCI mechanism. In addition, we implemented reaction types that are needed to reproduce this chemistry mechanism in TChem-atm.
+
+E3SM employs the Community Atmospheric Model Pre-Processor (CAMPP) to generate a set of Fortran files to represent and solve the chemical kinetic model, which includes reaction coefficients, the hand side of volumetric mixing ratio (vmr, denoted $\eta$), and ODE solvers (Implicit/Explicit solver). Ultimately, CAMPP aims to compute an updated vmr ($\eta_{t+\Delta t}$) for the troposphere and stratosphere.
+
+For additional information on this LDRD project, we recommend to read the [SAND2024-01807R report]
+% (/../sand_report/QTI_tchemV1.pdf)
+[CITE]. As described in the SAND2024-01807R report, we employed TChem-atm to time advance one-time step and compare these outputs with E3SM output in six different locations; see table below. We compute the relative root mean square error (RRMSE) of the difference between the E3SM and TChem-atm outputs. Using this approach, we verified the input files and implementation of TChem-atm.
+
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        Abbreviation & Latitude & Longitude & Location \\
+        \hline
+        LA & 34.0549 & -118.2426 & Los Angeles, CA, USA \\
+        BRW & 71.323 & -156.6114 & North Slope, AK, USA \\
+        MHD & 53.326 & -9.899 & Halfmace, County Galway, Ireland \\
+        PSA & -64.7742 & -64.0527 & Palmer Station, Antarctica \\
+        RPB & 13.165 & -59.432 & Ragged Point, Barbados \\
+        SYO & -69.0125 & 39.59 & Showa Station, Antarctica \\
+        ZEP & 78.9067 & 11.8883 & Zeppelin mountain, Ny-\AA lesund, Norway \\
+        \hline
+    \end{tabular}
+    \caption{Location Information}
+    \label{tab:location-info}
+\end{table}
+
+
+\subsection{Troposphere mechanism}
+
+The bash scripts and input files for the UCI chemistry in the troposphere are located at ``src/examples/runs/uci\_col``. In this directory, we split the input file of TChem-atm into two input files. One has initial conditions, and the other file lists reactions, constant species, and active species. The chemistry file of the UCI mechanism is located at ``src/examples/runs/uci\_col/uci\_v2\_test3.yaml``. The initial conditions file for one of the UCI tests is located at ``src/examples/runs/uci\_col/input\_conditions\_col.yaml`, corresponding to a set of cells for one location in an E3SM simulation.
+
+Mechanism details:
+
+\begin{itemize}
+    \item Number of species: 82
+    \item Number of invariants or constant species: 29
+    \item Number of reactions: 106
+    \item Number of Arrhenius-type reactions: 71
+    \item Number of JPL-Troe type reactions: 10
+    \item Number of Ratio JPL-Arrhenius type reactions: 3
+    \item Number of Photolysis rates: 22
+\end{itemize}
+
+
+A run script for the UCI mechanism is presented next:
+
+\begin{verbatim}
+exec=\$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistryE3SM.implicit_euler.x
+input=\$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/uci_v2_test3.yaml
+inputFile=\$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/input_conditions_multi_col.yaml
+run_this="\$exec --chemfile=\$input \\
+          --inputfile=\$inputFile \\
+          --outputfile=full_gas.dat \\
+          --time-iterations-per-interval=100 \\
+          --tol-time=1e-6 \\
+          --dtmin=1800 \\
+          --dtmax=1800 \\
+          --tend=1800 \\
+          --atol-newton=1e-18 \\
+          --rtol-newton=1e-8 \\
+          --max-newton-iterations=20 \\
+          --max-time-iterations=20000"
+
+echo \$run_this
+eval \$run_this
+\end{verbatim}
+
+
+Here, TChem-atm is using an implicit euler solver. The ``inputfile`` flag allows to pass the initial condition files as an independent file of the ``chemfile``. Furthermore, TChem-atm also offers executables for Tines-TrBDF2 solver, ``TChem\_AtmosphericChemistryE3SM.x`` and for CVODE, ``TChem\_AtmosphericChemistryE3SM\_CVODE.x``; Note the CVODE-TChem-atm executable works only in CPUs.
+
+FIXME
+%![E3SM vs TChem-atm Troposhere](figures/net_production_rate_worst.png)
+Parity plot for rate of progress in the troposphere. E3SM outputs are produced by CAMPP’s generated code. There are 104 reactions, and we only display the 10 with the larges RRMSE for the locations given in previous table. RRMSE per location is presented in each plot. The net production rates correspond to the RHS of the equations solved by E3SM and TChem.
+
+
+\subsection{Stratosphere mechanism}
+
+The chemistry file of the UCI mechanism of the stratosphere is located at ``src/examples/runs/uci\_col/uci\_explicit\_mech.yaml``. The initial conditions file for one of the UCI tests is located at ``src/examples/runs/uci\_col/input\_conditions\_explicit\_part\_multi\_col.yaml`, which corresponds to one set of cells for one location in an E3SM simulation.
+
+Mechanism details:
+
+\begin{itemize}
+    \item Number of species: 7
+    \item Number of invariants or constant species invariants: 3
+    \item Number of reactions: 5
+    \item Number of Arrhenius-type reactions: 3
+    \item Number of JPL-Troe type reactions: 2
+\end{itemize}
+
+E3SM uses an explicit Euler solver to time integrate gas chemistry in the Stratoshere. In TChem-atm, we also implemented an explicit Euler solver.
+
+
+\begin{verbatim}
+exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistryE3SM.explicit_euler.x
+input=$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/uci_explicit_mech.yaml
+inputFile=$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/input_conditions_explicit_part_multi_col.yaml
+run_this="$exec --chemfile=$input \
+          --inputfile=$inputFile \
+          --outputfile=full_gas_stratosphere.dat \
+          --time-iterations-per-interval=100 \
+          --tol-time=1e-6 \
+          --dtmin=1800 \
+          --dtmax=1800 \
+          --tend=1800 \
+          --atol-newton=1e-18 \
+          --rtol-newton=1e-8 \
+          --max-newton-iterations=20 \
+          --max-time-iterations=20000"
+
+echo $run_this
+eval $run_this
+\end{verbatim}
+
+
+FIXME
+% [E3SM vs TChem-atm Stratoshere](figures/net_production_rates_stratosphere.png)
+
+Parity plot of net production rates(RHS) in the stratosphere. RRMSE per location is presented in each plot. The net production rates correspond to the RHS of the equations solved by E3SM and TChem.
+
+
 
 % \cleardoublepage
 % \chapter{DETAILED DESCRIPTION OF RESEARCH AND DEVELOPMENT AND METHODOLOGY}

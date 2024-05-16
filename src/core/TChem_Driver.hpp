@@ -2,8 +2,8 @@
 #include <TChem_KineticModelNCAR_ConstData.hpp>
 #include <TChem_Util.hpp>
 
-extern "C" void initialize_kokkos(const char * filename);
-extern "C" void finalize_kokkos();
+extern "C" void initialize(const char * filename);
+extern "C" void finalize();
 
 namespace TChem {
 struct Driver {
@@ -51,7 +51,6 @@ public:
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
 extern "C" std::string TChem_getSpeciesName(TChem::ordinal_type index);
-extern "C" void TChem_setAllStateVectorHost(TChem::real_type *state);
 extern "C" int TChem_getLengthOfStateVector();
 extern "C" void TChem_getStateVector(TChem::real_type *array);
 extern "C" void TChem_setStateVector(TChem::real_type *array);

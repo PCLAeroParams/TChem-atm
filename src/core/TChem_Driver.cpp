@@ -14,7 +14,7 @@ using ordinal_type = TChem::ordinal_type;
 
 static TChem::Driver *g_tchem = nullptr;
 
-void initialize_kokkos(const char * chemFile){
+void initialize(const char * chemFile){
 
   g_tchem = new TChem::Driver();
 
@@ -56,7 +56,7 @@ void initialize_kokkos(const char * chemFile){
   
 }
 
-void finalize_kokkos(){
+void finalize(){
 
   g_tchem->freeAll();
   delete g_tchem;
@@ -134,11 +134,6 @@ void TChem::Driver::setStateVector() { //TChem::real_type *view){
   for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
      _state(0,k) = 1.0;
   }
-//  auto state_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL);
-//  for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
-//     printf("%e\n", state_at_0(k));
-//  }
-//  return state_at_0;
 }
 
 void TChem_getSpeciesNames(){
@@ -170,14 +165,3 @@ ordinal_type TChem::Driver::getLengthOfStateVector() const {
 //  TCHEM_CHECK_ERROR(!_is_gasphase_kmcd_created, "const Kinetic model first needs to be created");
   return Impl::getStateVectorSize(_kmcd.nSpec);
 }
-
-void TChem_setAllStateVectorHost(TChem::real_type *state) {
-  printf("Done!");
-//  if (g_tchem != nullptr) {
-//    const int m0 = TChem_getNumberOfSamples();
-//    const int m1 = TChem_getLengthOfStateVector();
-//    g_tchem->setStateVectorHost(real_type_2d_view_host(state, m0, m1));
-//  }
-}
-
-

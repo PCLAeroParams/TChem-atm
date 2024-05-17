@@ -15,11 +15,10 @@ interface
     use iso_c_binding
     integer(kind=c_int) :: TChem_getNumberOfSpecies
   end function
-  function TChem_getSpeciesName(index) bind(c)
+  subroutine TChem_getSpeciesName(index) bind(c, name="TChem_getSpeciesName")
     use iso_c_binding
     integer(kind=c_int) :: index
-    character(kind=c_char), dimension(50) :: TChem_TChem_getSpeciesName
-  end function
+  end  subroutine
   subroutine TChem_getStateVector(array) bind(c, name="TChem_getStateVector")
     use iso_c_binding
     real(kind=c_double) :: array(*)
@@ -27,6 +26,11 @@ interface
   subroutine TChem_setStateVector(array) bind(c, name="TChem_setStateVector")
     use iso_c_binding
     real(kind=c_double) :: array(*)
+  end subroutine
+  subroutine TChem_getSpeciesNames(species_name, len) bind(c, name="TChem_getSpeciesNames")
+    use iso_c_binding
+    integer(kind=c_int) :: len
+    character(kind=c_char), dimension(len) :: species_name
   end subroutine
 end interface
 

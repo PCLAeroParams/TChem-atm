@@ -18,7 +18,7 @@ public:
    void createStateVector();
    ordinal_type getLengthOfStateVector() const;
    auto getStateVector(); //TChem::real_type &view);
-   void setStateVector();
+   void setStateVector(double *array);
 
    // 
    TChem::KineticModelData _kmd;
@@ -27,7 +27,8 @@ public:
    void createGasKineticModelConstData();
 
    ordinal_type getNumberOfSpecies();
-   void getSpeciesNames();
+   std::string getSpeciesNames();
+   char *getSpeciesName(int *index); //ordinal_type &index);
 
    // Clean up
    void freeAll();
@@ -50,7 +51,8 @@ public:
 
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
-extern "C" std::string TChem_getSpeciesName(TChem::ordinal_type index);
+extern "C" const char* TChem_getSpeciesName(TChem::ordinal_type *index);
 extern "C" int TChem_getLengthOfStateVector();
 extern "C" void TChem_getStateVector(TChem::real_type *array);
 extern "C" void TChem_setStateVector(TChem::real_type *array);
+extern "C" void TChem_getSpeciesNames(std::string *string);

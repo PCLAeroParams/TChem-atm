@@ -103,8 +103,7 @@ void TChem::Driver::createStateVector() {
   }
 }
 
-auto TChem::Driver::getStateVector() { //TChem::real_type *view){
-  printf("in TChem::Driver::getStateVector\n");
+auto TChem::Driver::getStateVector() {
   auto state_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL); 
   for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
      printf("%e\n", state_at_0(k));
@@ -113,34 +112,47 @@ auto TChem::Driver::getStateVector() { //TChem::real_type *view){
 }
 
 void TChem_getStateVector(TChem::real_type *state){
-  state[0] = 100.0;
-  state[50] = 50.0;
-  auto q = g_tchem->getStateVector(); //&state);
+  auto q = g_tchem->getStateVector();
   for (ordinal_type k = 0; k < 67; k++){ 
-  printf("in TChem_getStateVector %e\n", q[k]);
-  state[k] = q[k];
+     state[k] = q[k];
   }
 }
 
 void TChem_setStateVector(double *array){
-  g_tchem->setStateVector();
-  for (ordinal_type k = 0; k < 67; k++){
-     printf("in setStateVector %e\n", array[k]);
-  }
+  g_tchem->setStateVector(array);
 }
 
-void TChem::Driver::setStateVector() { //TChem::real_type *view){
-  printf("in TChem::Driver::setStateVector\n");
+void TChem::Driver::setStateVector(double *array) {
+  printf("In TChem::Driver::setStateVector\n");
   for (ordinal_type k = 0; k < _kmcd.nSpec; k++){
-     _state(0,k) = 1.0;
+     _state(0,k) = array[k];
   }
 }
 
-void TChem_getSpeciesNames(){
-  g_tchem->getSpeciesNames();
+const char *TChem_getSpeciesName(int *index){
+  char * str = g_tchem->getSpeciesName(index);
+  printf("TChem_getSpeciesName %s\n", str);
+  return str;
 }
 
-void TChem::Driver::getSpeciesNames(){
+char * TChem::Driver::getSpeciesName(int *index){
+//  std::string species_name;
+  const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd.speciesNames);
+  Kokkos::deep_copy(speciesNamesHost, _kmcd.speciesNames);
+  int k = *index;
+  char * species_name = &speciesNamesHost(k,0);
+  printf("TChem::Driver::getSpeciesName %s\n", species_name);
+  return species_name;
+}
+
+void TChem_getSpeciesNames(std::string *string){
+  std::string str;
+  str = g_tchem->getSpeciesNames();
+  printf("This is fun! %s\n", str.data());
+//  return str;
+}
+
+std::string TChem::Driver::getSpeciesNames(){
   std::string species_names[_kmcd.nSpec];
   const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd.speciesNames);
   Kokkos::deep_copy(speciesNamesHost, _kmcd.speciesNames);
@@ -149,6 +161,7 @@ void TChem::Driver::getSpeciesNames(){
      species_names[k] = &speciesNamesHost(k,0);
      printf("%s \n", species_names[k].c_str());
   }
+  return species_names[0];
 }
 
 ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd.nSpec;}

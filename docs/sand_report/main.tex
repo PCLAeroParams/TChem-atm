@@ -21,6 +21,9 @@
 \usepackage{enumerate}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{fancyvrb}
+\usepackage{fvextra}
+\fvset{breaklines=true,breakanywhere=true}
 
 \newcommand\YAMLcolonstyle{\color{red}\mdseries}
 \newcommand\YAMLkeystyle{\color{black}\bfseries}
@@ -317,9 +320,9 @@ MY_FC=gfortran # Fortran compiler
 
 To build/install with CUDA \verb|ON| or \verb|OFF|, use:
 
-\begin{verbatim}
+\begin{Verbatim}
 CUDA="ON" # Set to ON/OFF to compile TChem-atm with or without NVIDIA-GPUs support.
-\end{verbatim}
+\end{Verbatim}
 
 Additionally, specify the root directory for installing/building the third-party libraries:
 
@@ -345,7 +348,7 @@ To build/install with CUDA ON (or OFF), use:
 
 In addition, this script adds the option to turn \verb|SACADO="ON"| or \verb|SACADO="OFF"| for enabling or disabling automatic differentiation using the SACADO library.
 
-The installation path for the third-party libraries is specified by \verb|INSTALL_BASE_HOST|, and \verb|ROOT=/path/to/tchem-atm| is where TChem-atm and Tines are installed. If CUDA is \verb|ON|, libraries will be installed in the \verb|ROOT/DEVICE| directory. Otherwise, they will be installed in the \verb|ROOT/HOST| directory.
+The installation path for the third-party libraries is specified by \verb|INSTALL_BASE_HOST|, and \Verb|ROOT=/path/to/tchem-atm| is where TChem-atm and Tines are installed. If CUDA is \verb|ON|, libraries will be installed in the \verb|ROOT/DEVICE| directory. Otherwise, they will be installed in the \verb|ROOT/HOST| directory.
 
 \chapter{Theoretical Background}
 \label{ch:theo}
@@ -588,7 +591,7 @@ HO_2NO_2 + M \rightarrow HO_2 + NO_2 + M
 \end{lstlisting}
 \subsection{usr\_DMS\_OH}
 
-The reaction type \verb|usr_DMS_OH| is part of the UCI mechanism and is hard-coded in the [\verb|mo_usrrxt|] submodule in $\eee$'s code~\cite{e3smweb}. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
+The reaction type \verb|usr_DMS_OH| is part of the UCI mechanism and is hard-coded in the \verb|mo_usrrxt| submodule in $\eee$'s code~\cite{e3smweb}. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
 
 \begin{lstlisting}[language=yaml]
 - coefficients:
@@ -638,7 +641,7 @@ The reaction type \verb|usr_SO2_OH| is part of the UCI mechanism and is hard-cod
 
 \subsection{Modifier prod O1D}
 
-Reaction types [UCI 1, 2, 3]
+Reaction types UCI 1, 2, 3
 in the UCI mechanism require a modifier to compute the reaction rate. We did not include this modifier under the \verb|reaction| section of the input file; instead, we created the section \verb|modifier_prod_O1D|.
 
 \begin{equation}
@@ -730,7 +733,7 @@ species:
   name: B
 \end{lstlisting}
 
-A description of the reaction types currently implemented in TChem-atm is presented in theoretical background section~\ref{ch:theo}. In addition, a set of examples of input files is presented under \verb|/src/examples/runs/atmopheric_chemistry|.
+A description of the reaction types currently implemented in TChem-atm is presented in theoretical background section~\ref{ch:theo}. In addition, a set of examples of input files is presented under \Verb|/src/examples/runs/atmopheric_chemistry|.
 
 \chapter{Examples}
 \section{Carbon Bond 5}
@@ -750,10 +753,10 @@ Mechanism details:
 
 The mechanism in the CAMP solver has 26 photolysis reactions, which we replace with Arrhenius-type reactions with energy = 0  and temperature coefficient = 1.
 
-Scripts to run and plot the outputs of this example are at: \verb|src/examples/runs/atmospheric_chemistry/CB05CL_AE5|. The bash script to run this mechanism is shown below:
+Scripts to run and plot the outputs of this example are at:\Verb|src/examples/runs/atmospheric_chemistry/CB05CL_AE5|. The bash script to run this mechanism is shown below:
 
 
-\begin{verbatim}
+\begin{Verbatim}
 exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistry.x
 
 run_this="$exec --chemfile=config_full_gas.yaml \
@@ -770,11 +773,11 @@ run_this="$exec --chemfile=config_full_gas.yaml \
 
 echo $run_this
 eval $run_this
-\end{verbatim}
+\end{Verbatim}
 
 Here, the \verb|TChem_AtmosphericChemistry.x| executable is a box model that integrates in time a list of species using the mechanism file from input \verb|chemfile|, which in this case is the \verb|config_full_gas.yaml|. The box model only considers chemical reactions. The executable saves the time profiles for the species in \verb|outputfile=full_gas.dat|. In the example directory, the jupyter-notebook \verb|PlotFullGas| plots the time profiles of each species from the TChem-atm and CAMP outputs; see Figure~(\ref{fig:camp_vs_tchem-atm}). Note that the CAMP output was previously computed and saved in the TChem-atm repository.
 
-The \verb|TChem_AtmosphericChemistry.x| executable allows to change time integration parameters of the TrBDF2 solver~\cite{tinesweb}. First, the Newton solver parameters are the absolute (\verb|atol-newton|), relative tolerance (\verb|rtol-newton|), and the maximum number of iterations (\verb|max-newton-iterations|). Second, the time step size is controlled using the \verb|tol-time| parameter and the maximum (\verb|dtmax|) and minimum (\verb|dtmin|) time step values. Third, the parameters either \verb|tend| or \verb|max-time-iterations| will end the simulation. Finally, one can get additional help information from the \verb|TChem_AtmosphericChemistry.x| executable using \verb|TChem_AtmosphericChemistry.x --help|.
+The \verb|TChem_AtmosphericChemistry.x| executable allows to change time integration parameters of the TrBDF2 solver~\cite{tinesweb}. First, the Newton solver parameters are the absolute (\verb|atol-newton|), relative tolerance (\verb|rtol-newton|), and the maximum number of iterations (\verb|max-newton-iterations|). Second, the time step size is controlled using the \verb|tol-time| parameter and the maximum (\verb|dtmax|) and minimum (\verb|dtmin|) time step values. Third, the parameters either \verb|tend| or \verb|max-time-iterations| will end the simulation. Finally, one can get additional help information from the \Verb|TChem_AtmosphericChemistry.x| executable using \verb|TChem_AtmosphericChemistry.x --help|.
 
 
 \begin{figure}[htp]
@@ -816,7 +819,7 @@ For additional information on this LDRD project, we recommend to read the SAND20
 
 \subsection{Troposphere mechanism}
 
-The bash scripts and input files for the UCI chemistry in the troposphere are located at \verb|src/examples/runs/uci_col|. In this directory, we split the input file of TChem-atm into two input files. One has initial conditions, and the other file lists reactions, constant species, and active species. The chemistry file of the UCI mechanism is located at \verb|src/examples/runs/uci_col/uci_v2_test3.yaml|. The initial conditions file for one of the UCI tests is located at \verb|src/examples/runs/uci_col/input_conditions_col.yaml|, corresponding to a set of cells for one location in an E3SM simulation.
+The bash scripts and input files for the UCI chemistry in the troposphere are located at \Verb|src/examples/runs/uci_col|. In this directory, we split the input file of TChem-atm into two input files. One has initial conditions, and the other file lists reactions, constant species, and active species. The chemistry file of the UCI mechanism is located at \Verb|src/examples/runs/uci_col/uci_v2_test3.yaml|. The initial conditions file for one of the UCI tests is located at \Verb|src/examples/runs/uci_col/input_conditions_col.yaml|, corresponding to a set of cells for one location in an E3SM simulation.
 
 Mechanism details:
 
@@ -833,7 +836,7 @@ Mechanism details:
 
 A run script for the UCI mechanism is presented next:
 
-\begin{verbatim}
+\begin{Verbatim}
 exec=\$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistryE3SM.implicit_euler.x
 input=\$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/uci_v2_test3.yaml
 inputFile=\$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/input_conditions_multi_col.yaml
@@ -852,7 +855,7 @@ run_this="\$exec --chemfile=\$input \\
 
 echo \$run_this
 eval \$run_this
-\end{verbatim}
+\end{Verbatim}
 
 
 Here, TChem-atm is using an implicit euler solver. The \verb|inputfile| flag allows to pass the initial condition files as an independent file of the \verb|chemfile|. Furthermore, TChem-atm also offers executables for Tines-TrBDF2 solver, \verb|TChem_AtmosphericChemistryE3SM.x| and for CVODE, \verb|TChem_AtmosphericChemistryE3SM_CVODE.x|; Note the CVODE-TChem-atm executable works only in CPUs.
@@ -868,7 +871,9 @@ Here, TChem-atm is using an implicit euler solver. The \verb|inputfile| flag all
 
 \subsection{Stratosphere mechanism}
 
-The chemistry file of the UCI mechanism of the stratosphere is located at \verb|src/examples/runs/uci_col/uci_explicit_mech.yaml|. The initial conditions file for one of the UCI tests is located at \verb|src/examples/runs/uci_col/input_conditions_explicit_part_multi_col.yaml|, which corresponds to one set of cells for one location in an E3SM simulation.
+The chemistry file of the UCI mechanism of the stratosphere is located at
+\Verb|src/examples/runs/uci_col/uci_explicit_mech.yaml|.
+The initial conditions file for one of the UCI tests is located at \Verb|src/examples/runs/uci_col/input_conditions_explicit_part_multi_col.yaml|, which corresponds to one set of cells for one location in an E3SM simulation.
 
 Mechanism details:
 
@@ -883,7 +888,7 @@ Mechanism details:
 E3SM uses an explicit Euler solver to time integrate gas chemistry in the Stratoshere. In TChem-atm, we also implemented an explicit Euler solver.
 
 
-\begin{verbatim}
+\begin{Verbatim}
 exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistryE3SM.explicit_euler.x
 input=$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/uci_explicit_mech.yaml
 inputFile=$TCHEM_INSTALL_PATH/examples/runs/atmospheric_chemistry/uci_col/input_conditions_explicit_part_multi_col.yaml
@@ -902,7 +907,7 @@ run_this="$exec --chemfile=$input \
 
 echo $run_this
 eval $run_this
-\end{verbatim}
+\end{Verbatim}
 
 \begin{figure}[htp]
   \centering

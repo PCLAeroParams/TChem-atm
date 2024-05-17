@@ -492,18 +492,18 @@ Note that in the \verb|JPL| type \verb|N=1|.
 
 The rate constant for the custom H2O2 type (\verb|type: CMAQ_H2O2|) can not be expressed as the combination of Arriheous and Troe reaction types. Hence, TChem-atm has a specific type of reaction for this reaction.
 
-$$
+\begin{equation}
 k_f = A_1 \mathrm{exp} \Big( \frac{C_1}{\mathrm{T}} \Big)
 \left(\frac{\mathrm{T}}{300}\right)^{B_1} + A_2 \mathrm{exp} \Big ( \frac{C_2}{\mathrm{T}} \Big) \left(\frac{\mathrm{T}}{300}\right)^{B_2} \mathrm{conv}
-$$
+\end{equation}
 
 where, $\mathrm{conv} = \frac{N_A}{R \times 10^{-12}} \frac{P}{T}$ and $N_A=6.02214179 \times 10^{23}$ is Avogadro's number ($\mathrm{mole}^{-1}$) and $R=8.314472$ is the universal gas constant ($J \mathrm{mole}^{-1}K^{-1}$).
 
 As an example of this reaction from the carbon bond 5 mechanism:
 
-$$
+\begin{equation}
 2HO_2 \rightarrow H_2O_2
-$$
+\end{equation}
 
 \begin{lstlisting}[language=yaml]
 - MUSICA_name: R34
@@ -523,9 +523,9 @@ $$
 
 The carbon bond 5 mechanism employs this reaction type and can be expressed as the sum of Arrhenius and Troe reaction types, i.e., $k_f=k_{troe} + k_{arrhenius}$. Hence, one must specify two reactions in the YAML input files. For example:
 
-$$
+\begin{equation}
 HNO_3 + OH \rightarrow NO_3
-$$
+\end{equation}
 
 \begin{lstlisting}[language=yaml]
 - coefficients:
@@ -559,9 +559,9 @@ This reaction type (\verb|type: R_JPL_ARRHENIUS|) is computed as the ratio betwe
 
 The addition of this reaction type to represent UCI reactions required custom-defined rate coefficients (UCI \#7-9). As an example, for FIXME%[`uci7`](https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/llnl_O1D_to_2OH_adj.F90#L184) reaction:
 
-$$
+\begin{equation}
 HO_2NO_2 + M \rightarrow HO_2 + NO_2 + M
-$$
+\end{equation}
 
 \begin{lstlisting}[language=yaml]
 - coefficients:
@@ -646,17 +646,17 @@ Reaction types [UCI 1, 2, 3]
 %(https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/llnl_O1D_to_2OH_adj.F90#L152) 
 in the UCI mechanism require a modifier to compute the reaction rate. We did not include this modifier under the \verb|reaction| section of the input file; instead, we created the section \verb|modifier_prod_O1D|.
 
-$$
+\begin{equation}
 \mathrm{factor} = \frac{\mathrm{prod_{O1D}}}{fc}
-$$
+\end{equation}
 
 where, $fc$
 
-$$
+\begin{equation}
 fc = A1\, \mathrm{exp} \Big(\frac{C1}{\mathrm{T}} \Big) * [\mathrm{N_2}] +
 A2\, \mathrm{exp} \Big(\frac{C2}{\mathrm{T}} \Big) * [\mathrm{O_2}] +
 A3\, \mathrm{exp} \Big(\frac{C3}{\mathrm{T}} \Big) * [\mathrm{H_2O}]
-$$
+\end{equation}
 
 The YAML configuration for this modifier is :
 

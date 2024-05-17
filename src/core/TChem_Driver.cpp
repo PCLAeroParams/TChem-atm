@@ -129,19 +129,21 @@ void TChem::Driver::setStateVector(double *array) {
   }
 }
 
-const char *TChem_getSpeciesName(int *index){
-  char * str = g_tchem->getSpeciesName(index);
-  printf("TChem_getSpeciesName %s\n", str);
-  return str;
+int TChem_getSpeciesName(int *index){
+//int TChem_getSpeciesName(int *index){
+  std::string str = g_tchem->getSpeciesName(index);
+  printf("TChem_getSpeciesName %s\n", str.c_str());
+//  return str.c_str();
+  return str.size();
 }
 
-char * TChem::Driver::getSpeciesName(int *index){
+std::string TChem::Driver::getSpeciesName(int *index){
 //  std::string species_name;
   const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd.speciesNames);
   Kokkos::deep_copy(speciesNamesHost, _kmcd.speciesNames);
   int k = *index;
-  char * species_name = &speciesNamesHost(k,0);
-  printf("TChem::Driver::getSpeciesName %s\n", species_name);
+  std::string species_name = &speciesNamesHost(k,0);
+  printf("TChem::Driver::getSpeciesName %s\n", species_name.c_str());
   return species_name;
 }
 

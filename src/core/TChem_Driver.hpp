@@ -28,7 +28,7 @@ public:
 
    ordinal_type getNumberOfSpecies();
    std::string getSpeciesNames();
-   char *getSpeciesName(int *index); //ordinal_type &index);
+   std::string getSpeciesName(int *index); //ordinal_type &index);
 
    // Clean up
    void freeAll();
@@ -51,7 +51,7 @@ public:
 
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
-extern "C" const char* TChem_getSpeciesName(TChem::ordinal_type *index);
+extern "C" int TChem_getSpeciesName(TChem::ordinal_type *index);
 extern "C" int TChem_getLengthOfStateVector();
 extern "C" void TChem_getStateVector(TChem::real_type *array);
 extern "C" void TChem_setStateVector(TChem::real_type *array);

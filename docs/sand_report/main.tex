@@ -793,13 +793,11 @@ Comparing TChem-atm and CAMP outputs using the Carbon Bound 5 mechanism.
 
 \section{UCI-E3SM version 3 chemistry}
 
-E3SM version 3 uses the UCI mechanism to model gas chemistry using separate reaction mechanisms for the Troposphere and Stratosphere. As part of the Sandia LDRD project "Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver"[CITE], we created TChem-atm input files for the UCI mechanism. In addition, we implemented reaction types that are needed to reproduce this chemistry mechanism in TChem-atm.
+E3SM version 3 uses the UCI mechanism to model gas chemistry using separate reaction mechanisms for the Troposphere and Stratosphere. As part of the Sandia LDRD project ``Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solve''~\cite{Diaz-Ibarra:2024:tchem}, we created TChem-atm input files for the UCI mechanism. In addition, we implemented reaction types that are needed to reproduce this chemistry mechanism in TChem-atm.
 
 E3SM employs the Community Atmospheric Model Pre-Processor (CAMPP) to generate a set of Fortran files to represent and solve the chemical kinetic model, which includes reaction coefficients, the hand side of volumetric mixing ratio (vmr, denoted $\eta$), and ODE solvers (Implicit/Explicit solver). Ultimately, CAMPP aims to compute an updated vmr ($\eta_{t+\Delta t}$) for the troposphere and stratosphere.
 
-For additional information on this LDRD project, we recommend to read the [SAND2024-01807R report]
-% (/../sand_report/QTI_tchemV1.pdf)
-[CITE]. As described in the SAND2024-01807R report, we employed TChem-atm to time advance one-time step and compare these outputs with E3SM output in six different locations; see table below. We compute the relative root mean square error (RRMSE) of the difference between the E3SM and TChem-atm outputs. Using this approach, we verified the input files and implementation of TChem-atm.
+For additional information on this LDRD project, we recommend to read the SAND2024-01807R report~\cite{Diaz-Ibarra:2024:tchem}. As described in the SAND2024-01807R report, we employed TChem-atm to time advance one-time step and compare these outputs with E3SM output in six different locations; see table below. We compute the relative root mean square error (RRMSE) of the difference between the E3SM and TChem-atm outputs. Using this approach, we verified the input files and implementation of TChem-atm.
 
 
 \begin{table}[htbp]

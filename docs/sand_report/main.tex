@@ -557,7 +557,7 @@ HNO_3 + OH \rightarrow NO_3
 
 This reaction type (\verb|type: R_JPL_ARRHENIUS|) is computed as the ratio between Troe (or JPL) and Arrhenius types, i.e., $k_f=k_{troe}/k_{arrhenius}$.
 
-The addition of this reaction type to represent UCI reactions required custom-defined rate coefficients (UCI \#7-9). As an example, for FIXME%[`uci7`](https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/llnl_O1D_to_2OH_adj.F90#L184) reaction:
+The addition of this reaction type to represent UCI reactions required custom-defined rate coefficients (UCI \#7-9). As an example, for uci7 reaction~\cite{e3smweb}:
 
 \begin{equation}
 HO_2NO_2 + M \rightarrow HO_2 + NO_2 + M
@@ -588,9 +588,7 @@ HO_2NO_2 + M \rightarrow HO_2 + NO_2 + M
 \end{lstlisting}
 \subsection{usr\_DMS\_OH}
 
-The reaction type \verb|usr_DMS_OH| is part of the UCI mechanism and is hard-coded in the [\verb|mo_usrrxt|]FIMXE
-%(https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L683) 
-submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
+The reaction type \verb|usr_DMS_OH| is part of the UCI mechanism and is hard-coded in the [\verb|mo_usrrxt|] submodule in $\eee$'s code~\cite{e3smweb}. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
 
 \begin{lstlisting}[language=yaml]
 - coefficients:
@@ -615,9 +613,7 @@ submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Tro
 
 \subsection{usr\_SO2\_OH}
 
-The reaction type \verb|usr_SO2_OH| is part of the UCI mechanism and is hard-coded in the [\verb|mo_usrrxt|]
-FIXME%(https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L693) 
-submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
+The reaction type \verb|usr_SO2_OH| is part of the UCI mechanism and is hard-coded in the \verb|mo_usrrxt| submodule in $\eee$'s code~\cite{e3smweb}. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
 
 \begin{lstlisting}[language=yaml]
 - coefficients:
@@ -643,7 +639,6 @@ submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Tro
 \subsection{Modifier prod O1D}
 
 Reaction types [UCI 1, 2, 3]
-%(https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/llnl_O1D_to_2OH_adj.F90#L152) 
 in the UCI mechanism require a modifier to compute the reaction rate. We did not include this modifier under the \verb|reaction| section of the input file; instead, we created the section \verb|modifier_prod_O1D|.
 
 \begin{equation}
@@ -801,6 +796,7 @@ For additional information on this LDRD project, we recommend to read the SAND20
 
 \begin{table}[htbp]
     \centering
+    \caption{Abbreviation, Coordinates, and Location for the atmospheric columns used in validation and performance testing.}
     \begin{tabular}{|c|c|c|c|}
         \hline
         Abbreviation & Latitude & Longitude & Location \\
@@ -814,7 +810,6 @@ For additional information on this LDRD project, we recommend to read the SAND20
         ZEP & 78.9067 & 11.8883 & Zeppelin mountain, Ny-\AA lesund, Norway \\
         \hline
     \end{tabular}
-    \caption{Location Information}
     \label{tab:location-info}
 \end{table}
 
@@ -862,10 +857,14 @@ eval \$run_this
 
 Here, TChem-atm is using an implicit euler solver. The \verb|inputfile| flag allows to pass the initial condition files as an independent file of the \verb|chemfile|. Furthermore, TChem-atm also offers executables for Tines-TrBDF2 solver, \verb|TChem_AtmosphericChemistryE3SM.x| and for CVODE, \verb|TChem_AtmosphericChemistryE3SM_CVODE.x|; Note the CVODE-TChem-atm executable works only in CPUs.
 
-FIXME
-%![E3SM vs TChem-atm Troposhere](figures/net_production_rate_worst.png)
-Parity plot for rate of progress in the troposphere. E3SM outputs are produced by CAMPP’s generated code. There are 104 reactions, and we only display the 10 with the larges RRMSE for the locations given in previous table. RRMSE per location is presented in each plot. The net production rates correspond to the RHS of the equations solved by E3SM and TChem.
 
+\begin{figure}[htp]
+  \centering
+  \includegraphics[width=1\textwidth]{figures/rate_of_progress_worst.pdf}
+  \caption{Parity plot for rate of progress in the troposphere. E3SM outputs are produced by CAMPP’s generated code. There are 104 reactions, and we only display the 10 with the larges RRMSE for the locations given in Table~(\ref{tab:location-info}). RRMSE per location is presented in each plot. The net production rates correspond to the RHS of the equations solved by E3SM and TChem.
+  }
+ \label{fig:rate_progress_parity}
+\end{figure}
 
 \subsection{Stratosphere mechanism}
 
@@ -905,12 +904,13 @@ echo $run_this
 eval $run_this
 \end{verbatim}
 
-
-FIXME
-% [E3SM vs TChem-atm Stratoshere](figures/net_production_rates_stratosphere.png)
-
-Parity plot of net production rates(RHS) in the stratosphere. RRMSE per location is presented in each plot. The net production rates correspond to the RHS of the equations solved by E3SM and TChem.
-
+\begin{figure}[htp]
+  \centering
+  \includegraphics[width=1\textwidth]{figures/net_production_rates_stratosphere.pdf}
+ \caption{Parity plot of net production rates(RHS) in the stratosphere. RRMSE per location is presented in each plot. The net production rates correspond to the RHS of the equations solved by E3SM and TChem.
+}
+\label{fig:net_production_rates_stratosphere}
+\end{figure}
 
 
 % \cleardoublepage
@@ -967,7 +967,7 @@ Parity plot of net production rates(RHS) in the stratosphere. RRMSE per location
         
     % \printindex
     
-    \include{SANDdistribution}
+    % \include{SANDdistribution}
     
 
 \end{document}

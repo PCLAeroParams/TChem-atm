@@ -409,7 +409,7 @@ has the following information provided using the following YAML configuration:
     D: 0.0
 \end{lstlisting}
 
-Under the `reactants`/`products`, the name and stoichiometric coefficient ($\nu''_{ki}$ /$\nu'_{ki}$) of each species is listed.
+Under the ``reactants''/``products'', the name and stoichiometric coefficient ($\nu''_{ki}$ /$\nu'_{ki}$) of each species is listed.
 
 Note that in the previous reaction, $O_2$ is not considered a product in the computation of $k_f$.
 
@@ -678,7 +678,7 @@ modifier_prod_O1D:
   - 24
   photolysis_reaction_index: 0
 \end{lstlisting}
-Here, under \verb|coefficients|, the kinetic parameters are presented. The species involved in this factor are listed with \verb|`species_name_1`| to \verb|`species_name_2`|. Note that TChem will find the index of this species. The \verb|reaction_list| presents the index of reaction, where this modifier is applied. Finally, \verb|photolysis_reaction_index| is the index of the $\mathrm{prod_{O1D}}$ reaction.
+Here, under \verb|coefficients|, the kinetic parameters are presented. The species involved in this factor are listed with \verb|species_name_1| to \verb|species_name_2|. Note that TChem will find the index of this species. The \verb|reaction_list| presents the index of reaction, where this modifier is applied. Finally, \verb|photolysis_reaction_index| is the index of the $\mathrm{prod_{O1D}}$ reaction.
 
 Future work will convert \verb|reaction_list| from a list of indexes to reaction IDs. Thus, one does not need to know the index of each reaction before running a TChem simulation. Furthermore, \verb|photolysis_reaction_index| will be converted from index to reaction ID.
 
@@ -740,8 +740,7 @@ A description of the reaction types currently implemented in TChem-atm is presen
 \chapter{Examples}
 \section{Carbon Bond 5}
 
-We adapted the Carbon Bound 5 reaction mechanism from the FIXME
-%[CAMP chemistry code](https://github.com/open-atmos/camp/tree/main/mechanisms/cb05cl_ae5).
+We adapted the Carbon Bound 5 reaction mechanism from the CAMP chemistry code~\cite{campweb,Dawson2022}.
 
 Mechanism details:
 
@@ -778,18 +777,18 @@ echo $run_this
 eval $run_this
 \end{verbatim}
 
-Here, the \verb|TChem_AtmosphericChemistry.x| executable is a box model that integrates in time a list of species using the mechanism file from input \verb|chemfile|, which in this case is the \verb|config_full_gas.yaml|. The box model only considers chemical reactions. The executable saves the time profiles for the species in \verb|outputfile=full_gas.dat|. In the example directory, the jupyter-notebook \verb|PlotFullGas| plots the time profiles of each species from the TChem-atm and CAMP outputs. Note that the CAMP output was previously computed and saved in the TChem-atm repository.
+Here, the \verb|TChem_AtmosphericChemistry.x| executable is a box model that integrates in time a list of species using the mechanism file from input \verb|chemfile|, which in this case is the \verb|config_full_gas.yaml|. The box model only considers chemical reactions. The executable saves the time profiles for the species in \verb|outputfile=full_gas.dat|. In the example directory, the jupyter-notebook \verb|PlotFullGas| plots the time profiles of each species from the TChem-atm and CAMP outputs; see Figure~(\ref{fig:camp_vs_tchem-atm}). Note that the CAMP output was previously computed and saved in the TChem-atm repository.
 
-The \verb|TChem_AtmosphericChemistry.x| executable allows to change time integration parameters of the 
-FIXME 
-% [TrBDF2 solver](https://github.com/sandialabs/Tines?tab=readme-ov-file#timeintegration).
- First, the Newton solver parameters are the
-absolute (\verb|atol-newton|), relative tolerance (\verb|rtol-newton|), and the maximum number of iterations (\verb|max-newton-iterations|). Second, the time step size is controlled using the \verb|tol-time| parameter and the maximum (\verb|dtmax|) and minimum (\verb|dtmin|) time step values. Third, the parameters either \verb|tend| or \verb|max-time-iterations| will end the simulation. Finally, one can get additional help information from the \verb|TChem_AtmosphericChemistry.x| executable using \verb|TChem_AtmosphericChemistry.x --help|.
+The \verb|TChem_AtmosphericChemistry.x| executable allows to change time integration parameters of the TrBDF2 solver~\cite{tinesweb}. First, the Newton solver parameters are the absolute (\verb|atol-newton|), relative tolerance (\verb|rtol-newton|), and the maximum number of iterations (\verb|max-newton-iterations|). Second, the time step size is controlled using the \verb|tol-time| parameter and the maximum (\verb|dtmax|) and minimum (\verb|dtmin|) time step values. Third, the parameters either \verb|tend| or \verb|max-time-iterations| will end the simulation. Finally, one can get additional help information from the \verb|TChem_AtmosphericChemistry.x| executable using \verb|TChem_AtmosphericChemistry.x --help|.
 
 
-FIXME
-%![TChem-atm vs CAMP](figures/carbonB5TChemvsCAMP.png)
-Comparing TChem-atm and CAMP outputs using the Carbon Bound 5 mechanism.
+\begin{figure}[htp]
+  \centering
+  \includegraphics[width=1\textwidth]{../figures/carbonB5TChemvsCAMP.png}
+  \caption{Comparing TChem-atm and CAMP outputs using the Carbon Bound 5 mechanism.}
+\label{fig:camp_vs_tchem-atm}
+\end{figure}
+
 
 \section{UCI-E3SM version 3 chemistry}
 

@@ -170,7 +170,7 @@
 %
 % Set the title, author, and date
 %
-  \title{TChem-atm: a performance portable toolkit for atmospheric chemistry mechanisms}
+  \title{TChem-atm: A performance portable toolkit for atmospheric chemistry mechanisms}
 
    
 
@@ -203,7 +203,7 @@
     % An Abstract is required for SAND reports
     %
     \begin{abstract}
-TChem-atm computes source terms and Jacobian matrices for chemical systems. It is a performance-portable software toolkit designed for complex kinetic mechanisms. We designed and implemented TChem-atm using [Kokkos](https://github.com/kokkos/kokkos.git).
+TChem-atm computes source terms and Jacobian matrices for chemical systems. It is a performance-portable software toolkit designed for complex kinetic mechanisms. We designed and implemented TChem-atm using Kokkos~\cite{kokkosweb,Carter:2014,Trott:2021:kokkos,Trott:2022:kokkos}
 
 Software Design:
 \begin{itemize}
@@ -214,11 +214,16 @@ Software Design:
   \item Coupling to external ODE solvers, e.g., Tines, Sundials (CVODE).
 \end{itemize}
 
-% ![TChem](figures/TChem_atm.png)
+\begin{figure}[htp]
+  \centering
+  \includegraphics[width=1\textwidth]{../figures/TChem_atm.pdf}
+  \caption{Ovierview of TChem-atm.}
+\label{fig:method}
+\end{figure}
 
-TChem-atm includes a parser for a YAML input file that constructs a kinetic model constant data object containing relevant parameters for the computation of the chemical source terms. It computes the reaction constants and rate of progress for all the reactions listed in the input files. Then, it calculates the net production rate or source terms for all species mentioned in the input files. TChem-atm automatically calculates the Jacobian matrix for the source terms using either finite differences (numerical Jacobian) or automatic differentiation (analytical Jacobian via SACADO). Furthermore, the computation of the source term and associated Jacobian is independent of the time integration solver in TChem-atm. Therefore, TChem-atm provides an interface for time integration (Box model) for the Tines and CVODE libraries. Finally, TChem-atm features a batched interface for evaluating the source term, Jacobian matrix, and time integration.
+As depicted in Figure~\ref{fig:method}, TChem-atm includes a parser for a YAML input file that constructs a kinetic model constant data object containing relevant parameters for the computation of the chemical source terms. It computes the reaction constants and rate of progress for all the reactions listed in the input files. Then, it calculates the net production rate or source terms for all species mentioned in the input files. TChem-atm automatically calculates the Jacobian matrix for the source terms using either finite differences (numerical Jacobian) or automatic differentiation (analytical Jacobian via SACADO). Furthermore, the computation of the source term and associated Jacobian is independent of the time integration solver in TChem-atm. Therefore, TChem-atm provides an interface for time integration (Box model) for the Tines and CVODE libraries. Finally, TChem-atm features a batched interface for evaluating the source term, Jacobian matrix, and time integration.
 
-    \end{abstract}
+\end{abstract}
 
 
   %   % ------------------------------------------------------------------------ %
@@ -277,18 +282,17 @@ TChem-atm includes a parser for a YAML input file that constructs a kinetic mode
 % \chapter{Overview}
 % \label{ch:intro}
 
-
 \chapter{Installation}
 \label{ch:install}
 TChem-atm requires the following third-party libraries:
 \begin{itemize}
-  \item [Tines](https://github.com/sandialabs/Tines.git)
-  \item [Sacado](https://docs.trilinos.org/dev/packages/sacado/doc/html/index.html)
-  \item [BLAS/LAPACK](http://www.openblas.net)
-  \item [YAML](https://github.com/jbeder/yaml-cpp)
-  \item [Sundials](https://github.com/LLNL/sundials.git)
-  \item [Gtest](https://github.com/google/googletest.git)
-  \item [Skywalker](https://github.com/eagles-project/skywalker.git)
+  \item Tines~\cite{tinesweb}
+  \item Sacado~\cite{sacadoweb} 
+  \item BLAS/LAPACK~\cite{openBLASweb, Wang:openBLAS:2013,Xianyi:openBLAS:2012}
+  \item YAML-CPP~\cite{yaml}
+  \item Sundials~\cite{SUNDIALS_gardner2022, SUNDIALS_hindmarsh2005}
+  \item Gtest~\cite{gtestweb}
+  \item Skywalker\cite{skywalkerweb}
 \end{itemize}
 
 These third-party libraries are submodules in TChem-atm. Thus, we can initialize them using the following command:
@@ -299,11 +303,11 @@ git submodule update --init --recursive
 
 \section{Obtaning TChem-atm}
 
-TChem-atm is open-source code available on [GitHub](https://github.com/sandialabs/tchem-atm).
+TChem-atm is open-source code available on GitHub (https://github.com/sandialabs/tchem-atm)~\cite{tchem-atm}.
 
 \section{Building and installing third-party libraries}
 
-The script ``scripts/tpls\_bld.sh`` clones, builds, and installs TChem-atm's third-party libraries. To use this script, one must provide compiler information as follows:
+The script \verb|scripts/tpls_bld.sh| clones, builds, and installs TChem-atm's third-party libraries. To use this script, one must provide compiler information as follows:
 
 \begin{verbatim}
 MY_CC=gcc # C++ compiler
@@ -311,7 +315,7 @@ MY_CXX=g++ # C++ compiler
 MY_FC=gfortran # Fortran compiler
 \end{verbatim}
 
-To build/install with CUDA ``ON`` or ``OFF``, use:
+To build/install with CUDA \verb|ON| or \verb|OFF|, use:
 
 \begin{verbatim}
 CUDA="ON" # Set to ON/OFF to compile TChem-atm with or without NVIDIA-GPUs support.
@@ -319,15 +323,15 @@ CUDA="ON" # Set to ON/OFF to compile TChem-atm with or without NVIDIA-GPUs suppo
 
 Additionally, specify the root directory for installing/building the third-party libraries:
 
-``ROOT=/path/to/tchem-atm/``.
+\verb|ROOT=/path/to/tchem-atm/|.
 
-These variables are located in the top section of the ``scripts/tpls\_bld.sh`` script.
+These variables are located in the top section of the \verb|scripts/tpls_bld.sh| script.
 
-This script initializes the submodules and installs/builds the third-party libraries in the ``ROOT/HOST`` or ``ROOT/DEVICE`` directory, depending on whether ``CUDA=OFF`` or ``CUDA=ON``. Since Kokkos can be installed/built with both CUDA ``ON`` and ``OFF``, this script installs it in both ``ROOT/HOST`` and ``ROOT/DEVICE``, while the other libraries are installed in ``ROOT/HOST``. Therefore, one must run this script using ``CUDA=OFF`` to install all third-party libraries and run it a second time with ``CUDA=ON`` if an NVIDIA GPU is available.
+This script initializes the submodules and installs/builds the third-party libraries in the \verb|ROOT/HOST| or \verb|ROOT/DEVICE| directory, depending on whether \verb|CUDA=OFF| or \verb|CUDA=ON|. Since Kokkos can be installed/built with both CUDA \verb|ON| and \verb|OFF|, this script installs it in both \verb|ROOT/HOST| and \verb|ROOT/DEVICE|, while the other libraries are installed in \verb|ROOT/HOST|. Therefore, one must run this script using \verb|CUDA=OFF| to install all third-party libraries and run it a second time with \verb|CUDA=ON| if an NVIDIA GPU is available.
 
 \section{Building and installing TChem-atm and Tines}
 
-The script ``scripts/build\_script.sh`` builds and installs TChem-atm and Tines. Similar to the script for third-party libraries, in ``scripts/build\_script.sh``, one must provide the compiler information:
+The script \verb|scripts/build_script.sh| builds and installs TChem-atm and Tines. Similar to the script for third-party libraries, in \verb|scripts/build_script.sh|, one must provide the compiler information:
 
 \begin{verbatim}
 MY_CC=gcc # C++ compiler
@@ -337,11 +341,11 @@ MY_FC=gfortran # Fortran compiler
 
 To build/install with CUDA ON (or OFF), use:
 
-``CUDA="ON" \# Set to ON/OFF to compile TChem with NVIDIA-GPUs``
+\verb|CUDA="ON" # Set to ON/OFF to compile TChem with NVIDIA-GPUs|
 
-In addition, this script adds the option to turn ``SACADO="ON" or ``SACADO="OFF"`` for enabling or disabling automatic differentiation using the SACADO library.
+In addition, this script adds the option to turn \verb|SACADO="ON"| or \verb|SACADO="OFF"| for enabling or disabling automatic differentiation using the SACADO library.
 
-The installation path for the third-party libraries is specified by ``INSTALL\_BASE\_HOST``, and ``ROOT=/path/to/tchem-atm`` is where TChem-atm and Tines are installed. If CUDA is ``ON``, libraries will be installed in the ``ROOT/DEVICE`` directory. Otherwise, they will be installed in the ``ROOT/HOST`` directory.
+The installation path for the third-party libraries is specified by \verb|INSTALL_BASE_HOST|, and \verb|ROOT=/path/to/tchem-atm| is where TChem-atm and Tines are installed. If CUDA is \verb|ON|, libraries will be installed in the \verb|ROOT/DEVICE| directory. Otherwise, they will be installed in the \verb|ROOT/HOST| directory.
 
 \chapter{Theoretical Background}
 \label{ch:theo}
@@ -369,15 +373,14 @@ where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction cons
 
 
 \section{Reaction types}
-Currently, TChem-atm can reproduce gas chemistry for two complex reaction mechanisms: the gas chemistry of $\eee{}$ v3, i.e., the UCI chemistry (University of California Irvine), and the Carbon Bond 2005 chemical mechanism, which is well-formulated for urban to remote troposphere conditions CITE[Dawson]
-%([Dawson](https://gmd.copernicus.org/articles/15/3663/2022/),[Yarwood](https://www.camx.com/Files/CB05_Final_Report_120805.pdf)). 
+Currently, TChem-atm can reproduce gas chemistry for two complex reaction mechanisms: the gas chemistry of $\eee{}$ v3, i.e., the UCI chemistry (University of California Irvine), and the Carbon Bond 2005 chemical mechanism, which is well-formulated for urban to remote troposphere conditions~\cite{Yarwood2005,Dawson2022}.
 To represent these mechanisms, TChem-atm implements Troe, Arrhenius, Troe-Arrenious ratio, and Custom-H2O2 reaction types.
 
 Next, we present the expression for the forward rate constant of the reaction types implemented in TChem-atm. In these equations, $\mathrm{T}$, $\mathrm{P}$, $[M]$ correspond to the temperature, pressure, and air concentration.
 
 \subsection{Arrhenius type}
 
-The Arrhenius type (``type: ARRHENIUS``) is computed by
+The Arrhenius type (\verb|type: ARRHENIUS|) is computed by
 
 \begin{equation}
 k_f = A \mathrm{exp} \Big( \frac{C}{\mathrm{T}} \Big)  \frac{\mathrm{T}}{D}^B (1+ E\,\mathrm{P})
@@ -411,7 +414,7 @@ Under the `reactants`/`products`, the name and stoichiometric coefficient ($\nu'
 Note that in the previous reaction, $O_2$ is not considered a product in the computation of $k_f$.
 
 \subsection{Troe type}
-The Troe type (``type: TROE``) is computed by
+The Troe type (\verb|type: TROE|) is computed by
 
 \begin{equation}
 k_f=\frac{k_0[M]}{1+\frac{k_0[M]}{k_{\infty}}}F_c^{\left(1+\left(\frac{log_{10} \big(\frac{k_0[M]}{k_{\infty}} \big)}{N}\right)^2 \right)^{-1}},
@@ -454,13 +457,13 @@ The kinetic constants are passed using the following format:
     N: 1.0
 \end{lstlisting}
 
-We use a modified version of the Troe reaction for the UCI mechanism using the `type : JPL`.
+We use a modified version of the Troe reaction for the UCI mechanism using the \verb|type : JPL|.
 
-For example, for the `uci6` reaction in the UCI mechanism:
+For example, for the \verb|uci6| reaction in the UCI mechanism:
 
-$$
+\begin{equation}
 HNO_3 + OH \rightarrow NO_3 + H_2O
-$$
+\end{equation}
 
 \begin{lstlisting}[language=yaml]
 - coefficients:
@@ -483,11 +486,11 @@ $$
     NO3: 1
     H2O: 1
 \end{lstlisting}
-Note that in the  `JPL` type `N=1`.
+Note that in the \verb|JPL| type \verb|N=1|.
 
 \subsection{Custom H2O2 type}
 
-The rate constant for the custom H2O2 type (``type: CMAQ\_H2O2``) can not be expressed as the combination of Arriheous and Troe reaction types. Hence, TChem-atm has a specific type of reaction for this reaction.
+The rate constant for the custom H2O2 type (\verb|type: CMAQ_H2O2|) can not be expressed as the combination of Arriheous and Troe reaction types. Hence, TChem-atm has a specific type of reaction for this reaction.
 
 $$
 k_f = A_1 \mathrm{exp} \Big( \frac{C_1}{\mathrm{T}} \Big)
@@ -552,7 +555,7 @@ $$
 
 \subsection{Troe-Arrhenius ratio Type}
 
-This reaction type (``type: R\_JPL\_ARRHENIUS``) is computed as the ratio between Troe (or JPL) and Arrhenius types, i.e., $k_f=k_{troe}/k_{arrhenius}$.
+This reaction type (\verb|type: R_JPL_ARRHENIUS|) is computed as the ratio between Troe (or JPL) and Arrhenius types, i.e., $k_f=k_{troe}/k_{arrhenius}$.
 
 The addition of this reaction type to represent UCI reactions required custom-defined rate coefficients (UCI \#7-9). As an example, for FIXME%[`uci7`](https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/llnl_O1D_to_2OH_adj.F90#L184) reaction:
 
@@ -585,7 +588,7 @@ $$
 \end{lstlisting}
 \subsection{usr\_DMS\_OH}
 
-The reaction type ``usr\_DMS\_OH`` is part of the UCI mechanism and is hard-coded in the [``mo\_usrrxt``]FIMXE
+The reaction type \verb|usr_DMS_OH| is part of the UCI mechanism and is hard-coded in the [\verb|mo_usrrxt|]FIMXE
 %(https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L683) 
 submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
 
@@ -612,7 +615,7 @@ submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Tro
 
 \subsection{usr\_SO2\_OH}
 
-The reaction type ``usr\_SO2\_OH`` is part of the UCI mechanism and is hard-coded in the [``mo\_usrrxt``]
+The reaction type \verb|usr_SO2_OH| is part of the UCI mechanism and is hard-coded in the [\verb|mo_usrrxt|]
 FIXME%(https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/mo_usrrxt.F90#L693) 
 submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Troe (or JPL) reaction type using the following configuration.
 
@@ -641,7 +644,7 @@ submodule in $\eee$'s code. In TChem, we reformulate this reaction type as a Tro
 
 Reaction types [UCI 1, 2, 3]
 %(https://github.com/E3SM-Project/scream/blob/a73d48a5f8556e5240b64b037bc60d42cb5f2413/components/eam/src/chemistry/mozart/llnl_O1D_to_2OH_adj.F90#L152) 
-in the UCI mechanism require a modifier to compute the reaction rate. We did not include this modifier under the ``reaction`` section of the input file; instead, we created the section ``modifier\_prod\_O1D``.
+in the UCI mechanism require a modifier to compute the reaction rate. We did not include this modifier under the \verb|reaction| section of the input file; instead, we created the section \verb|modifier_prod_O1D|.
 
 $$
 \mathrm{factor} = \frac{\mathrm{prod_{O1D}}}{fc}
@@ -675,9 +678,9 @@ modifier_prod_O1D:
   - 24
   photolysis_reaction_index: 0
 \end{lstlisting}
-Here, under ``coefficients``, the kinetic parameters are presented. The species involved in this factor are listed with `species\_name\_1` to `species\_name\_2`. Note that TChem will find the index of this species. The ``reaction\_list`` presents the index of reaction, where this modifier is applied. Finally, ``photolysis\_reaction\_index`` is the index of the $\mathrm{prod_{O1D}}$ reaction.
+Here, under \verb|coefficients|, the kinetic parameters are presented. The species involved in this factor are listed with \verb|`species_name_1`| to \verb|`species_name_2`|. Note that TChem will find the index of this species. The \verb|reaction_list| presents the index of reaction, where this modifier is applied. Finally, \verb|photolysis_reaction_index| is the index of the $\mathrm{prod_{O1D}}$ reaction.
 
-Future work will convert ``reaction\_list`` from a list of indexes to reaction IDs. Thus, one does not need to know the index of each reaction before running a TChem simulation. Furthermore, ``photolysis\_reaction\_index`` will be converted from index to reaction ID.
+Future work will convert \verb|reaction_list| from a list of indexes to reaction IDs. Thus, one does not need to know the index of each reaction before running a TChem simulation. Furthermore, \verb|photolysis_reaction_index| will be converted from index to reaction ID.
 
 \chapter{Input file}
 
@@ -686,12 +689,12 @@ Future work will convert ``reaction\_list`` from a list of indexes to reaction I
 The YAML input file for atmospheric chemistry consists of five sections:
 
 \begin{itemize}
-\item ``environmental\_conditions``: pressure and temperature of individual cells.
-\item ``initial\_state``: initial species concentration within the cells.
-\item ``reactions``: list of reactions with rate parameters and reaction type.
-\item ``constant\_species``: species that are part of the reaction mechanism but are assumed constant.
+\item \verb|environmental_conditions|: pressure and temperature of individual cells.
+\item \verb|initial_state|: initial species concentration within the cells.
+\item \verb|reactions|: list of reactions with rate parameters and reaction type.
+\item \verb|constant_species|: species that are part of the reaction mechanism but are assumed constant.
 e.g., invariant species.
-\item ``species``: list of species names.
+\item \verb|species|: list of species names.
 \end{itemize}
 
 For example, for the toy reaction $A \rightarrow B$, simulation with N cells, one reaction, and three species
@@ -732,7 +735,7 @@ species:
   name: B
 \end{lstlisting}
 
-A description of the reaction types currently implemented in TChem-atm is presented in theoretical background section~\ref{ch:theo}. In addition, a set of examples of input files is presented under ``/src/examples/runs/atmopheric\_chemistry``.
+A description of the reaction types currently implemented in TChem-atm is presented in theoretical background section~\ref{ch:theo}. In addition, a set of examples of input files is presented under \verb|/src/examples/runs/atmopheric_chemistry|.
 
 \chapter{Examples}
 \section{Carbon Bond 5}
@@ -753,7 +756,7 @@ Mechanism details:
 
 The mechanism in the CAMP solver has 26 photolysis reactions, which we replace with Arrhenius-type reactions with energy = 0  and temperature coefficient = 1.
 
-Scripts to run and plot the outputs of this example are at: ``src/examples/runs/atmospheric\_chemistry/CB05CL\_AE5``. The bash script to run this mechanism is shown below:
+Scripts to run and plot the outputs of this example are at: \verb|src/examples/runs/atmospheric_chemistry/CB05CL_AE5|. The bash script to run this mechanism is shown below:
 
 
 \begin{verbatim}
@@ -775,13 +778,13 @@ echo $run_this
 eval $run_this
 \end{verbatim}
 
-Here, the ``TChem\_AtmosphericChemistry.x`` executable is a box model that integrates in time a list of species using the mechanism file from input ``chemfile``, which in this case is the ``config\_full\_gas.yaml``. The box model only considers chemical reactions. The executable saves the time profiles for the species in ``outputfile=full\_gas.dat``. In the example directory, the jupyter-notebook ``PlotFullGas`` plots the time profiles of each species from the TChem-atm and CAMP outputs. Note that the CAMP output was previously computed and saved in the TChem-atm repository.
+Here, the \verb|TChem_AtmosphericChemistry.x| executable is a box model that integrates in time a list of species using the mechanism file from input \verb|chemfile|, which in this case is the \verb|config_full_gas.yaml|. The box model only considers chemical reactions. The executable saves the time profiles for the species in \verb|outputfile=full_gas.dat|. In the example directory, the jupyter-notebook \verb|PlotFullGas| plots the time profiles of each species from the TChem-atm and CAMP outputs. Note that the CAMP output was previously computed and saved in the TChem-atm repository.
 
-The ``TChem\_AtmosphericChemistry.x`` executable allows to change time integration parameters of the 
+The \verb|TChem_AtmosphericChemistry.x| executable allows to change time integration parameters of the 
 FIXME 
 % [TrBDF2 solver](https://github.com/sandialabs/Tines?tab=readme-ov-file#timeintegration).
  First, the Newton solver parameters are the
-absolute (``atol-newton``), relative tolerance (``rtol-newton``), and the maximum number of iterations (``max-newton-iterations``). Second, the time step size is controlled using the ``tol-time`` parameter and the maximum (``dtmax``) and minimum (``dtmin``) time step values. Third, the parameters either ``tend`` or ``max-time-iterations`` will end the simulation. Finally, one can get additional help information from the ``TChem\_AtmosphericChemistry.x`` executable using ``TChem\_AtmosphericChemistry.x --help``.
+absolute (\verb|atol-newton|), relative tolerance (\verb|rtol-newton|), and the maximum number of iterations (\verb|max-newton-iterations|). Second, the time step size is controlled using the \verb|tol-time| parameter and the maximum (\verb|dtmax|) and minimum (\verb|dtmin|) time step values. Third, the parameters either \verb|tend| or \verb|max-time-iterations| will end the simulation. Finally, one can get additional help information from the \verb|TChem_AtmosphericChemistry.x| executable using \verb|TChem_AtmosphericChemistry.x --help|.
 
 
 FIXME
@@ -821,7 +824,7 @@ For additional information on this LDRD project, we recommend to read the [SAND2
 
 \subsection{Troposphere mechanism}
 
-The bash scripts and input files for the UCI chemistry in the troposphere are located at ``src/examples/runs/uci\_col``. In this directory, we split the input file of TChem-atm into two input files. One has initial conditions, and the other file lists reactions, constant species, and active species. The chemistry file of the UCI mechanism is located at ``src/examples/runs/uci\_col/uci\_v2\_test3.yaml``. The initial conditions file for one of the UCI tests is located at ``src/examples/runs/uci\_col/input\_conditions\_col.yaml`, corresponding to a set of cells for one location in an E3SM simulation.
+The bash scripts and input files for the UCI chemistry in the troposphere are located at \verb|src/examples/runs/uci_col|. In this directory, we split the input file of TChem-atm into two input files. One has initial conditions, and the other file lists reactions, constant species, and active species. The chemistry file of the UCI mechanism is located at \verb|src/examples/runs/uci_col/uci_v2_test3.yaml|. The initial conditions file for one of the UCI tests is located at \verb|src/examples/runs/uci_col/input_conditions_col.yaml|, corresponding to a set of cells for one location in an E3SM simulation.
 
 Mechanism details:
 
@@ -860,7 +863,7 @@ eval \$run_this
 \end{verbatim}
 
 
-Here, TChem-atm is using an implicit euler solver. The ``inputfile`` flag allows to pass the initial condition files as an independent file of the ``chemfile``. Furthermore, TChem-atm also offers executables for Tines-TrBDF2 solver, ``TChem\_AtmosphericChemistryE3SM.x`` and for CVODE, ``TChem\_AtmosphericChemistryE3SM\_CVODE.x``; Note the CVODE-TChem-atm executable works only in CPUs.
+Here, TChem-atm is using an implicit euler solver. The \verb|inputfile| flag allows to pass the initial condition files as an independent file of the \verb|chemfile|. Furthermore, TChem-atm also offers executables for Tines-TrBDF2 solver, \verb|TChem_AtmosphericChemistryE3SM.x| and for CVODE, \verb|TChem_AtmosphericChemistryE3SM_CVODE.x|; Note the CVODE-TChem-atm executable works only in CPUs.
 
 FIXME
 %![E3SM vs TChem-atm Troposhere](figures/net_production_rate_worst.png)
@@ -869,7 +872,7 @@ Parity plot for rate of progress in the troposphere. E3SM outputs are produced b
 
 \subsection{Stratosphere mechanism}
 
-The chemistry file of the UCI mechanism of the stratosphere is located at ``src/examples/runs/uci\_col/uci\_explicit\_mech.yaml``. The initial conditions file for one of the UCI tests is located at ``src/examples/runs/uci\_col/input\_conditions\_explicit\_part\_multi\_col.yaml`, which corresponds to one set of cells for one location in an E3SM simulation.
+The chemistry file of the UCI mechanism of the stratosphere is located at \verb|src/examples/runs/uci_col/uci_explicit_mech.yaml|. The initial conditions file for one of the UCI tests is located at \verb|src/examples/runs/uci_col/input_conditions_explicit_part_multi_col.yaml|, which corresponds to one set of cells for one location in an E3SM simulation.
 
 Mechanism details:
 
@@ -948,8 +951,8 @@ Parity plot of net production rates(RHS) in the stratosphere. RRMSE per location
     %   \addcontentsline{toc}{section}{References}
     % }
     %\small
-    % \bibliographystyle{abbrv}
-    % \bibliography{references}
+    \bibliographystyle{abbrv}
+    \bibliography{ref}
 
 
     % ------------------------,---------------------------------------------- %

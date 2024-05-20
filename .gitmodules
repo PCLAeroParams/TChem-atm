@@ -7,3 +7,6 @@
 [submodule "external/Sundials"]
 	path = external/Sundials
 	url = https://github.com/LLNL/sundials.git
+[submodule "external/kokkos-kernels"]
+	path = external/kokkos-kernels
+	url = https://github.com/kokkos/kokkos-kernels.git

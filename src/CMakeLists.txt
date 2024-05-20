@@ -83,6 +83,26 @@ ELSE()
   ENDIF()
 ENDIF()
 
+# Kokkos-kernels
+#
+IF(TARGET Kokkos::kokkoskernels)
+  # check to see if kokkos-kernels was loaded in another project
+  message(STATUS "Found Kokkos::kokkoskernels target")
+  SET(TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET "Kokkos::kokkoskernels")
+  SET(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS ON CACHE BOOL "Enable Kokkos-kernels")
+  LIST(APPEND TCHEM_ATM_LINK_LIBRARIES ${TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET})
+ELSE()
+  IF (KOKKOSKERNELS_INSTALL_PATH)
+    MESSAGE(STATUS "TChem_atm attempts to use Kokkos-kernels installed at ${KOKKOSKERNELS_INSTALL_PATH}")
+    FIND_PACKAGE(kokkoskernels REQUIRED)
+    SET(TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET "Kokkos::kokkoskernels")
+    SET(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS ON CACHE BOOL "Enable Kokkos-kernels")
+    LIST(APPEND TCHEM_ATM_LINK_LIBRARIES ${TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET})
+  ELSE()
+    MESSAGE(FATAL_ERROR "-- Kokkos-kernels install path is not provided")
+  ENDIF()
+ENDIF()
+
 #
 # Tines
 #

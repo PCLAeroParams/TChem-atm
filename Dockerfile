@@ -32,7 +32,7 @@ RUN cmake -S /tchem_dir/external/Tines/ext/kokkos -B /build/kokkos_build \
           -DKokkos_ENABLE_CUDA=OFF \
           -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
           -DKokkos_ENABLE_CUDA_LAMBDA=OFF
-     
+
 WORKDIR /build/kokkos_build/
 RUN make -j \
     && make install
@@ -52,7 +52,7 @@ RUN cmake -S /tchem_dir/external/Tines/ext/yaml -B /build//yaml_build \
           -DCMAKE_EXE_LINKER_FLAGS="" \
           -DCMAKE_BUILD_TYPE=RELEASE
 WORKDIR /build/yaml_build
-RUN make -j \ 
+RUN make -j \
     && make install
 
 RUN cmake -S /tchem_dir/external/Sundials -B /build/sundials_build \
@@ -98,6 +98,19 @@ WORKDIR /build/tines_build
 RUN make -j \
     && make install
 
+RUN cmake -S /tchem_dir/external/kokkos-kernels -B /build/kokkoskernels_build \
+          -DCMAKE_INSTALL_PREFIX="/install/kokkoskernels_install" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="-g" \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+          -DKOKKOS_INSTALL_PATH=/install/kokkos_install \
+          -DKokkos_ROOT=/install/kokkos_install
+WORKDIR /build/kokkoskernels_build
+RUN make -j \
+    && make install
+
 RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DCMAKE_INSTALL_PREFIX=/tchem_install \
           -DCMAKE_CXX_COMPILER=g++ \
@@ -114,7 +127,10 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
           -DTCHEM_ATM_ENABLE_REAL_TYPE="double" \
           -DSKYWALKER_INSTALL_PATH=/install/skywalker_install \
+          -DTCHEM_ATM_ENABLE_KOKKOSKERNELS=ON \
+          -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
           -DGTEST_INSTALL_PATH=/install/gtest_install
+
 WORKDIR /tchem_build
 RUN make -j \
     && make install

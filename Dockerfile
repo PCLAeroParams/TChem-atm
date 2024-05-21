@@ -102,10 +102,11 @@ RUN cmake -S /tchem_dir/external/kokkos-kernels -B /build/kokkoskernels_build \
           -DCMAKE_INSTALL_PREFIX="/install/kokkoskernels_install" \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_CXX_FLAGS="-g" \
-          -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+          -DKokkosKernels_ENABLE_EXAMPLES=OFF \
+          -DKokkosKernels_ENABLE_EXPERIMENTAL=OFF \
+          -DKokkosKernels_ENABLE_TESTS=OFF \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-          -DKOKKOS_INSTALL_PATH=/install/kokkos_install \
           -DKokkos_ROOT=/install/kokkos_install
 WORKDIR /build/kokkoskernels_build
 RUN make -j \

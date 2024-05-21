@@ -1,18 +1,27 @@
 # **Overview**
-TChem-atm computes source terms and Jacobian matrices for chemical systems. It is a performance-portable software toolkit designed for complex kinetic mechanisms. We designed and implemented TChem-atm using [Kokkos](https://github.com/kokkos/kokkos.git).
+
+Tchem-atm is a chemistry solver for problems in atmospheric chemistry.
+TChem-atm computes source terms and Jacobian matrices for chemical systems. It is a performance-portable software toolkit designed for complex kinetic mechanisms.
 
 Software Design:
 
   * Modern C++.
-  * Kokkos programming model for performance portability.
+  * [Kokkos](https://github.com/kokkos/kokkos.git) programming model for performance portability.
   * CMake build system.
-  * Numerical Jacobians and SACADO analytic Jacobians for all models.
-  * Coupling to external ODE solvers, e.g., Tines, Sundials (CVODE).
+  * Numerical and SACADO analytic Jacobian calculations for all models.
+  * Coupling to external ODE solvers, e.g., [Tines](https://github.com/sandialabs/Tines), [Sundials](https://computing.llnl.gov/projects/sundials) (CVODE).
 
 ![TChem](figures/TChem_atm.png)
 
-TChem-atm includes a parser for a YAML input file that constructs a kinetic model constant data object containing relevant parameters for the computation of the chemical source terms. It computes the reaction constants and rate of progress for all the reactions listed in the input files. Then, it calculates the net production rate or source terms for all species mentioned in the input files. TChem-atm automatically calculates the Jacobian matrix for the source terms using either finite differences (numerical Jacobian) or automatic differentiation (analytical Jacobian via SACADO). Furthermore, the computation of the source term and associated Jacobian is independent of the time integration solver in TChem-atm. Therefore, TChem-atm provides an interface for time integration (Box model) for the Tines and CVODE libraries. Finally, TChem-atm features a batched interface for evaluating the source term, Jacobian matrix, and time integration.
+TChem-atm is configured using a YAML input file to construct the internal representation of the kinetic model, containing relevant parameters for the computation of chemical source terms.
+It computes reaction constants and rates of progress for all reactions and calculates the net production rate, or source terms, for all chemical species.
+TChem-atm automatically calculates the Jacobian matrix for source terms using either finite differences (numerical Jacobian) or automatic differentiation (analytical Jacobian via SACADO).
+Furthermore, the computation of the source term and associated Jacobian is independent of the time integration solver in TChem-atm.
+As such, TChem-atm provides an interface for time-stepping solutions (Box model) for the Tines and CVODE libraries.
+Finally, TChem-atm features a batched interface for all of the above calculations.
+
 # **Citations**
+
 * [TChem: A performance portable parallel software
 toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/article/pii/S0010465522003472)
 
@@ -29,7 +38,7 @@ toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/a
 }
 ```
 
-* [“Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver”](sand_report/QTI_tchemV1.pdf)
+* ["Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver"](sand_report/QTI_tchemV1.pdf)
 ```bibtex
 @techreport{Diaz-Ibarra:2024:tchem,
   author      = {Diaz-Ibarra, Oscar and Schmidt, Michael J.  and Safta, Cosmin },
@@ -41,20 +50,24 @@ toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/a
 ```
 
 # **Installation**
-The [installation](installation.md) guide demonstrates how to obtain, build, and install TChem-atm along with its third-party libraries.
+
+The [installation](installation.md) guide demonstrates how to obtain, build, and install TChem-atm along with the requisite third-party libraries.
 
 # **Theoretical Background**
-The TChem-atm approach is briefly described in the [Methodoly section](methodology.md).
 
-# **Input file**
-A description of input files is presented in the [Input file section](input.md).
+TChem-atm's approach is briefly described in the [Methodology section](methodology.md).
+
+# **Input File**
+
+A description of the configuration file is presented in the [Input File section](input.md).
 
 # **Examples**
 
 A list of examples can be found [here](examples.md).
 
 # **Acknowledgements**
-TChem-atm has been developed using the following funding sources:
+
+TChem-atm development has been supported by the following funding sources:
 
 * Sandia Laboratory Directed Research and Development (LDRD) projects "Bridging aerosol representations across scales with physics-constrained statistical learning" and "Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver."
 

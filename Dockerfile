@@ -32,7 +32,6 @@ RUN cmake -S /tchem_dir/external/Tines/ext/kokkos -B /build/kokkos_build \
           -DKokkos_ENABLE_CUDA=OFF \
           -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
           -DKokkos_ENABLE_CUDA_LAMBDA=OFF
-
 WORKDIR /build/kokkos_build/
 RUN make -j \
     && make install

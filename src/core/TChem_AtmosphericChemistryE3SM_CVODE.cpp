@@ -61,10 +61,12 @@ namespace TChem
         photo_rates_at_i =
         Kokkos::subview(photo_rates, i, Kokkos::ALL());
       }
-
-      const real_type_1d_view_type external_sources_at_i =
-        Kokkos::subview(external_sources, i, Kokkos::ALL());
-
+      // Note: The number of external source can be equal to zero.
+      real_type_1d_view_type external_sources_at_i;
+      if(external_sources.extent(0) > 0)
+      {
+        external_sources_at_i= Kokkos::subview(external_sources, i, Kokkos::ALL());
+      }
       const real_type_1d_view_type state_out_at_i =
         Kokkos::subview(state_out, i, Kokkos::ALL());
       const real_type_1d_view_type fac_at_i =

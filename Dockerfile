@@ -105,6 +105,9 @@ RUN cmake -S /tchem_dir/external/kokkos-kernels -B /build/kokkoskernels_build \
           -DKokkosKernels_ENABLE_EXAMPLES=OFF \
           -DKokkosKernels_ENABLE_EXPERIMENTAL=OFF \
           -DKokkosKernels_ENABLE_TESTS=OFF \
+          -DKokkosKernels_ENABLE_COMPONENT_BLAS=OFF \
+          -DKokkosKernels_ENABLE_COMPONENT_GRAPH=OFF \
+          -DKokkosKernels_ENABLE_COMPONENT_LAPACK=OFF \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DKokkos_ROOT=/install/kokkos_install
 WORKDIR /build/kokkoskernels_build
@@ -128,6 +131,7 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DTCHEM_ATM_ENABLE_REAL_TYPE="double" \
           -DSKYWALKER_INSTALL_PATH=/install/skywalker_install \
           -DTCHEM_ATM_ENABLE_KOKKOSKERNELS=ON \
+          -DKOKKOSKERNELS_INSTALL_PATH=/install/kokkoskernels_install \
           -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
           -DGTEST_INSTALL_PATH=/install/gtest_install
 WORKDIR /tchem_build

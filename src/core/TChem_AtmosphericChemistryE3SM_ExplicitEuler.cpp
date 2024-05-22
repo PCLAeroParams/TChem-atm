@@ -1,7 +1,7 @@
 #include "TChem_Util.hpp"
 #include "TChem_AtmosphericChemistryE3SM_ExplicitEuler.hpp"
 
-namespace TChem 
+namespace TChem
 {
 	  template<typename PolicyType,
            typename DeviceType>
@@ -27,8 +27,8 @@ namespace TChem
     using policy_type = PolicyType;
     using real_type_0d_view_type = Tines::value_type_0d_view<real_type, DeviceType>;
     using real_type_1d_view_type = Tines::value_type_1d_view<real_type, DeviceType>;
-    using problem_type = TChem::Impl::AtmosphericChemistryE3SM_Problem<real_type,DeviceType>;          
-    
+    using problem_type = TChem::Impl::AtmosphericChemistryE3SM_Problem<real_type,DeviceType>;
+
     const ordinal_type level = 1;
     const ordinal_type per_team_extent = AtmosphericChemistryE3SM_ExplicitEuler::getWorkSpaceSize(kmcd);
 
@@ -46,9 +46,14 @@ namespace TChem
     const real_type_1d_view_type state_at_i =
         Kokkos::subview(state, i, Kokkos::ALL());
 
-    const real_type_1d_view_type photo_rates_at_i =
+      // Note: The number of photo reactions can be equal to zero.
+      real_type_1d_view_type photo_rates_at_i;
+      if(photo_rates.extent(0) > 0)
+      {
+        photo_rates_at_i =
         Kokkos::subview(photo_rates, i, Kokkos::ALL());
-      
+      }
+
     const real_type_1d_view_type external_sources_at_i =
         Kokkos::subview(external_sources, i, Kokkos::ALL());
 
@@ -89,19 +94,19 @@ namespace TChem
                               kmcd.nSpec - kmcd.nConstSpec );
 
       const real_type_0d_view_type density_out(sv_out_at_i.DensityPtr());
-      
+
       const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd);
       /// problem setup
       const ordinal_type problem_workspace_size = problem_type::getWorkSpaceSize(kmcd);
 
       problem_type problem;
       problem._kmcd = kmcd;
-      
+
       /// problem workspace
       auto wptr = work.data();
       auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
       wptr += problem_workspace_size;
-      
+
       /// error check
       const ordinal_type workspace_used(wptr - work.data()), workspace_extent(work.extent(0));
       if (workspace_used > workspace_extent) {
@@ -110,7 +115,7 @@ namespace TChem
 
       /// time integrator workspace
       auto tw = real_type_1d_view_type(wptr, workspace_extent - workspace_used);
-      
+
       /// initialize problem
       problem._work = pw;
       problem._temperature= temperature;
@@ -137,7 +142,7 @@ namespace TChem
     Kokkos::Profiling::popRegion();
   }
 
- 
+
 
 #define TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM()     \
   AtmosphericChemistryE3SM_ExplicitEuler_TemplateRun(          \
@@ -164,10 +169,10 @@ namespace TChem
            const real_type_1d_view_host& t_out,
            const real_type_1d_view_host& dt_out,
            const real_type_2d_view_host& state_out,
-           const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd) 
+           const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd)
   {
-    const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runHostBatch::kmcd array"; 
-    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM(); 
+    const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runHostBatch::kmcd array";
+    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM();
   }// namespace TChem
   void
   AtmosphericChemistryE3SM_ExplicitEuler::runDeviceBatch( /// thread block size
@@ -184,8 +189,8 @@ namespace TChem
            /// const data from kinetic model
            const KineticModelNCAR_ConstData<device_type >& kmcd)
   {
-    const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runDeviceBatch::kmcd array"; 
-    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM(); 
+    const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runDeviceBatch::kmcd array";
+    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM();
   }
 
 }

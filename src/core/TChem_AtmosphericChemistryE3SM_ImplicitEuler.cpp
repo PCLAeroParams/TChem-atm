@@ -67,9 +67,14 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
       if (t_out_at_i() < t_end) {
       const real_type_1d_view_type state_at_i =
         Kokkos::subview(state, i, Kokkos::ALL());
-      const real_type_1d_view_type photo_rates_at_i =
+      // Note: The number of photo reactions can be equal to zero.
+      real_type_1d_view_type photo_rates_at_i;
+      if(photo_rates.extent(0) > 0)
+      {
+        photo_rates_at_i =
         Kokkos::subview(photo_rates, i, Kokkos::ALL());
-      
+      }
+
       const real_type_1d_view_type external_sources_at_i =
         Kokkos::subview(external_sources, i, Kokkos::ALL());
 
@@ -81,7 +86,7 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
       const real_type_0d_view_type dt_out_at_i = Kokkos::subview(dt_out, i);
       Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                        per_team_extent);
-    
+
       Impl::StateVector<real_type_1d_view_type> sv_at_i(kmcd_at_i.nSpec, state_at_i);
       Impl::StateVector<real_type_1d_view_type> sv_out_at_i(kmcd_at_i.nSpec,
                                                         state_out_at_i);
@@ -270,10 +275,10 @@ AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch( /// thread block size
    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
  } else if  (m < 64) {
    using value_type = Sacado::Fad::SLFad<real_type,64>;
-   TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()  
+   TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
  } else if  (m < 128) {
    using value_type = Sacado::Fad::SLFad<real_type,128>;
-   TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()  
+   TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
  } else if  (m < 256) {
    using value_type = Sacado::Fad::SLFad<real_type,256>;
    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
@@ -324,7 +329,7 @@ const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ImplicitEuler:
    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
  } else if  (m < 64) {
    using value_type = Sacado::Fad::SLFad<real_type,64>;
-   TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()  
+   TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
  } else if (m < 128) {
    using value_type = Sacado::Fad::SLFad<real_type,128>;
    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()
@@ -395,7 +400,7 @@ AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch( /// thread block size
       TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()
     } else if  (m < 64) {
       using value_type = Sacado::Fad::SLFad<real_type,64>;
-      TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()  
+      TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()
     } else if (m < 128) {
       using value_type = Sacado::Fad::SLFad<real_type,128>;
       TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()
@@ -449,7 +454,7 @@ AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch( /// thread block size
       TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()
     } else if  (m < 64) {
       using value_type = Sacado::Fad::SLFad<real_type,64>;
-      TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()  
+      TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()
     } else if (m < 128) {
       using value_type = Sacado::Fad::SLFad<real_type,128>;
       TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()

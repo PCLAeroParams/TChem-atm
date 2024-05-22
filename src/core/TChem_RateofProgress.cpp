@@ -59,9 +59,14 @@ RateofProgress_TemplateRun( /// input
         Kokkos::subview(state, i, Kokkos::ALL());
       const real_type_1d_view_type rate_of_progress_at_i =
         Kokkos::subview(rate_of_progress, i, Kokkos::ALL());
-      const real_type_1d_view_type photo_rate_at_i =
-        Kokkos::subview(photo_rates, i, Kokkos::ALL());  
 
+      // Note: The number of photo reactions can be equal to zero.
+      real_type_1d_view_type photo_rate_at_i;
+      if(photo_rates.extent(0) > 0)
+      {
+        photo_rate_at_i =
+        Kokkos::subview(photo_rates, i, Kokkos::ALL());
+      }
       Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                       per_team_extent);
       const Impl::StateVector<real_type_1d_view_type> sv_at_i(kmcd.nSpec,
@@ -77,7 +82,6 @@ RateofProgress_TemplateRun( /// input
         const real_type_1d_view_type Ys = sv_at_i.MassFractions();
 
         // const real_type density = sv_at_i.Density();
-
         Impl::RateofProgress<real_type, device_type>
         ::team_invoke(member, t, p, Ys, photo_rate_at_i, rate_of_progress_at_i, ww, kmcd);
 
@@ -85,7 +89,6 @@ RateofProgress_TemplateRun( /// input
 
         }
     });
-
   Kokkos::Profiling::popRegion();
 }
 void
@@ -112,7 +115,7 @@ RateofProgress::runHostBatch( /// input
     "TChem::RateofProgress::runHostBatch",
     policy,
     state,
-    photo_rates, 
+    photo_rates,
     rate_of_progress,
     kmcd);
 

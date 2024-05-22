@@ -496,10 +496,11 @@ TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(const std::string&
 {
    // parser for scenario conditions
     YAML::Node root = YAML::LoadFile(filename);
-    printf(" TChem is reading photolysis rates from %s  \n",filename.c_str() );
+
 
     count_photo_rates=0;
     if (root["photolysis_rates"]){
+      printf(" TChem is reading photolysis rates from %s  \n",filename.c_str() );
       auto photo_rates_info = root["photolysis_rates"];
       // first get number of photo_rates
       for (auto const& ireac_photo : photo_rates_info) {

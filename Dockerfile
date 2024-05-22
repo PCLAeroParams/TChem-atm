@@ -131,7 +131,6 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DTCHEM_ATM_ENABLE_KOKKOSKERNELS=ON \
           -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
           -DGTEST_INSTALL_PATH=/install/gtest_install
-
 WORKDIR /tchem_build
 RUN make -j \
     && make install

@@ -111,7 +111,7 @@ RUN cmake -S /tchem_dir/external/kokkos-kernels -B /build/kokkoskernels_build \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DKokkos_ROOT=/install/kokkos_install
 WORKDIR /build/kokkoskernels_build
-RUN make -j \
+RUN make -j4 \
     && make install
 
 RUN cmake -S /tchem_dir/src -B /tchem_build \

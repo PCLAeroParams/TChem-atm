@@ -20,7 +20,7 @@ SACADO="OFF"
 
 ## update this path.
 ROOT=/path/to/tchem
-INSTALL_BASE_HOST=$ROOT/build_tchem/TPLs/install
+INSTALL_BASE_HOST=$ROOT/build_tchem/HOST/install
 
 # User configuration  -- end
 

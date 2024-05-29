@@ -2,8 +2,8 @@
 #include <TChem_KineticModelNCAR_ConstData.hpp>
 #include <TChem_Util.hpp>
 
-extern "C" void initialize(const char * filename);
-extern "C" void finalize();
+//extern "C" void initialize(const char * filename);
+//extern "C" void finalize();
 
 namespace TChem {
 struct Driver {
@@ -17,19 +17,27 @@ public:
 
    void createStateVector();
    ordinal_type getLengthOfStateVector() const;
-   auto getStateVector(); //TChem::real_type &view);
+   auto getStateVectorSize();
+   auto getStateVector();
    void setStateVector(double *array);
+   void getStateVectorHost(real_type_2d_const_view_host &view);
+ 
 
-   // 
+   // Gases
    TChem::KineticModelData _kmd;
    TChem::KineticModelNCAR_ConstData<host_device_type> _kmcd;   
    void createGasKineticModel(const std::string &chem_file);
    void createGasKineticModelConstData();
 
-   ordinal_type getNumberOfSpecies();
-   std::string getSpeciesNames();
-   std::string getSpeciesName(int *index); //ordinal_type &index);
+   // Aerosols
 
+
+   // Get sizes
+   ordinal_type getNumberOfSpecies();
+   std::string getSpeciesName(int *index);
+
+
+   void doTimestep();
    // Clean up
    void freeAll();
    void freeGasKineticModel();
@@ -49,10 +57,16 @@ public:
 };
 }
 
+extern "C" void initialize(const char * filename);
+extern "C" void finalize();
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
-extern "C" int TChem_getSpeciesName(TChem::ordinal_type *index);
 extern "C" int TChem_getLengthOfStateVector();
 extern "C" void TChem_getStateVector(TChem::real_type *array);
 extern "C" void TChem_setStateVector(TChem::real_type *array);
-extern "C" void TChem_getSpeciesNames(std::string *string);
+extern "C" int TChem_getSpeciesName(int* index, char* result,
+     const std::string::size_type buffer_size);
+extern "C" void TChem_doTimestep();
+extern "C" int TChem_getStateVectorSize();
+
+extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);

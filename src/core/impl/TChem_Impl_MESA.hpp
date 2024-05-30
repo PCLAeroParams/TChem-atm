@@ -54,6 +54,14 @@ struct MESA
     const int ioc_a = 17;
     const int ibc_a = 18;
 
+    // FIXME: need to update indices. 
+    static const int jcaco3;
+    static const int jcaso4;
+    static const int iso4_a;
+    static const int ino3_a;
+    static const int icl_a;
+
+
     int naer;
     int nelectrolyte;
     int inh4_a; 
@@ -65,8 +73,8 @@ struct MESA
 
   KOKKOS_INLINE_FUNCTION static 
   void calculate_XT(const real_type_1d_view_type& aer,
-                  const Mosaic& mosaic, 
-                  real_type &XT
+                    const Mosaic& mosaic, 
+                    real_type &XT
                   ) {
   //aer nmol/m^3 
   // I remove ibin  
@@ -78,64 +86,7 @@ struct MESA
         XT = -1.0;
     }
 }// calculate_XT
-/*
-! called when aerosol bin is completely solid.
-!
-! author: Rahul A. Zaveri
-! update: jan 2005
-*/
-KOKKOS_INLINE_FUNCTION static 
-void adjust_solid_aerosol(
-                          // int jsolid,
-                          // int jhyst_lo,
-                          const real_type_1d_view_type& aer_total,
-                          const real_type_1d_view_type& aer_solid,
-                          real_type_1d_view_type& aer_liquid,
-                          
-                          const real_type_1d_view_type& electrolyte_total,
-                          const real_type_1d_view_type& electrolyte_solid,
-                          real_type_1d_view_type& electrolyte_liquid,
-                          const real_type_1d_view_type& epercent_total,
-                          const real_type_1d_view_type& epercent_solid,
-                          const Mosaic& mosaic
-                          )
-{
-    // Set phase and hysteresis leg to solid
-    jphase = jsolid;
-    jhyst_leg = jhyst_lo; // lower curve
-    water_a = 0.0;
 
-    int naer = mosaic.naer;
-    int nelectrolyte = mosaic.nelectrolyte;
-    int inh4_a = mosaic.inh4_a; 
-    int ino3_a = mosaic.ino3_a;
-    int icl_a = mosaic.icl_a;
-
-    // Transfer aer(jtotal) to aer(jsolid) and set aer(jliquid) to 0.0
-    for (int iaer = 0; iaer < naer; ++iaer) {
-        aer_solid(iaer) = aer_total(iaer);
-        aer_liquid(iaer) = 0.0;
-    }
-
-    // Transfer electrolyte(jtotal) to electrolyte(jsolid) and set electrolyte(jliquid) and epercent(jliquid) to 0.0
-    for (int je = 0; je < nelectrolyte; ++je) {
-        electrolyte_liquid(je) = 0.0;
-        epercent_liquid(je) = 0.0;
-        electrolyte_solid(je) = electrolyte_total(je);
-        epercent_solid(je) = epercent_total(je);
-    }
-
-    // Update aer(jtotal) that may have been affected above
-    aer_total(inh4_a) = aer_solid(inh4_a);
-    aer_total(ino3_a) = aer_solid(ino3_a);
-    aer_total(icl_a) = aer_solid(icl_a);
-
-    // Update electrolyte(jtotal)
-    for (int je = 0; je < nelectrolyte; ++je) {
-        electrolyte_total(je) = electrolyte_solid(je);
-        epercent_total(je) = epercent_solid(je);
-    }
-}
 
 /* 
  this subroutine completely deliquesces an aerosol and partitions
@@ -148,11 +99,138 @@ void adjust_solid_aerosol(
  update: jan 2005
 -----------------------------------------------------------------------
 */
-  KOKKOS_INLINE_FUNCTION static void
-  do_full_deliquescence()
-  {
+KOKKOS_INLINE_FUNCTION static 
+void adjust_liquid_aerosol(const MosaicIndices& mosaic,
+                           const real_type_1d_view_type& electrolyte_jsolid, 
+                           const real_type_1d_view_type& electrolyte_jliquid, 
+                           const real_type_1d_view_type& electrolyte_jtotal, 
+                           const real_type_1d_view_type& epercent_jsolid, 
+                           const real_type_1d_view_type& epercent_jliquid, 
+                           const real_type_1d_view_type& epercent_jtotal, 
+                           const real_type_1d_view_type& aer_jsolid, 
+                           const real_type_1d_view_type& aer_jliquid, 
+                           const real_type_1d_view_type& aer_jtotal
+                           real_type& jphase, 
+                           real_type& jhyst_leg) {
 
-  }
+    jphase    = jliquid
+    jhyst_leg = jhyst_up;// upper curve
+
+    // Partition all electrolytes into liquid phase
+    for (int je = 0; je < mosaic.nelectrolyte; ++je) {
+        electrolyte_jsolid(je) = 0.0;
+        epercent_jsolid(je) = 0.0;
+        electrolyte_jliquid(je) = electrolyte_jtotal(je);
+        epercent_jliquid(je) = epercent_jtotal(je);
+    }
+
+    // Except these electrolytes, which always remain in the solid phase
+    electrolyte_jsolid(mosaic.jcaco3) = electrolyte_jtotal(mosaic.jcaco3);
+    electrolyte_jsolid(mosaic.jcaso4) = electrolyte_jtotal(mosaic.jcaso4);
+    epercent_jsolid(mosaic.jcaco3) = epercent_jtotal(mosaic.jcaco3);
+    epercent_jsolid(mosaic.jcaso4) = epercent_jtotal(mosaic.jcaso4);
+    electrolyte_jliquid(mosaic.jcaco3) = 0.0;
+    electrolyte_jliquid(mosaic.jcaso4) = 0.0;
+    epercent_jliquid(mosaic.jcaco3) = 0.0;
+    epercent_jliquid(mosaic.jcaso4) = 0.0;
+
+    // Partition all the aer species into solid and liquid phases
+    // Solid phase
+    aer_jsolid(mosaic.iso4_a) = electrolyte_jsolid(mosaic.jcaso4);
+    aer_jsolid(mosaic.ino3_a) = 0.0;
+    aer_jsolid(mosaic.icl_a) = 0.0;
+    aer_jsolid(mosaic.inh4_a) = 0.0;
+    aer_jsolid(mosaic.ioc_a) = aer_jtotal(mosaic.ioc_a);
+    aer_jsolid(mosaic.imsa_a) = 0.0;
+    aer_jsolid(mosaic.ico3_a) = aer_jtotal(mosaic.ico3_a);
+    aer_jsolid(mosaic.ina_a) = 0.0;
+    aer_jsolid(mosaic.ica_a) = electrolyte_jsolid(mosaic.jcaco3) + electrolyte_jsolid(mosaic.jcaso4);
+    aer_jsolid(mosaic.ibc_a) = aer_jtotal(mosaic.ibc_a);
+    aer_jsolid(mosaic.ioin_a) = aer_jtotal(mosaic.ioin_a);
+    aer_jsolid(mosaic.iaro1_a) = aer_jtotal(mosaic.iaro1_a);
+    aer_jsolid(mosaic.iaro2_a) = aer_jtotal(mosaic.iaro2_a);
+    aer_jsolid(mosaic.ialk1_a) = aer_jtotal(mosaic.ialk1_a);
+    aer_jsolid(mosaic.iole1_a) = aer_jtotal(mosaic.iole1_a);
+    aer_jsolid(mosaic.iapi1_a) = aer_jtotal(mosaic.iapi1_a);
+    aer_jsolid(mosaic.iapi2_a) = aer_jtotal(mosaic.iapi2_a);
+    aer_jsolid(mosaic.ilim1_a) = aer_jtotal(mosaic.ilim1_a);
+    aer_jsolid(mosaic.ilim2_a) = aer_jtotal(mosaic.ilim2_a);
+
+    // Liquid phase
+    aer_jliquid(mosaic.iso4_a) = max(0.0, aer_jtotal(mosaic.iso4_a) - aer_jsolid(mosaic.iso4_a));
+    aer_jliquid(mosaic.ino3_a) = aer_jtotal(mosaic.ino3_a);
+    aer_jliquid(mosaic.icl_a) = aer_jtotal(mosaic.icl_a);
+    aer_jliquid(mosaic.inh4_a) = aer_jtotal(mosaic.inh4_a);
+    aer_jliquid(mosaic.ioc_a) = 0.0;
+    aer_jliquid(mosaic.imsa_a) = aer_jtotal(mosaic.imsa_a);
+    aer_jliquid(mosaic.ico3_a) = 0.0;
+    aer_jliquid(mosaic.ina_a) = aer_jtotal(mosaic.ina_a);
+    aer_jliquid(mosaic.ica_a) = max(0.0, aer_jtotal(mosaic.ica_a) - aer_jsolid(mosaic.ica_a));
+    aer_jliquid(mosaic.ibc_a) = 0.0;
+    aer_jliquid(mosaic.ioin_a) = 0.0;
+    aer_jliquid(mosaic.iaro1_a) = 0.0;
+    aer_jliquid(mosaic.iaro2_a) = 0.0;
+    aer_jliquid(mosaic.ialk1_a) = 0.0;
+    aer_jliquid(mosaic.iole1_a) = 0.0;
+    aer_jliquid(mosaic.iapi1_a) = 0.0;
+    aer_jliquid(mosaic.iapi2_a) = 0.0;
+    aer_jliquid(mosaic.ilim1_a) = 0.0;
+    aer_jliquid(mosaic.ilim2_a) = 0.0;
+}
+
+/*
+! called when aerosol bin is completely solid.
+!
+! author: Rahul A. Zaveri
+! update: jan 2005
+*/
+
+KOKKOS_INLINE_FUNCTION static 
+void adjust_solid_aerosol(const Mosaic& mosaic, 
+                          const real_type_1d_view_type& aer_jsolid,
+                          const real_type_1d_view_type& aer_jliquid,
+                          const real_type_1d_view_type& aer_jtotal, 
+                          const real_type_1d_view_type& electrolyte_jsolid,
+                          const real_type_1d_view_type& electrolyte_jliquid,
+                          const real_type_1d_view_type& electrolyte_jtotal,
+                          const real_type_1d_view_type& epercent_jsolid,
+                          const real_type_1d_view_type& epercent_jliquid,
+                          const real_type_1d_view_type& epercent_jtotal,
+                          real_type& water_a,real_type&jphase, real_type&jhyst_leg ) {
+    // Assuming naer, nelectrolyte are accessible or part of the Mosaic object
+
+    // Since water_a is now an input parameter, we can directly modify it.
+    water_a = 0.0;
+    jphase = jsolid
+    jhyst_leg = jhyst_lo;// lower curve
+
+    // Transfer aer(jtotal) to aer(jsolid) and set aer(jliquid) to 0
+    for (int iaer = 0; iaer < mosaic.naer; iaer++) {
+        aer_jsolid(iaer) = aer_jtotal(iaer);
+        aer_jliquid(iaer) = 0.0;
+    }
+
+    // Transfer electrolyte(jtotal) to electrolyte(jsolid) and set electrolyte(jliquid) to 0
+    for (int je = 0; je < mosaic.nelectrolyte; je++) {
+        electrolyte_jliquid(je) = 0.0;
+        epercent_jliquid(je) = 0.0;
+        electrolyte_jsolid(je) = electrolyte_jtotal(je);
+        epercent_jsolid(je) = epercent_jtotal(je);
+    }
+
+    // Update aer(jtotal) that may have been affected above
+    aer_jtotal(mosaic.inh4_a) = aer_jsolid(mosaic.inh4_a);
+    aer_jtotal(mosaic.ino3_a) = aer_jsolid(mosaic.ino3_a);
+    aer_jtotal(mosaic.icl_a) = aer_jsolid(mosaic.icl_a);
+
+    // Update electrolyte(jtotal)
+    for (int je = 0; je < mosaic.nelectrolyte; je++) {
+        electrolyte_jtotal(je) = electrolyte_jsolid(je);
+        epercent_jtotal(je) = epercent_jsolid(je);
+    }
+}// adjust_solid_aerosol
+
+
   /* 
 ! called when aerosol bin is completely liquid.
 !
@@ -160,10 +238,69 @@ void adjust_solid_aerosol(
 ! update: jan 2005
   */
   KOKKOS_INLINE_FUNCTION static void
-  adjust_liquid_aerosol()
-  {
+void do_full_deliquescence(const Mosaic& mosaic, 
+                           const real_type_1d_view_type& electrolyte_jsolid,
+                           const real_type_1d_view_type& electrolyte_jliquid,
+                           const real_type_1d_view_type& electrolyte_jtotal,
+                           const real_type_1d_view_type& aer_jsolid,
+                           const real_type_1d_view_type& aer_jliquid, 
+                           const real_type_1d_view_type& aer_jtotal) {
+    // Partition all electrolytes into liquid phase
+    for (int js = 0; js < mosaic.nelectrolyte; js++) {
+        electrolyte_jsolid(js) = 0.0;
+        electrolyte_jliquid(js) = electrolyte_jtotal(js);
+    }
 
-  }
+    // Except these electrolytes, which always remain in the solid phase
+    electrolyte_jsolid(mosaic.jcaco3) = electrolyte_jtotal(mosaic.jcaco3);
+    electrolyte_jsolid(mosaic.jcaso4) = electrolyte_jtotal(mosaic.jcaso4);
+    electrolyte_jliquid(mosaic.jcaco3) = 0.0;
+    electrolyte_jliquid(mosaic.jcaso4) = 0.0;
+
+    // Partition all the generic aer species into solid and liquid phases
+    // Solid phase
+    aer_jsolid(mosaic.iso4_a) = electrolyte_jsolid(mosaic.jcaso4);
+    aer_jsolid(mosaic.ino3_a) = 0.0;
+    aer_jsolid(mosaic.icl_a) = 0.0;
+    aer_jsolid(mosaic.inh4_a) = 0.0;
+    aer_jsolid(mosaic.ioc_a) = aer_jtotal(mosaic.ioc_a);
+    aer_jsolid(mosaic.imsa_a) = 0.0;
+    aer_jsolid(mosaic.ico3_a) = aer_jtotal(mosaic.ico3_a);
+    aer_jsolid(mosaic.ina_a) = 0.0;
+    aer_jsolid(mosaic.ica_a) = electrolyte_jsolid(mosaic.jcaco3) + electrolyte_jsolid(mosaic.jcaso4);
+    aer_jsolid(mosaic.ibc_a) = aer_jtotal(mosaic.ibc_a);
+    aer_jsolid(mosaic.ioin_a) = aer_jtotal(mosaic.ioin_a);
+    aer_jsolid(mosaic.iaro1_a) = aer_jtotal(mosaic.iaro1_a);
+    aer_jsolid(mosaic.iaro2_a) = aer_jtotal(mosaic.iaro2_a);
+    aer_jsolid(mosaic.ialk1_a) = aer_jtotal(mosaic.ialk1_a);
+    aer_jsolid(mosaic.iole1_a) = aer_jtotal(mosaic.iole1_a);
+    aer_jsolid(mosaic.iapi1_a) = aer_jtotal(mosaic.iapi1_a);
+    aer_jsolid(mosaic.iapi2_a) = aer_jtotal(mosaic.iapi2_a);
+    aer_jsolid(mosaic.ilim1_a) = aer_jtotal(mosaic.ilim1_a);
+    aer_jsolid(mosaic.ilim2_a) = aer_jtotal(mosaic.ilim2_a);
+
+    // Liquid phase
+    aer_jliquid(mosaic.iso4_a) = aer_jtotal(mosaic.iso4_a) - electrolyte_jsolid(mosaic.jcaso4);
+    aer_jliquid(mosaic.ino3_a) = aer_jtotal(mosaic.ino3_a);
+    aer_jliquid(mosaic.icl_a) = aer_jtotal(mosaic.icl_a);
+    aer_jliquid(mosaic.inh4_a) = aer_jtotal(mosaic.inh4_a);
+    aer_jliquid(mosaic.ioc_a) = 0.0;
+    aer_jliquid(mosaic.imsa_a) = aer_jtotal(mosaic.imsa_a);
+    aer_jliquid(mosaic.ico3_a) = 0.0;
+    aer_jliquid(mosaic.ina_a) = aer_jtotal(mosaic.ina_a);
+    aer_jliquid(mosaic.ica_a) = electrolyte_jtotal(mosaic.jcano3) + electrolyte_jtotal(mosaic.jcacl2);
+    aer_jliquid(mosaic.ibc_a) = 0.0;
+    aer_jliquid(mosaic.ioin_a) = 0.0;
+    aer_jliquid(mosaic.iaro1_a) = 0.0;
+    aer_jliquid(mosaic.iaro2_a) = 0.0;
+    aer_jliquid(mosaic.ialk1_a) = 0.0;
+    aer_jliquid(mosaic.iole1_a) = 0.0;
+    aer_jliquid(mosaic.iapi1_a) = 0.0;
+    aer_jliquid(mosaic.iapi2_a) = 0.0;
+    aer_jliquid(mosaic.ilim1_a) = 0.0;
+    aer_jliquid(mosaic.ilim2_a) = 0.0;
+}
+
   KOKKOS_INLINE_FUNCTION static void
   compute_activities()
   {
@@ -200,24 +337,18 @@ void adjust_solid_aerosol(
         jaerosolstate = all_solid;
         jphase = jsolid;
         jhyst_leg = jhyst_lo;
-        adjust_solid_aerosol(
-    // jsolid,
-    // jhyst_lo,
-    aer_total,
-    aer_solid,
-    aer_liquid,
-    electrolyte_total,
-    electrolyte_solid,
-    electrolyte_liquid,
-    epercent_total,
-    epercent_solid,
-    mosaic);
-
+        adjust_solid_aerosol(mosaic, 
+                     aer_jsolid, aer_jliquid, aer_jtotal, 
+                     electrolyte_jsolid, electrolyte_jliquid, electrolyte_jtotal,
+                     epercent_jsolid, epercent_jliquid, epercent_jtotal,
+                     water_a, jphase, jhyst_leg);
 
     // step 2: Check for supersaturation/metastable state
     // if(water_a_hyst(ibin)*0.0 .gt. 0.5*water_a_up(ibin))then ! 3-D
     if (jhyst_leg == jhyst_up) { // BOX
-      do_full_deliquescence();
+      do_full_deliquescence(mosaic, 
+                      electrolyte_jsolid, electrolyte_jliquid, electrolyte_jtotal,
+                      aer_jsolid, aer_jliquid, aer_jtotal);
 
       // Assuming electrolyte is a 3D vector or an array
       real_type sum_soluble = 0.0;
@@ -233,18 +364,11 @@ void adjust_solid_aerosol(
       if (sum_soluble < 1.e-15 && solids > 0.0) {
         jaerosolstate = all_solid; // no soluble material present
         jphase = jsolid;
-        adjust_solid_aerosol(
-    // jsolid,
-    // jhyst_lo,
-    aer_total,
-    aer_solid,
-    aer_liquid,
-    electrolyte_total,
-    electrolyte_solid,
-    electrolyte_liquid,
-    epercent_total,
-    epercent_solid,
-    mosaic);
+        adjust_solid_aerosol(mosaic, 
+                     aer_jsolid, aer_jliquid, aer_jtotal, 
+                     electrolyte_jsolid, electrolyte_jliquid, electrolyte_jtotal,
+                     epercent_jsolid, epercent_jliquid, epercent_jtotal,
+                     water_a, jphase, jhyst_leg);
 
         // New wet mass and wet volume
         mass_wet_a = mass_dry_a + water_a * 1.e-3; // g/cc(air)
@@ -256,26 +380,24 @@ void adjust_solid_aerosol(
         jaerosolstate = all_liquid;
         jhyst_leg = jhyst_up;
         jphase = jliquid;
-        water_a = aerosol_water_total();
+        // FIXME: aerosol_water_total is an input
+        water_a = aerosol_water_total;
 
         if (water_a < 0.0) {
             jaerosolstate = all_solid; // no soluble material present
             jphase = jsolid;
             jhyst_leg = jhyst_lo;
-            adjust_solid_aerosol(
-    // jsolid,
-    // jhyst_lo,
-    aer_total,
-    aer_solid,
-    aer_liquid,
-    electrolyte_total,
-    electrolyte_solid,
-    electrolyte_liquid,
-    epercent_total,
-    epercent_solid,
-    mosaic);
+            adjust_solid_aerosol(mosaic, 
+                     aer_jsolid, aer_jliquid, aer_jtotal, 
+                     electrolyte_jsolid, electrolyte_jliquid, electrolyte_jtotal,
+                     epercent_jsolid, epercent_jliquid, epercent_jtotal,
+                     water_a, jphase, jhyst_leg);
         } else {
-            adjust_liquid_aerosol();
+            adjust_liquid_aerosol(mosaic,
+                      electrolyte_jsolid, electrolyte_jliquid, electrolyte_jtotal,
+                      epercent_jsolid, epercent_jliquid, epercent_jtotal,
+                      aer_jsolid, aer_jliquid, aer_jtotal,
+                      jphase, jhyst_leg);
             compute_activities();
         }
 
@@ -287,8 +409,6 @@ void adjust_solid_aerosol(
         return;
     }
     }// end step 2
-
-
 
 
     }

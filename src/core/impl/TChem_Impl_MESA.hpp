@@ -101,8 +101,8 @@ struct MosaicModelData {
 
     // polynomial coefficients for binary molality (used in ZSR)
        // for aw < 0.97
-    const real_type_2d_view_type a_zsr("a_zsr", 6, 22);
-    const real_type_1d_view_type aw_min("aw_min", 22);
+    const real_type_2d_view_type a_zsr("a_zsr", 6, nelectrolyte);
+    const real_type_1d_view_type aw_min("aw_min", nelectrolyte);
 
     a_zsr(0, jnh4hso4) =   1.30894;
     a_zsr(1, jnh4hso4) =  -7.09922;
@@ -281,7 +281,7 @@ struct MosaicModelData {
     aw_min(jcaco3)    =  1.0;
 
        // for aw => 0.97 to 0.999999
-    const real_type_1d_view_type b_zsr("b_zsr", 22);
+    const real_type_1d_view_type b_zsr("b_zsr", nelectrolyte);
 
     b_zsr(jnh4so4)  = 28.0811;
     b_zsr(jlvcite)  = 14.7178;
@@ -305,6 +305,24 @@ struct MosaicModelData {
     b_zsr(jcaso4)   = 0.0;
     b_zsr(jcamsa2)  = 18.3661;
     b_zsr(jcaco3)   = 0.0;
+
+    // local aerosol ions
+    // cations
+    const ordinal_type jc_h   = 1;
+    const ordinal_type jc_nh4 = 2;
+    const ordinal_type jc_na  = 3;
+    const ordinal_type jc_ca  = 4;
+
+    // anions
+    const ordinal_type ja_hso4 = 1;
+    const ordinal_type ja_so4  = 2;
+    const ordinal_type ja_no3  = 3;
+    const ordinal_type ja_cl   = 4;
+    const ordinal_type ja_msa  = 5;
+    // const ordinal_type ja_co3  = 6; (note: this is commented out in MOSAIC as well)
+
+    const ordinal_type nrxn_aer_ll = 3;
+
  };
 
 
@@ -587,6 +605,32 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
     real_type XT = 0.0;
     calcuate_XT(aer_liquid, mosaic, XT);
 
+    if (XT > 2.0 || XT < 0.0) {
+      // SULFATE POOR: fully dissociated electrolytes
+      real_type a_c;
+
+      // anion molalities (mol / kg water)
+      ma(mosaic.ja_so4)  = 1.e-9 * aer_liquid(mosaic.iso4_a) / water_a;
+      ma(mosaic.ja_hso4) = 0.0;
+      ma(mosaic.ja_no3)  = 1.e-9 * aer_liquid(mosaic.ino3_a) / water_a;
+      ma(mosaic.ja_cl)   = 1.e-9 * aer_liquid(mosaic.icl_a)  / water_a;
+      ma(mosaic.ja_msa)  = 1.e-9 * aer_liquid(mosaic.imsa_a) / water_a;
+
+      // cation molalities (mol / kg water)
+      mc(mosaic.jc_ca)  = 1.e-9 * aer_liquid(mosaic.ica_a)  / water_a;
+      mc(mosaic.jc_nh4) = 1.e-9 * aer_liquid(mosaic.inh4_a) / water_a;
+      mc(mosaic.jc_na)  = 1.e-9 * aer_liquid(mosaic.na_a)   / water_a;
+      a_c               = (
+                          (2. * ma(mosaic.ja_so4)  +
+                                ma(mosaic.ja_no3)  +
+                                ma(mosaic.ja_cl)   +
+                                ma(mosaic.ja_msa)) -
+                          (2. * mc(mosaic.jc_ca)   +
+                                mc(mosaic.jc_nh4)  +
+                                mc(mosaic.jc_na))  );
+      mc(mosaic.jc_h)   = 0.5 * ( (a_c) +
+                                  (sqrt(a_c*a_c + 4. * Keq_ll(3))) ); 
+    }
   }
 
   KOKKOS_INLINE_FUNCTION static

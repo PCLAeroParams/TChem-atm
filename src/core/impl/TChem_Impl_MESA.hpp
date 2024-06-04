@@ -561,7 +561,7 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
 
   KOKKOS_INLINE_FUNCTION static
   void compute_activities(const MosaicModelData& mosaic,
-                          const real_type_1d_view_type& aer_total,
+                          const real_type_1d_view_type& aer_liquid,
                           const real_type_1d_view_type& ma,
                           const real_type_1d_view_type& mc,
                           const real_type_1d_view_type& electrolyte_solid,
@@ -575,11 +575,18 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
 
     // get aerosol water activity
     real_type water_a;
+    // FIXME: these need to be set beforehand
+    ordinal_type jaerosolstate, jphase, jhyst_leg;
+    aerosol_water(mosaic, electrolyte_liquid, water_a, jaerosolstate, jphase, jhyst_leg);
 
+    if (water_a == 0.0) {
+      return;
+    }
 
     // get sulfate ratio to determine regime
     real_type XT = 0.0;
-    calcuate_XT(aero_total, mosaic, XT);
+    calcuate_XT(aer_liquid, mosaic, XT);
+
   }
 
   KOKKOS_INLINE_FUNCTION static
@@ -601,7 +608,7 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
            aw * (mosaic.a_zsr(3, je) +
            aw * (mosaic.a_zsr(4, je) +
            aw *  mosaic.a_zsr(5, je) ))));
-      bin_molality = 55.509 * xm / (1.0 -xm);
+      bin_molality = 55.509 * xm / (1.0 - xm);
     } else {
       bin_molality = -1.0 * mosaic.b_zsr(je) * log(aw);
     }
@@ -609,8 +616,8 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
 
   // ZSR method (water uptake)
   KOKKOS_INLINE_FUNCTION static
-  void aerosol_water_total(const MosaicModelData& mosaic,
-                           const real_type_1d_view_type& electrolyte_total,
+  void aerosol_water(const MosaicModelData& mosaic,
+                           const real_type_1d_view_type& electrolyte,
                            real_type& aerosol_water,
                            ordinal_type& jaerosolstate,
                            ordinal_type& jphase,
@@ -626,34 +633,6 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
     real_type dum = 0.0;
     for (ordinal_type je = 0; je < (mosaic.nsalt + 4), je++) {
       dum = dum + electrolyte_total(je) / molality0(je);
-    }
-
-    aerosol_water = dum * 1.e-9;
-    if (aerosol_water <= 0.0) {
-      jaerosolstate = mosaic.all_solid;
-      jphase = mosaic.jsolid;
-      jhyst_leg = mosaic.jhyst_lo;
-    }
-  }
-
-  KOKKOS_INLINE_FUNCTION static
-  void aerosol_water_liquid(const MosaicModelData& mosaic,
-                           const real_type_1d_view_type& electrolyte_liquid,
-                           real_type& aerosol_water,
-                           ordinal_type& jaerosolstate,
-                           ordinal_type& jphase,
-                           ordinal_type& jhyst_leg) {
-
-    real_type_1d_view_type molality0("molality_0", mosaic.nelectrolyte);
-    real_type bin_molality_0;
-    for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
-      bin_molality(mosaic, je, bin_molality_0);
-      molality0(je) = bin_molality_0;
-    }
-
-    real_type dum = 0.0;
-    for (ordinal_type je = 0; je < (mosaic.nsalt + 4), je++) {
-      dum = dum + electrolyte_liquid(je) / molality0(je);
     }
 
     aerosol_water = dum * 1.e-9;

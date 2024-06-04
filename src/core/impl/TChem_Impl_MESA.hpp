@@ -74,20 +74,237 @@ struct MosaicModelData {
     const ordinal_type jlim2 = 32; // insoluble - part of naercomp
     const ordinal_type jh2o = 33; // water - part of naercomp
 
-    const ordinal_type naer=1;
-    const ordinal_type nelectrolyte=1;
+    const ordinal_type naer=19;
+    const ordinal_type nelectrolyte=22;
+    const ordinal_type nsalt=15;
+    const ordinal_type nsoluble=20;
+    const ordinal_type ncation=4;
+    const ordinal_type nanion=5;
 
     // FIXME: update values and make enum
-    const ordinal_type jliquid=1;
-    const ordinal_type jsolid=2;
+    const ordinal_type jsolid=1;
+    const ordinal_type jliquid=2;
+    const ordinal_type jtotal=3;
 
-    const ordinal_type all_solid=3;
-    const ordinal_type all_liquid=3;
+    const ordinal_type no_aerosol=0;
+    const ordinal_type all_solid=1;
+    const ordinal_type all_liquid=2;
+    const ordinal_type mixed=3;
 
-    const ordinal_type jhyst_up=0;
+    const ordinal_type soluble=1;
+    const ordinal_type insoluble=2;
+
+    const ordinal_type jhyst_up=1;
     const ordinal_type jhyst_lo=0;
 
-    const ordinal_type nsoluble=1;
+    const ordinal_type nsoluble=20;
+
+    // polynomial coefficients for binary molality (used in ZSR)
+       // for aw < 0.97
+    const real_type_2d_view_type a_zsr("a_zsr", 6, 22);
+    const real_type_1d_view_type aw_min("aw_min", 22);
+
+    a_zsr(0, jnh4hso4) =   1.30894;
+    a_zsr(1, jnh4hso4) =  -7.09922;
+    a_zsr(2, jnh4hso4) =  20.62831;
+    a_zsr(3, jnh4hso4) = -32.19965;
+    a_zsr(4, jnh4hso4) =  25.17026;
+    a_zsr(5, jnh4hso4) =  -7.81632;
+    aw_min(jnh4hso4)   =       0.1;
+
+    a_zsr(0, jlvcite)  =   1.10725;
+    a_zsr(1, jlvcite)  =  -5.17978;
+    a_zsr(2, jlvcite)  =  12.29534;
+    a_zsr(3, jlvcite)  = -16.32545;
+    a_zsr(4, jlvcite)  =  11.29274;
+    a_zsr(5, jlvcite)  =  -3.19164;
+    aw_min(jlvcite)    =       0.1;
+
+    a_zsr(0, jnh4hso4) =  1.15510;
+    a_zsr(1, jnh4hso4) = -3.20815;
+    a_zsr(2, jnh4hso4) =  2.71141;
+    a_zsr(3, jnh4hso4) =  2.01155;
+    a_zsr(4, jnh4hso4) = -4.71014;
+    a_zsr(5, jnh4hso4) =  2.04616;
+    aw_min(jnh4hso4)   =      0.1;
+
+    a_zsr(0, jnh4msa) =  1.15510;
+    a_zsr(1, jnh4msa) = -3.20815;
+    a_zsr(2, jnh4msa) =  2.71141;
+    a_zsr(3, jnh4msa) =  2.01155;
+    a_zsr(4, jnh4msa) = -4.71014;
+    a_zsr(5, jnh4msa) =  2.04616;
+    aw_min(jnh4msa)   =      0.1;
+
+    a_zsr(0, jnh4no3) =   0.43507;
+    a_zsr(1, jnh4no3) =   6.38220;
+    a_zsr(2, jnh4no3) = -30.19797;
+    a_zsr(3, jnh4no3) =  53.36470;
+    a_zsr(4, jnh4no3) = -43.44203;
+    a_zsr(5, jnh4no3) =  13.46158;
+    aw_min(jnh4no3)   =       0.1;
+
+    a_zsr(0, jnh4cl) =  0.45309;
+    a_zsr(1, jnh4cl) =  2.65606;
+    a_zsr(2, jnh4cl) = -14.7730;
+    a_zsr(3, jnh4cl) =  26.2936;
+    a_zsr(4, jnh4cl) = -20.5735;
+    a_zsr(5, jnh4cl) =  5.94255;
+    aw_min(jnh4cl)   =      0.1;
+
+    a_zsr(0, jnacl) =  0.42922;
+    a_zsr(1, jnacl) = -1.17718;
+    a_zsr(2, jnacl) =  2.80208;
+    a_zsr(3, jnacl) = -4.51097;
+    a_zsr(4, jnacl) =  3.76963;
+    a_zsr(5, jnacl) = -1.31359;
+    aw_min(jnacl)   =      0.1;
+
+    a_zsr(0, jnano3) =   1.34966;
+    a_zsr(1, jnano3) =  -5.20116;
+    a_zsr(2, jnano3) =  11.49011;
+    a_zsr(3, jnano3) = -14.41380;
+    a_zsr(4, jnano3) =   9.07037;
+    a_zsr(5, jnano3) =  -2.29769;
+    aw_min(jnano3)   =       0.1;
+
+    a_zsr(0, jna2so4) =  0.39888;
+    a_zsr(1, jna2so4) = -1.27150;
+    a_zsr(2, jna2so4) =  3.42792;
+    a_zsr(3, jna2so4) = -5.92632;
+    a_zsr(4, jna2so4) =  5.33351;
+    a_zsr(5, jna2so4) = -1.96541;
+    aw_min(jna2so4)   =      0.1;
+
+    a_zsr(0, jna3hso4) =  0.31480;
+    a_zsr(1, jna3hso4) = -1.01087;
+    a_zsr(2, jna3hso4) =  2.44029;
+    a_zsr(3, jna3hso4) = -3.66095;
+    a_zsr(4, jna3hso4) =  2.77632;
+    a_zsr(5, jna3hso4) = -0.86058;
+    aw_min(jna3hso4)   =      0.1;
+
+    a_zsr(0, jnahso4)  =   0.62764;
+    a_zsr(1, jnahso4)  =  -1.63520;
+    a_zsr(2, jnahso4)  =   4.62531;
+    a_zsr(3, jnahso4)  = -10.06925;
+    a_zsr(4, jnahso4)  =  10.33547;
+    a_zsr(5, jnahso4)  =  -3.88729;
+    aw_min(jnahso4)    =       0.1;
+
+    a_zsr(0, jnamsa)  =   0.62764;
+    a_zsr(1, jnamsa)  =  -1.63520;
+    a_zsr(2, jnamsa)  =   4.62531;
+    a_zsr(3, jnamsa)  = -10.06925;
+    a_zsr(4, jnamsa)  =  10.33547;
+    a_zsr(5, jnamsa)  =  -3.88729;
+    aw_min(jnamsa)    =       0.1;
+
+    a_zsr(0, jcano3) =  0.38895;
+    a_zsr(1, jcano3) = -1.16013;
+    a_zsr(2, jcano3) =  2.16819;
+    a_zsr(3, jcano3) = -2.23079;
+    a_zsr(4, jcano3) =  1.00268;
+    a_zsr(5, jcano3) = -0.16923;
+    aw_min(jcano3)   =      0.1;
+
+    a_zsr(0, jcacl2) =  0.29891;
+    a_zsr(1, jcacl2) = -1.31104;
+    a_zsr(2, jcacl2) =  3.68759;
+    a_zsr(3, jcacl2) = -5.81708;
+    a_zsr(4, jcacl2) =  4.67520;
+    a_zsr(5, jcacl2) = -1.53223;
+    aw_min(jcacl2)   =      0.1;
+
+    a_zsr(0, jh2so4) =  0.32751;
+    a_zsr(1, jh2so4) = -1.00692;
+    a_zsr(2, jh2so4) =  2.59750;
+    a_zsr(3, jh2so4) = -4.40014;
+    a_zsr(4, jh2so4) =  3.88212;
+    a_zsr(5, jh2so4) = -1.39916;
+    aw_min(jh2so4)   =      0.1;
+
+    a_zsr(0, jmsa) =  0.32751;
+    a_zsr(1, jmsa) = -1.00692;
+    a_zsr(2, jmsa) =  2.59750;
+    a_zsr(3, jmsa) = -4.40014;
+    a_zsr(4, jmsa) =  3.88212;
+    a_zsr(5, jmsa) = -1.39916;
+    aw_min(jmsa)   =      0.1;
+
+    a_zsr(0, jhhso4) =  0.32751;
+    a_zsr(1, jhhso4) = -1.00692;
+    a_zsr(2, jhhso4) =  2.59750;
+    a_zsr(3, jhhso4) = -4.40014;
+    a_zsr(4, jhhso4) =  3.88212;
+    a_zsr(5, jhhso4) = -1.39916;
+    aw_min(jhhso4)   =     1.0;
+
+    a_zsr(0, jhno3) =   0.75876;
+    a_zsr(1, jhno3) =  -3.31529;
+    a_zsr(2, jhno3) =   9.26392;
+    a_zsr(3, jhno3) = -14.89799;
+    a_zsr(4, jhno3) =  12.08781;
+    a_zsr(5, jhno3) =  -3.89958;
+    aw_min(jhno3)   =       0.1;
+
+    a_zsr(0, jhcl) =  0.31133;
+    a_zsr(1, jhcl) = -0.79688;
+    a_zsr(2, jhcl) =  1.93995;
+    a_zsr(3, jhcl) = -3.31582;
+    a_zsr(4, jhcl) =  2.93513;
+    a_zsr(5, jhcl) = -1.07268;
+    aw_min(jhcl)   =      0.1;
+
+    a_zsr(0, jcaso4)  =  0.0;
+    a_zsr(1, jcaso4)  =  0.0;
+    a_zsr(2, jcaso4)  =  0.0;
+    a_zsr(3, jcaso4)  =  0.0;
+    a_zsr(4, jcaso4)  =  0.0;
+    a_zsr(5, jcaso4)  =  0.0;
+    aw_min(jcaso4)    =  1.0;
+
+    a_zsr(0, jcamsa2) =  0.38895;
+    a_zsr(1, jcamsa2) = -1.16013;
+    a_zsr(2, jcamsa2) =  2.16819;
+    a_zsr(3, jcamsa2) = -2.23079;
+    a_zsr(4, jcamsa2) =  1.00268;
+    a_zsr(5, jcamsa2) = -0.16923;
+    aw_min(jcamsa2)   =      0.1;
+
+    a_zsr(0, jcaco3)  =  0.0;
+    a_zsr(1, jcaco3)  =  0.0;
+    a_zsr(2, jcaco3)  =  0.0;
+    a_zsr(3, jcaco3)  =  0.0;
+    a_zsr(4, jcaco3)  =  0.0;
+    a_zsr(5, jcaco3)  =  0.0;
+    aw_min(jcaco3)    =  1.0;
+
+       // for aw => 0.97 to 0.999999
+    const real_type_1d_view_type b_zsr("b_zsr", 22);
+
+    b_zsr(jnh4so4)  = 28.0811;
+    b_zsr(jlvcite)  = 14.7178;
+    b_zsr(jnh4hso4) = 29.4779;
+    b_zsr(jnh4msa)  = 29.4779;
+    b_zsr(jnh4no3)  = 33.4049;
+    b_zsr(jnh4cl)   = 30.8888;
+    b_zsr(jnacl)    = 29.8375;
+    b_zsr(jnano3)   = 32.2756;
+    b_zsr(jna2so4)  = 27.6889;
+    b_zsr(jna3hso4) = 14.2184;
+    b_zsr(jnahso4)  = 28.3367;
+    b_zsr(jnamsa)   = 28.3367;
+    b_zsr(jcano3)   = 18.3661;
+    b_zsr(jcacl2)   = 20.8792;
+    b_zsr(jh2so4)   = 26.7347;
+    b_zsr(jhhso4)   = 26.7347;
+    b_zsr(jhno3)    = 28.8257;
+    b_zsr(jhcl)     = 27.7108;
+    b_zsr(jmsa)     = 26.7347;
+    b_zsr(jcaso4)   = 0.0;
+    b_zsr(jcamsa2)  = 18.3661;
+    b_zsr(jcaco3)   = 0.0;
  };
 
 
@@ -342,16 +559,79 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
     aer_liquid(mosaic.ilim2_a) = 0.0;
 }
 
-  KOKKOS_INLINE_FUNCTION static void
-  compute_activities()
-  {
+  KOKKOS_INLINE_FUNCTION static
+  void compute_activities(const MosaicModelData& mosaic,
+                          const real_type_1d_view_type& aer_total,
+                          const real_type_1d_view_type& ma,
+                          const real_type_1d_view_type& mc,
+                          const real_type_1d_view_type& electrolyte_solid,
+                          const real_type_1d_view_type& electrolyte_liquid,
+                          const real_type_1d_view_type& electrolyte_total,
+                          const real_type_1d_view_type& xmol,
+                          const real_type_1d_view_type& log_gam,
+                          const real_type_2d_view_type& log_gamZ,
+                          const real_type_1d_view_type& gam,
+                          const real_type_1d_view_type& activity) {
 
+    // get aerosol water activity
+
+    // get sulfate ratio to determine regime
+    real_type XT = 0.0;
+    calcuate_XT(aero_total, mosaic, XT);
   }
 
-KOKKOS_INLINE_FUNCTION static void
-  aerosol_water_total()
-    {
+  KOKKOS_INLINE_FUNCTION static
+  void bin_molality(const MosaicModelData& mosaic,
+                    const ordinal_type& je,
+                    real_type& bin_molality) {
 
+    real_type aw, xm;
+    // FIXME: aH20_a should be set to the relative humidity
+    real_type aH2O_a = 0.0;
+
+    aw = max(aH20_a, mosaic.aw_min(je));
+    aw = min(aw, 0.999999);
+
+    if (aw < 0.97) {
+      xm = mosaic.a_zsr(0, je) +
+           aw * (mosaic.a_zsr(1, je) +
+           aw * (mosaic.a_zsr(2, je) +
+           aw * (mosaic.a_zsr(3, je) +
+           aw * (mosaic.a_zsr(4, je) +
+           aw *  mosaic.a_zsr(5, je) ))));
+      bin_molality = 55.509 * xm / (1.0 -xm);
+    } else {
+      bin_molality = -1.0 * mosaic.b_zsr(je) * log(aw);
+    }
+  }
+
+  // ZSR method (water uptake)
+  KOKKOS_INLINE_FUNCTION static
+  void aerosol_water_total(const MosaicModelData& mosaic,
+                           const real_type_1d_view_type& electrolyte_total,
+                           real_type& aerosol_water,
+                           ordinal_type& jaerosolstate,
+                           ordinal_type& jphase,
+                           ordinal_type& jhyst_leg) {
+
+    real_type_1d_view_type molality0("molality_0", mosaic.nelectrolyte);
+    real_type bin_molality_0;
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
+      bin_molality(mosaic, je, bin_molality_0);
+      molality0(je) = bin_molality_0;
+    }
+
+    real_type dum = 0.0;
+    for (ordinal_type je = 0; je < (mosaic.nsalt + 4), je++) {
+      dum = dum + electrolyte_total(je) / molality0(je);
+    }
+
+    aerosol_water = dum * 1.e-9;
+    if (aerosol_water <= 0.0) {
+      jaerosolstate = mosaic.all_solid;
+      jphase = mosaic.jsolid;
+      jhyst_leg = mosaic.jhyst_lo;
+    }
   }
 
   template<typename MemberType>

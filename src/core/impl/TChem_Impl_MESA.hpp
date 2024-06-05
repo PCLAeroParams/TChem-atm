@@ -600,12 +600,15 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                           const real_type_1d_view_type& electrolyte_solid,
                           const real_type_1d_view_type& electrolyte_liquid,
                           const real_type_1d_view_type& electrolyte_total,
-                          const real_type_1d_view_type& xmol,
                           const real_type_1d_view_type& log_gam,
                           const real_type_2d_view_type& log_gamZ,
                           const real_type_1d_view_type& gam,
                           const real_type_1d_view_type& activity,
                           real_type T_K) {
+
+    // local variables
+    real_type_1d_view_type xmol("xmol", mosaic.nelectrolyte);
+    real_type a_c, Keq_ll, sum_elec;
 
     // get aerosol water activity
     real_type water_a;
@@ -623,7 +626,6 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
 
     if (XT > 2.0 || XT < 0.0) {
       // SULFATE POOR: fully dissociated electrolytes
-      real_type a_c, Keq_ll;
 
       // anion molalities (mol / kg water)
       ma(mosaic.ja_so4)  = 1.e-9 * aer_liquid(mosaic.iso4_a) / water_a;
@@ -644,12 +646,20 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                           (2. * mc(mosaic.jc_ca)   +
                                 mc(mosaic.jc_nh4)  +
                                 mc(mosaic.jc_na))  );
-      // FIXME: consider adding update_thermodynamic_constants instead 
-      // of computing equil. constants directly 
+      // FIXME: consider adding update_thermodynamic_constants instead
+      // of computing equil. constants directly.
+      // Make sure temp. is handled
       fn_Keq(mosaic.Keq_ll_298(2), mosaic.Keq_a_ll(2), mosiac.Keq_b_ll(2), T_K, Keq_ll);
       mc(mosaic.jc_h)   = 0.5 * ( (a_c) +
-                                  (sqrt(a_c*a_c + 4. * Keq_ll)) ); 
-    }
+                                  (sqrt(a_c*a_c + 4. * Keq_ll)) );
+
+      if (mc(mosaic.jc_h) == 0.0) {
+        mc(mosaic.jc_h) = 1.e-10;
+      }
+
+
+
+    } // end SULFATE POOR regime
   }
 
   KOKKOS_INLINE_FUNCTION static

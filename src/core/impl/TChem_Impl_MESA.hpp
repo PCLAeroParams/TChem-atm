@@ -321,7 +321,22 @@ struct MosaicModelData {
     const ordinal_type ja_msa  = 5;
     // const ordinal_type ja_co3  = 6; (note: this is commented out in MOSAIC as well)
 
+    // Temperature-dependent thermodynamic parameters
+    // liquid-liquid
     const ordinal_type nrxn_aer_ll = 3;
+    const real_type_1d_view_type Keq_298_ll("Keq_298_ll", nrxn_aer_ll);
+    Keq_298_ll(0) = 1.0502e-2; // HSO4- <=> SO4= + H+
+    Keq_298_ll(1) = 1.805e-5;  // NH3(l) + H2O = NH4+ + OH-
+    Keq_298_ll(2) = 1.01e-14;  // H2O(l) <=> H+ + OH-
+    const real_type_1d_view_type Keq_a_ll("Keq_a_ll", nrxn_aer_ll);
+    Keq_a_ll(0) =   8.85;
+    Keq_a_ll(1) =  -1.50;
+    Keq_a_ll(2) = -22.52;
+    const real_type_1d_view_type Keq_b_ll("Keq_b_ll", nrxn_aer_ll);
+    Keq_b_ll(0) = 25.14;
+    Keq_b_ll(1) = 26.92;
+    Keq_b_ll(2) = 26.92;
+
 
  };
 
@@ -589,7 +604,8 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                           const real_type_1d_view_type& log_gam,
                           const real_type_2d_view_type& log_gamZ,
                           const real_type_1d_view_type& gam,
-                          const real_type_1d_view_type& activity) {
+                          const real_type_1d_view_type& activity,
+                          real_type T_K) {
 
     // get aerosol water activity
     real_type water_a;
@@ -607,7 +623,7 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
 
     if (XT > 2.0 || XT < 0.0) {
       // SULFATE POOR: fully dissociated electrolytes
-      real_type a_c;
+      real_type a_c, Keq_ll;
 
       // anion molalities (mol / kg water)
       ma(mosaic.ja_so4)  = 1.e-9 * aer_liquid(mosaic.iso4_a) / water_a;
@@ -628,8 +644,11 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                           (2. * mc(mosaic.jc_ca)   +
                                 mc(mosaic.jc_nh4)  +
                                 mc(mosaic.jc_na))  );
+      // FIXME: consider adding update_thermodynamic_constants instead 
+      // of computing equil. constants directly 
+      fn_Keq(mosaic.Keq_ll_298(2), mosaic.Keq_a_ll(2), mosiac.Keq_b_ll(2), T_K, Keq_ll);
       mc(mosaic.jc_h)   = 0.5 * ( (a_c) +
-                                  (sqrt(a_c*a_c + 4. * Keq_ll(3))) ); 
+                                  (sqrt(a_c*a_c + 4. * Keq_ll)) ); 
     }
   }
 
@@ -685,6 +704,19 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
       jphase = mosaic.jsolid;
       jhyst_leg = mosaic.jhyst_lo;
     }
+  }
+
+  KOKKOS_INLINE_FUNCTION static
+  void fn_Keq(const real_type Keq_298,
+              const real_type a,
+              const real_type b,
+              const real_type& T,
+              real_type& Keq) {
+
+    real_type tt;
+    tt = 298.15 / T;
+
+    Keq = Keq_298 * exp(a * (tt - 1.0) + b * (1.0 + log(tt) - tt));
   }
 
   template<typename MemberType>

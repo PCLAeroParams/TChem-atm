@@ -608,7 +608,7 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
 
     // local variables
     real_type_1d_view_type xmol("xmol", mosaic.nelectrolyte);
-    real_type a_c, Keq_ll, sum_elec;
+    real_type a_c, Keq_ll, sum_elec, gam_ratio;
 
     // get aerosol water activity
     real_type water_a;
@@ -657,9 +657,67 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
         mc(mosaic.jc_h) = 1.e-10;
       }
 
+      sum_elec = 2. * electrolyte_liquid(mosaic.jnh4no3) +
+                 2. * electrolyte_liquid(mosaic.jnh4cl)  +
+                 3. * electrolyte_liquid(mosaic.jnh4so4) +
+                 3. * electrolyte_liquid(mosaic.jna2so4) +
+                 2. * electrolyte_liquid(mosaic.jnano3)  +
+                 2. * electrolyte_liquid(mosaic.jnacl)   +
+                 3. * electrolyte_liquid(mosaic.jcano3)  +
+                 3. * electrolyte_liquid(mosaic.jcacl2)  +
+                 2. * electrolyte_liquid(mosaic.jhno3)   +
+                 2. * electrolyte_liquid(mosaic.jhcl);
 
+      if (sum_elec == 0.0) {
+        for (ordinal_type jA = 0; jA < mosaic.nelectrolyte; jA++) {
+          gam(jA) = 1.0;
+        }
+        // FIXME: duplicated code to avoid goto statement
+        gam(mosaic.jlvcite)  = 1.0;
+        gam(mosaic.jnh4hso4) = 1.0;
+        gam(mosaic.jnh4msa)  = 1.0;
+        gam(mosaic.jna3hso4) = 1.0;
+        gam(mosaic.jnamsa)   = 1.0;
+        gam(mosaic.jcamsa2)  = 1.0;
 
-    } // end SULFATE POOR regime
+        activity(mosaic.jlvcite)  = 0.0;
+        activity(mosaic.jnh4hso4) = 0.0;
+
+        activity(mosaic.jnh4msa) = mc(mosaic.jc_nh4) * ma(mosaic.ja_msa) *
+                                   gam(mosaic.jnh4msa) * gam(mosaic.jnh4msa);
+
+        activity(mosaic.jna3hso4) = 0.0;
+        activity(mosaic.jnahso4)  = 0.0;
+
+        activity(mosaic.jnamsa)  = mc(mosaic.jc_na) * ma(mosaic.ja_msa) *
+                                   gam(mosaic.jnamsa) * gam(mosaic.jnamsa);
+        activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) * ma(mosaic.ja_msa) *
+                                   gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2)
+
+        gam_ratio = gam(mosaic.jnh4no3) * gam(mosaic.jnh4no3) /
+                    gam(mosaic.jhno3)   * gam(mosaic.jhno3)
+
+        return;
+      }
+
+    // ionic mole fractions
+    xmol(mosaic.jnh4no3) = 2. * electrolyte_liquid(mosaic.jnh4no3) / sum_elec;
+    xmol(mosaic.jnh4cl)  = 2. * electrolyte_liquid(mosaic.jnh4cl)  / sum_elec;
+    xmol(mosaic.jnh4so4) = 3. * electrolyte_liquid(mosaic.jnh4so4) / sum_elec;
+    xmol(mosaic.jna2so4) = 3. * electrolyte_liquid(mosaic.jna2so4) / sum_elec;
+    xmol(mosaic.jnano3)  = 2. * electrolyte_liquid(mosaic.jnano3)  / sum_elec;
+    xmol(mosaic.jnacl)   = 2. * electrolyte_liquid(mosaic.jnacl)   / sum_elec;
+    xmol(mosaic.jcano3)  = 3. * electrolyte_liquid(mosaic.jcano3)  / sum_elec;
+    xmol(mosaic.jcacl2)  = 3. * electrolyte_liquid(mosaic.jcacl2)  / sum_elec;
+    xmol(mosaic.jhno3)   = 2. * electrolyte_liquid(mosaic.jhno3)   / sum_elec;
+    xmol(mosaic.jhcl)    = 2. * electrolyte_liquid(mosaic.jhcl)    / sum_elec;
+
+    
+
+    // end SULFATE POOR regime
+    } else {
+      // SULFATE RICH: solve for SO4= and HSO4- ions
+    }
   }
 
   KOKKOS_INLINE_FUNCTION static

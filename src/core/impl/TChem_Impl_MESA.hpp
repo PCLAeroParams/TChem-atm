@@ -893,6 +893,25 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
     Keq = Keq_298 * exp(a * (tt - 1.0) + b * (1.0 + log(tt) - tt));
   }
 
+  KOKKOS_INLINE_FUNCTION static
+  void fnlog_gamZ(const MosaicModelData& mosaic,
+                  const ordinal_type& jA,
+                  const ordinal_type& jE,
+                  real_type& log_gamZ) {
+
+    // FIXME: aH2O should not be local; make sure updated with RH
+    real_type aw, aH2O;
+
+    aw = max(aH2O, aw_min(jE));
+
+    log_gamZ =  mosaic.b_mtem(0,jA,jE) + aw *
+               (mosaic.b_mtem(1,jA,jE) + aw *
+               (mosaic.b_mtem(2,jA,jE) + aw *
+               (mosaic.b_mtem(3,jA,jE) + aw *
+               (mosaic.b_mtem(4,jA,jE) + aw *
+                mosaic.b_mtem(5,jA,jE) ))));
+  }
+
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static void team_invoke(
     const MemberType& member,

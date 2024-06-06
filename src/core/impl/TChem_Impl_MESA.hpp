@@ -832,10 +832,10 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                     real_type& bin_molality) {
 
     real_type aw, xm;
-    // FIXME: aH20_a should be set to the relative humidity
-    real_type aH2O_a = 0.0;
+    // FIXME: aH20 should be set to the relative humidity
+    real_type aH2O = 0.0;
 
-    aw = max(aH20_a, mosaic.aw_min(je));
+    aw = max(aH20, mosaic.aw_min(je));
     aw = min(aw, 0.999999);
 
     if (aw < 0.97) {

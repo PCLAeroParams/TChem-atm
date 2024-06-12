@@ -32,7 +32,6 @@ RUN cmake -S /tchem_dir/external/Tines/ext/kokkos -B /build/kokkos_build \
           -DKokkos_ENABLE_CUDA=OFF \
           -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
           -DKokkos_ENABLE_CUDA_LAMBDA=OFF
-     
 WORKDIR /build/kokkos_build/
 RUN make -j \
     && make install
@@ -52,7 +51,7 @@ RUN cmake -S /tchem_dir/external/Tines/ext/yaml -B /build//yaml_build \
           -DCMAKE_EXE_LINKER_FLAGS="" \
           -DCMAKE_BUILD_TYPE=RELEASE
 WORKDIR /build/yaml_build
-RUN make -j \ 
+RUN make -j \
     && make install
 
 RUN cmake -S /tchem_dir/external/Sundials -B /build/sundials_build \
@@ -98,6 +97,23 @@ WORKDIR /build/tines_build
 RUN make -j \
     && make install
 
+RUN cmake -S /tchem_dir/external/kokkos-kernels -B /build/kokkoskernels_build \
+          -DCMAKE_INSTALL_PREFIX="/install/kokkoskernels_install" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_CXX_FLAGS="-g" \
+          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+          -DKokkosKernels_ENABLE_EXAMPLES=OFF \
+          -DKokkosKernels_ENABLE_EXPERIMENTAL=OFF \
+          -DKokkosKernels_ENABLE_TESTS=OFF \
+          -DKokkosKernels_ENABLE_COMPONENT_BLAS=OFF \
+          -DKokkosKernels_ENABLE_COMPONENT_GRAPH=OFF \
+          -DKokkosKernels_ENABLE_COMPONENT_LAPACK=OFF \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+          -DKokkos_ROOT=/install/kokkos_install
+WORKDIR /build/kokkoskernels_build
+RUN make -j4 \
+    && make install
+
 RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DCMAKE_INSTALL_PREFIX=/tchem_install \
           -DCMAKE_CXX_COMPILER=g++ \
@@ -114,6 +130,9 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
           -DTCHEM_ATM_ENABLE_REAL_TYPE="double" \
           -DSKYWALKER_INSTALL_PATH=/install/skywalker_install \
+          -DTCHEM_ATM_ENABLE_KOKKOSKERNELS=ON \
+          -DKOKKOSKERNELS_INSTALL_PATH=/install/kokkoskernels_install \
+          -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
           -DGTEST_INSTALL_PATH=/install/gtest_install
 WORKDIR /tchem_build
 RUN make -j \

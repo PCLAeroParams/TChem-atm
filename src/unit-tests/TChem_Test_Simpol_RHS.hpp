@@ -11,10 +11,10 @@ using real_type_2d_view = TChem::real_type_2d_view;
 using real_type_2d_view_host = TChem::real_type_2d_view_host;
 
 #define TCHEM_TEST_IMPL_SACADO
-
-TEST(SimpolRHS, Device)
+namespace TChem {
+namespace Test {
+void static SimpolRHS_test()
 {
-    constexpr real_type zero=0.0;
     using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
     // input files need to located in same directory as the executable.
     std::string chemFile ="../examples/runs/atmospheric_chemistry/Simpol/config_gas.yaml";
@@ -59,7 +59,10 @@ TEST(SimpolRHS, Device)
 
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
-
+    // FIXME:
+    // is this a bug in nvcc?
+    //https://github.com/google/googletest/issues/4104
+ #if  1
     // team policy
     ordinal_type nBatch =1;
     policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
@@ -67,6 +70,7 @@ TEST(SimpolRHS, Device)
       ("SIMPOL RHS",
        policy,
        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+
        real_type t = 272.5; // K
        real_type p = 101253.3; // pa
 
@@ -97,9 +101,11 @@ TEST(SimpolRHS, Device)
         //copy values of omega
         for (ordinal_type i = 0; i < ntotal_species; i++)
           omega_out(i) = omega(i).val();
-#endif
 
+#endif
   });
+
+#endif
   // we need to copy data from device to host.
   auto omega_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), omega_out);
   // save results to a file.
@@ -107,6 +113,14 @@ TEST(SimpolRHS, Device)
   FILE *fout = fopen(outputFile.c_str(), "w");
   TChem::Test::writeReactionRates(outputFile, omega_host.extent(0), omega_host);
   fclose(fout);
+
+}
+}// namespace Test
+
+}// namespace TChem
+TEST(SimpolRHS, Device)
+{
+  TChem::Test::SimpolRHS_test();
 }
 
 TEST(SimpolRHS, verification_device)

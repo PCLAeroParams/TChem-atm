@@ -13,7 +13,11 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_AtmosphericChemistryE3SM_CVODE.cpp
   TChem_AerosolChemistry_CVODE.cpp
 )
-
+IF(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS)
+LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
+TChem_GEMM_KokkosKernels.cpp
+)
+ENDIF()
 #
 # Create examples for the above sources
 #

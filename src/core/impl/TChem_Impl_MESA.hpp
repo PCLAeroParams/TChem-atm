@@ -609,6 +609,111 @@ struct MosaicModelData {
     b_mtem(5,jnh4cl,jhcl) =  1.78866;
 
     ///////////////////////////////////////
+    // Na2SO4 in (NH4)2SO4
+    b_mtem(0,jna2so4,jnh4so4) =   -2.6982;
+    b_mtem(1,jna2so4,jnh4so4) =   22.9875;
+    b_mtem(2,jna2so4,jnh4so4) =  -98.9840;
+    b_mtem(3,jna2so4,jnh4so4) =  198.0180;
+    b_mtem(4,jna2so4,jnh4so4) = -188.7270;
+    b_mtem(5,jna2so4,jnh4so4) =   69.0548;
+
+    // Na2SO4 in NH4NO3
+    b_mtem(0,jna2so4,jnh4no3) =  -2.4844;
+    b_mtem(1,jna2so4,jnh4no3) =   6.5420;
+    b_mtem(2,jna2so4,jnh4no3) =  -9.8998;
+    b_mtem(3,jna2so4,jnh4no3) =  11.3884;
+    b_mtem(4,jna2so4,jnh4no3) = -13.6842;
+    b_mtem(5,jna2so4,jnh4no3) =   7.7411;
+
+    // Na2SO4 in NH4Cl (revised on 11/15/2003)
+    b_mtem(0,jna2so4,jnh4cl) =  -1.3325;
+    b_mtem(1,jna2so4,jnh4cl) =  13.0406;
+    b_mtem(2,jna2so4,jnh4cl) = -56.1935;
+    b_mtem(3,jna2so4,jnh4cl) = 107.1170;
+    b_mtem(4,jna2so4,jnh4cl) = -97.3721;
+    b_mtem(5,jna2so4,jnh4cl) =  34.3763;
+
+    // Na2SO4 in Na2SO4
+    b_mtem(0,jna2so4,jna2so4) =  -1.2832;
+    b_mtem(1,jna2so4,jna2so4) =  12.8526;
+    b_mtem(2,jna2so4,jna2so4) =  -62.2087;
+    b_mtem(3,jna2so4,jna2so4) =  130.3876;
+    b_mtem(4,jna2so4,jna2so4) = -128.2627;
+    b_mtem(5,jna2so4,jna2so4) =  48.0340;
+
+    // Na2SO4 in NaNO3
+    b_mtem(0,jna2so4,jnano3) =   -3.5384;
+    b_mtem(1,jna2so4,jnano3) =   21.3758;
+    b_mtem(2,jna2so4,jnano3) =  -70.7638;
+    b_mtem(3,jna2so4,jnano3) =  121.1580;
+    b_mtem(4,jna2so4,jnano3) = -104.6230;
+    b_mtem(5,jna2so4,jnano3) =   36.0557;
+
+    // Na2SO4 in NaCl
+    b_mtem(0,jna2so4,jnacl) =   0.2175;
+    b_mtem(1,jna2so4,jnacl) =  -0.5648;
+    b_mtem(2,jna2so4,jnacl) =  -8.0288;
+    b_mtem(3,jna2so4,jnacl) =  25.9734;
+    b_mtem(4,jna2so4,jnacl) = -32.3577;
+    b_mtem(5,jna2so4,jnacl) =  14.3924;
+
+    // Na2SO4 in HNO3
+    b_mtem(0,jna2so4,jhno3) =  -0.309617;
+    b_mtem(1,jna2so4,jhno3) =  -1.82899;
+    b_mtem(2,jna2so4,jhno3) =  -1.5505;
+    b_mtem(3,jna2so4,jhno3) =  13.3847;
+    b_mtem(4,jna2so4,jhno3) = -20.1284;
+    b_mtem(5,jna2so4,jhno3) =   9.93163;
+
+    // Na2SO4 in HCl
+    b_mtem(0,jna2so4,jhcl) =  -0.259455;
+    b_mtem(1,jna2so4,jhcl) =  -0.819366;
+    b_mtem(2,jna2so4,jhcl) =  -4.28964;
+    b_mtem(3,jna2so4,jhcl) =  16.4305;
+    b_mtem(4,jna2so4,jhcl) = -21.8546;
+    b_mtem(5,jna2so4,jhcl) =  10.3044;
+
+    // Na2SO4 in H2SO4
+    b_mtem(0,jna2so4,jh2so4) =  -1.84257;
+    b_mtem(1,jna2so4,jh2so4) =   7.85788;
+    b_mtem(2,jna2so4,jh2so4) = -29.9275;
+    b_mtem(3,jna2so4,jh2so4) =  61.7515;
+    b_mtem(4,jna2so4,jh2so4) = -63.2308;
+    b_mtem(5,jna2so4,jh2so4) =  24.9542;
+
+    // Na2SO4 in NH4HSO4
+    b_mtem(0,jna2so4,jnh4hso4) =  -1.05891;
+    b_mtem(1,jna2so4,jnh4hso4) =   2.84831;
+    b_mtem(2,jna2so4,jnh4hso4) = -21.1827;
+    b_mtem(3,jna2so4,jnh4hso4) =  57.5175;
+    b_mtem(4,jna2so4,jnh4hso4) = -64.8120;
+    b_mtem(5,jna2so4,jnh4hso4) =  26.1986;
+
+    // Na2SO4 in (NH4)3H(SO4)2
+    b_mtem(0,jna2so4,jlvcite) =  -1.16584;
+    b_mtem(1,jna2so4,jlvcite) =   8.50075;
+    b_mtem(2,jna2so4,jlvcite) = -44.3420;
+    b_mtem(3,jna2so4,jlvcite) =  97.3974;
+    b_mtem(4,jna2so4,jlvcite) = -98.4549;
+    b_mtem(5,jna2so4,jlvcite) =  37.6104;
+
+    // Na2SO4 in NaHSO4
+    b_mtem(0,jna2so4,jnahso4) =  -1.95805;
+    b_mtem(1,jna2so4,jnahso4) =   6.62417;
+    b_mtem(2,jna2so4,jnahso4) = -31.8072;
+    b_mtem(3,jna2so4,jnahso4) =  77.8603;
+    b_mtem(4,jna2so4,jnahso4) = -84.6458;
+    b_mtem(5,jna2so4,jnahso4) =  33.4963;
+
+    // Na2SO4 in Na3H(SO4)2
+    b_mtem(0,jna2so4,jna3hso4) =  -0.36045;
+    b_mtem(1,jna2so4,jna3hso4) =   3.55223;
+    b_mtem(2,jna2so4,jna3hso4) = -24.0327;
+    b_mtem(3,jna2so4,jna3hso4) =  54.4879;
+    b_mtem(4,jna2so4,jna3hso4) = -56.6531;
+    b_mtem(5,jna2so4,jna3hso4) =  22.4956;
+
+    ///////////////////////////////////////
  }
 
 

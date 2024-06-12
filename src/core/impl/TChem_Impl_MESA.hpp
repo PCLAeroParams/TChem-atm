@@ -795,6 +795,87 @@ struct MosaicModelData {
     b_mtem(5,jnano3,jhcl) =  0.873986;
 
     ///////////////////////////////////////
+    // NaCl in (NH4)2SO4
+    b_mtem(0,jnacl,jnh4so4) =   -1.9525;
+    b_mtem(1,jnacl,jnh4so4) =   16.6433;
+    b_mtem(2,jnacl,jnh4so4) =  -61.7090;
+    b_mtem(3,jnacl,jnh4so4) =  112.9910;
+    b_mtem(4,jnacl,jnh4so4) = -101.9370;
+    b_mtem(5,jnacl,jnh4so4) =   35.7760;
+
+    // NaCl in NH4NO3
+    b_mtem(0,jnacl,jnh4no3) =  -1.7525;
+    b_mtem(1,jnacl,jnh4no3) =   3.0713;
+    b_mtem(2,jnacl,jnh4no3) =   4.8063;
+    b_mtem(3,jnacl,jnh4no3) = -17.5334;
+    b_mtem(4,jnacl,jnh4no3) =  14.2872;
+    b_mtem(5,jnacl,jnh4no3) =  -3.0690;
+
+    // NaCl in NH4Cl (revised on 11/15/2003)
+    b_mtem(0,jnacl,jnh4cl) =  -0.4021;
+    b_mtem(1,jnacl,jnh4cl) =   5.2399;
+    b_mtem(2,jnacl,jnh4cl) = -19.4278;
+    b_mtem(3,jnacl,jnh4cl) =  33.0027;
+    b_mtem(4,jnacl,jnh4cl) = -28.1020;
+    b_mtem(5,jnacl,jnh4cl) =   9.5159;
+
+    // NaCl in Na2SO4
+    b_mtem(0,jnacl,jna2so4) =   0.6692;
+    b_mtem(1,jnacl,jna2so4) =   4.1207;
+    b_mtem(2,jnacl,jna2so4) = -27.3314;
+    b_mtem(3,jnacl,jna2so4) =  59.3112;
+    b_mtem(4,jnacl,jna2so4) = -58.7998;
+    b_mtem(5,jnacl,jna2so4) =  21.7674;
+
+    // NaCl in NaNO3
+    b_mtem(0,jnacl,jnano3) =  -1.17444;
+    b_mtem(1,jnacl,jnano3) =  10.9927;
+    b_mtem(2,jnacl,jnano3) = -38.9013;
+    b_mtem(3,jnacl,jnano3) =  66.8521;
+    b_mtem(4,jnacl,jnano3) = -57.6564;
+    b_mtem(5,jnacl,jnano3) =  19.7296;
+
+    // NaCl in NaCl
+    b_mtem(0,jnacl,jnacl) =  1.17679;
+    b_mtem(1,jnacl,jnacl) = -2.5061;
+    b_mtem(2,jnacl,jnacl) =  0.8508;
+    b_mtem(3,jnacl,jnacl) =  4.4802;
+    b_mtem(4,jnacl,jnacl) = -8.4945;
+    b_mtem(5,jnacl,jnacl) =  4.3182;
+
+    // NaCl in Ca(NO3)2
+    b_mtem(0,jnacl,jcano3) =   1.01450;
+    b_mtem(1,jnacl,jcano3) =   2.10260;
+    b_mtem(2,jnacl,jcano3) = -20.9036;
+    b_mtem(3,jnacl,jcano3) =  49.1481;
+    b_mtem(4,jnacl,jcano3) = -51.4867;
+    b_mtem(5,jnacl,jcano3) =  19.9301;
+
+    // NaCl in CaCl2 (PSC92: revised on 11/27/2003)
+    b_mtem(0,jnacl,jcacl2) =   1.55463;
+    b_mtem(1,jnacl,jcacl2) =  -3.20122;
+    b_mtem(2,jnacl,jcacl2) =  -0.957075;
+    b_mtem(3,jnacl,jcacl2) =  12.103;
+    b_mtem(4,jnacl,jcacl2) = -17.221;
+    b_mtem(5,jnacl,jcacl2) =   7.50264;
+
+    // NaCl in HNO3
+    b_mtem(0,jnacl,jhno3) =   2.46187;
+    b_mtem(1,jnacl,jhno3) = -12.6845;
+    b_mtem(2,jnacl,jhno3) =  34.2383;
+    b_mtem(3,jnacl,jhno3) = -51.9992;
+    b_mtem(4,jnacl,jhno3) =  39.4934;
+    b_mtem(5,jnacl,jhno3) = -11.7247;
+
+    // NaCl in HCl
+    b_mtem(0,jnacl,jhcl) =   1.74915;
+    b_mtem(1,jnacl,jhcl) =  -4.65768;
+    b_mtem(2,jnacl,jhcl) =   8.80287;
+    b_mtem(3,jnacl,jhcl) = -12.2503;
+    b_mtem(4,jnacl,jhcl) =   8.668751;
+    b_mtem(5,jnacl,jhcl) =  -2.50158;
+
+    ///////////////////////////////////////
  }
 
 

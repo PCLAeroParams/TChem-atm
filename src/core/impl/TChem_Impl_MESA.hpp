@@ -714,6 +714,87 @@ struct MosaicModelData {
     b_mtem(5,jna2so4,jna3hso4) =  22.4956;
 
     ///////////////////////////////////////
+    // NaNO3 in (NH4)2SO4
+    b_mtem(0,jnano3,jnh4so4) =   -2.5888;
+    b_mtem(1,jnano3,jnh4so4) =   17.6192;
+    b_mtem(2,jnano3,jnh4so4) =  -63.2183;
+    b_mtem(3,jnano3,jnh4so4) =  115.3520;
+    b_mtem(4,jnano3,jnh4so4) = -104.0860;
+    b_mtem(5,jnano3,jnh4so4) =   36.7390;
+
+    // NaNO3 in NH4NO3
+    b_mtem(0,jnano3,jnh4no3) =  -2.0669;
+    b_mtem(1,jnano3,jnh4no3) =   1.4792;
+    b_mtem(2,jnano3,jnh4no3) =  10.5261;
+    b_mtem(3,jnano3,jnh4no3) = -27.0987;
+    b_mtem(4,jnano3,jnh4no3) =  23.0591;
+    b_mtem(5,jnano3,jnh4no3) =  -6.0938;
+
+    // NaNO3 in NH4Cl (revised on 11/15/2003)
+    b_mtem(0,jnano3,jnh4cl) =  -0.8325;
+    b_mtem(1,jnano3,jnh4cl) =   3.9933;
+    b_mtem(2,jnano3,jnh4cl) = -15.3789;
+    b_mtem(3,jnano3,jnh4cl) =  30.4050;
+    b_mtem(4,jnano3,jnh4cl) = -29.4204;
+    b_mtem(5,jnano3,jnh4cl) =  11.0597;
+
+    // NaNO3 in Na2SO4
+    b_mtem(0,jnano3,jna2so4) =  -1.1233;
+    b_mtem(1,jnano3,jna2so4) =   8.3998;
+    b_mtem(2,jnano3,jna2so4) = -31.9002;
+    b_mtem(3,jnano3,jna2so4) =  60.1450;
+    b_mtem(4,jnano3,jna2so4) = -55.5503;
+    b_mtem(5,jnano3,jna2so4) =  19.7757;
+
+    // NaNO3 in NaNO3
+    b_mtem(0,jnano3,jnano3) =  -2.5386;
+    b_mtem(1,jnano3,jnano3) =  13.9039;
+    b_mtem(2,jnano3,jnano3) = -42.8467;
+    b_mtem(3,jnano3,jnano3) =  69.7442;
+    b_mtem(4,jnano3,jnano3) = -57.8988;
+    b_mtem(5,jnano3,jnano3) =  19.4635;
+
+    // NaNO3 in NaCl
+    b_mtem(0,jnano3,jnacl) =  -0.4351;
+    b_mtem(1,jnano3,jnacl) =   2.8311;
+    b_mtem(2,jnano3,jnacl) = -11.4485;
+    b_mtem(3,jnano3,jnacl) =  22.7201;
+    b_mtem(4,jnano3,jnacl) = -22.4228;
+    b_mtem(5,jnano3,jnacl) =   8.5792;
+
+    // NaNO3 in Ca(NO3)2
+    b_mtem(0,jnano3,jcano3) = -0.72060;
+    b_mtem(1,jnano3,jcano3) =  5.64915;
+    b_mtem(2,jnano3,jcano3) = -23.5020;
+    b_mtem(3,jnano3,jcano3) =  46.0078;
+    b_mtem(4,jnano3,jcano3) = -43.8075;
+    b_mtem(5,jnano3,jcano3) =  16.1652;
+
+    // NaNO3 in CaCl2
+    b_mtem(0,jnano3,jcacl2) =   0.003928;
+    b_mtem(1,jnano3,jcacl2) =   3.54724;
+    b_mtem(2,jnano3,jcacl2) = -18.6057;
+    b_mtem(3,jnano3,jcacl2) =  38.1445;
+    b_mtem(4,jnano3,jcacl2) = -36.7745;
+    b_mtem(5,jnano3,jcacl2) =  13.4529;
+
+    // NaNO3 in HNO3
+    b_mtem(0,jnano3,jhno3) =  -1.1712;
+    b_mtem(1,jnano3,jhno3) =   7.20907;
+    b_mtem(2,jnano3,jhno3) = -22.9215;
+    b_mtem(3,jnano3,jhno3) =  38.1257;
+    b_mtem(4,jnano3,jhno3) = -32.0759;
+    b_mtem(5,jnano3,jhno3) =  10.6443;
+
+    // NaNO3 in HCl
+    b_mtem(0,jnano3,jhcl) =  0.738022;
+    b_mtem(1,jnano3,jhcl) = -1.14313;
+    b_mtem(2,jnano3,jhcl) =  0.32251;
+    b_mtem(3,jnano3,jhcl) =  0.838679;
+    b_mtem(4,jnano3,jhcl) = -1.81747;
+    b_mtem(5,jnano3,jhcl) =  0.873986;
+
+    ///////////////////////////////////////
  }
 
 

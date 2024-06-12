@@ -1010,7 +1010,7 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                       ma(mosaic.ja_cl) *
                       ats<real_type>::pow(gam(jA,2.));
       }
-      
+
       // FIXME: duplicated code to avoid goto statement
       gam(mosaic.jlvcite)  = 1.0;
       gam(mosaic.jnh4hso4) = 1.0;
@@ -1084,18 +1084,18 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
         gam_ratio = ats<real_type>::pow(gam(mosaic.jnh4hso4),2.) /
                     ats<real_type>::pow(gam(mosaic.jhhso4),2.);
         fn_Keq(mosaic.Keq_ll_298(0), mosaic.Keq_a_ll(0), mosaic.Keq_b_ll(0), T_K, dumK);
-        dumK = dumK * ats<real_type>::pow(gam(mosaic.jhhso4),2.) / 
+        dumK = dumK * ats<real_type>::pow(gam(mosaic.jhhso4),2.) /
                       ats<real_type>::pow(gam(mosaic.jh2so4),3.);
-        
 
-        c_bal = mc(mosaic.jc_nh4) + mc(mosaic.jc_na) + 2. * mc(mosaic.jc_ca) - 
+
+        c_bal = mc(mosaic.jc_nh4) + mc(mosaic.jc_na) + 2. * mc(mosaic.jc_ca) -
                 ma(mosaic.ja_no3) - ma(mosaic.ja_cl) - mSULF - ma(mosaic.ja_msa);
 
         aq = 1.0;
         bq = dumK + c_bal;
         cq = dumK * (c_bal -mSULF);
 
-      //--quadratic solution 
+      //--quadratic solution
         if (bq != 0.0) {
           real_type xq = 4. * (1./bq) * (cq/bq);
 
@@ -1121,7 +1121,7 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
         activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) *
                                   ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
                                   ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
-        
+
         activity(mosaic.jnh4so4) = ats<real_type>::pow(mc(mosaic.jc_nh4),2.) *
                                   ma(mosaic.ja_so4) *
                                   ats<real_type>::pow(gam(mosaic.jnh4so4),3.);
@@ -1148,7 +1148,7 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                                   ats<real_type>::pow(gam(mosaic.jnahso4),2.);
 
         activity(mosaic.jnamsa)  = mc(mosaic.jc_na) *
-                                  ma(mosaic.ja_msa) *  
+                                  ma(mosaic.ja_msa) *
                                   ats<real_type>::pow(gam(mosaic.jnamsa),2.);
 
   // Note: these lines are also commented out in MOSAIC
@@ -1201,6 +1201,254 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
                     xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
       gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
 
+    // H.HSO4
+      jA = mosaic.jhhso4;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+
+    // NH4HSO4
+      jA = mosaic.jnh4hso4;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+
+    // LETOVICITE
+      jA = mosaic.jlvcite;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosiac.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+
+    // (NH4)2SO4
+      jA = mosaic.jnh4so4;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+
+    // NaHSO4
+      jA = mosaic.jnahso4;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+
+ // Na3H(SO4)2
+      jA = mosaic.jna3hso4;
+ //      log_gam(jA) = xmol(jh2so4)  *log_gamZ(jA,jh2so4)  +
+ //     &              xmol(jnh4hso4)*log_gamZ(jA,jnh4hso4)+
+ //     &              xmol(jlvcite) *log_gamZ(jA,jlvcite) +
+ //     &              xmol(jnh4so4) *log_gamZ(jA,jnh4so4) +
+ //     &              xmol(jnahso4) *log_gamZ(jA,jnahso4) +
+ //     &              xmol(jna3hso4)*log_gamZ(jA,jna3hso4)+
+ //     &              xmol(jna2so4) *log_gamZ(jA,jna2so4) +
+ //     &              xmol(jhno3)   *log_gamZ(jA,jhno3)   +
+ //     &              xmol(jhcl)    *log_gamZ(jA,jhcl)
+ //      gam(jA,ibin) = 10.**log_gam(jA)
+      gam(jA) = 1.0;
+
+
+      // Na2SO4
+      jA = mosaic.jna2so4;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+
+      // HNO3
+      jA = mosaic.jhno3;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosiac.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+
+      // HCl
+      jA = mosaic.jhcl;
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
+                    xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
+                    xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
+                    xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
+                    xmol(moasic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
+                    xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
+                    xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
+                    xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
+
+      // FIXME: duplicated code to avoid goto statement
+      gam(mosaic.jnh4no3) = 1.0;
+      gam(mosaic.jnh4cl)  = 1.0;
+      gam(mosaic.jnano3)  = 1.0;
+      gam(mosaic.jnacl)   = 1.0;
+      gam(mosaic.jcano3)  = 1.0;
+      gam(mosaic.jcacl2)  = 1.0;
+      gam(mosaic.jnh4msa) = 1.0;
+      gam(mosaic.jnamsa)  = 1.0;
+      gam(mosaic.jcamsa2) = 1.0;
+
+      // compute equilibrium pH
+      // cation molalities (mol / kg water)
+      mc(mosaic.jc_ca)  = 1.e-9 * aer_liquid(mosaic.ica_a)  / water_a;
+      mc(mosaic.jc_nh4) = 1.e-9 * aer_liquid(mosaic.inh4_a) / water_a;
+      mc(mosaic.jc_na)  = 1.e-9 * aer_liquid(mosaic.ina_a)  / water_a;
+
+      // anion molalities (mol / kg water)
+      mSULF              = 1.e-9 * aer_liquid(mosaic.iso4_a) / water_a;
+      ma(mosaic.ja_hso4) = 0.0;
+      ma(mosaic.ja_so4)  = 0.0;
+      ma(mosaic.ja_no3)  = 1.e-9 * aer_liquid(mosaic.ino3_a) / water_a;
+      ma(mosaic.ja_cl)   = 1.e-9 * aer_liquid(mosaic.icl_a)  / water_a;
+      ma(mosaic.ja_msa)  = 1.e-9 * aer_liquid(mosaic.imsa_a) / water_a;
+
+      real_type dumK, c_bal, aq, bq, cq;
+
+      gam_ratio = ats<real_type>::pow(gam(mosaic.jnh4hso4),2.) /
+                  ats<real_type>::pow(gam(mosaic.jhhso4),2.);
+      fn_Keq(mosaic.Keq_ll_298(0), mosaic.Keq_a_ll(0), mosaic.Keq_b_ll(0), T_K, dumK);
+      dumK = dumK * ats<real_type>::pow(gam(mosaic.jhhso4),2.) /
+                    ats<real_type>::pow(gam(mosaic.jh2so4),3.);
+
+
+      c_bal = mc(mosaic.jc_nh4) + mc(mosaic.jc_na) + 2. * mc(mosaic.jc_ca) -
+              ma(mosaic.ja_no3) - ma(mosaic.ja_cl) - mSULF - ma(mosaic.ja_msa);
+
+      aq = 1.0;
+      bq = dumK + c_bal;
+      cq = dumK * (c_bal -mSULF);
+
+      //--quadratic solution
+      if (bq != 0.0) {
+        real_type xq = 4. * (1./bq) * (cq/bq);
+
+      } else {
+        real_type xq = 1.e6;
+      }
+
+      if(ats<real_type>abs(xq) < 1.e-6) {
+        real_type dum = xq * (0.5 + xq*(0.125 + xq*0.0625));
+        real_type quad  = (-0.5*bq/aq)*dum;
+        if (quad < 0.0) {
+          quad = -bq/aq - quad;
+        }
+      } else {
+        quad = 0.5 * (-bq + ats<real_type>sqrt(bq*bq - 4.*cq));
+      }
+
+      //--end of quadratic solution
+      mc(mosaic.jc_h)    = ats<real_type>max(quad, 1.e-7);
+      ma(mosaic.ja_so4)  = mSULF * dumK / (mc(mosaic.jc_h) + dumK);
+      ma(mosaic.ja_hso4) = mSULF - ma(mosaic.ja_so4);
+
+      activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) *
+                                ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
+                                ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
+
+      activity(mosaic.jnh4so4) = ats<real_type>::pow(mc(mosaic.jc_nh4),2.) *
+                                ma(mosaic.ja_so4) *
+                                ats<real_type>::pow(gam(mosaic.jnh4so4),3.);
+
+      activity(mosaic.jlvcite) = ats<real_type>::pow(mc(mosaic.jc_nh4),3.) *
+                                ma(mosaic.ja_hso4) *
+                                ma(mosaic.ja_so4) *
+                                ats<real_type>::pow(gam(mosaic.lvcite),5.);
+
+      activity(mosaic.jnh4hso4) = mc(mosaic.jc_nh4) *
+                                  ma(mosaic.ja_hso4) *
+                                  ats<real_type>::pow(gam(mosaic.jnh4hso4),2.);
+
+      activity(mosaic.jnh4msa) = mc(mosaic.jc_nh4) *
+                                ma(mosaic.ja_msa) *
+                                ats<real_type>::pow(gam(mosaic.jnh4msa),2.);
+
+      activity(mosaic.jna2so4) = ats<real_type>::pow(mc(mosaic.jc_na),2.) *
+                                ma(mosaic.ja_so4) *
+                                ats<real_type>::pow(gam(mosaic.jna2so4),3.);
+
+      activity(mosaic.jnahso4) = mc(mosaic.jc_na) *
+                                ma(mosaic.ja_hso4) *
+                                ats<real_type>::pow(gam(mosaic.jnahso4),2.);
+
+      activity(mosaic.jnamsa)  = mc(mosaic.jc_na) *
+                                ma(mosaic.ja_msa) *
+                                ats<real_type>::pow(gam(mosaic.jnamsa),2.);
+
+  // Note: these lines are also commented out in MOSAIC
+  //      activity(jna3hso4,ibin)= mc(jc_na,ibin)**3 * ma(ja_hso4,ibin) *
+  //     &                         ma(ja_so4,ibin) * gam(jna3hso4,ibin)**5
+
+      activity(mosaic.jna3hso4) = 0.0;
+
+      activity(mosaic.jhno3) = mc(mosaic.jc_h) *
+                              ma(mosaic.ja_no3) *
+                              ats<real_type>::pow(gam(mosaic.jhno3),2.);
+
+      activity(mosaic.jhcl)  = mc(mosaic.jc_h) *
+                              ma(mosaic.ja_cl) *
+                              ats<real_type>::pow(gam(mosaic.jhcl),2.);
+
+      activity(mosaic.jmsa)  = mc(mosaic.jc_h) *
+                              ma(mosaic.ja_msa) *
+                              ats<real_type>::pow(gam(mosaic.jmsa),2.);
+
+  // sulfate-poor species
+      activity(mosaic.jnh4no3) = 0.0;
+      activity(mosaic.jnh4cl)  = 0.0;
+      activity(mosaic.jnano3)  = 0.0;
+      activity(mosaic.jnacl)   = 0.0;
+      activity(mosaic.jcano3)  = 0.0;
+      activity(mosaic.jcacl2)  = 0.0;
     }
   }
 

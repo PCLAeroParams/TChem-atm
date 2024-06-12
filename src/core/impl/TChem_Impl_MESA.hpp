@@ -876,6 +876,71 @@ struct MosaicModelData {
     b_mtem(5,jnacl,jhcl) =  -2.50158;
 
     ///////////////////////////////////////
+    // Ca(NO3)2 in NH4NO3
+    b_mtem(0,jcano3,jnh4no3) =  -1.86260;
+    b_mtem(1,jcano3,jnh4no3) =  11.6178;
+    b_mtem(2,jcano3,jnh4no3) = -30.9069;
+    b_mtem(3,jcano3,jnh4no3) =  41.7578;
+    b_mtem(4,jcano3,jnh4no3) = -33.7338;
+    b_mtem(5,jcano3,jnh4no3) =  12.7541;
+
+    // Ca(NO3)2 in NH4Cl (revised on 11/15/2003)
+    b_mtem(0,jcano3,jnh4cl) =   -1.1798;
+    b_mtem(1,jcano3,jnh4cl) =   25.9608;
+    b_mtem(2,jcano3,jnh4cl) =  -98.9373;
+    b_mtem(3,jcano3,jnh4cl) =  160.2300;
+    b_mtem(4,jcano3,jnh4cl) = -125.9540;
+    b_mtem(5,jcano3,jnh4cl) =   39.5130;
+
+    // Ca(NO3)2 in NaNO3
+    b_mtem(0,jcano3,jnano3) =  -1.44384;
+    b_mtem(1,jcano3,jnano3) =  13.6044;
+    b_mtem(2,jcano3,jnano3) = -54.4300;
+    b_mtem(3,jcano3,jnano3) = 100.582;
+    b_mtem(4,jcano3,jnano3) = -91.2364;
+    b_mtem(5,jcano3,jnano3) =  32.5970;
+
+    // Ca(NO3)2 in NaCl
+    b_mtem(0,jcano3,jnacl) =  -0.099114;
+    b_mtem(1,jcano3,jnacl) =   2.84091;
+    b_mtem(2,jcano3,jnacl) = -16.9229;
+    b_mtem(3,jcano3,jnacl) =  37.4839;
+    b_mtem(4,jcano3,jnacl) = -39.5132;
+    b_mtem(5,jcano3,jnacl) =  15.8564;
+
+    // Ca(NO3)2 in Ca(NO3)2
+    b_mtem(0,jcano3,jcano3) =   0.055116;
+    b_mtem(1,jcano3,jcano3) =   4.58610;
+    b_mtem(2,jcano3,jcano3) = -27.6629;
+    b_mtem(3,jcano3,jcano3) =  60.8288;
+    b_mtem(4,jcano3,jcano3) = -61.4988;
+    b_mtem(5,jcano3,jcano3) =  23.3136;
+
+    // Ca(NO3)2 in CaCl2 (PSC92: revised on 11/27/2003)
+    b_mtem(0,jcano3,jcacl2) =   1.57155;
+    b_mtem(1,jcano3,jcacl2) =  -3.18486;
+    b_mtem(2,jcano3,jcacl2) =  -3.35758;
+    b_mtem(3,jcano3,jcacl2) =  18.7501;
+    b_mtem(4,jcano3,jcacl2) = -24.5604;
+    b_mtem(5,jcano3,jcacl2) =  10.3798;
+
+    // Ca(NO3)2 in HNO3
+    b_mtem(0,jcano3,jhno3) =  1.04446;
+    b_mtem(1,jcano3,jhno3) = -3.19066;
+    b_mtem(2,jcano3,jhno3) =  2.44714;
+    b_mtem(3,jcano3,jhno3) =  2.07218;
+    b_mtem(4,jcano3,jhno3) = -6.43949;
+    b_mtem(5,jcano3,jhno3) =  3.66471;
+
+    // Ca(NO3)2 in HCl
+    b_mtem(0,jcano3,jhcl) =  1.05723;
+    b_mtem(1,jcano3,jhcl) = -1.46826;
+    b_mtem(2,jcano3,jhcl) = -1.0713;
+    b_mtem(3,jcano3,jhcl) =  4.64439;
+    b_mtem(4,jcano3,jhcl) = -6.32402;
+    b_mtem(5,jcano3,jhcl) =  2.78202;
+
+    ///////////////////////////////////////
  }
 
 

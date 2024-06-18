@@ -1006,7 +1006,127 @@ struct MosaicModelData {
     b_mtem(6,jcacl2,jhcl) =  -1.74821;
 
     ///////////////////////////////////////
+    // HNO3 in (NH4)2SO4
+    b_mtem(0,jhno3,jnh4so4) =   -3.57598;
+    b_mtem(1,jhno3,jnh4so4) =   21.5469;
+    b_mtem(2,jhno3,jnh4so4) =  -77.4111;
+    b_mtem(3,jhno3,jnh4so4) =  144.136;
+    b_mtem(4,jhno3,jnh4so4) = -132.849;
+    b_mtem(5,jhno3,jnh4so4) =   47.9412;
 
+    // HNO3 in NH4NO3
+    b_mtem(0,jhno3,jnh4no3) =  -2.00209;
+    b_mtem(1,jhno3,jnh4no3) =  -3.48399;
+    b_mtem(2,jhno3,jnh4no3) =  34.9906;
+    b_mtem(3,jhno3,jnh4no3) = -68.6653;
+    b_mtem(4,jhno3,jnh4no3) =  54.0992;
+    b_mtem(5,jhno3,jnh4no3) = -15.1343;
+
+    // HNO3 in NH4Cl revised on 12/22/2003
+    b_mtem(0,jhno3,jnh4cl) =  -0.63790;
+    b_mtem(1,jhno3,jnh4cl) =  -1.67730;
+    b_mtem(2,jhno3,jnh4cl) =  10.1727;
+    b_mtem(3,jhno3,jnh4cl) = -14.9097;
+    b_mtem(4,jhno3,jnh4cl) =   7.67410;
+    b_mtem(5,jhno3,jnh4cl) =  -0.79586;
+
+    // HNO3in NaCl
+    b_mtem(0,jhno3,jnacl) =  1.3446;
+    b_mtem(1,jhno3,jnacl) = -2.5578;
+    b_mtem(2,jhno3,jnacl) =  1.3464;
+    b_mtem(3,jhno3,jnacl) =  2.90537;
+    b_mtem(4,jhno3,jnacl) = -6.53014;
+    b_mtem(5,jhno3,jnacl) =  3.31339;
+
+    // HNO3 in NaNO3
+    b_mtem(0,jhno3,jnano3) =  -0.546636;
+    b_mtem(1,jhno3,jnano3) =  10.3127;
+    b_mtem(2,jhno3,jnano3) = -39.9603;
+    b_mtem(3,jhno3,jnano3) =  71.4609;
+    b_mtem(4,jhno3,jnano3) = -63.4958;
+    b_mtem(5,jhno3,jnano3) =  22.0679;
+
+    // HNO3 in Na2SO4
+    b_mtem(0,jhno3,jna2so4) =   1.35059;
+    b_mtem(1,jhno3,jna2so4) =   4.34557;
+    b_mtem(2,jhno3,jna2so4) = -35.8425;
+    b_mtem(3,jhno3,jna2so4) =  80.9868;
+    b_mtem(4,jhno3,jna2so4) = -81.6544;
+    b_mtem(5,jhno3,jna2so4) =  30.4841;
+
+    // HNO3 in Ca(NO3)2
+    b_mtem(0,jhno3,jcano3) =   0.869414;
+    b_mtem(1,jhno3,jcano3) =   2.98486;
+    b_mtem(2,jhno3,jcano3) = -22.255;
+    b_mtem(3,jhno3,jcano3) =  50.1863;
+    b_mtem(4,jhno3,jcano3) = -51.214;
+    b_mtem(5,jhno3,jcano3) =  19.2235;
+
+    // HNO3 in CaCl2 (KM) revised on 12/22/2003
+    b_mtem(0,jhno3,jcacl2) =   1.42800;
+    b_mtem(1,jhno3,jcacl2) =  -1.78959;
+    b_mtem(2,jhno3,jcacl2) =  -2.49075;
+    b_mtem(3,jhno3,jcacl2) =  10.1877;
+    b_mtem(4,jhno3,jcacl2) = -12.1948;
+    b_mtem(5,jhno3,jcacl2) =   4.64475;
+
+    // HNO3 in HNO3 (added on 12/06/2004)
+    b_mtem(0,jhno3,jhno3) =  0.22035;
+    b_mtem(1,jhno3,jhno3) =  2.94973;
+    b_mtem(2,jhno3,jhno3) = -12.1469;
+    b_mtem(3,jhno3,jhno3) =  20.4905;
+    b_mtem(4,jhno3,jhno3) = -17.3966;
+    b_mtem(5,jhno3,jhno3) =   5.70779;
+
+    // HNO3 in HCl (added on 12/06/2004)
+    b_mtem(0,jhno3,jhcl) =  1.55503;
+    b_mtem(1,jhno3,jhcl) = -3.61226;
+    b_mtem(2,jhno3,jhcl) =  6.28265;
+    b_mtem(3,jhno3,jhcl) = -8.69575;
+    b_mtem(4,jhno3,jhcl) =  6.09372;
+    b_mtem(5,jhno3,jhcl) = -1.80898;
+
+    // HNO3 in H2SO4
+    b_mtem(0,jhno3,jh2so4) =  1.10783;
+    b_mtem(1,jhno3,jh2so4) = -1.3363;
+    b_mtem(2,jhno3,jh2so4) = -1.83525;
+    b_mtem(3,jhno3,jh2so4) =  7.47373;
+    b_mtem(4,jhno3,jh2so4) = -9.72954;
+    b_mtem(5,jhno3,jh2so4) =  4.12248;
+
+    // HNO3 in NH4HSO4
+    b_mtem(0,jhno3,jnh4hso4) =  -0.851026;
+    b_mtem(1,jhno3,jnh4hso4) =  12.2515;
+    b_mtem(2,jhno3,jnh4hso4) = -49.788;
+    b_mtem(3,jhno3,jnh4hso4) =  91.6215;
+    b_mtem(4,jhno3,jnh4hso4) = -81.4877;
+    b_mtem(5,jhno3,jnh4hso4) =  28.0002;
+
+    // HNO3 in (NH4)3H(SO4)2
+    b_mtem(0,jhno3,jlvcite) =  -3.09464;
+    b_mtem(1,jhno3,jlvcite) =  14.9303;
+    b_mtem(2,jhno3,jlvcite) = -43.0454;
+    b_mtem(3,jhno3,jlvcite) =  72.6695;
+    b_mtem(4,jhno3,jlvcite) = -65.2140;
+    b_mtem(5,jhno3,jlvcite) =  23.4814;
+
+    // HNO3 in NaHSO4
+    b_mtem(0,jhno3,jnahso4) =   1.22973;
+    b_mtem(1,jhno3,jnahso4) =   2.82702;
+    b_mtem(2,jhno3,jnahso4) = -17.5869;
+    b_mtem(3,jhno3,jnahso4) =  28.9564;
+    b_mtem(4,jhno3,jnahso4) = -23.5814;
+    b_mtem(5,jhno3,jnahso4) =   7.91153;
+
+    // HNO3 in Na3H(SO4)2
+    b_mtem(0,jhno3,jna3hso4) =   1.64773;
+    b_mtem(1,jhno3,jna3hso4) =   0.94188;
+    b_mtem(2,jhno3,jna3hso4) = -19.1242;
+    b_mtem(3,jhno3,jna3hso4) =  46.9887;
+    b_mtem(4,jhno3,jna3hso4) = -50.9494;
+    b_mtem(5,jhno3,jna3hso4) =  20.2169;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
  }

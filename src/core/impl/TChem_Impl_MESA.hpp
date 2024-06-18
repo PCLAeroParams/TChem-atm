@@ -1248,8 +1248,82 @@ struct MosaicModelData {
     b_mtem(5,jhcl,jna3hso4) =  20.4717;
 
     ///////////////////////////////////////
+    // H2SO4 in H2SO4
+    b_mtem(0,jh2so4,jh2so4) =   0.76734;
+    b_mtem(1,jh2so4,jh2so4) =  -1.12263;
+    b_mtem(2,jh2so4,jh2so4) =  -9.08728;
+    b_mtem(3,jh2so4,jh2so4) =  30.3836;
+    b_mtem(4,jh2so4,jh2so4) = -38.4133;
+    b_mtem(5,jh2so4,jh2so4) =  17.0106;
+
+    // H2SO4 in NH4HSO4
+    b_mtem(0,jh2so4,jnh4hso4) =   -2.03879;
+    b_mtem(1,jh2so4,jnh4hso4) =   15.7033;
+    b_mtem(2,jh2so4,jnh4hso4) =  -58.7363;
+    b_mtem(3,jh2so4,jnh4hso4) =  109.242;
+    b_mtem(4,jh2so4,jnh4hso4) = -102.237;
+    b_mtem(5,jh2so4,jnh4hso4) =   37.5350;
+
+    // H2SO4 in (NH4)3H(SO4)2
+    b_mtem(0,jh2so4,jlvcite) =   -3.10228;
+    b_mtem(1,jh2so4,jlvcite) =   16.6920;
+    b_mtem(2,jh2so4,jlvcite) =  -59.1522;
+    b_mtem(3,jh2so4,jlvcite) =  113.487;
+    b_mtem(4,jh2so4,jlvcite) = -110.890;
+    b_mtem(5,jh2so4,jlvcite) =   42.4578;
+
+    // H2SO4 in (NH4)2SO4
+    b_mtem(0,jh2so4,jnh4so4) =   -3.43885;
+    b_mtem(1,jh2so4,jnh4so4) =   21.0372;
+    b_mtem(2,jh2so4,jnh4so4) =  -84.7026;
+    b_mtem(3,jh2so4,jnh4so4) =  165.324;
+    b_mtem(4,jh2so4,jnh4so4) = -156.101;
+    b_mtem(5,jh2so4,jnh4so4) =   57.3101;
+
+    // H2SO4 in NaHSO4
+    b_mtem(0,jh2so4,jnahso4) =   0.33164;
+    b_mtem(1,jh2so4,jnahso4) =   6.55864;
+    b_mtem(2,jh2so4,jnahso4) = -33.5876;
+    b_mtem(3,jh2so4,jnahso4) =  65.1798;
+    b_mtem(4,jh2so4,jnahso4) = -63.2046;
+    b_mtem(5,jh2so4,jnahso4) =  24.1783;
+
+    // H2SO4 in Na3H(SO4)2
+    b_mtem(0,jh2so4,jna3hso4) =   3.06830;
+    b_mtem(1,jh2so4,jna3hso4) =  -3.18408;
+    b_mtem(2,jh2so4,jna3hso4) = -19.6332;
+    b_mtem(3,jh2so4,jna3hso4) =  61.3657;
+    b_mtem(4,jh2so4,jna3hso4) = -73.4438;
+    b_mtem(5,jh2so4,jna3hso4) =  31.2334;
+
+    // H2SO4 in Na2SO4
+    b_mtem(0,jh2so4,jna2so4) =    2.58649;
+    b_mtem(1,jh2so4,jna2so4) =    0.87921;
+    b_mtem(2,jh2so4,jna2so4) =  -39.3023;
+    b_mtem(3,jh2so4,jna2so4) =  101.603;
+    b_mtem(4,jh2so4,jna2so4) = -109.469;
+    b_mtem(5,jh2so4,jna2so4) =   43.0188;
+
+    // H2SO4 in HNO3
+    b_mtem(0,jh2so4,jhno3) =   1.54587;
+    b_mtem(1,jh2so4,jhno3) =  -7.50976;
+    b_mtem(2,jh2so4,jhno3) =  12.8237;
+    b_mtem(3,jh2so4,jhno3) = -10.1452;
+    b_mtem(4,jh2so4,jhno3) =  -0.541956;
+    b_mtem(5,jh2so4,jhno3) =   3.34536;
+
+    // H2SO4 in HCl
+    b_mtem(0,jh2so4,jhcl) =   0.829757;
+    b_mtem(1,jh2so4,jhcl) =  -4.11316;
+    b_mtem(2,jh2so4,jhcl) =   3.67111;
+    b_mtem(3,jh2so4,jhcl) =   3.6833;
+    b_mtem(4,jh2so4,jhcl) = -11.2711;
+    b_mtem(5,jh2so4,jhcl) =   6.71421;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
+
  }
 
 

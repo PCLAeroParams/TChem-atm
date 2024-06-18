@@ -97,8 +97,6 @@ struct MosaicModelData {
     const ordinal_type jhyst_up=1;
     const ordinal_type jhyst_lo=0;
 
-    const ordinal_type nsoluble=20;
-
     // polynomial coefficients for binary molality (used in ZSR)
        // for aw < 0.97
     const real_type_2d_view_type a_zsr("a_zsr", 6, nelectrolyte);
@@ -951,6 +949,8 @@ struct MosaicModelData {
     b_mtem(3,jcano3,jhcl) =  4.64439;
     b_mtem(4,jcano3,jhcl) = -6.32402;
     b_mtem(5,jcano3,jhcl) =  2.78202;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // CaCl2 in NH4NO3 (PSC92: revised on 12/22/2003)
@@ -3199,6 +3199,8 @@ void adjust_solid_aerosol(const MosaicModelData& mosaic,
     log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
   }
 
+
+  // *This is equivalent to subroutin MESA(ibin) in MOSAIC*
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static void team_invoke(
     const MemberType& member,

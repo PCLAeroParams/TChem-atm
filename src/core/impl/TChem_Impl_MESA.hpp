@@ -341,6 +341,7 @@ struct MosaicModelData {
     // parameters for MTEM mixing rule (Zaveri, Easter, and Wexler, 2005)
     cont real_type_3d_view_type b_mtem("b_mtem", 6, nelectrolyte, nelectrolyte);
 
+    ///////////////////////////////////////
     // (NH4)2SO4 in (NH4)2SO4
     b_mtem(0,jnh4so4,jnh4hso4) =   -2.94685;
     b_mtem(1,jnh4so4,jnh4hso4) =   17.3328;
@@ -446,6 +447,8 @@ struct MosaicModelData {
     b_mtem(5,jnh4so4,jna3hso4) =  27.7706;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
     // NH4NO3 in (NH4)2SO4
     b_mtem(0,jnh4no3,jnh4so4) =   -3.5201;
     b_mtem(1,jnh4no3,jnh4so4) =   21.6584;
@@ -528,6 +531,8 @@ struct MosaicModelData {
     b_mtem(5,jnh4no3,jhcl) =   5.17123;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
     // NH4Cl in (NH4)2SO4
     b_mtem(0,jnh4cl,jnh4so4) =   -2.8850;
     b_mtem(1,jnh4cl,jnh4so4) =   20.6970;
@@ -607,6 +612,8 @@ struct MosaicModelData {
     b_mtem(3,jnh4cl,jhcl) =  4.73003;
     b_mtem(4,jnh4cl,jhcl) = -4.80849;
     b_mtem(5,jnh4cl,jhcl) =  1.78866;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // Na2SO4 in (NH4)2SO4
@@ -714,6 +721,8 @@ struct MosaicModelData {
     b_mtem(5,jna2so4,jna3hso4) =  22.4956;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
     // NaNO3 in (NH4)2SO4
     b_mtem(0,jnano3,jnh4so4) =   -2.5888;
     b_mtem(1,jnano3,jnh4so4) =   17.6192;
@@ -793,6 +802,7 @@ struct MosaicModelData {
     b_mtem(3,jnano3,jhcl) =  0.838679;
     b_mtem(4,jnano3,jhcl) = -1.81747;
     b_mtem(5,jnano3,jhcl) =  0.873986;
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // NaCl in (NH4)2SO4
@@ -874,6 +884,8 @@ struct MosaicModelData {
     b_mtem(3,jnacl,jhcl) = -12.2503;
     b_mtem(4,jnacl,jhcl) =   8.668751;
     b_mtem(5,jnacl,jhcl) =  -2.50158;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // Ca(NO3)2 in NH4NO3
@@ -1006,6 +1018,8 @@ struct MosaicModelData {
     b_mtem(6,jcacl2,jhcl) =  -1.74821;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
     // HNO3 in (NH4)2SO4
     b_mtem(0,jhno3,jnh4so4) =   -3.57598;
     b_mtem(1,jhno3,jnh4so4) =   21.5469;
@@ -1125,6 +1139,8 @@ struct MosaicModelData {
     b_mtem(3,jhno3,jna3hso4) =  46.9887;
     b_mtem(4,jhno3,jna3hso4) = -50.9494;
     b_mtem(5,jhno3,jna3hso4) =  20.2169;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // HCl in (NH4)2SO4
@@ -1248,6 +1264,8 @@ struct MosaicModelData {
     b_mtem(5,jhcl,jna3hso4) =  20.4717;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
     // H2SO4 in H2SO4
     b_mtem(0,jh2so4,jh2so4) =   0.76734;
     b_mtem(1,jh2so4,jh2so4) =  -1.12263;
@@ -1319,6 +1337,8 @@ struct MosaicModelData {
     b_mtem(3,jh2so4,jhcl) =   3.6833;
     b_mtem(4,jh2so4,jhcl) = -11.2711;
     b_mtem(5,jh2so4,jhcl) =   6.71421;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // H.HSO4 in H2SO4
@@ -1394,6 +1414,8 @@ struct MosaicModelData {
     b_mtem(5,jhhso4,jhcl) =  -5.84917;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
     // NH4HSO4 in H2SO4
     b_mtem(0,jnh4hso4,jh2so4) =   0.169160;
     b_mtem(1,jnh4hso4,jh2so4) =   2.15094;
@@ -1465,6 +1487,8 @@ struct MosaicModelData {
     b_mtem(3,jnh4hso4,jhcl) =  4.54444;
     b_mtem(4,jnh4hso4,jhcl) = -3.86549;
     b_mtem(5,jnh4hso4,jhcl) =  1.13441;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // (NH4)3H(SO4)2 in H2SO4
@@ -1540,6 +1564,8 @@ struct MosaicModelData {
     b_mtem(5,jlvcite,jhcl) =  10.0754;
 
     ///////////////////////////////////////
+
+    ///////////////////////////////////////
     // NaHSO4 in H2SO4
     b_mtem(0,jnahso4,jh2so4) =   0.68259;
     b_mtem(1,jnahso4,jh2so4) =   0.71468;
@@ -1611,6 +1637,8 @@ struct MosaicModelData {
     b_mtem(3,jnahso4,jhcl) = -12.4948;
     b_mtem(4,jnahso4,jhcl) =   9.67514;
     b_mtem(5,jnahso4,jhcl) =  -3.18004;
+
+    ///////////////////////////////////////
 
     ///////////////////////////////////////
     // Na3H(SO4)2 in H2SO4

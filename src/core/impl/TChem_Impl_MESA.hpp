@@ -14,6 +14,9 @@ namespace TChem {
 namespace Impl {
 
 struct MosaicModelData {
+  using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
+  using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
+  using real_type_3d_view_type = Tines::value_type_3d_view<real_type,device_type>;
   public:
     const ordinal_type iso4_a = 0;   // <-> ih2so4_g
     const ordinal_type ino3_a = 1;   // <-> ihno3_g
@@ -37,7 +40,6 @@ struct MosaicModelData {
 
     //electrolyte indices (used for water content calculations)
     // these indices are order sensitive
-
 
     const ordinal_type jnh4so4 = 0; // soluble
     const ordinal_type jlvcite = 1; // soluble
@@ -1715,7 +1717,7 @@ struct MosaicModelData {
 
     ///////////////////////////////////////
 
- }
+ };
 
 
 template<typename ValueType, typename DeviceType>

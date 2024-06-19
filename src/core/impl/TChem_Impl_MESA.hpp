@@ -14,6 +14,8 @@ namespace TChem {
 namespace Impl {
 
 struct MosaicModelData {
+  using device_type = DeviceType;
+
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
   using real_type_3d_view_type = Tines::value_type_3d_view<real_type,device_type>;

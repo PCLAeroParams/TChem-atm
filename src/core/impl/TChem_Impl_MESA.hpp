@@ -13,6 +13,7 @@
 namespace TChem {
 namespace Impl {
 
+template<typename DeviceType>
 struct MosaicModelData {
   using device_type = DeviceType;
 

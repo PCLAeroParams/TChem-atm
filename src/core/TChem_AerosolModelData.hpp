@@ -27,6 +27,12 @@ namespace TChem {
   std::map<std::string, int> gas_sp_name_idx_;
   bool is_gas_parameters_set_{false};
 
+  // toy problem
+  ordinal_type nToy_process_;
+  toy_process_1d_dual_view toy_params_;
+
+
+
   public:
 
     AerosolModelData(const std::string& mechfile,
@@ -71,6 +77,12 @@ namespace TChem {
     amcd_real_type_1d_view molecular_weights;
     amcd_real_type_1d_view aerosol_density;
 
+    // toy process
+    ordinal_type nToy_process;
+    using toy_process_1d_view_type =  Tines::value_type_1d_view<ToyProcessType,device_type>;
+    using amcd_toy_process_1d_view = ConstUnmanaged<toy_process_1d_view_type>;
+    amcd_toy_process_1d_view toy_params;
+
    };
 
    template<typename SpT>
@@ -84,6 +96,10 @@ namespace TChem {
     data.molecular_weights = amd.molecular_weights_.template view<SpT>();
     data.aerosol_density = amd.aerosol_density_.template view<SpT>();
     data.simpol_params = amd.simpol_params_.template view<SpT>();
+    // toy params
+    data.nToy_process = amd.nToy_process_;
+    data.toy_params = amd.toy_params_.template view<SpT>();
+
   return data;
   }
 

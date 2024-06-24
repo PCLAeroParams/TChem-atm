@@ -1,0 +1,6 @@
+particles:
+  initial_state:
+    B : 
+      initial_value: [1.0e-8]
+  num_concentration:
+   initial_value: [1.3e6]     

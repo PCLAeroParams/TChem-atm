@@ -24,6 +24,21 @@ struct SIMPOL_PhaseTransferType{
 using simpol_phase_transfer_type_1d_dual_view =
  Tines::value_type_1d_dual_view<SIMPOL_PhaseTransferType, exec_space>;
 
+struct ToyProcessType {
+  // kinetic parameters
+  ordinal_type A;
+  ordinal_type B;
+
+  // aerosol index
+  ordinal_type aerosol_sp_index;
+
+  // gas species info
+  ordinal_type gas_sp_index;
+};
+
+using toy_process_1d_dual_view =
+ Tines::value_type_1d_dual_view<ToyProcessType, exec_space>;
+
 } // namespace TChem
 
 #endif

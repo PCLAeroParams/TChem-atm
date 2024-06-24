@@ -5,6 +5,7 @@ SET(TCHEM_ATM_TEST_SOURCES "")
 LIST(APPEND TCHEM_ATM_TEST_SOURCES
      TChem_Test_Driver.cpp
      TChem_Test_Simpol_RHS.cpp
+     TChem_Test_ToyProcess.cpp
     )
 
 FOREACH(TCHEM_ATM_TEST_SOURCES ${TCHEM_ATM_TEST_SOURCES} )

@@ -30,7 +30,7 @@ void AerosolModelData::setGasParameters(const KineticModelData& kmd){
   // maps from kmd has order of gas species.
   gas_sp_name_idx_ = kmd.species_indx_;
   is_gas_parameters_set_=true;
-  printf("Setting gas parameters... nSpec_gas_ %d  nConstSpec_gas_%d \n", nSpec_gas_, nConstSpec_gas_);
+  printf("[AerosolModelData::setGasParameters] Setting gas parameters... nSpec_gas_ %d  nConstSpec_gas_%d \n", nSpec_gas_, nConstSpec_gas_);
  }
 void AerosolModelData::initFile(const std::string &mechfile,
                                 std::ostream& echofile){
@@ -39,7 +39,7 @@ void AerosolModelData::initFile(const std::string &mechfile,
   // FIXME: add error checking in yaml parser
   if (doc["NCAR-version"]) {
     if (verboseEnabled) {
-      printf("Using TChem parser for atmospheric chemistry\n");
+      printf("[AerosolModelData::initFile] Using TChem parser for atmospheric chemistry\n");
     }
     initChem(doc, echofile);
   } else {
@@ -51,9 +51,9 @@ void AerosolModelData::initFile(const std::string &mechfile,
 int AerosolModelData::initChem(YAML::Node &root,
                                std::ostream& echofile) {
 
-    TCHEM_CHECK_ERROR(!is_gas_parameters_set_,"Error: gas parameters are not set use: setGasParameters(n_active_gas) ." );
+    TCHEM_CHECK_ERROR(!is_gas_parameters_set_,"[AerosolModelData::initChem] Error: gas parameters are not set use: setGasParameters(n_active_gas) ." );
 
-    //gas_idx_sp_name : given index return spacies name
+    //gas_idx_sp_name : given index return species name
     std::map<int, std::string> gas_idx_sp_name;
     for (std::map<std::string, int>::iterator
          i = gas_sp_name_idx_.begin();
@@ -63,7 +63,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     // 1. let's make a map of aerosol species and gas species.
     // given the name of species return the YAML::NODE
     std::map<std::string, YAML::Node> gas_sp_info;
-    // 2. get molecular weitghs and density of aerosol_species
+    // 2. get molecular weights and density of aerosol_species
     std::vector<real_type> mw_aerosol_sp, density_aero_sp;
     int i_aero_sp=0;
     // loops over species, only make map from aerosol species.
@@ -98,7 +98,7 @@ int AerosolModelData::initChem(YAML::Node &root,
       }// AERO_REP_SINGLE_PARTICLE
 
     } // item loop
-    printf("Done with species...\n");
+    printf("[AerosolModelData::initChem] Done with species...\n");
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();
@@ -126,7 +126,7 @@ int AerosolModelData::initChem(YAML::Node &root,
            //Note: that we do not use number of particles here.
            simpol_info_at.aerosol_sp_index = it_aero->second + nSpec_gas_;
            } else {
-           printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp);
+           printf("[AerosolModelData::initChem] species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp);
            TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
           }
 
@@ -136,24 +136,132 @@ int AerosolModelData::initChem(YAML::Node &root,
             //
             simpol_info_at.gas_sp_index = it_gas->second;
            } else {
-            printf("Error : species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER\n", gas_sp);
+            printf("[AerosolModelData::initChem] Error : species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER\n", gas_sp);
             TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting aerosol model" );
           }
           simpol_info.push_back(simpol_info_at);
-         } else {
-        printf("Warning : TChem (amd) did not parse this reaction type %s \n", reaction_type.c_str());
-       }// ireac
-      }
-    }// item loop
+         } // if SIMPOL_PHASE_TRANSFER 
+         else {
+          printf("[AerosolModelData::initChem] Warning : TChem (amd) did not parse this reaction type %s \n", reaction_type.c_str());
+       }
+      } // ireac loop
+    } // if MECHANISM
 
-    } // item
-    printf("Done with reactions/phase trans...\n");
+    // Extract attributes for aerosol water sub model
+    if (type=="SUB_MODEL_ZSR_AEROSOL_WATER"){
+       printf("[AerosolModelData::initChem] Parsing aerosol water sub model\n"); 
+        
+       auto ion_pairs = item["ion pairs"];
+       // loop over ion pair and extract aerosol water calc. attribs
+       for (auto it = ion_pairs.begin(); it != ion_pairs.end(); ++it){
+        // each entry in ion pairs is a key value pair
+        auto i_ionpair_name = it->first.as<std::string>();
+        auto i_ionpair_data = it->second;
+        printf("[AerosolModelData::initChem] Ion pair: %s\n", i_ionpair_name.c_str());
+        auto calc_type = i_ionpair_data["type"].as<std::string>();
+        printf("[AerosolModelData::initChem] ..Calc type: %s\n", calc_type.c_str());
+
+        if (calc_type=="JACOBSON"){
+              IonPair jacobson_ionpair;
+              jacobson_ionpair.calc_type = calc_type;
+              
+              // parse ions, assign ion names and ion quantities
+              auto ions = i_ionpair_data["ions"];
+              for (auto i_ion = ions.begin(); i_ion != ions.end(); ++i_ion){
+                auto i_ion_name = i_ion->first.as<std::string>();
+                auto i_ion_data = i_ion->second;
+                jacobson_ionpair.ions.push_back(i_ion_name);
+                printf("[AerosolModelData::initChem] ..Ion: %s\n", i_ion_name.c_str());
+
+                // if qty in i_ion_data then use value, otherwise set qty to 1
+                int i_ion_qty = 1;
+                if (i_ion_data["qty"]){
+                  i_ion_qty = i_ion_data["qty"].as<int>(); // type alias for int?
+                }
+                printf("[AerosolModelData::initChem] ....Ion qty: %d\n", i_ion_qty);
+                //jacobson_ionpair.ion_quantities.push_back(i_ion_qty);
+                // NOTE: in Python prototyping using dictionary (key=ion name, value=qty integer)
+                jacobson_ionpair.ion_quantities_dict.push_back(std::make_pair(i_ion_name, i_ion_qty));
+
+                // assign ion type (anion or cation)
+                char charge = i_ion_name.back();
+                if (charge == 'p'){
+                  jacobson_ionpair.jacobson_cation = i_ion_name;
+                } 
+                if (charge == 'm'){
+                  jacobson_ionpair.jacobson_anion = i_ion_name;
+                }
+                // possibly raise an exception if an unexpected charge character is encountered?
+
+              } // i_ion loop
+
+              printf("[AerosolModelData::initChem] ..Jacobson anion: %s\n", jacobson_ionpair.jacobson_anion.c_str());
+              printf("[AerosolModelData::initChem] ..Jacobson cation: %s\n", jacobson_ionpair.jacobson_cation.c_str());
+
+              // assign jacobson molality polynomial coefficients (Y_j)
+              auto jacobson_coeffs = i_ionpair_data["Y_j"];
+              for (auto const &i_coeff : jacobson_coeffs) {
+                real_type y_j = i_coeff.as<real_type>();
+                jacobson_ionpair.jacobson_Y_j.push_back(y_j);
+                printf("[AerosolModelData::initChem] ..Jacobson Y_j: %f\n", y_j);
+              } // Y_j jacobson molality coefficient loop
+
+              jacobson_ionpair.jacobson_low_RH = i_ionpair_data["low RH"].as<real_type>();
+              printf("[AerosolModelData::initChem] ..Jacobson low RH = %f\n", jacobson_ionpair.jacobson_low_RH);
+
+              // TODO: push back jacobson_ionpair to an ionpair vector
+
+          } // calc_type JACOBSON
+
+          if (calc_type=="EQSAM"){
+              IonPair eqsam_ionpair;
+              eqsam_ionpair.calc_type = calc_type;
+
+              // parse ions, assign ion names and ion quantities
+              auto ions = i_ionpair_data["ions"];
+              for (auto i_ion = ions.begin(); i_ion != ions.end(); ++i_ion){
+                auto i_ion_name = i_ion->first.as<std::string>();
+                auto i_ion_data = i_ion->second;
+                eqsam_ionpair.ions.push_back(i_ion_name);
+                printf("[AerosolModelData::initChem] ..Ion: %s\n", i_ion_name.c_str());
+
+                // if qty in i_ion_data then use value, otherwise set qty to 1
+                int i_ion_qty = 1;
+                if (i_ion_data["qty"]){
+                  i_ion_qty = i_ion_data["qty"].as<int>(); // type alias for int?
+                }
+                printf("[AerosolModelData::initChem] ....Ion qty: %d\n", i_ion_qty);
+                //eqsam_ionpair.ion_quantities.push_back(i_ion_qty);
+                // NOTE: in Python prototyping using dictionary (key=ion name, value=qty integer)
+                eqsam_ionpair.ion_quantities_dict.push_back(std::make_pair(i_ion_name, i_ion_qty));
+              }// i_ion loop
+
+              eqsam_ionpair.eqsam_NW = i_ionpair_data["NW"].as<real_type>();
+              eqsam_ionpair.eqsam_MW = i_ionpair_data["MW"].as<real_type>();
+              eqsam_ionpair.eqsam_ZW = i_ionpair_data["ZW"].as<real_type>();
+
+              printf("[AerosolModelData::initChem] ..EQSAM NW = %f\n", eqsam_ionpair.eqsam_NW );
+              printf("[AerosolModelData::initChem] ..EQSAM MW = %f\n", eqsam_ionpair.eqsam_MW );
+              printf("[AerosolModelData::initChem] ..EQSAM ZW = %f\n", eqsam_ionpair.eqsam_ZW );
+
+              // TODO: push back eqsam_ionpair to an ionpair vector
+
+          } // calc_type EQSAM
+          // TODO: Raise key error if calc_type other than jacobson or EQSAM encountered
+
+          
+
+       } // ion pair (it) loop
+
+    } // if SUB_MODEL_ZSR_AEROSOL_WATER
+    } // item loop
+    printf("[AerosolModelData::initChem] Done with reactions, mechanisms, sub-models...\n");
 
     // number of aerosol species
     nSpec_= density_aero_sp.size();
 
     nSimpol_tran_=simpol_info.size();
-    printf("Number of Simpol phase transfer %d \n",nSimpol_tran_ );
+    printf("[AerosolModelData::initChem] Number of Simpol phase transfer %d \n",nSimpol_tran_ );
     // update simpol
     simpol_params_ = simpol_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran_);
     const auto simpol_params_host = simpol_params_.view_host();
@@ -182,6 +290,8 @@ int AerosolModelData::initChem(YAML::Node &root,
       simpol_params_host(isimpol)=simpol_params_host_at_i;
     } // nsimpol
 
+    // NOTE-SF: Should I do something similar for the ZSR data structure that I create? I dont really understand 
+    // the purpose of creating a 'host' kokkos object and when that is necessary
 
     molecular_weights_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weights"), nSpec_);
     auto molecular_weights_host = molecular_weights_.view_host();
@@ -232,7 +342,7 @@ void AerosolModelData::scenarioConditionParticles(const std::string &mechfile,
       auto species_name = sp_cond.first.as<std::string>();
       auto it = aerosol_sp_name_idx_.find(species_name);
       if (it == aerosol_sp_name_idx_.end()) {
-          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", species_name);
+          printf("[AerosolModelData::scenarioConditionParticles] species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", species_name);
           TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
       }
       const ordinal_type species_idx = it->second;

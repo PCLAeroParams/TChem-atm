@@ -12,6 +12,7 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_Linozv3_StratosphereChemSolver.cpp
   TChem_AtmosphericChemistryE3SM_CVODE.cpp
   TChem_AerosolChemistry_CVODE.cpp
+  TChem_ZSR.cpp
 )
 
 #

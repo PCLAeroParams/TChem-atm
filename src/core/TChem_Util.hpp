@@ -458,6 +458,21 @@ real_type _C3;
 
 using prod_O1D_type_1d_dual_view = Tines::value_type_1d_dual_view<prod_O1DType, exec_space>;
 
+/// ZSR parameter data
+struct IonPair{
+  std::string calc_type;
+  std::vector<std::string> ions;
+  std::vector<real_type> ion_quantities; // NOTE: deprecate after removing hard-coded definition in TChem_ZSR.cpp
+  std::vector<std::pair<std::string, int>> ion_quantities_dict;
+  std::vector<real_type> jacobson_Y_j;
+  real_type jacobson_low_RH;
+  std::string jacobson_cation; 
+  std::string jacobson_anion; 
+  real_type eqsam_NW;
+  real_type eqsam_ZW;
+  real_type eqsam_MW;
+};
+using aerosol_ion_pair_type = IonPair;
 
 /// kinetic model data
 struct KineticModelData;

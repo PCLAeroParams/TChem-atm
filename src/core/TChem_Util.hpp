@@ -474,6 +474,16 @@ struct IonPair{
 };
 using aerosol_ion_pair_type = IonPair;
 
+/// Primary data structure for aerosol water calculations
+struct AerosolWater{
+  std::string name;
+  std::string aero_phase;
+  std::string gas_phase_water;
+  std::string aerosol_phase_water;
+  std::vector<aerosol_ion_pair_type> ion_pair_vec;
+};
+using aerosol_water_type = AerosolWater;
+
 /// kinetic model data
 struct KineticModelData;
 using kmd_type = KineticModelData;

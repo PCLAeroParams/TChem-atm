@@ -100,6 +100,8 @@ int AerosolModelData::initChem(YAML::Node &root,
     } // item loop
     printf("[AerosolModelData::initChem] Done with species...\n");
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
+    std::vector<aerosol_ion_pair_type> ion_pair_vec;
+    aerosol_water_type aerowater_model;
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();
       if (type=="MECHANISM"){
@@ -150,7 +152,12 @@ int AerosolModelData::initChem(YAML::Node &root,
     // Extract attributes for aerosol water sub model
     if (type=="SUB_MODEL_ZSR_AEROSOL_WATER"){
        printf("[AerosolModelData::initChem] Parsing aerosol water sub model\n"); 
-        
+       
+       aerowater_model.name = item["name"].as<std::string>();
+       aerowater_model.aero_phase = item["aerosol phase"].as<std::string>();
+       aerowater_model.gas_phase_water = item["gas-phase water"].as<std::string>();
+       aerowater_model.aerosol_phase_water = item["aerosol-phase water"].as<std::string>();
+
        auto ion_pairs = item["ion pairs"];
        // loop over ion pair and extract aerosol water calc. attribs
        for (auto it = ion_pairs.begin(); it != ion_pairs.end(); ++it){
@@ -209,7 +216,8 @@ int AerosolModelData::initChem(YAML::Node &root,
               jacobson_ionpair.jacobson_low_RH = i_ionpair_data["low RH"].as<real_type>();
               printf("[AerosolModelData::initChem] ..Jacobson low RH = %f\n", jacobson_ionpair.jacobson_low_RH);
 
-              // TODO: push back jacobson_ionpair to an ionpair vector
+              // push back ionpair attributes to vector
+              ion_pair_vec.push_back(jacobson_ionpair);
 
           } // calc_type JACOBSON
 
@@ -244,14 +252,16 @@ int AerosolModelData::initChem(YAML::Node &root,
               printf("[AerosolModelData::initChem] ..EQSAM MW = %f\n", eqsam_ionpair.eqsam_MW );
               printf("[AerosolModelData::initChem] ..EQSAM ZW = %f\n", eqsam_ionpair.eqsam_ZW );
 
-              // TODO: push back eqsam_ionpair to an ionpair vector
+              // push back ionpair attributes to vector
+              ion_pair_vec.push_back(eqsam_ionpair);
 
           } // calc_type EQSAM
           // TODO: Raise key error if calc_type other than jacobson or EQSAM encountered
 
-          
-
+  
        } // ion pair (it) loop
+
+       aerowater_model.ion_pair_vec = ion_pair_vec;
 
     } // if SUB_MODEL_ZSR_AEROSOL_WATER
     } // item loop
@@ -261,7 +271,9 @@ int AerosolModelData::initChem(YAML::Node &root,
     nSpec_= density_aero_sp.size();
 
     nSimpol_tran_=simpol_info.size();
+    auto nAerosolWater_ionpairs_ = aerowater_model.ion_pair_vec.size();
     printf("[AerosolModelData::initChem] Number of Simpol phase transfer %d \n",nSimpol_tran_ );
+    printf("[AerosolModelData::initChem] Number of aerosol water ion pairs %d \n",nAerosolWater_ionpairs_ );
     // update simpol
     simpol_params_ = simpol_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran_);
     const auto simpol_params_host = simpol_params_.view_host();

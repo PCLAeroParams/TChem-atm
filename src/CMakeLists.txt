@@ -43,6 +43,7 @@ OPTION(TCHEM_ATM_ENABLE_INSTALL "Flag to enable install exports for TCHEM_ATM" O
 OPTION(TCHEM_ENABLE_FORTRAN "Flag to enable fortran binding" ON)
 OPTION(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY "Flag to enable sacado jacobian for atmospheric chemistry" OFF)
 OPTION(TCHEM_ATM_ENABLE_SKYWALKER "Flag to enable Skywalker" OFF)
+OPTION(TCHEM_ATM_ENABLE_KOKKOSKERNELS "Flag to enable Kokkos-kernels" OFF)
 
 OPTION(KOKKOS_INSTALL_PATH "Path to Kokkos installation")
 OPTION(TINES_INSTALL_PATH "Path to Tines installation")
@@ -81,6 +82,28 @@ ELSE()
     LIST(APPEND TCHEM_ATM_LINK_LIBRARIES ${TCHEM_ATM_INTERNAL_KOKKOS_TARGET})
   ELSE()
     MESSAGE(FATAL_ERROR "-- Kokkos install path is not provided")
+  ENDIF()
+ENDIF()
+
+# Kokkos-kernels
+#
+IF(TARGET Kokkos::kokkoskernels)
+  # check to see if kokkos-kernels was loaded in another project
+  message(STATUS "Found Kokkos::kokkoskernels target")
+  SET(TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET "Kokkos::kokkoskernels")
+  SET(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS ON CACHE BOOL "Enable Kokkos-kernels")
+  LIST(APPEND TCHEM_ATM_LINK_LIBRARIES ${TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET})
+ELSE()
+  IF (TCHEM_ATM_ENABLE_KOKKOSKERNELS)
+  IF (KOKKOSKERNELS_INSTALL_PATH)
+    MESSAGE(STATUS "TChem_atm attempts to use Kokkos-kernels installed at ${KOKKOSKERNELS_INSTALL_PATH}")
+    FIND_PACKAGE(kokkoskernels REQUIRED)
+    SET(TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET "Kokkos::kokkoskernels")
+    SET(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS ON CACHE BOOL "Enable Kokkos-kernels")
+    LIST(APPEND TCHEM_ATM_LINK_LIBRARIES ${TCHEM_ATM_INTERNAL_KOKKOSKERNELS_TARGET})
+  ELSE()
+    MESSAGE(FATAL_ERROR "-- Kokkos-kernels install path is not provided")
+  ENDIF()
   ENDIF()
 ENDIF()
 

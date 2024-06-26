@@ -2,7 +2,7 @@
 
 #include "TChem_AtmosphericChemistryE3SM_CVODE.hpp"
 
-namespace TChem 
+namespace TChem
 {
 	  template<typename PolicyType,
            typename ValueType,
@@ -35,7 +35,7 @@ namespace TChem
     using real_type_1d_view_type = Tines::value_type_1d_view<real_type, DeviceType>;
     // const auto kmcd_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), Kokkos::subview(kmcds, 0));
 
-    using problem_type = TChem::Impl::AtmosphericChemistryE3SM_Problem<real_type,DeviceType>;          
+    using problem_type = TChem::Impl::AtmosphericChemistryE3SM_Problem<real_type,DeviceType>;
     const ordinal_type level = 1;
     const ordinal_type per_team_extent = AtmosphericChemistryE3SM_CVODE::getWorkSpaceSize(kmcds(0));
 
@@ -46,7 +46,7 @@ namespace TChem
        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
   const ordinal_type i = member.league_rank();
   const auto kmcd = (kmcds.extent(0) == 1 ? kmcds(0) : kmcds(i));
-        auto cvode = cvodes(i); 
+        auto cvode = cvodes(i);
 
   const auto tadv_at_i = tadv(i);
   const real_type t_end = tadv_at_i._tend;
@@ -54,12 +54,19 @@ namespace TChem
   if (t_out_at_i() < t_end) {
     const real_type_1d_view_type state_at_i =
         Kokkos::subview(state, i, Kokkos::ALL());
-      const real_type_1d_view_type photo_rates_at_i =
+       // Note: The number of photo reactions can be equal to zero.
+      real_type_1d_view_type photo_rates_at_i;
+      if(photo_rates.extent(0) > 0)
+      {
+        photo_rates_at_i =
         Kokkos::subview(photo_rates, i, Kokkos::ALL());
-      
-      const real_type_1d_view_type external_sources_at_i =
-        Kokkos::subview(external_sources, i, Kokkos::ALL());
-
+      }
+      // Note: The number of external source can be equal to zero.
+      real_type_1d_view_type external_sources_at_i;
+      if(external_sources.extent(0) > 0)
+      {
+        external_sources_at_i= Kokkos::subview(external_sources, i, Kokkos::ALL());
+      }
       const real_type_1d_view_type state_out_at_i =
         Kokkos::subview(state_out, i, Kokkos::ALL());
       const real_type_1d_view_type fac_at_i =
@@ -99,7 +106,7 @@ namespace TChem
       const real_type_0d_view_type pressure_out(sv_out_at_i.PressurePtr());
       const real_type_1d_view_type Ys_out = sv_out_at_i.MassFractions();
       const real_type_0d_view_type density_out(sv_out_at_i.DensityPtr());
-      
+
       const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd);
       auto vals = cvode.getStateVector();
 
@@ -108,12 +115,12 @@ namespace TChem
 
       problem_type problem;
       problem._kmcd = kmcd;
-      
+
       /// problem workspace
       auto wptr = work.data();
       auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
       wptr += problem_workspace_size;
-      
+
       /// error check
       const ordinal_type workspace_used(wptr - work.data()), workspace_extent(work.extent(0));
       if (workspace_used > workspace_extent) {
@@ -122,7 +129,7 @@ namespace TChem
 
       /// time integrator workspace
       auto tw = real_type_1d_view_type(wptr, workspace_extent - workspace_used);
-      
+
       /// initialize problem
       problem._fac = fac_at_i;
       problem._work_cvode = tw; // time integrator workspace
@@ -133,16 +140,16 @@ namespace TChem
       problem._photo_rates=photo_rates_at_i;
       problem._external_sources=external_sources_at_i;
 
-      for (ordinal_type i=0;i<m;++i) 
-        vals(i) = activeYs(i);   
-           
+      for (ordinal_type i=0;i<m;++i)
+        vals(i) = activeYs(i);
+
       real_type t = t_out_at_i(), dt = 0;
       cvode.initialize(t,
            dt_in, dt_min, dt_max,
            tol(0,0), tol(0,1),
            TChem::Impl::ProblemAtmosphericChemistryE3SM_ComputeFunctionCVODE,
            TChem::Impl::ProblemAtmosphericChemistryE3SM_ComputeJacobianCVODE);
-      
+
       cvode.setProblem(problem);
       for (ordinal_type iter=0;iter<max_num_time_iterations && t<=t_end;++iter) {
         const real_type t_prev = t;
@@ -151,8 +158,8 @@ namespace TChem
       }
       t_out_at_i() = t;
       dt_out_at_i() = dt;
-        
-      for (ordinal_type i=0;i<m;++i) 
+
+      for (ordinal_type i=0;i<m;++i)
         Ys_out(i) = vals(i);
       temperature_out() =temperature;
 
@@ -163,7 +170,7 @@ namespace TChem
     Kokkos::Profiling::popRegion();
   }
 
- 
+
 
 #define TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM()     \
   AtmosphericChemistryE3SM_CVODE_TemplateRun(          \
@@ -201,9 +208,9 @@ namespace TChem
            const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type, host_device_type>, host_device_type>& cvodes) {
 #if defined(TINES_ENABLE_TPL_SUNDIALS)
     const std::string profile_name = "TChem::AtmosphericChemistryE3SM::runHostBatch::kmcd array";
-    // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.  
+    // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.
     using value_type = real_type;
-    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM(); 
+    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM();
 #endif
   }// namespace TChem
 }

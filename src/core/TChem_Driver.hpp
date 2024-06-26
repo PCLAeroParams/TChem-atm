@@ -7,7 +7,7 @@ struct Driver {
 public:
    using real_type_2d_view_host = TChem::real_type_2d_view_host;
    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
-   using device_type      = typename Tines::UseThisDevice<exec_space>::type;
+   using device_type = typename Tines::UseThisDevice<exec_space>::type;
 
    std::string _chem_file, _therm_file;
    real_type_2d_view_host _state;
@@ -56,7 +56,8 @@ public:
 };
 }
 
-extern "C" void initialize(const char* gasFile, const char* aeroFile, const char* numericsFile);
+extern "C" void initialize(const char* gasFile, const char* aeroFile,
+                           const char* numericsFile);
 extern "C" void finalize();
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
@@ -64,7 +65,7 @@ extern "C" int TChem_getLengthOfStateVector();
 extern "C" void TChem_getStateVector(TChem::real_type *array);
 extern "C" void TChem_setStateVector(TChem::real_type *array);
 extern "C" int TChem_getSpeciesName(int* index, char* result,
-     const std::string::size_type buffer_size);
+                                    const std::string::size_type buffer_size);
 extern "C" void TChem_doTimestep(const double &del_t);
 extern "C" int TChem_getStateVectorSize();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);

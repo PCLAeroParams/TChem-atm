@@ -2,9 +2,6 @@
 #include <TChem_KineticModelNCAR_ConstData.hpp>
 #include <TChem_Util.hpp>
 
-//extern "C" void initialize(const char * filename);
-//extern "C" void finalize();
-
 namespace TChem {
 struct Driver {
 public:
@@ -37,7 +34,7 @@ public:
    std::string getSpeciesName(int *index);
 
 
-   void doTimestep();
+   void doTimestep(const double del_t);
    // Clean up
    void freeAll();
    void freeGasKineticModel();
@@ -46,18 +43,20 @@ public:
    void printSpecies();
 
    // time integration
-   real_type_1d_view _t;
-   real_type_1d_view _dt;
-   real_type_2d_view _tol_time;
-   real_type_1d_view _tol_newton;
-   real_type_2d_view _fac;
+   real_type _atol_newton;
+   real_type _rtol_newton;
+   real_type _dtmin;
+   real_type _atol_time;
+   real_type _rtol_time;
+
+   void createNumerics(const std::string &numerics_file);
 
    void setTimeAdvance();
 
 };
 }
 
-extern "C" void initialize(const char * filename);
+extern "C" void initialize(const char* gasFile, const char* aeroFile, const char* numericsFile);
 extern "C" void finalize();
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
@@ -66,7 +65,6 @@ extern "C" void TChem_getStateVector(TChem::real_type *array);
 extern "C" void TChem_setStateVector(TChem::real_type *array);
 extern "C" int TChem_getSpeciesName(int* index, char* result,
      const std::string::size_type buffer_size);
-extern "C" void TChem_doTimestep();
+extern "C" void TChem_doTimestep(const double &del_t);
 extern "C" int TChem_getStateVectorSize();
-
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);

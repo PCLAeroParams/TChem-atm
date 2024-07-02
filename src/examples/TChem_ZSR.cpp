@@ -38,60 +38,30 @@ main(int argc, char* argv[])
     TChem::AerosolModelData amd = TChem::AerosolModelData(aerochemFile, kmd);
     const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
 
-    // NOTE: temporarily setting IonPair struct here for passing to aerosol water calculation
-    // TODO: these attributes will eventualy be set in aersol model data ion pair struct
-    TChem::IonPair jacobson_ionpair;
-    jacobson_ionpair.calc_type = "JACOBSON";
-    jacobson_ionpair.ions = {"Ca_pp", "Cl_m"};
-    jacobson_ionpair.ion_quantities = {1.0, 2.0};
-    jacobson_ionpair.jacobson_Y_j = {-1.918004e2, 2.001540e3, -8.557205e3, 1.987670e4, -2.717192e4, 2.187103e4, -9.591577e3, 1.763672e3};
-    jacobson_ionpair.jacobson_low_RH = 0.43;
-    jacobson_ionpair.jacobson_cation = "Ca_pp";
-    jacobson_ionpair.jacobson_anion = "Cl_m";
-    // TODO: use molecular weights from YAML input
-
-    TChem::IonPair eqsam_ionpair;
-    eqsam_ionpair.calc_type = "EQSAM";
-    eqsam_ionpair.ions = {"Cl_m"};
-    eqsam_ionpair.ion_quantities = {1.0};
-    eqsam_ionpair.eqsam_NW = 2.0;
-    eqsam_ionpair.eqsam_MW = 0.0585;
-    eqsam_ionpair.eqsam_ZW = 0.67;
-
-    // NOTE: temporarily just setting these ion mappings 
-    // TODO: Set ion index mapping via loop over IonPair structs
-    std::map<std::string, int> ion_idx_map;
-    ion_idx_map.insert({"Ca_pp", 0});
-    ion_idx_map.insert({"Cl_m", 1});
-
-    // temporarily lookup mapping for atomic weights (values in g/mol)
-    std::map<std::string, real_type> atomic_weights;
-    atomic_weights.insert({"Ca", 40.08});
-    atomic_weights.insert({"Cl", 35.453});
-
     using aerosol_water_single_particle_type = TChem::Impl::AerosolWater_SingleParticle<real_type, host_device_type>;
     
     // Just run serial right now for simplicity
     const auto member = Tines::HostSerialTeamMember();
 
     // TODO: use TChem's state data structure
-    real_type state[4];
+    int n_particles = 1;
+    real_type state[amd.aerosol_sp_name_idx_.size()+1]; // add 1 for gas phase water
+    int rh_index = amd.aerosol_sp_name_idx_.size();
+    int i_part = 0;
+    int number_conc = 1.0;
 
     // Loop over RH
     for (int i; i<101; i++){
-        state[0] = 1.3; // Ca
-        state[1] = 5.3; // Cl
-        state[2] = i/100.0; // rh
-        state[3] = 0.0; // aerosol water content
 
-        // TODO: embedd ionpair objects in a vector attribute of aerosol model data, loop over the vector ionpair entries
-        // to compute aerosol water content for each ionpair type
+        state[amd.aerosol_sp_name_idx_.at("Cl_m")] = 5.3;    // Cl
+        state[amd.aerosol_sp_name_idx_.at("Ca_pp")] = 1.3;   // Ca
+        state[rh_index] = i/100.0; // H2O (gas phase) (note gas phase H2O is not part of the species mapping)
+        state[amd.aerosol_sp_name_idx_.at("H2O_aq")] = 0;    // H2O (aerosol phase)
         
-        aerosol_water_single_particle_type::team_invoke(member, state, jacobson_ionpair, ion_idx_map, atomic_weights);
-        aerosol_water_single_particle_type::team_invoke(member, state, eqsam_ionpair, ion_idx_map, atomic_weights);
+        aerosol_water_single_particle_type::team_invoke(member, i_part, number_conc, state, amd);
         //printf("[TChem_ZSR::main] RH %f\n", state[2]);
         //printf("[TChem_ZSR::main] Total aerosol water content %f\n\n", state[3]);
-        printf("%f,%f\n", state[2], state[3]);
+        printf("%f,%f\n", state[rh_index], state[amd.aerosol_sp_name_idx_.at("H2O_aq")]);
     }
     
     

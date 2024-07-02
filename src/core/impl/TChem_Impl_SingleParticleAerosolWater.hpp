@@ -25,16 +25,18 @@ struct AerosolWater_SingleParticle
     template<typename MemberType>
     KOKKOS_INLINE_FUNCTION static
     void team_invoke(const MemberType& member,
+        ordinal_type i_part,
+        real_type number_conc,
         real_type state[],  // TODO: figure out how the state vector actually works
-        const aerosol_ion_pair_type ionpair,
-        const std::map<std::string, int> ion_idx_map,
-        const std::map<std::string, real_type> atomic_weights  // TODO: pack into ionpair objects
+        const AerosolModelData amd
+        //const aerosol_ion_pair_type ionpair,
+        //const std::map<std::string, int> ion_idx_map,
+        //const std::map<std::string, real_type> atomic_weights  // TODO: pack into ionpair objects
         )
     {   
         // NOTE: Cannot use std::string with cuda 
         // Declare and initialize variables for later use
-        real_type effective_aw = 0.0;
-        real_type molality = 0.0;
+        
         int anion_idx;
         int cation_idx;
         int qty;
@@ -54,60 +56,61 @@ struct AerosolWater_SingleParticle
         real_type MW_H20 = 999.7351; // 55.51*18.01
         ordinal_type ion_idx;
 
-        real_type rh = state[2];
-
+        real_type rh = state[amd.aerosol_sp_name_idx_.size()];
+        
         // note that you have to convert std::string to a C-string for printf since printf is a C function
         //printf("[AerosolWater_SingleParticle::team_invoke] calculation type %s\n", ionpair.calc_type.c_str());
+        auto aerowater_model = amd.aerowater_model;
 
-        if (ionpair.calc_type == "JACOBSON") {
-            //printf("[AerosolWater_SingleParticle::team_invoke] in jacobson evaluation\n");
+        int n_ionpairs = aerowater_model.ion_pair_vec.size();
+        for (int j=0; j<n_ionpairs; j++){
+            auto i_ionpair = aerowater_model.ion_pair_vec[j];
+            //printf("[AerosolWater_SingleParticle::team_invoke] %s\n", i_ionpair.calc_type.c_str());
+            real_type effective_aw = 0.0;
+            real_type molality = 0.0;
+            if (i_ionpair.calc_type == "JACOBSON") {
+                //printf("[AerosolWater_SingleParticle::team_invoke] in jacobson evaluation\n");
 
-            effective_aw = max(rh, ionpair.jacobson_low_RH);
+                effective_aw = max(rh, i_ionpair.jacobson_low_RH);
+                
+                // calculate molality from power series 
+                for (int i_order=0; i_order < i_ionpair.jacobson_Y_j.size(); i_order++) {
+                    molality += i_ionpair.jacobson_Y_j[i_order]*std::pow(effective_aw, i_order);
+                }
+                molality = std::pow(molality, 2.0);
+                //printf("[AerosolWater_SingleParticle::team_invoke] Jacobson molality %f\n", molality);
+                
+                anion_idx = amd.aerosol_sp_name_idx_.at(i_ionpair.jacobson_anion);
+                cation_idx = amd.aerosol_sp_name_idx_.at(i_ionpair.jacobson_cation);
+                //printf("[AerosolWater_SingleParticle::team_invoke] Jacobson anion index %d\n", anion_idx);
+                //printf("[AerosolWater_SingleParticle::team_invoke] Jacobson cation index %d\n", cation_idx);
+                
+                // Get molecular weights
+                qty = i_ionpair.ion_quantities_map.at(i_ionpair.jacobson_anion);
+                //printf("jacobson anion quantity: %d\n", qty);
+                ion_molecular_weight = qty*i_ionpair.ion_molecular_weights.at(i_ionpair.jacobson_anion);
+                //printf("[AerosolWater_SingleParticle::team_invoke] jacobson anion molec. weight %f\n", ion_molecular_weight);
+                anion = state[anion_idx]/(ion_molecular_weight*1000.0);
 
-            // calculate molality from power series 
-            for (int i_order; i_order < ionpair.jacobson_Y_j.size(); i_order++) {
-                molality += ionpair.jacobson_Y_j[i_order]*std::pow(effective_aw, i_order);
-            }
-            molality = std::pow(molality, 2.0);
-            //printf("[AerosolWater_SingleParticle::team_invoke] molality %f\n", molality);
-
-            // calculate ion conc for anion and cation
-            anion_idx = ion_idx_map.at(ionpair.jacobson_anion); 
-            cation_idx = ion_idx_map.at(ionpair.jacobson_cation);
+                qty = i_ionpair.ion_quantities_map.at(i_ionpair.jacobson_cation);
+                //printf("jacobson cation quantity: %d\n", qty);
+                ion_molecular_weight = qty*i_ionpair.ion_molecular_weights.at(i_ionpair.jacobson_cation);
+                //printf("[AerosolWater_SingleParticle::team_invoke] jacobson cation molec. weight %f\n", ion_molecular_weight);
+                cation = state[cation_idx]/(ion_molecular_weight*1000.0);
             
-            // calculate the molecular weight (since some ions are diatomic like Cl2, need the number of atoms)
-            qty = ionpair.ion_quantities.at(cation_idx);
-            atom_name = ionpair.jacobson_cation.substr(0, ionpair.jacobson_cation.find('_'));
-            ion_molecular_weight = qty*atomic_weights.at(atom_name);
-            cation = state[cation_idx]/(ion_molecular_weight*1000.0);
-            //printf("[AerosolWater_SingleParticle::team_invoke] cation index %d\n", cation_idx);
-            //printf("[AerosolWater_SingleParticle::team_invoke] atom name %s\n", atom_name.c_str());
-            //printf("[AerosolWater_SingleParticle::team_invoke] ion molecular weight %f\n", ion_molecular_weight);
-            //printf("[AerosolWater_SingleParticle::team_invoke] cation conc. %e\n", cation);
+                // soft-max function to allow for smooth transition between cation/anion saturation
+                e_ac = exp(ALPHA*cation);
+                e_aa = exp(ALPHA*anion);
+                ion_conc = (cation*e_ac + anion*e_aa)/(e_ac + e_aa);
+                water_content = (ion_conc/molality)*1000.0;
+                //printf("[AerosolWater_SingleParticle::team_invoke] (Jacobson) water content %f\n", water_content);
+                state[amd.aerosol_sp_name_idx_.at("H2O_aq")] += water_content;
+                
+            } // calc_type == JACOBSON
+            if (i_ionpair.calc_type == "EQSAM") {
+                //printf("[AerosolWater_SingleParticle::team_invoke] in eqsam evaluation\n");
 
-            // calculate the molecular weight (since some ions are diatomic like Cl2, need the number of atoms)
-            qty = ionpair.ion_quantities.at(anion_idx);
-            atom_name = ionpair.jacobson_anion.substr(0, ionpair.jacobson_anion.find('_'));
-            ion_molecular_weight = qty*atomic_weights.at(atom_name);
-            anion = state[anion_idx]/(ion_molecular_weight*1000.0);
-            //printf("[AerosolWater_SingleParticle::team_invoke] anion index %d\n", anion_idx);
-            //printf("[AerosolWater_SingleParticle::team_invoke] atom name %s\n", atom_name.c_str());
-            //printf("[AerosolWater_SingleParticle::team_invoke] ion molecular weight %f\n", ion_molecular_weight);
-            //printf("[AerosolWater_SingleParticle::team_invoke] anion conc. %e\n", anion);
-
-            // soft-max function to allow for smooth transition between cation/anion saturation
-            e_ac = exp(ALPHA*cation);
-            e_aa = exp(ALPHA*anion);
-            ion_conc = (cation*e_ac + anion*e_aa)/(e_ac + e_aa);
-            water_content = (ion_conc/molality)*1000.0;
-            //printf("[AerosolWater_SingleParticle::team_invoke] water content %f\n", water_content);
-            state[3] += water_content;
-
-        } // calc_type == JACOBSON
-        if (ionpair.calc_type == "EQSAM") {
-            //printf("[AerosolWater_SingleParticle::team_invoke] in eqsam evaluation\n");
-
-            // avoid div by zero in EQSAM calc
+                // avoid div by zero in EQSAM calc
                 if (rh > 0.99){
                     effective_aw = 0.99;
                 }
@@ -118,33 +121,31 @@ struct AerosolWater_SingleParticle
                     effective_aw = rh;
                 }
 
-                NW = ionpair.eqsam_NW;
-                MW = 1000.0*ionpair.eqsam_MW;
-                ZW = ionpair.eqsam_ZW;
+                NW = i_ionpair.eqsam_NW;
+                MW = 1000.0*i_ionpair.eqsam_MW;
+                ZW = i_ionpair.eqsam_ZW;
                 molality = std::pow((NW*(MW_H20/MW)*(1.0/effective_aw-1.0)), ZW);
-                //printf("[AerosolWater_SingleParticle::team_invoke] molality %f\n", molality);
-
-                for (int i; i < ionpair.ions.size(); i++) {
-                    ion_name = ionpair.ions.at(i);
+                //printf("[AerosolWater_SingleParticle::team_invoke] EQSAM molality %f\n", molality);
+                
+                for (int i=0; i < i_ionpair.ions.size(); i++) {
+                    ion_name = i_ionpair.ions.at(i);
                     
-                    atom_name = ion_name.substr(0, ion_name.find('_'));
-                    //printf("atom name %s\n", atom_name.c_str());
+                    qty = i_ionpair.ion_quantities_map.at(ion_name);
+                    //printf("EQSAM ion quantity: %d\n", qty);
+                    ion_molecular_weight = qty*i_ionpair.ion_molecular_weights.at(ion_name);
+                    //printf("[AerosolWater_SingleParticle::team_invoke] EQSAM ion molec. weight %f\n", ion_molecular_weight);
 
-                    ion_idx = ion_idx_map.at(ion_name);
-                    //printf("ion idx %d\n", ion_idx);
-                    qty = ionpair.ion_quantities.at(i);
-                    ion_molecular_weight = qty*atomic_weights.at(atom_name);
                     //printf("[AerosolWater_SingleParticle::team_invoke] ion molecular weight %f\n", ion_molecular_weight);
-                    ion_conc = state[ion_idx]/ion_molecular_weight;
+                    ion_conc = state[amd.aerosol_sp_name_idx_.at(ion_name)]/ion_molecular_weight;
                     water_content = ion_conc/molality;
-                    //printf("[AerosolWater_SingleParticle::team_invoke] water content %f\n", water_content);
-                    state[3] += water_content;
+                    
+                    state[amd.aerosol_sp_name_idx_.at("H2O_aq")] += water_content;
 
                 }
-                //printf("[AerosolWater_SingleParticle::team_invoke] water content %f\n", state[3]);
+                //printf("[AerosolWater_SingleParticle::team_invoke] (EQSAM) water content %f\n", water_content);
                     
         } // calc_type == EQSAM
-
+        } // loop over ion_pair structs
     } // TeamInvoke
 
     }; // struct AerosolWater_SingleParticle

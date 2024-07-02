@@ -101,7 +101,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     printf("[AerosolModelData::initChem] Done with species...\n");
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
     std::vector<aerosol_ion_pair_type> ion_pair_vec;
-    aerosol_water_type aerowater_model;
+    //aerosol_water_type aerowater_model; // note, using the declaration of aerowater_model in the header
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();
       if (type=="MECHANISM"){
@@ -188,15 +188,21 @@ int AerosolModelData::initChem(YAML::Node &root,
                 printf("[AerosolModelData::initChem] ....Ion qty: %d\n", i_ion_qty);
                 //jacobson_ionpair.ion_quantities.push_back(i_ion_qty);
                 // NOTE: in Python prototyping using dictionary (key=ion name, value=qty integer)
-                jacobson_ionpair.ion_quantities_dict.push_back(std::make_pair(i_ion_name, i_ion_qty));
-
-                // assign ion type (anion or cation)
+                jacobson_ionpair.ion_quantities_map[i_ion_name] = i_ion_qty;
+                
+                // assign ion type (anion or cation) and set molecular weights
                 char charge = i_ion_name.back();
                 if (charge == 'p'){
                   jacobson_ionpair.jacobson_cation = i_ion_name;
+                  auto cation_idx = aerosol_sp_name_idx_.at(jacobson_ionpair.jacobson_cation);
+                  auto cation_molec_weight = mw_aerosol_sp.at(cation_idx);
+                  jacobson_ionpair.ion_molecular_weights.insert({jacobson_ionpair.jacobson_cation, cation_molec_weight});
                 } 
                 if (charge == 'm'){
                   jacobson_ionpair.jacobson_anion = i_ion_name;
+                  auto anion_idx = aerosol_sp_name_idx_.at(jacobson_ionpair.jacobson_anion);
+                  auto anion_molec_weight = mw_aerosol_sp.at(anion_idx);
+                  jacobson_ionpair.ion_molecular_weights.insert({jacobson_ionpair.jacobson_anion, anion_molec_weight});
                 }
                 // possibly raise an exception if an unexpected charge character is encountered?
 
@@ -239,9 +245,14 @@ int AerosolModelData::initChem(YAML::Node &root,
                   i_ion_qty = i_ion_data["qty"].as<int>(); // type alias for int?
                 }
                 printf("[AerosolModelData::initChem] ....Ion qty: %d\n", i_ion_qty);
-                //eqsam_ionpair.ion_quantities.push_back(i_ion_qty);
-                // NOTE: in Python prototyping using dictionary (key=ion name, value=qty integer)
-                eqsam_ionpair.ion_quantities_dict.push_back(std::make_pair(i_ion_name, i_ion_qty));
+
+                eqsam_ionpair.ion_quantities_map[i_ion_name] =  i_ion_qty;
+
+                // set molecular weights
+                auto ion_idx = aerosol_sp_name_idx_.at(i_ion_name);
+                auto ion_molec_weight = mw_aerosol_sp.at(ion_idx);
+                eqsam_ionpair.ion_molecular_weights.insert({i_ion_name, ion_molec_weight});
+
               }// i_ion loop
 
               eqsam_ionpair.eqsam_NW = i_ionpair_data["NW"].as<real_type>();
@@ -269,11 +280,9 @@ int AerosolModelData::initChem(YAML::Node &root,
 
     // number of aerosol species
     nSpec_= density_aero_sp.size();
-
     nSimpol_tran_=simpol_info.size();
-    auto nAerosolWater_ionpairs_ = aerowater_model.ion_pair_vec.size();
     printf("[AerosolModelData::initChem] Number of Simpol phase transfer %d \n",nSimpol_tran_ );
-    printf("[AerosolModelData::initChem] Number of aerosol water ion pairs %d \n",nAerosolWater_ionpairs_ );
+
     // update simpol
     simpol_params_ = simpol_phase_transfer_type_1d_dual_view(do_not_init_tag("AMD::simpol_params_"), nSimpol_tran_);
     const auto simpol_params_host = simpol_params_.view_host();
@@ -302,8 +311,14 @@ int AerosolModelData::initChem(YAML::Node &root,
       simpol_params_host(isimpol)=simpol_params_host_at_i;
     } // nsimpol
 
-    // NOTE-SF: Should I do something similar for the ZSR data structure that I create? I dont really understand 
-    // the purpose of creating a 'host' kokkos object and when that is necessary
+    auto nAerosolWater_ionpairs_ = aerowater_model.ion_pair_vec.size();
+    printf("[AerosolModelData::initChem] Number of aerosol water ion pairs %d \n",nAerosolWater_ionpairs_ );
+
+    // Create a host for aerosol water model
+    //aerowater_model_ = aerosol_water_type_1d_dual_view(do_not_init_tag("AMD::aerowater_model_"), 1);
+    //const auto aerowater_model_host = aerowater_model_.view_host();
+    //aerowater_model_host(0) = aerowater_model;
+    printf("[AerosolModelData::initChem] name of aerosol water model: %s\n", aerowater_model.name.c_str());
 
     molecular_weights_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weights"), nSpec_);
     auto molecular_weights_host = molecular_weights_.view_host();
@@ -318,10 +333,12 @@ int AerosolModelData::initChem(YAML::Node &root,
     molecular_weights_.modify_host();
     aerosol_density_.modify_host();
     simpol_params_.modify_host();
+    //aerowater_model_.modify_host();
 
     molecular_weights_.sync_device();
     aerosol_density_.sync_device();
     simpol_params_.sync_device();
+    //aerowater_model_.sync_device();
 
     return 0;
 }

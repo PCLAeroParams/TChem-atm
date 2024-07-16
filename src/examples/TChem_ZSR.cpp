@@ -50,6 +50,10 @@ main(int argc, char* argv[])
     int i_part = 0;
     int number_conc = 1.0;
 
+    
+    ordinal_type rh_idx = amd.aerosol_sp_name_idx_.size();
+    ordinal_type aqueous_water_idx = amd.aerosol_sp_name_idx_.at("H2O_aq");
+
     // Loop over RH
     for (int i; i<101; i++){
 
@@ -58,12 +62,14 @@ main(int argc, char* argv[])
         state[rh_index] = i/100.0; // H2O (gas phase) (note gas phase H2O is not part of the species mapping)
         state[amd.aerosol_sp_name_idx_.at("H2O_aq")] = 0;    // H2O (aerosol phase)
         
-        aerosol_water_single_particle_type::team_invoke(member, i_part, number_conc, state, amd);
+        aerosol_water_single_particle_type::team_invoke(member, i_part, number_conc, state, amcd, rh_idx, aqueous_water_idx);
         //printf("[TChem_ZSR::main] RH %f\n", state[2]);
         //printf("[TChem_ZSR::main] Total aerosol water content %f\n\n", state[3]);
         printf("%f,%f\n", state[rh_index], state[amd.aerosol_sp_name_idx_.at("H2O_aq")]);
     }
+
     
+        
     
 #if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
     printf("Some stuff in the serial test output")

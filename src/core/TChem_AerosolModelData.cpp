@@ -100,8 +100,8 @@ int AerosolModelData::initChem(YAML::Node &root,
     } // item loop
     printf("[AerosolModelData::initChem] Done with species...\n");
     std::vector<SIMPOL_PhaseTransferType> simpol_info;
-    std::vector<aerosol_ion_pair_type> ion_pair_vec;
-    //aerosol_water_type aerowater_model; // note, using the declaration of aerowater_model in the header
+    std::vector<aerosol_ion_pair_type> ion_pair_vec;  
+
     for (auto const &item : root["NCAR-version"]) {
       auto type =item["type"].as<std::string>();
       if (type=="MECHANISM"){
@@ -153,32 +153,30 @@ int AerosolModelData::initChem(YAML::Node &root,
     if (type=="SUB_MODEL_ZSR_AEROSOL_WATER"){
        printf("[AerosolModelData::initChem] Parsing aerosol water sub model\n"); 
        
-       aerowater_model.name = item["name"].as<std::string>();
-       aerowater_model.aero_phase = item["aerosol phase"].as<std::string>();
-       aerowater_model.gas_phase_water = item["gas-phase water"].as<std::string>();
-       aerowater_model.aerosol_phase_water = item["aerosol-phase water"].as<std::string>();
-
        auto ion_pairs = item["ion pairs"];
        // loop over ion pair and extract aerosol water calc. attribs
        for (auto it = ion_pairs.begin(); it != ion_pairs.end(); ++it){
-        // each entry in ion pairs is a key value pair
-        auto i_ionpair_name = it->first.as<std::string>();
-        auto i_ionpair_data = it->second;
-        printf("[AerosolModelData::initChem] Ion pair: %s\n", i_ionpair_name.c_str());
-        auto calc_type = i_ionpair_data["type"].as<std::string>();
-        printf("[AerosolModelData::initChem] ..Calc type: %s\n", calc_type.c_str());
+          // each entry in ion pairs is a key value pair
+          auto i_ionpair_name = it->first.as<std::string>();
+          auto i_ionpair_data = it->second;
+          printf("[AerosolModelData::initChem] Ion pair: %s\n", i_ionpair_name.c_str());
+          auto calc_type = i_ionpair_data["type"].as<std::string>();
+          printf("[AerosolModelData::initChem] ..Calc type: %s\n", calc_type.c_str());
 
-        if (calc_type=="JACOBSON"){
+          ordinal_type num_ions = 0;
+          ordinal_type ion_idx = 0; // index of ion in an ion pair
+          if (calc_type=="JACOBSON"){
               IonPair jacobson_ionpair;
-              jacobson_ionpair.calc_type = calc_type;
+              jacobson_ionpair.calc_type = JACOBSON;
               
               // parse ions, assign ion names and ion quantities
               auto ions = i_ionpair_data["ions"];
               for (auto i_ion = ions.begin(); i_ion != ions.end(); ++i_ion){
+                num_ions += 1;
                 auto i_ion_name = i_ion->first.as<std::string>();
                 auto i_ion_data = i_ion->second;
-                jacobson_ionpair.ions.push_back(i_ion_name);
                 printf("[AerosolModelData::initChem] ..Ion: %s\n", i_ion_name.c_str());
+                printf("[AerosolModelData::initChem] ..Ion index: %d\n", ion_idx);
 
                 // if qty in i_ion_data then use value, otherwise set qty to 1
                 int i_ion_qty = 1;
@@ -186,93 +184,107 @@ int AerosolModelData::initChem(YAML::Node &root,
                   i_ion_qty = i_ion_data["qty"].as<int>(); // type alias for int?
                 }
                 printf("[AerosolModelData::initChem] ....Ion qty: %d\n", i_ion_qty);
-                //jacobson_ionpair.ion_quantities.push_back(i_ion_qty);
                 // NOTE: in Python prototyping using dictionary (key=ion name, value=qty integer)
-                jacobson_ionpair.ion_quantities_map[i_ion_name] = i_ion_qty;
+                jacobson_ionpair.ion_quantities[ion_idx] = i_ion_qty;
                 
+                jacobson_ionpair.ion_species_index[ion_idx] = aerosol_sp_name_idx_.at(i_ion_name); // index of ion among all aerosol species
+
                 // assign ion type (anion or cation) and set molecular weights
                 char charge = i_ion_name.back();
                 if (charge == 'p'){
-                  jacobson_ionpair.jacobson_cation = i_ion_name;
-                  auto cation_idx = aerosol_sp_name_idx_.at(jacobson_ionpair.jacobson_cation);
+                  jacobson_ionpair.jacobson_cation = ion_idx;
+                  auto cation_idx = aerosol_sp_name_idx_.at(i_ion_name);
                   auto cation_molec_weight = mw_aerosol_sp.at(cation_idx);
-                  jacobson_ionpair.ion_molecular_weights.insert({jacobson_ionpair.jacobson_cation, cation_molec_weight});
+                  jacobson_ionpair.ion_molec_weight[ion_idx] = cation_molec_weight;
                 } 
                 if (charge == 'm'){
-                  jacobson_ionpair.jacobson_anion = i_ion_name;
-                  auto anion_idx = aerosol_sp_name_idx_.at(jacobson_ionpair.jacobson_anion);
+                  jacobson_ionpair.jacobson_anion = ion_idx;
+                  auto anion_idx = aerosol_sp_name_idx_.at(i_ion_name);
                   auto anion_molec_weight = mw_aerosol_sp.at(anion_idx);
-                  jacobson_ionpair.ion_molecular_weights.insert({jacobson_ionpair.jacobson_anion, anion_molec_weight});
+                  jacobson_ionpair.ion_molec_weight[ion_idx] = anion_molec_weight;
                 }
                 // possibly raise an exception if an unexpected charge character is encountered?
 
-              } // i_ion loop
+                ion_idx += 1;
 
-              printf("[AerosolModelData::initChem] ..Jacobson anion: %s\n", jacobson_ionpair.jacobson_anion.c_str());
-              printf("[AerosolModelData::initChem] ..Jacobson cation: %s\n", jacobson_ionpair.jacobson_cation.c_str());
+              } // i_ion loop
+              jacobson_ionpair.num_ions = num_ions;
+              printf("[AerosolModelData::initChem] ..Number of ions = %d\n", jacobson_ionpair.num_ions );
+
+              printf("[AerosolModelData::initChem] ..Jacobson anion index: %d\n", jacobson_ionpair.jacobson_anion);
+              printf("[AerosolModelData::initChem] ....Anion molec weight: %f\n", jacobson_ionpair.ion_molec_weight[jacobson_ionpair.jacobson_anion]);
+              printf("[AerosolModelData::initChem] ..Jacobson cation index: %d\n", jacobson_ionpair.jacobson_cation);
+              printf("[AerosolModelData::initChem] ....Cation molec weight: %f\n", jacobson_ionpair.ion_molec_weight[jacobson_ionpair.jacobson_cation]);
 
               // assign jacobson molality polynomial coefficients (Y_j)
               auto jacobson_coeffs = i_ionpair_data["Y_j"];
+              ordinal_type y_idx = 0;
               for (auto const &i_coeff : jacobson_coeffs) {
                 real_type y_j = i_coeff.as<real_type>();
-                jacobson_ionpair.jacobson_Y_j.push_back(y_j);
-                printf("[AerosolModelData::initChem] ..Jacobson Y_j: %f\n", y_j);
+                jacobson_ionpair.jacobson_y_j[y_idx] = y_j;
+                printf("[AerosolModelData::initChem] ..Jacobson Y_%d: %f\n", y_idx, y_j);
+                y_idx += 1;
               } // Y_j jacobson molality coefficient loop
 
-              jacobson_ionpair.jacobson_low_RH = i_ionpair_data["low RH"].as<real_type>();
-              printf("[AerosolModelData::initChem] ..Jacobson low RH = %f\n", jacobson_ionpair.jacobson_low_RH);
+              jacobson_ionpair.jacobson_low_rh = i_ionpair_data["low RH"].as<real_type>();
+              printf("[AerosolModelData::initChem] ..Jacobson low RH = %f\n", jacobson_ionpair.jacobson_low_rh);
 
               // push back ionpair attributes to vector
               ion_pair_vec.push_back(jacobson_ionpair);
 
-          } // calc_type JACOBSON
+            } // calc_type JACOBSON
 
-          if (calc_type=="EQSAM"){
-              IonPair eqsam_ionpair;
-              eqsam_ionpair.calc_type = calc_type;
+            if (calc_type=="EQSAM"){
+                IonPair eqsam_ionpair;
+                eqsam_ionpair.calc_type = EQSAM;
 
-              // parse ions, assign ion names and ion quantities
-              auto ions = i_ionpair_data["ions"];
-              for (auto i_ion = ions.begin(); i_ion != ions.end(); ++i_ion){
-                auto i_ion_name = i_ion->first.as<std::string>();
-                auto i_ion_data = i_ion->second;
-                eqsam_ionpair.ions.push_back(i_ion_name);
-                printf("[AerosolModelData::initChem] ..Ion: %s\n", i_ion_name.c_str());
+                // parse ions, assign ion names and ion quantities
+                auto ions = i_ionpair_data["ions"];
+                for (auto i_ion = ions.begin(); i_ion != ions.end(); ++i_ion){
+                  num_ions += 1;
+                  auto i_ion_name = i_ion->first.as<std::string>();
+                  auto i_ion_data = i_ion->second;
+                  printf("[AerosolModelData::initChem] ..Ion: %s\n", i_ion_name.c_str());
+                  printf("[AerosolModelData::initChem] ..Ion index: %d\n", ion_idx);
 
-                // if qty in i_ion_data then use value, otherwise set qty to 1
-                int i_ion_qty = 1;
-                if (i_ion_data["qty"]){
-                  i_ion_qty = i_ion_data["qty"].as<int>(); // type alias for int?
-                }
-                printf("[AerosolModelData::initChem] ....Ion qty: %d\n", i_ion_qty);
+                  // if qty in i_ion_data then use value, otherwise set qty to 1
+                  int i_ion_qty = 1;
+                  if (i_ion_data["qty"]){
+                    i_ion_qty = i_ion_data["qty"].as<int>(); // type alias for int?
+                  }
+                  printf("[AerosolModelData::initChem] ....Ion qty: %d\n", i_ion_qty);
 
-                eqsam_ionpair.ion_quantities_map[i_ion_name] =  i_ion_qty;
+                  eqsam_ionpair.ion_quantities[ion_idx] = i_ion_qty;
 
-                // set molecular weights
-                auto ion_idx = aerosol_sp_name_idx_.at(i_ion_name);
-                auto ion_molec_weight = mw_aerosol_sp.at(ion_idx);
-                eqsam_ionpair.ion_molecular_weights.insert({i_ion_name, ion_molec_weight});
+                  // set molecular weights
+                  auto ion_species_idx = aerosol_sp_name_idx_.at(i_ion_name); // index of ion among all species
+                  eqsam_ionpair.ion_species_index[ion_idx] = ion_species_idx;
+                  auto ion_molec_weight = mw_aerosol_sp.at(ion_species_idx);
+                  eqsam_ionpair.ion_molec_weight[ion_idx] = ion_molec_weight;
+                  printf("[AerosolModelData::initChem] ....Ion molec weight: %f\n", eqsam_ionpair.ion_molec_weight[ion_idx]);
 
-              }// i_ion loop
+                  ion_idx += 1;
 
-              eqsam_ionpair.eqsam_NW = i_ionpair_data["NW"].as<real_type>();
-              eqsam_ionpair.eqsam_MW = i_ionpair_data["MW"].as<real_type>();
-              eqsam_ionpair.eqsam_ZW = i_ionpair_data["ZW"].as<real_type>();
+                }// i_ion loop
+                eqsam_ionpair.num_ions = num_ions;
+                printf("[AerosolModelData::initChem] ..Number of ions = %d\n", eqsam_ionpair.num_ions );
 
-              printf("[AerosolModelData::initChem] ..EQSAM NW = %f\n", eqsam_ionpair.eqsam_NW );
-              printf("[AerosolModelData::initChem] ..EQSAM MW = %f\n", eqsam_ionpair.eqsam_MW );
-              printf("[AerosolModelData::initChem] ..EQSAM ZW = %f\n", eqsam_ionpair.eqsam_ZW );
+                eqsam_ionpair.eqsam_nw = i_ionpair_data["NW"].as<real_type>();
+                eqsam_ionpair.eqsam_mw = i_ionpair_data["MW"].as<real_type>();
+                eqsam_ionpair.eqsam_zw = i_ionpair_data["ZW"].as<real_type>();
 
-              // push back ionpair attributes to vector
-              ion_pair_vec.push_back(eqsam_ionpair);
+                printf("[AerosolModelData::initChem] ..EQSAM NW = %f\n", eqsam_ionpair.eqsam_nw );
+                printf("[AerosolModelData::initChem] ..EQSAM MW = %f\n", eqsam_ionpair.eqsam_mw );
+                printf("[AerosolModelData::initChem] ..EQSAM ZW = %f\n", eqsam_ionpair.eqsam_zw );
 
-          } // calc_type EQSAM
-          // TODO: Raise key error if calc_type other than jacobson or EQSAM encountered
+                // push back ionpair attributes to vector
+                ion_pair_vec.push_back(eqsam_ionpair);
 
-  
+            } // calc_type EQSAM
+            // TODO: Raise key error if calc_type other than jacobson or EQSAM encountered
+
        } // ion pair (it) loop
 
-       aerowater_model.ion_pair_vec = ion_pair_vec;
 
     } // if SUB_MODEL_ZSR_AEROSOL_WATER
     } // item loop
@@ -311,14 +323,17 @@ int AerosolModelData::initChem(YAML::Node &root,
       simpol_params_host(isimpol)=simpol_params_host_at_i;
     } // nsimpol
 
-    auto nAerosolWater_ionpairs_ = aerowater_model.ion_pair_vec.size();
+    nAerosolWater_ionpairs_ = ion_pair_vec.size(); // declared in header
     printf("[AerosolModelData::initChem] Number of aerosol water ion pairs %d \n",nAerosolWater_ionpairs_ );
 
     // Create a host for aerosol water model
-    //aerowater_model_ = aerosol_water_type_1d_dual_view(do_not_init_tag("AMD::aerowater_model_"), 1);
-    //const auto aerowater_model_host = aerowater_model_.view_host();
-    //aerowater_model_host(0) = aerowater_model;
-    printf("[AerosolModelData::initChem] name of aerosol water model: %s\n", aerowater_model.name.c_str());
+    aerowater_params_ = aerosol_ion_pair_type_1d_dual_view(do_not_init_tag("AMD::aerowater_params_"), nAerosolWater_ionpairs_);
+    const auto aerowater_params_host = aerowater_params_.view_host();
+
+    for (ordinal_type i_ionpair = 0; i_ionpair < nAerosolWater_ionpairs_; i_ionpair++){
+      auto ion_pair_host_at_i = ion_pair_vec[i_ionpair];
+      aerowater_params_host(i_ionpair)=ion_pair_host_at_i;
+    }
 
     molecular_weights_ = real_type_1d_dual_view(do_not_init_tag("AMD::molecular_weights"), nSpec_);
     auto molecular_weights_host = molecular_weights_.view_host();
@@ -333,12 +348,12 @@ int AerosolModelData::initChem(YAML::Node &root,
     molecular_weights_.modify_host();
     aerosol_density_.modify_host();
     simpol_params_.modify_host();
-    //aerowater_model_.modify_host();
+    aerowater_params_.modify_host();
 
     molecular_weights_.sync_device();
     aerosol_density_.sync_device();
     simpol_params_.sync_device();
-    //aerowater_model_.sync_device();
+    aerowater_params_.sync_device();
 
     return 0;
 }

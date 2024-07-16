@@ -459,32 +459,35 @@ real_type _C3;
 using prod_O1D_type_1d_dual_view = Tines::value_type_1d_dual_view<prod_O1DType, exec_space>;
 
 /// ZSR parameter data
+enum zsr_calc_type { JACOBSON, EQSAM };
+
+const int NUM_IONS_IN_SALT = 2;
+const int N_JACOBSON_COEFFS = 8;
+
 struct IonPair{
-  std::string calc_type;
-  std::vector<std::string> ions;
-  std::map<std::string, int> ion_quantities_map;
-  std::map<std::string, real_type> ion_molecular_weights;
-  std::vector<real_type> jacobson_Y_j;
-  real_type jacobson_low_RH;
-  std::string jacobson_cation; 
-  std::string jacobson_anion; 
-  real_type eqsam_NW;
-  real_type eqsam_ZW;
-  real_type eqsam_MW;
+    // TODO: Check number of ions in parser
+    // TODO: add flag for number of ions
+    zsr_calc_type calc_type;
+    // Assume that all salts are composed of at max two ions
+    int num_ions = NUM_IONS_IN_SALT;
+    ordinal_type ions[NUM_IONS_IN_SALT] = {0, 1}; // local index of each ion within the struct
+    ordinal_type ion_species_index[NUM_IONS_IN_SALT] = {-999, -999}; // index of each ion among all aerosol species   
+    // initialize attributes with nonsense values to allow check 
+    // of ion pair definitions where only one ion is specified 
+    // (e.g., Cl in NaCl of CAMP example)
+    ordinal_type ion_quantities[NUM_IONS_IN_SALT] = {-999, -999};
+    real_type ion_molec_weight[NUM_IONS_IN_SALT] = {-999., -999.};
+    real_type jacobson_y_j[N_JACOBSON_COEFFS];
+    real_type jacobson_low_rh;
+    ordinal_type jacobson_cation;
+    ordinal_type jacobson_anion;
+    real_type eqsam_nw;
+    real_type eqsam_zw;
+    real_type eqsam_mw;
 };
 using aerosol_ion_pair_type = IonPair;
-
-/// Primary data structure for aerosol water calculations
-struct AerosolWaterType{
-  std::string name;
-  std::string aero_phase;
-  std::string gas_phase_water;
-  std::string aerosol_phase_water;
-  std::vector<aerosol_ion_pair_type> ion_pair_vec;
-};
-using aerosol_water_type = AerosolWaterType;
-using aerosol_water_type_1d_dual_view =
- Tines::value_type_1d_dual_view<AerosolWaterType, exec_space>;
+using aerosol_ion_pair_type_1d_dual_view =
+ Tines::value_type_1d_dual_view<aerosol_ion_pair_type, exec_space>;
 
 /// kinetic model data
 struct KineticModelData;

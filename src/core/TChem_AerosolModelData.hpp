@@ -22,9 +22,8 @@ namespace TChem {
   simpol_phase_transfer_type_1d_dual_view simpol_params_;
   ordinal_type nSimpol_tran_;
 
-  // TODO: SF figure out how to get this dual view thing to work
-  //aerosol_water_type_1d_dual_view aerowater_model_;
-  aerosol_water_type aerowater_model;
+  ordinal_type nAerosolWater_ionpairs_;
+  aerosol_ion_pair_type_1d_dual_view aerowater_params_;
 
   // only use aerosol_sp_name_idx_ and  gas_sp_name_idx_ only in host.
   std::map<std::string, int> aerosol_sp_name_idx_;
@@ -67,14 +66,15 @@ namespace TChem {
     using amcd_simpol_phase_transfer_type_1d_view = ConstUnmanaged<simpol_phase_transfer_type_1d_view_type>;
     amcd_simpol_phase_transfer_type_1d_view simpol_params;
 
-    //using simpol_phase_transfer_type_1d_view_type =  Tines::value_type_1d_view<SIMPOL_PhaseTransferType,device_type>;
-    //using amcd_simpol_phase_transfer_type_1d_view = ConstUnmanaged<simpol_phase_transfer_type_1d_view_type>;
-    //amcd_aero_water_model_type_1d_view aerowater_model;
+    using aerosol_ion_pair_type_1d_view_type = Tines::value_type_1d_view<aerosol_ion_pair_type,device_type>;
+    using amcd_aerosol_ion_pair_type_1d_view = ConstUnmanaged<aerosol_ion_pair_type_1d_view_type>;
+    amcd_aerosol_ion_pair_type_1d_view aerowater_params;
 
     ordinal_type nSpec;
     ordinal_type nSpec_gas;
     ordinal_type nParticles;
     ordinal_type nSimpol_tran;
+    ordinal_type nAerosolWater_ionpairs;
 
     amcd_real_type_1d_view molecular_weights;
     amcd_real_type_1d_view aerosol_density;
@@ -89,10 +89,11 @@ namespace TChem {
     data.nSpec=amd.nSpec_;
     data.nParticles=amd.nParticles_;
     data.nSimpol_tran=amd.nSimpol_tran_;
+    data.nAerosolWater_ionpairs=amd.nAerosolWater_ionpairs_;
     data.molecular_weights = amd.molecular_weights_.template view<SpT>();
     data.aerosol_density = amd.aerosol_density_.template view<SpT>();
     data.simpol_params = amd.simpol_params_.template view<SpT>();
-    //data.aerowater_model = amd.aerowater_model_.template view<SpT>();
+    data.aerowater_params = amd.aerowater_params_.template view<SpT>();
   return data;
   }
 

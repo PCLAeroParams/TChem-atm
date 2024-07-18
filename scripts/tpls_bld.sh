@@ -49,6 +49,23 @@ cd ${OPENBLAS_REPOSITORY_PATH}
 make PREFIX=${OPENBLAS_INSTALL_PATH} install
 }
 
+build_install_kokkoskernels(){
+echo "Building kokkos kernels:"
+mkdir ${KOKKOSKERNELS_BUILD_PATH}
+mkdir ${KOKKOSKERNELS_INSTALL_PATH}
+cd ${KOKKOSKERNELS_BUILD_PATH}
+cmake \
+    -D CMAKE_INSTALL_PREFIX="${KOKKOSKERNELS_INSTALL_PATH}" \
+    -D CMAKE_CXX_COMPILER="${KOKKOS_CXX_COMPILER}" \
+    -D CMAKE_CXX_FLAGS="-g" \
+    -D CMAKE_C_COMPILER="${MY_CC}" \
+    -D CMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+    -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -D KOKKOS_INSTALL_PATH="${KOKKOS_INSTALL_PATH}" \
+    -D Kokkos_ROOT=$KOKKOS_INSTALL_PATH \
+    ${KOKKOSKERNELS_REPOSITORY_PATH}
+make ${JFLAG} install
+}
 build_install_kokkos(){
 echo "Building kokkos:"
 mkdir ${KOKKOS_BUILD_PATH}
@@ -144,14 +161,12 @@ make ${JFLAG} install
 TCHEM_BASE=$ROOT/TChem-atm/external
 REPO_BASE=$TCHEM_BASE/Tines/ext
 
-
-
 if [ "${CUDA}" = "ON" ]; then
     BUILD_BASE=${PWD}/DEVICE/build
     INSTALL_BASE=${PWD}/DEVICE/install
 else
-    BUILD_BASE=${PWD}/TPLs/build
-    INSTALL_BASE=${PWD}/TPLs/install
+    BUILD_BASE=${PWD}/HOST/build
+    INSTALL_BASE=${PWD}/HOST/install
 fi
 
 mkdir -p ${BUILD_BASE}
@@ -200,5 +215,9 @@ else
 fi
 build_install_kokkos
 
+KOKKOSKERNELS_REPOSITORY_PATH=$ROOT/TChem-atm/external/kokkos-kernels
+KOKKOSKERNELS_BUILD_PATH=${BUILD_BASE}/kokkos-kernels
+KOKKOSKERNELS_INSTALL_PATH=${INSTALL_BASE}/kokkos-kernels
+build_install_kokkoskernels
 
 exit

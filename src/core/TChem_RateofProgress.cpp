@@ -1,22 +1,22 @@
 /* =====================================================================================
-TChem version 2.0
-Copyright (2020) NTESS
-https://github.com/sandialabs/TChem
+TChem-atm version 1.0
+Copyright (2024) NTESS
+https://github.com/sandialabs/TChem-atm
 
-Copyright 2020 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
+Copyright 2024 National Technology & Engineering Solutions of Sandia, LLC (NTESS).
 Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains
 certain rights in this software.
 
-This file is part of TChem. TChem is open source software: you can redistribute it
+This file is part of TChem-atm. TChem-atm is open source software: you can redistribute it
 and/or modify it under the terms of BSD 2-Clause License
 (https://opensource.org/licenses/BSD-2-Clause). A copy of the licese is also
 provided under the main directory
 
-Questions? Contact Cosmin Safta at <csafta@sandia.gov>, or
-           Kyungjoo Kim at <kyukim@sandia.gov>, or
-           Oscar Diaz-Ibarra at <odiazib@sandia.gov>
+Questions? Contact Oscar Diaz-Ibarra at <odiazib@sandia.gov>, or
+           Mike Schmidt at <mjschm@sandia.gov>, or
+           Cosmin Safta at <csafta@sandia.gov>
 
-Sandia National Laboratories, Livermore, CA, USA
+Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 ===================================================================================== */
 #include "TChem_Util.hpp"
 #include "TChem_Impl_RateofProgress.hpp"
@@ -59,9 +59,14 @@ RateofProgress_TemplateRun( /// input
         Kokkos::subview(state, i, Kokkos::ALL());
       const real_type_1d_view_type rate_of_progress_at_i =
         Kokkos::subview(rate_of_progress, i, Kokkos::ALL());
-      const real_type_1d_view_type photo_rate_at_i =
-        Kokkos::subview(photo_rates, i, Kokkos::ALL());  
 
+      // Note: The number of photo reactions can be equal to zero.
+      real_type_1d_view_type photo_rate_at_i;
+      if(photo_rates.extent(0) > 0)
+      {
+        photo_rate_at_i =
+        Kokkos::subview(photo_rates, i, Kokkos::ALL());
+      }
       Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                       per_team_extent);
       const Impl::StateVector<real_type_1d_view_type> sv_at_i(kmcd.nSpec,
@@ -77,7 +82,6 @@ RateofProgress_TemplateRun( /// input
         const real_type_1d_view_type Ys = sv_at_i.MassFractions();
 
         // const real_type density = sv_at_i.Density();
-
         Impl::RateofProgress<real_type, device_type>
         ::team_invoke(member, t, p, Ys, photo_rate_at_i, rate_of_progress_at_i, ww, kmcd);
 
@@ -85,7 +89,6 @@ RateofProgress_TemplateRun( /// input
 
         }
     });
-
   Kokkos::Profiling::popRegion();
 }
 void
@@ -112,7 +115,7 @@ RateofProgress::runHostBatch( /// input
     "TChem::RateofProgress::runHostBatch",
     policy,
     state,
-    photo_rates, 
+    photo_rates,
     rate_of_progress,
     kmcd);
 

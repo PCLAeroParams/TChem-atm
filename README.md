@@ -1,7 +1,6 @@
 # TChem-atm
 
-[![Build Status](https://github.com/PCLAeroParams/TChem-atm/workflows/auto_test/badge.svg)](https://github.com/PCLAeroParams/TChem-atm/
-actions)
+[![Build Status](https://github.com/PCLAeroParams/TChem-atm/workflows/auto_test/badge.svg)](https://github.com/PCLAeroParams/TChem-atm/actions)
 
 
 ## Installation 

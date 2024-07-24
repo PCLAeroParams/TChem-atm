@@ -1,0 +1,12 @@
+particles:
+  initial_state:
+    Na_p: 
+      initial_value: [2.5]
+    Cl_m: 
+      initial_value: [5.3]
+    Ca_pp: 
+      initial_value: [1.3]
+    H2O_aq: 
+      initial_value: [0]
+  num_concentration:
+   initial_value: [1.3e6] 

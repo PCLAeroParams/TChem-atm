@@ -1,0 +1,76 @@
+NCAR-version:
+- name: H2O
+  type: CHEM_SPEC
+- charge: 1
+  density [kg m-3]: 1.0
+  molecular weight [kg mol-1]: 0.0229898
+  name: Na_p
+  phase: AEROSOL
+  type: CHEM_SPEC
+- charge: -1
+  density [kg m-3]: 1.0
+  molecular weight [kg mol-1]: 0.035453
+  name: Cl_m
+  phase: AEROSOL
+  type: CHEM_SPEC
+- charge: 2
+  density [kg m-3]: 1.0
+  molecular weight [kg mol-1]: 0.040078
+  name: Ca_pp
+  phase: AEROSOL
+  type: CHEM_SPEC
+- density [kg m-3]: 1.0
+  molecular weight [kg mol-1]: 0.01801
+  name: H2O_aq
+  phase: AEROSOL
+  tracer type: CONSTANT
+  type: CHEM_SPEC
+- name: aqueous aerosol
+  species:
+  - Na_p
+  - Cl_m
+  - Ca_pp
+  - H2O_aq
+  type: AERO_PHASE
+- maximum computational particles: 1
+  name: my aero rep 1
+  type: AERO_REP_SINGLE_PARTICLE
+- maximum computational particles: 1
+  name: my aero rep 2
+  type: AERO_REP_SINGLE_PARTICLE
+- maximum computational particles: 1
+  name: my aero rep 3
+  type: AERO_REP_SINGLE_PARTICLE
+- aerosol phase: aqueous aerosol
+  aerosol-phase water: H2O_aq
+  gas-phase water: H2O
+  ion pairs:
+    CaCl2:
+      Y_j:
+      - -191.8004
+      - 2001.54
+      - -8557.205
+      - 19876.7
+      - -27171.92
+      - 21871.03
+      - -9591.577
+      - 1763.672
+      ions:
+        Ca_pp: {}
+        Cl_m:
+          qty: 2
+      low RH: 0.43
+      type: JACOBSON
+    NaCl:
+      MW: 0.0585
+      NW: 2.0
+      ZW: 0.67
+      ions:
+        Cl_m: {}
+      type: EQSAM
+  name: simple sea-salt aerosol water
+  type: SUB_MODEL_ZSR_AEROSOL_WATER
+note: Test data for ZSR aerosol water calculation. Parameters for JACOBSON molality
+  calculation are from Jacobson et al., 1996 Table 2 for NaCl (CaCl2 is used in the
+  test just to test the code when different numbers of cations and anions are present.)
+  Parameters for EQSAM molality calculation are from EQSAM_v03d for NaCl

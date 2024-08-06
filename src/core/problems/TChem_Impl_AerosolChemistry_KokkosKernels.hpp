@@ -40,7 +40,7 @@ struct StiffChemistry {
   using scalar_type = typename ats<value_type>::scalar_type;
   using problem_type = TChem::Impl::AerosolChemistry_Problem<value_type, device_type>;
 
-  // FIXME: let's try first Serial and host_device_type
+  // FIXME: let's try  fisrt host_device_type
   using host_device_type = Tines::UseThisDevice<host_exec_space>::type;
   // using problem_type = AerosolChemistry_Problem<realtype,host_device_type>;
   problem_type _problem;

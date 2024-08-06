@@ -45,9 +45,6 @@ namespace TChem
           /// const data from kinetic model
           const KineticModelNCAR_ConstData<DeviceType>& kmcd,
           const AerosolModel_ConstData<DeviceType>& amcd
-          // ,
-          // const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type,DeviceType>,DeviceType>& cvodes
-
           ) {
     Kokkos::Profiling::pushRegion(profile_name);
     using policy_type = PolicyType;
@@ -59,6 +56,8 @@ namespace TChem
     using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type,DeviceType>;
     const ordinal_type level = 1;
     const ordinal_type per_team_extent = AerosolChemistry_KokkosKernels::getWorkSpaceSize(kmcd,amcd);
+
+
 
     /// this assumes host space
     Kokkos::parallel_for
@@ -86,7 +85,7 @@ namespace TChem
       Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                        per_team_extent);
       auto wptr = work.data();
-      const real_type_1d_view_type ww(wptr, work.extent(0));
+      // const real_type_1d_view_type ww(wptr, work.extent(0));
       const ordinal_type total_n_species = kmcd.nSpec + amcd.nParticles*amcd.nSpec;
       Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
       Impl::StateVector<real_type_1d_view_type> sv_out_at_i(total_n_species,
@@ -119,10 +118,7 @@ namespace TChem
       const real_type_1d_view_type Ys_out = sv_out_at_i.MassFractions();
       const real_type_0d_view_type density_out(sv_out_at_i.DensityPtr());
 
-      const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);
-      // auto vals = cvode.getStateVector();
-      // FIXME: get vals
-      real_type_1d_view_type vals;
+      const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);     
 
       /// problem setup
       const ordinal_type problem_workspace_size = problem_type::getWorkSpaceSize(kmcd,amcd);
@@ -136,6 +132,19 @@ namespace TChem
       auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
       wptr += problem_workspace_size;
 
+      /// temporal var
+      real_type_1d_view_type vals(wptr, m);
+      wptr += m;
+      // Kokkos kernels temporal views. 
+      // FIXME: I need to pass these temp arrays
+      ordinal_type subTemp_dims[4];
+      AerosolChemistry_KokkosKernels::get_subTemp_dims(m, subTemp_dims);
+      real_type_2d_view_type subTemp(wptr, subTemp_dims[0], subTemp_dims[1]);
+      wptr += subTemp_dims[0]*subTemp_dims[1];
+      //
+      real_type_2d_view_type subTemp2(wptr,subTemp_dims[2], subTemp_dims[3]);
+      wptr += subTemp_dims[2]*subTemp_dims[3];
+
       /// error check
       const ordinal_type workspace_used(wptr - work.data()), workspace_extent(work.extent(0));
       if (workspace_used > workspace_extent) {
@@ -143,11 +152,10 @@ namespace TChem
       }
 
       /// time integrator workspace
-      auto tw = real_type_1d_view_type(wptr, workspace_extent - workspace_used);
+      //auto tw = real_type_1d_view_type(wptr, workspace_extent - workspace_used);
 
       /// initialize problem
       problem._fac = fac_at_i;
-      // problem._work_cvode = tw; // time integrator workspace
       problem._work = pw;
       problem._temperature= temperature;
       problem._pressure =pressure;
@@ -163,43 +171,23 @@ namespace TChem
         vals(i) = partYs(i-n_active_gas_species);
       }
 
-      real_type t = t_out_at_i(), dt = 0;
-
-      // FIXME: should I define this problem before? 
+      real_type t = t_out_at_i();
       using ode_type = TChem::Impl::StiffChemistry<real_type,DeviceType>;
-
       ode_type my_ode;
       my_ode._problem = problem;
-      my_ode.neqs = problem.getNumberOfEquations();
+      my_ode.neqs = m;
 
       // FIXME: do I need these copies?
       auto t_start = tadv_at_i._tbeg;
       auto t_end = tadv_at_i._tend;
-      auto _dt = tadv_at_i._dt; 
+      auto dt = tadv_at_i._dt; 
       real_type max_step = (t_end - t_start) / 10;
-      // FIXME: can I use same variablet for in and out? 
-      // FIXME: I need to pass these temp arrays
-      real_type_2d_view_type subTemp;
-      real_type_2d_view_type subTemp2;
+      
 
-
+      // FIXME: can I use same variable for in and out? 
       KokkosODE::Experimental::BDFSolve(my_ode, t_start, t_end, dt, max_step,
                                       vals, vals, subTemp, subTemp2);
 
-
-      // cvode.initialize(t,
-      //      dt_in, dt_min, dt_max,
-      //      tol(0,0), tol(0,1),
-      //      TChem::Impl::ProblemAerosolChemistry_ComputeFunctionCVODE,
-      //      TChem::Impl::ProblemAerosolChemistry_ComputeJacobianCVODE);
-
-      // cvode.setProblem(problem);
-      // for (ordinal_type iter=0;iter<max_num_time_iterations && t<=t_end;++iter) {
-      //   const real_type t_prev = t;
-      //   // FIXME: third argument in cvode.advance must be an input.
-      //   cvode.advance(t_end, t, 1);
-      //   dt = t - t_prev;
-      // }
       t_out_at_i() = t;
       dt_out_at_i() = dt;
 

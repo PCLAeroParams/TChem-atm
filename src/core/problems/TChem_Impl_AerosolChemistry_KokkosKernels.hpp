@@ -33,29 +33,25 @@ namespace TChem {
 namespace Impl {
 
 template<typename MemberType, typename ValueType, typename DeviceType>
-struct StiffChemistry {  
+struct KokkosKernelsODE {  
 
   using value_type = ValueType;
   using device_type = DeviceType;
   using scalar_type = typename ats<value_type>::scalar_type;
   using problem_type = TChem::Impl::AerosolChemistry_Problem<value_type, device_type>;
+  using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
 
-  // FIXME: let's try  fisrt host_device_type
-  using host_device_type = Tines::UseThisDevice<host_exec_space>::type;
-  // using problem_type = AerosolChemistry_Problem<realtype,host_device_type>;
-  using value_type_1d_view_type = Tines::value_type_1d_view<value_type,host_device_type>;
   problem_type problem;
   ordinal_type neqs;
   MemberType member;
 
   KOKKOS_FUNCTION
-  StiffChemistry(const ordinal_type& neqs_,
+  KokkosKernelsODE(const ordinal_type& neqs_,
                  const problem_type& problem_,
                  const MemberType& member_)
       : neqs(neqs_), problem(problem_), member(member_) {}
 
 
-  // template <class vec_type1>
   KOKKOS_FUNCTION void evaluate_function(const double /*t*/,
                                          const double /*dt*/,
                                          const value_type_1d_view_type& y,

@@ -169,7 +169,7 @@ namespace TChem
       }
 
       real_type t = t_out_at_i();
-      TChem::Impl::StiffChemistry my_ode(m, problem, member);
+      Impl::KokkosKernelsODE my_ode(m, problem, member);
 
       // FIXME: do I need these copies?
       auto t_start = 0.0; //tadv_at_i._tbeg;

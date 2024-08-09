@@ -37,18 +37,19 @@ struct KokkosKernelsODE {
 
   using value_type = ValueType;
   using device_type = DeviceType;
+  using member_type = MemberType;
   using scalar_type = typename ats<value_type>::scalar_type;
   using problem_type = TChem::Impl::AerosolChemistry_Problem<value_type, device_type>;
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
 
   problem_type problem;
   ordinal_type neqs;
-  MemberType member;
+  member_type member;
 
   KOKKOS_FUNCTION
   KokkosKernelsODE(const ordinal_type& neqs_,
-                 const problem_type& problem_,
-                 const MemberType& member_)
+                   const problem_type& problem_,
+                   const member_type& member_)
       : neqs(neqs_), problem(problem_), member(member_) {}
 
 

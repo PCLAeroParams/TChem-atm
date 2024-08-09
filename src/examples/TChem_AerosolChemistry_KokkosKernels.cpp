@@ -169,23 +169,30 @@ int main(int argc, char *argv[]) {
     const ordinal_type n_active_vars = total_n_species - kmcd.nConstSpec;
     printf("Number of const species %d \n", kmcd.nConstSpec);
 
-    real_type_2d_view_host num_concentration;
-    amd.scenarioConditionParticles(input_file_particles, nBatch, num_concentration, state_scenario_host);
+    real_type_2d_view_host num_concentration_host;
+    real_type_2d_view_host state_host;
 
-    real_type_2d_view_host state;
+    amd.scenarioConditionParticles(input_file_particles, nBatch, num_concentration_host, state_scenario_host);
+    const auto num_concentration = Kokkos::create_mirror_view(num_concentration_host);
+
+    
+    real_type_2d_view state;
     if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
       // only clone samples if nbacth_files is 1
       printf("-------------------------------------------------------\n");
       printf("--------------------Warning----------------------------\n");
       printf("Using cloned samples ... only for numerical experiments\n");
-      state = real_type_2d_view_host("StateVector Devices", nBatch, stateVecDim);
+      state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
+      state_host = Kokkos::create_mirror_view(state);
       auto state_scenario_host_at_0 = Kokkos::subview(state_scenario_host, 0, Kokkos::ALL);
       auto state_host_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
       Kokkos::deep_copy(state_host_at_0, state_scenario_host_at_0);
       TChem::Test::cloneView(state);
     } else {
       nBatch = nbacth_files;
-      state = state_scenario_host;
+      state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
+      Kokkos::deep_copy(state, state_scenario_host);
+      state_host = Kokkos::create_mirror_view(state);
     }
     printf("Number of nbacth %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,
@@ -247,27 +254,36 @@ int main(int argc, char *argv[]) {
       policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
 
       { /// time integration
-        real_type_1d_view_host t("time", nBatch);
+        real_type_1d_view t("time", nBatch);
         Kokkos::deep_copy(t, tbeg);
-        real_type_1d_view_host dt("delta time", nBatch);
+        real_type_1d_view dt("delta time", nBatch);
         Kokkos::deep_copy(dt, dtmax);
 
-        real_type_2d_view_host tol_time("tol time", number_of_equations, 2);
-        real_type_1d_view_host tol_newton("tol newton", 2);
 
-        real_type_2d_view_host fac("fac", nBatch, number_of_equations);
+
+        real_type_2d_view tol_time("tol time", number_of_equations, 2);
+        real_type_1d_view tol_newton("tol newton", 2);
+
+        real_type_2d_view fac("fac", nBatch, number_of_equations);
+
+        auto tol_time_host = Kokkos::create_mirror_view(tol_time);
+        auto tol_newton_host = Kokkos::create_mirror_view(tol_newton);
+
 
 
 
         /// tune tolerence
         {
           for (ordinal_type i = 0, iend = tol_time.extent(0); i < iend; ++i) {
-            tol_time(i, 0) = atol_time;
-            tol_time(i, 1) = rtol_time;
+            tol_time_host(i, 0) = atol_time;
+            tol_time_host(i, 1) = rtol_time;
           }
-          tol_newton(0) = atol_newton;
-          tol_newton(1) = rtol_newton;
+          tol_newton_host(0) = atol_newton;
+          tol_newton_host(1) = rtol_newton;
         }
+
+        Kokkos::deep_copy(tol_time, tol_time_host);
+        Kokkos::deep_copy(tol_newton, tol_newton_host);
 
         time_advance_type tadv_default;
         tadv_default._tbeg = tbeg;
@@ -280,8 +296,13 @@ int main(int argc, char *argv[]) {
             num_time_iterations_per_interval;
         tadv_default._jacobian_interval = jacobian_interval;
 
-        time_advance_type_1d_view_host tadv("tadv", nBatch);
+        time_advance_type_1d_view tadv("tadv", nBatch);
         Kokkos::deep_copy(tadv, tadv_default);
+
+        real_type_1d_view_host t_host;
+        real_type_1d_view_host dt_host;
+        t_host = real_type_1d_view_host("time host", nBatch);
+        dt_host = real_type_1d_view_host("dt host", nBatch);
 
         ordinal_type iter = 0;
 
@@ -330,7 +351,14 @@ int main(int argc, char *argv[]) {
           fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iter,
                   t_device_batch);
 
-          writeState(iter, t, dt, state, fout);
+
+
+          Kokkos::deep_copy(dt_host, dt);
+          Kokkos::deep_copy(t_host, t);
+          Kokkos::deep_copy(state_host, state);
+
+
+          writeState(iter, t_host, dt_host, state_host, fout);
 
           /// carry over time and dt computed in this step
           tsum = zero;

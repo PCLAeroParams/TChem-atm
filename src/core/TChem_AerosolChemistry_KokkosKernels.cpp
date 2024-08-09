@@ -151,9 +151,6 @@ namespace TChem
         Kokkos::abort("Error Ignition ZeroD Sacado : workspace used is larger than it is provided\n");
       }
 
-      /// time integrator workspace
-      //auto tw = real_type_1d_view_type(wptr, workspace_extent - workspace_used);
-
       /// initialize problem
       problem._fac = fac_at_i;
       problem._work = pw;
@@ -178,17 +175,18 @@ namespace TChem
       my_ode.neqs = m;
 
       // FIXME: do I need these copies?
-      auto t_start = tadv_at_i._tbeg;
-      auto t_end = tadv_at_i._tend;
+      auto t_start = 0.0; //tadv_at_i._tbeg;
       auto dt = tadv_at_i._dt; 
-      // I got this from example code. 
+      auto t_end = dt;//adv_at_i._tend;
+      
+      // I got this from the example code. 
       real_type max_step = (t_end - t_start) / 10;
       
       // FIXME: can I use same variable for in and out? 
       KokkosODE::Experimental::BDFSolve(my_ode, t_start, t_end, dt, max_step,
                                       vals, vals, subTemp, subTemp2);
 
-      t_out_at_i() = t;
+      t_out_at_i() += dt;
       dt_out_at_i() = dt;
 
       // active gas species

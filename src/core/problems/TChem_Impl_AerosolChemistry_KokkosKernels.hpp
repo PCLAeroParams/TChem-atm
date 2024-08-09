@@ -43,19 +43,20 @@ struct StiffChemistry {
   // FIXME: let's try  fisrt host_device_type
   using host_device_type = Tines::UseThisDevice<host_exec_space>::type;
   // using problem_type = AerosolChemistry_Problem<realtype,host_device_type>;
+  using value_type_1d_view_type = Tines::value_type_1d_view<value_type,host_device_type>;
   problem_type _problem;
   int neqs;
 
 
-  template <class vec_type1, class vec_type2>
+  // template <class vec_type1>
   KOKKOS_FUNCTION void evaluate_function(const double /*t*/,
                                          const double /*dt*/,
-                                         const vec_type1& y,
-                                         const vec_type2& f) const {
+                                         const value_type_1d_view_type& y,
+                                         const value_type_1d_view_type& f) const {
    
   // FIXME: use memger in device. 
   const auto member = Tines::HostSerialTeamMember();  
-    _problem.computeFunction(member,
+  _problem.computeFunction(member,
                              y,
                              f);
   }
@@ -65,7 +66,7 @@ struct StiffChemistry {
                                          const double /*dt*/, const vec_type& y,
                                          const mat_type& jac) const {
   
-  // FIXME: use memger in device. 
+  // FIXME: use member in device. 
   const auto member = Tines::HostSerialTeamMember();  
   _problem.computeJacobian(member,
              y,

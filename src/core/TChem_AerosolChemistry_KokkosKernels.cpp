@@ -239,12 +239,34 @@ namespace TChem
            /// const data from kinetic model
            const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd,
            const AerosolModel_ConstData<interf_host_device_type>& amcd
-           // ,
-           // const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type, host_device_type>, host_device_type>& cvodes
            ) {
     const std::string profile_name = "TChem::AerosolChemistry::runHostBatch::kmcd array";
     // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.
     using value_type = real_type;
     TCHEM_RUN_AEROSOL_CHEMISTRY();
   }// namespace TChem
+
+    void
+  AerosolChemistry_KokkosKernels::runDeviceBatch( /// thread block size
+           typename UseThisTeamPolicy<exec_space>::type& policy,
+           /// input
+           const real_type_2d_view& tol,
+           const real_type_2d_view& fac,
+           const time_advance_type_1d_view& tadv,
+           const real_type_2d_view& state,
+           const real_type_2d_view& number_conc,
+           /// output
+           const real_type_1d_view& t_out,
+           const real_type_1d_view& dt_out,
+           const real_type_2d_view& state_out,
+           /// const data from kinetic model
+           const KineticModelNCAR_ConstData<device_type>& kmcd,
+           const AerosolModel_ConstData<device_type>& amcd
+           ) {
+    const std::string profile_name = "TChem::AerosolChemistry::runHostBatch::kmcd array";
+    // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.
+    using value_type = real_type;
+    TCHEM_RUN_AEROSOL_CHEMISTRY();
+  }// namespace TChem
+
 }

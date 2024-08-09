@@ -32,7 +32,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 namespace TChem {
 namespace Impl {
 
-template<typename ValueType, typename DeviceType>
+template<typename MemberType, typename ValueType, typename DeviceType>
 struct StiffChemistry {  
 
   using value_type = ValueType;
@@ -44,8 +44,15 @@ struct StiffChemistry {
   using host_device_type = Tines::UseThisDevice<host_exec_space>::type;
   // using problem_type = AerosolChemistry_Problem<realtype,host_device_type>;
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,host_device_type>;
-  problem_type _problem;
-  int neqs;
+  problem_type problem;
+  ordinal_type neqs;
+  MemberType member;
+
+  KOKKOS_FUNCTION
+  StiffChemistry(const ordinal_type& neqs_,
+                 const problem_type& problem_,
+                 const MemberType& member_)
+      : neqs(neqs_), problem(problem_), member(member_) {}
 
 
   // template <class vec_type1>
@@ -53,10 +60,7 @@ struct StiffChemistry {
                                          const double /*dt*/,
                                          const value_type_1d_view_type& y,
                                          const value_type_1d_view_type& f) const {
-   
-  // FIXME: use memger in device. 
-  const auto member = Tines::HostSerialTeamMember();  
-  _problem.computeFunction(member,
+  problem.computeFunction(member,
                              y,
                              f);
   }
@@ -65,10 +69,8 @@ struct StiffChemistry {
   KOKKOS_FUNCTION void evaluate_jacobian(const double /*t*/,
                                          const double /*dt*/, const vec_type& y,
                                          const mat_type& jac) const {
-  
-  // FIXME: use member in device. 
-  const auto member = Tines::HostSerialTeamMember();  
-  _problem.computeJacobian(member,
+   
+  problem.computeJacobian(member,
              y,
              jac);
               

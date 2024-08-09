@@ -169,10 +169,7 @@ namespace TChem
       }
 
       real_type t = t_out_at_i();
-      using ode_type = TChem::Impl::StiffChemistry<real_type,DeviceType>;
-      ode_type my_ode;
-      my_ode._problem = problem;
-      my_ode.neqs = m;
+      TChem::Impl::StiffChemistry my_ode(m, problem, member);
 
       // FIXME: do I need these copies?
       auto t_start = 0.0; //tadv_at_i._tbeg;

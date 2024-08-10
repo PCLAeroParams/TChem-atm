@@ -263,7 +263,7 @@ namespace TChem
            const KineticModelNCAR_ConstData<device_type>& kmcd,
            const AerosolModel_ConstData<device_type>& amcd
            ) {
-    const std::string profile_name = "TChem::AerosolChemistry::runHostBatch::kmcd array";
+    const std::string profile_name = "TChem::AerosolChemistry::runDeviceBatch::kmcd array";
     // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.
     using value_type = real_type;
     TCHEM_RUN_AEROSOL_CHEMISTRY();

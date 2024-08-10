@@ -43,7 +43,8 @@ struct AerosolChemistry_KokkosKernels
   using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type,host_device_type>;
   using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type,host_device_type>;
 
-   static inline  void get_subTemp_dims(ordinal_type neqs, ordinal_type dims[4])
+   KOKKOS_INLINE_FUNCTION
+   static  void get_subTemp_dims(ordinal_type neqs, ordinal_type dims[4])
    {
       // mat_type temp("buffer1", neqs, 23 + 2 * neqs + 4, num_odes),
       // temp2("buffer2", 6, 7, num_odes);

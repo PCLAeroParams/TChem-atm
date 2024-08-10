@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
       per_team_extent = TChem::AerosolChemistry_KokkosKernels::getWorkSpaceSize(kmcd, amcd);
 
       const ordinal_type per_team_scratch =
-          TChem::Scratch<real_type_1d_view_host>::shmem_size(per_team_extent);
+          TChem::Scratch<real_type_1d_view>::shmem_size(per_team_extent);
       policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
 
       { /// time integration
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
 
 
       timer.reset();
-       TChem::AerosolChemistry_KokkosKernels::runHostBatch(
+       TChem::AerosolChemistry_KokkosKernels::runDeviceBatch(
               policy, tol_time, fac, tadv, state, num_concentration, t, dt, state,
               kmcd, amcd);
       exec_space_instance.fence();
@@ -352,7 +352,7 @@ int main(int argc, char *argv[]) {
           /// carry over time and dt computed in this step
           tsum = zero;
           Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<TChem::host_exec_space>(0, nBatch),
+              Kokkos::RangePolicy<TChem::exec_space>(0, nBatch),
               KOKKOS_LAMBDA(const ordinal_type &i, real_type &update) {
                 tadv(i)._tbeg = t(i);
                 tadv(i)._dt = dt(i);

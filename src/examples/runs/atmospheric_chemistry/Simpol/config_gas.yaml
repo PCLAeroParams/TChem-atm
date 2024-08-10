@@ -9,10 +9,12 @@ environmental_conditions:
     initial_value: [272.5]
     units: K
 initial_state:
-  ethanol:
+  ethanol: 
     initial_value: [0.1]
-  M:
+    units: mol m-3
+  M: 
     initial_value: [0.0]
+    units: mol m-3
 model_info:
   chemistry_time_step:
     units: sec
@@ -29,7 +31,7 @@ model_info:
 reactions:
 constant_species:
 - description: tracer-CONSTANT
-  name: M
+  name: M 
 species:
-- description: ETHANOL
-  name: ethanol
+- description: ETHANOL 
+  name: ethanol 

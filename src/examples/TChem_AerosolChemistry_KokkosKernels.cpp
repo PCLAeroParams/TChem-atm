@@ -321,7 +321,7 @@ int main(int argc, char *argv[]) {
 
 
         fprintf(fout, "\n");
-        writeState(-1, t, dt, state, fout);
+        writeState(-1, t_host, dt_host, state_host, fout);
 
         real_type tsum(0);
         Kokkos::Timer timer;

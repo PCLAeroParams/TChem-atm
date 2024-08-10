@@ -166,7 +166,6 @@ int main(int argc, char *argv[]) {
     printf("conditions parsing ...\n");
     TChem::AtmChemistry::setScenarioConditions(inputFile,
      speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
-    const ordinal_type n_active_vars = total_n_species - kmcd.nConstSpec;
     printf("Number of const species %d \n", kmcd.nConstSpec);
 
     real_type_2d_view_host num_concentration_host;
@@ -210,16 +209,6 @@ int main(int argc, char *argv[]) {
         fprintf(fout, "\n");
       }
 
-    };
-
-    auto printState = [](const time_advance_type _tadv, const real_type _t,
-                         const real_type_1d_view_host _state_at_i) {
-      /// iter, t, dt, rho, pres, temp, Ys ....
-      printf("%e %e %e %e %e", _t, _t - _tadv._tbeg, _state_at_i(0),
-             _state_at_i(1), _state_at_i(2));
-      for (ordinal_type k = 3, kend = _state_at_i.extent(0); k < kend; ++k)
-        printf(" %e", _state_at_i(k));
-      printf("\n");
     };
 
     FILE *fout_times = fopen(outputFileTimes.c_str(), "w");

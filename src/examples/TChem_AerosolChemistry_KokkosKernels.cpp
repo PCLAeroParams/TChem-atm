@@ -172,8 +172,9 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host state_host;
 
     amd.scenarioConditionParticles(input_file_particles, nBatch, num_concentration_host, state_scenario_host);
-    const auto num_concentration = Kokkos::create_mirror_view(num_concentration_host);
 
+    real_type_2d_view num_concentration("num_concentration",nBatch, amd.nParticles_);
+    Kokkos::deep_copy(num_concentration, num_concentration_host);
     
     real_type_2d_view state;
     if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {

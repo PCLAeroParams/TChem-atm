@@ -171,10 +171,12 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host num_concentration_host;
     real_type_2d_view_host state_host;
 
-    amd.scenarioConditionParticles(input_file_particles, nBatch, num_concentration_host, state_scenario_host);
+    
+    // scenario particles
+    amd.scenarioConditionParticles(input_file_particles, nbacth_files, num_concentration_host, state_scenario_host);
 
-    real_type_2d_view num_concentration("num_concentration",nBatch, amd.nParticles_);
-    Kokkos::deep_copy(num_concentration, num_concentration_host);
+    real_type_2d_view num_concentration;
+    
     
     real_type_2d_view state;
     if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
@@ -185,14 +187,25 @@ int main(int argc, char *argv[]) {
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       state_host = Kokkos::create_mirror_view(state);
       auto state_scenario_host_at_0 = Kokkos::subview(state_scenario_host, 0, Kokkos::ALL);
-      auto state_host_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
-      Kokkos::deep_copy(state_host_at_0, state_scenario_host_at_0);
+      auto state_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
+      Kokkos::deep_copy(state_at_0, state_scenario_host_at_0);
       TChem::Test::cloneView(state);
+      //scenario particles
+      auto num_concentration_host_at_0 = Kokkos::subview(num_concentration_host, 0, Kokkos::ALL);
+      num_concentration = real_type_2d_view("num_concentration", nBatch, amd.nParticles_);
+      auto num_concentration_at_0 = Kokkos::subview(num_concentration, 0, Kokkos::ALL);
+      Kokkos::deep_copy(num_concentration_at_0, num_concentration_host_at_0);
+      TChem::Test::cloneView(num_concentration);
+
     } else {
       nBatch = nbacth_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
       state_host = Kokkos::create_mirror_view(state);
+
+      // scenario particles 
+      num_concentration = real_type_2d_view("num_concentration", nBatch, amd.nParticles_);
+      Kokkos::deep_copy(num_concentration, num_concentration_host);
     }
     printf("Number of nbacth %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,

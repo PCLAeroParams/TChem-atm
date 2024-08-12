@@ -174,8 +174,8 @@ int main(int argc, char *argv[]) {
     const ordinal_type n_active_vars = total_n_species - kmcd.nConstSpec;
     printf("Number of const species %d \n", kmcd.nConstSpec);
 
-    real_type_2d_view_host num_concentration;
-    amd.scenarioConditionParticles(input_file_particles, nBatch, num_concentration, state_scenario_host);
+    real_type_2d_view_host num_concentration_scenario, num_concentration;
+    amd.scenarioConditionParticles(input_file_particles, nbacth_files, num_concentration_scenario, state_scenario_host);
 
     real_type_2d_view_host state;
     if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
@@ -188,9 +188,21 @@ int main(int argc, char *argv[]) {
       auto state_host_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
       Kokkos::deep_copy(state_host_at_0, state_scenario_host_at_0);
       TChem::Test::cloneView(state);
+
+      //scenario particles
+      auto num_concentration_host_at_0 = Kokkos::subview(num_concentration_scenario, 0, Kokkos::ALL);
+      num_concentration = real_type_2d_view_host("num_concentration", nBatch, amd.nParticles_);
+      auto num_concentration_at_0 = Kokkos::subview(num_concentration, 0, Kokkos::ALL);
+      Kokkos::deep_copy(num_concentration_at_0, num_concentration_host_at_0);
+      TChem::Test::cloneView(num_concentration);
+
     } else {
       nBatch = nbacth_files;
       state = state_scenario_host;
+
+      // scenario particles 
+      num_concentration = real_type_2d_view_host("num_concentration", nBatch, amd.nParticles_);
+      Kokkos::deep_copy(num_concentration, num_concentration_scenario);
     }
     printf("Number of nbacth %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,

@@ -4,14 +4,26 @@ authors:
   - family-names: Kim
     given-names: Kyungjoo
   - family-names: Diaz-Ibarra
+    given-names: Oscar H. 
+  - family-names: Safta
+    given-names: Cosmin  
+title: "TChem: A performance portable parallel software toolkit for complex kinetic mechanisms"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: Kim
+    given-names: Kyungjoo
+  - family-names: Diaz-Ibarra
     given-names: Oscar H.
   - family-names: Najm
     given-names: Habib N. 
   - family-names: Zádor
     given-names: Judit  
   - family-names: Safta
-    given-names: Cosmin     
-title: "TChem: A performance portable parallel software toolkit for complex kinetic mechanisms"
-journal : "Computer Physics Communications"
-identifiers:
-  - type: article
+    given-names: Cosmin 
+  doi: https://doi.org/10.1016/j.cpc.2022.108628
+  journal: "Computer Physics Communications"
+  month: 4
+  title: "TChem: A performance portable parallel software toolkit for complex kinetic mechanisms"
+  volume: 285
+  year: 2023  

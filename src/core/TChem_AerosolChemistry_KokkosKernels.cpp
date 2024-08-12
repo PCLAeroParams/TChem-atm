@@ -56,16 +56,11 @@ namespace TChem
     using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type,DeviceType>;
     const ordinal_type level = 1;
     const ordinal_type per_team_extent = AerosolChemistry_KokkosKernels::getWorkSpaceSize(kmcd,amcd);
-
-
-
-    /// this assumes host space
     Kokkos::parallel_for
       (profile_name,
        policy,
        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
   const ordinal_type i = member.league_rank();
-        // auto cvode = cvodes(i);
 
   const auto tadv_at_i = tadv(i);
   const real_type t_end = tadv_at_i._tend;
@@ -135,8 +130,7 @@ namespace TChem
       /// temporal var
       real_type_1d_view_type vals(wptr, m);
       wptr += m;
-      // Kokkos kernels temporal views. 
-      // FIXME: I need to pass these temp arrays
+
       ordinal_type subTemp_dims[4];
       AerosolChemistry_KokkosKernels::get_subTemp_dims(m, subTemp_dims);
       real_type_2d_view_type subTemp(wptr, subTemp_dims[0], subTemp_dims[1]);
@@ -241,7 +235,7 @@ namespace TChem
            const AerosolModel_ConstData<interf_host_device_type>& amcd
            ) {
     const std::string profile_name = "TChem::AerosolChemistry::runHostBatch::kmcd array";
-    // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.
+    // Note: we do not support SACADO and Kokkos-kernels. Thus, BDF::KokkosKernel solver uses a numerical Jacobian.
     using value_type = real_type;
     TCHEM_RUN_AEROSOL_CHEMISTRY();
   }// namespace TChem
@@ -264,7 +258,6 @@ namespace TChem
            const AerosolModel_ConstData<device_type>& amcd
            ) {
     const std::string profile_name = "TChem::AerosolChemistry::runDeviceBatch::kmcd array";
-    // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.
     using value_type = real_type;
     TCHEM_RUN_AEROSOL_CHEMISTRY();
   }// namespace TChem

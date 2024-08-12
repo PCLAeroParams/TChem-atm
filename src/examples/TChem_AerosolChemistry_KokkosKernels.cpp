@@ -174,11 +174,10 @@ int main(int argc, char *argv[]) {
     
     // scenario particles
     amd.scenarioConditionParticles(input_file_particles, nbacth_files, num_concentration_host, state_scenario_host);
-
+    
     real_type_2d_view num_concentration;
-    
-    
     real_type_2d_view state;
+
     if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
       // only clone samples if nbacth_files is 1
       printf("-------------------------------------------------------\n");
@@ -344,11 +343,11 @@ int main(int argc, char *argv[]) {
              ++iter) {
 
 
-      timer.reset();
-       TChem::AerosolChemistry_KokkosKernels::runDeviceBatch(
+          timer.reset();
+          TChem::AerosolChemistry_KokkosKernels::runDeviceBatch(
               policy, tol_time, fac, tadv, state, num_concentration, t, dt, state,
               kmcd, amcd);
-      exec_space_instance.fence();
+          exec_space_instance.fence();
 
           const real_type t_device_batch = timer.seconds();
           fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iter,

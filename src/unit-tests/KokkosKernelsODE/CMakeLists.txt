@@ -27,4 +27,5 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
 # Add a test to validate the output data with the reference data
 ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT} 
     -r_file=${OUTPUT_NAME}
-    -t_file=references/${OUTPUT_NAME})
+    -t_file=references/${OUTPUT_NAME}
+    -check_norms=True)

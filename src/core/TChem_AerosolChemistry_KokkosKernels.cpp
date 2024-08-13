@@ -131,6 +131,12 @@ namespace TChem
       real_type_1d_view_type vals(wptr, m);
       wptr += m;
 
+      real_type_1d_view_type rhs(wptr, m);
+      wptr += m;
+
+      real_type_1d_view_type update(wptr, m);
+      wptr += m;
+
       ordinal_type subTemp_dims[4];
       AerosolChemistry_KokkosKernels::get_subTemp_dims(m, subTemp_dims);
       real_type_2d_view_type subTemp(wptr, subTemp_dims[0], subTemp_dims[1]);
@@ -174,10 +180,10 @@ namespace TChem
       //FIXME: hard-coded value.
       // I got this from the example code. 
       real_type max_step = (t_end - t_start) / 10;
-      
+     
       // FIXME: can I use same variable for in and out? 
       KokkosODE::Experimental::BDFSolve(my_ode, t_start, t_end, dt, max_step,
-                                      vals, vals, subTemp, subTemp2);
+                                      vals, vals, subTemp, subTemp2, rhs, update);
 
       t_out_at_i() += dt;
       dt_out_at_i() = dt;

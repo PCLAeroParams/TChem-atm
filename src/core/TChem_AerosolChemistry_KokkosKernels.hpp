@@ -70,7 +70,7 @@ struct AerosolChemistry_KokkosKernels
     ordinal_type subTemp_dims[4]; 
     get_subTemp_dims(m, subTemp_dims);
 
-    return work_size + m +  subTemp_dims[0]*subTemp_dims[1] + subTemp_dims[2]*subTemp_dims[3];
+    return work_size + 3*m +  subTemp_dims[0]*subTemp_dims[1] + subTemp_dims[2]*subTemp_dims[3];
 
   }
 

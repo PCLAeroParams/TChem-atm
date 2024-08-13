@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
       nBatch = nbacth_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
-      state_host = Kokkos::create_mirror_view(state);
+      state_host = state_scenario_host;
 
       // scenario particles 
       num_concentration = real_type_2d_view("num_concentration", nBatch, amd.nParticles_);

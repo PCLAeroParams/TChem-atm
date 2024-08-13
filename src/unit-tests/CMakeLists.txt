@@ -5,7 +5,6 @@ SET(TCHEM_ATM_TEST_SOURCES "")
 LIST(APPEND TCHEM_ATM_TEST_SOURCES
      TChem_Test_Driver.cpp
      TChem_Test_Simpol_RHS.cpp
-     TChem_Test_KokkosKernelsODE.cpp
     )
 
 FOREACH(TCHEM_ATM_TEST_SOURCES ${TCHEM_ATM_TEST_SOURCES} )
@@ -25,3 +24,12 @@ FILE(COPY references
 
 INSTALL(DIRECTORY references
         DESTINATION ${CMAKE_INSTALL_PREFIX}/unit-tests)
+
+FILE(COPY scripts
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+INSTALL(DIRECTORY scripts
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/unit-tests)        
+
+
+ADD_SUBDIRECTORY(KokkosKernelsODE)

@@ -16,7 +16,7 @@ RUN apt-get update \
         git \
         lcov \
         make \
-        python3.8 \
+        python3 \
         python3-pip \
         libopenblas-dev \
         pkg-config \

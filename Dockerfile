@@ -16,9 +16,13 @@ RUN apt-get update \
         git \
         lcov \
         make \
+        python3.8 \
+        python3-pip \
         libopenblas-dev \
         pkg-config \
         ca-certificates
+
+RUN pip install numpy
 
 COPY . /tchem_dir/
 

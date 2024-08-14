@@ -235,7 +235,8 @@ int main(int argc, char *argv[]) {
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
       /// team policy
-      policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
+      // The Kokkos-kernels BDF solver is designed for range policy. Therefore, I will use a team size of 1 and a vector size of 1.
+      policy_type policy(exec_space_instance, nBatch, 1, 1);
 
 
         ordinal_type number_of_equations(0);

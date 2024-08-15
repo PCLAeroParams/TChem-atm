@@ -21,8 +21,8 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
     --aerofile=${INPUT_PATH}/test_SIMPOL_phase_transfer.yaml 
     --inputfile_particles=${INPUT_PATH}/scenario_conditions_particle.yaml 
     --outputfile=${OUTPUT_NAME} 
-    --dtmin=10 
-    --tend=50)
+    --dtmin=1 
+    --tend=5)
 
 # Add a test to validate the output data with the reference data
 ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT} 

@@ -28,7 +28,32 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
     --tend=5)
 
 # Add a test to validate the output data with the reference data
-ADD_TEST(validate_${TEST_NAME} python ${VALIDATION_SCRIPT} 
+ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT} 
+    -r_file=${OUTPUT_NAME}
+    -t_file=references/${OUTPUT_NAME}
+    -check_norms=True
+    =error=${PASSING_ERROR})
+
+
+## Unit test with batched test
+
+# Set the output file name
+SET(TEST_NAME batched_AerosolChemistry_KokkosKernels)
+SET(OUTPUT_NAME batched_full_gas.dat)
+
+# Add a test to execute the example code
+ADD_TEST(run_${TEST_NAME} ${EXE_NAME} 
+    --chemfile=${INPUT_PATH}/config_gas.yaml 
+    --aerofile=${INPUT_PATH}/test_SIMPOL_phase_transfer.yaml 
+    --inputfile_particles=${INPUT_PATH}/scenario_conditions_particle.yaml 
+    --outputfile=${OUTPUT_NAME} 
+    --dtmin=1 
+    --tend=5
+    --use_cloned_samples=true 
+    --batch_size=3 )
+
+# Add a test to validate the output data with the reference data
+ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT} 
     -r_file=${OUTPUT_NAME}
     -t_file=references/${OUTPUT_NAME}
     -check_norms=True

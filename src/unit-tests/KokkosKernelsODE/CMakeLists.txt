@@ -12,6 +12,9 @@ SET(INPUT_PATH ../../examples/runs/atmospheric_chemistry/Simpol)
 # Set the validation script path
 SET(VALIDATION_SCRIPT ../scripts/compare_tchem.py)
 
+# Threshold error for the passing test
+SET(PASSING_ERROR 1e-8)
+
 # Set the output file name
 SET(OUTPUT_NAME full_gas.dat)
 
@@ -25,7 +28,8 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
     --tend=5)
 
 # Add a test to validate the output data with the reference data
-ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT} 
+ADD_TEST(validate_${TEST_NAME} python ${VALIDATION_SCRIPT} 
     -r_file=${OUTPUT_NAME}
     -t_file=references/${OUTPUT_NAME}
-    -check_norms=True)
+    -check_norms=True
+    =error=${PASSING_ERROR})

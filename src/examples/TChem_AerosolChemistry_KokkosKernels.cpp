@@ -235,8 +235,8 @@ int main(int argc, char *argv[]) {
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
       /// team policy
-      // The Kokkos-kernels BDF solver is designed for range policy. Therefore, I will use a team size of 1 and a vector size of 1.
-      policy_type policy(exec_space_instance, nBatch, 1, 1);
+      // The Kokkos-kernels BDF solver is designed for range policy. Therefore, I will use a team size of 1.
+      policy_type policy(exec_space_instance, nBatch, 1);
 
 
         ordinal_type number_of_equations(0);
@@ -262,8 +262,6 @@ int main(int argc, char *argv[]) {
         real_type_1d_view dt("delta time", nBatch);
         Kokkos::deep_copy(dt, dtmax);
 
-
-
         real_type_2d_view tol_time("tol time", number_of_equations, 2);
         real_type_1d_view tol_newton("tol newton", 2);
 
@@ -271,9 +269,6 @@ int main(int argc, char *argv[]) {
 
         auto tol_time_host = Kokkos::create_mirror_view(tol_time);
         auto tol_newton_host = Kokkos::create_mirror_view(tol_newton);
-
-
-
 
         /// tune tolerence
         {

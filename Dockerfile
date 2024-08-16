@@ -22,8 +22,7 @@ RUN apt-get update \
         pkg-config \
         ca-certificates
 
-RUN pip install numpy \
-    pip pip install h5py 
+RUN pip install numpy h5py 
 
 COPY . /tchem_dir/
 

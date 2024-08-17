@@ -80,7 +80,6 @@ namespace TChem
       Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                        per_team_extent);
       auto wptr = work.data();
-      const real_type_1d_view_type ww(wptr, work.extent(0));
       const ordinal_type total_n_species = kmcd.nSpec + amcd.nParticles*amcd.nSpec;
       Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
       Impl::StateVector<real_type_1d_view_type> sv_out_at_i(total_n_species,
@@ -121,7 +120,8 @@ namespace TChem
       /// temporal var
       real_type_1d_view_type vals(wptr, m);
       wptr += m;
-
+      const real_type_1d_view_type ww(wptr, work.extent(0)-m);
+      wptr += (work.extent(0)-m);
 
       /// error check
       const ordinal_type workspace_used(wptr - work.data()), workspace_extent(work.extent(0));
@@ -142,8 +142,8 @@ namespace TChem
       Impl::AerosolChemistry<ValueType,DeviceType>;
 
       aerosol_chemistry_type::team_invoke(member,
-                                              jacobian_interval,
-                                              max_num_newton_iterations,
+                                          jacobian_interval,
+                                          max_num_newton_iterations,
                                           max_num_time_iterations,
                                           tol_newton,
                                           tol_time,

@@ -39,7 +39,7 @@ ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
 ## Unit test with batched test
 
 # Set the output file name
-SET(TEST_NAME batched_AerosolChemistry_KokkosKernels)
+SET(TEST_NAME batched_AerosolChemistry)
 SET(OUTPUT_NAME_TEST batched_full_gas.dat)
 SET(OUTPUT_NAME_REF batched_full_gas.hdf5)
 
@@ -64,7 +64,7 @@ ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
 
 # 
 # Set the output file name
-SET(TEST_NAME batched_CB5SimpolAerosolChemistry_KokkosKernels)
+SET(TEST_NAME batched_CB5SimpolAerosolChemistry)
 SET(OUTPUT_NAME_TEST batched_cb_full_gas.dat)
 SET(OUTPUT_NAME_REF batched_cb_full_gas.hdf5)
 

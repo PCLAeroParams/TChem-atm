@@ -191,6 +191,8 @@ int main(int argc, char *argv[]) {
       auto state_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
       Kokkos::deep_copy(state_at_0, state_scenario_host_at_0);
       TChem::Test::cloneView(state);
+      //make sure to copy state to host view. 
+      Kokkos::deep_copy(state_host, state);
       //scenario particles
       auto num_concentration_host_at_0 = Kokkos::subview(num_concentration_host, 0, Kokkos::ALL);
       num_concentration = real_type_2d_view("num_concentration", nBatch, amd.nParticles_);

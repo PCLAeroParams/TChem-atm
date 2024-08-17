@@ -23,6 +23,9 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #define __TCHEM_IMPL_SIMPOL_CONSTANT_HPP__
 
 #include "TChem_Util.hpp"
+#include "TChem_KineticModelData.hpp"
+#include "TChem_AerosolModelData.hpp"
+
 namespace TChem {
 namespace Impl {
   template<typename ValueType, typename DeviceType>

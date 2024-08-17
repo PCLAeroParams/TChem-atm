@@ -86,7 +86,7 @@ struct AerosolChemistry
     /// input (initial condition)
     const real_type& temperature,
     const real_type& pressure,
-    const real_type_1d_view& number_conc,
+    const real_type_1d_view_type& number_conc,
     const real_type_1d_view_type& const_vals,
     const real_type_1d_view_type& vals, /// mass fraction (kmcd.nSpec)
     /// output (final output conditions)

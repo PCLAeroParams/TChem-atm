@@ -136,16 +136,14 @@ int main(int argc, char *argv[]) {
     TChem::exec_space().print_configuration(std::cout, detail);
     TChem::host_exec_space().print_configuration(std::cout, detail);
 
-    using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
-
     /// construct kmd and use the view for testing
     printf("kmd parsing ...\n");
     TChem::KineticModelData kmd(chemFile);
-    const auto kmcd = TChem::createNCAR_KineticModelConstData<device_type>(kmd);
+    const auto kmcd = TChem::createNCAR_KineticModelConstData<TChem::interf_device_type>(kmd);
 
     printf("amd parsing ...\n");
     TChem::AerosolModelData amd(aeroFile, kmd);
-    const auto amcd = TChem::create_AerosolModelConstData<device_type>(amd);
+    const auto amcd = TChem::create_AerosolModelConstData<TChem::interf_device_type>(amd);
 
     const ordinal_type total_n_species =kmcd.nSpec + amcd.nSpec * amcd.nParticles;
     const ordinal_type stateVecDim =
@@ -247,7 +245,7 @@ int main(int argc, char *argv[]) {
 
         using problem_type =
             TChem::Impl::AerosolChemistry_Problem<real_type,
-                                                          device_type>;
+                                                          TChem::interf_device_type>;
         number_of_equations = problem_type::getNumberOfTimeODEs(kmcd, amcd);
 
 

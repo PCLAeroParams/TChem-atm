@@ -39,5 +39,5 @@ ADD_TEST(validate_CB05CL_AE5_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
     -r_file=references/${OUTPUT_NAME_REF}
     -t_file=${OUTPUT_NAME_TEST}
     -check_norms=True
-    =error=${PASSING_ERROR})
+    -error=${PASSING_ERROR})
     

@@ -34,7 +34,7 @@ ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
     -r_file=references/${OUTPUT_NAME_REF}
     -t_file=${OUTPUT_NAME_TEST}
     -check_norms=True
-    =error=${PASSING_ERROR})
+    -error=${PASSING_ERROR})
 
 
 ## Unit test with batched test
@@ -61,7 +61,7 @@ ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
     -r_file=references/${OUTPUT_NAME_REF}
     -t_file=${OUTPUT_NAME_TEST}
     -check_norms=True
-    =error=${PASSING_ERROR})
+    -error=${PASSING_ERROR})
 
 
 # 
@@ -93,5 +93,5 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
 #    -r_file=references/${OUTPUT_NAME_REF}
 #    -t_file=${OUTPUT_NAME_TEST}
 #    -check_norms=True
-#    =error=${PASSING_ERROR})
+#    -error=${PASSING_ERROR})
 

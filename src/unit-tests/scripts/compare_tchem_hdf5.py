@@ -31,6 +31,8 @@ check_norms=args[0].check_norms
 error_threshold=args[0].error_threshold
 ref_file = args[0].ref_file
 test_file= args[0].test_file
+## We consider any number smaller than small_number to be extremely small.
+small_number=1e-23
 
 with h5py.File(ref_file, 'r') as hdf:
     ref = hdf['ref'][:]
@@ -57,8 +59,8 @@ if check_norms:
             pass_all_tests[[i_out]] = True
             continue
         max4norm = 1.0
-        ## Avoid division by zero.
-        if ref_L2[[i_out]] != 0.0:
+        ## Avoid division by zero or very-small numbers.
+        if ref_L2[[i_out]] > small_number:
             max4norm = ref_L2[[i_out]]
         rel_error = L1[i_out]/ max4norm
         print("L1 rel_error",rel_error)

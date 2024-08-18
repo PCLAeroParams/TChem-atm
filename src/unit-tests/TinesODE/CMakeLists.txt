@@ -88,10 +88,9 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
     --batch_size=3 )
 
 # Add a test to validate the output data with the reference data
-#unit test is not working. It is getting DIFFs in both host and device. 
-#ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT} 
-#    -r_file=references/${OUTPUT_NAME_REF}
-#    -t_file=${OUTPUT_NAME_TEST}
-#    -check_norms=True
-#    -error=${PASSING_ERROR})
+ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT} 
+    -r_file=references/${OUTPUT_NAME_REF}
+    -t_file=${OUTPUT_NAME_TEST}
+    -check_norms=True
+    -error=${PASSING_ERROR})
 

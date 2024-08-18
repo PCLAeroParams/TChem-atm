@@ -45,10 +45,10 @@ test = (data[1:,:]).astype(float)
 d1, d2 = np.shape(ref)
 
 L1, L2, Linf = norms(ref, test)
-# let's use L2 if the ref array to compute relative error. 
+# let's use L2 if the ref array to compute relative error.
 ref_L2 = lin.norm(ref,2,0)
 
-# We assume that all test are passing. 
+# We assume that all test are passing.
 pass_all_tests= np.full(d2, True)
 
 
@@ -70,8 +70,17 @@ if check_norms:
         if rel_error > error_threshold: pass_all_tests[i_out] = False
         rel_error = Linf[i_out]/ max4norm
         print("Linf rel_error",rel_error)
-        if rel_error > error_threshold: pass_all_tests[i_out] = False    
-print(f'final pass array = {pass_all_tests}')            
+        if rel_error > error_threshold: pass_all_tests[i_out] = False
+print(f'final pass array = {pass_all_tests}')
 
-assert(np.all(pass_all_tests))
-
+#
+pass_test = np.all(pass_all_tests)
+if (pass_test== False):
+  print('test', 'ref', 'diff', 'rel')
+  for i in range(d1):
+    for j in range(d2):
+      diff =test[i,j]-ref[i,j]
+      rel = diff/test[i,j]
+      if abs(rel) > error_threshold:
+        print(test[i,j], ref[i,j], diff, rel)
+assert(pass_test)

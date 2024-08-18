@@ -25,6 +25,7 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
     --aerofile=${INPUT_PATH}/test_SIMPOL_phase_transfer.yaml 
     --inputfile_particles=${INPUT_PATH}/scenario_conditions_particle.yaml 
     --outputfile=${OUTPUT_NAME_TEST} 
+    --outputfile_times=${TEST_NAME}_wall_times.json
     --dtmin=1 
     --tend=5)
 
@@ -49,6 +50,7 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
     --aerofile=${INPUT_PATH}/test_SIMPOL_phase_transfer.yaml 
     --inputfile_particles=${INPUT_PATH}/scenario_conditions_particle.yaml 
     --outputfile=${OUTPUT_NAME_TEST} 
+    --outputfile_times=${TEST_NAME}_wall_times.json
     --dtmin=1 
     --tend=5
     --use_cloned_samples=true 
@@ -78,6 +80,7 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
     --aerofile=${INPUT_PATH}/mechanism_aero.yaml 
     --inputfile_particles=${INPUT_PATH}/scenario_conditions_particle.yaml 
     --outputfile=${OUTPUT_NAME_TEST} 
+    --outputfile_times=${TEST_NAME}_wall_times.json
     --dtmin=1e-3 
     --tend=5
     --max-time-iterations=2

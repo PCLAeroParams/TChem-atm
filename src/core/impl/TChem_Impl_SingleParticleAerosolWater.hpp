@@ -80,13 +80,13 @@ struct AerosolWater_SingleParticle
             switch( i_ionpair.calc_type ){
                 case JACOBSON:
                     //printf("[AerosolWater_SingleParticle::team_invoke] in jacobson evaluation\n");
-                    effective_aw = max(rh, i_ionpair.jacobson_low_rh);
+                    effective_aw = ats<real_type>::max(rh, i_ionpair.jacobson_low_rh);
 
                     // calculate molality from power series 
                     for (int i_order=0; i_order < N_JACOBSON_COEFFS; i_order++) {
-                        molality += i_ionpair.jacobson_y_j[i_order]*std::pow(effective_aw, i_order);
+                        molality += i_ionpair.jacobson_y_j[i_order]*ats<real_type>::pow(effective_aw, i_order);
                     }
-                    molality = std::pow(molality, 2.0);
+                    molality = ats<real_type>::pow(molality, 2.0);
                     //printf("[AerosolWater_SingleParticle::team_invoke] Jacobson molality %f\n", molality);
 
                     // calculate cation molecular weight
@@ -108,8 +108,8 @@ struct AerosolWater_SingleParticle
                     anion = state[anion_idx]/(ion_molecular_weight*1000.0);
 
                     // soft-max function to allow for smooth transition between cation/anion saturation
-                    e_ac = exp(ALPHA*cation);
-                    e_aa = exp(ALPHA*anion);
+                    e_ac = ats<real_type>::exp(ALPHA*cation);
+                    e_aa = ats<real_type>::exp(ALPHA*anion);
                     ion_conc = (cation*e_ac + anion*e_aa)/(e_ac + e_aa);
                     water_content = (ion_conc/molality)*1000.0;
                     //printf("[AerosolWater_SingleParticle::team_invoke] (Jacobson) water content %f\n", water_content);
@@ -133,7 +133,7 @@ struct AerosolWater_SingleParticle
                     NW = i_ionpair.eqsam_nw;
                     MW = 1000.0*i_ionpair.eqsam_mw;
                     ZW = i_ionpair.eqsam_zw;
-                    molality = std::pow((NW*(MW_H20/MW)*(1.0/effective_aw-1.0)), ZW);
+                    molality = ats<real_type>::pow((NW*(MW_H20/MW)*(1.0/effective_aw-1.0)), ZW);
                     //printf("[AerosolWater_SingleParticle::team_invoke] (EQSAM) molality %f\n", molality);
 
                     for (ordinal_type ion_idx = 0; ion_idx < i_ionpair.num_ions; ion_idx++) {

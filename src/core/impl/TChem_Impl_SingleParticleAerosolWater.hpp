@@ -80,7 +80,10 @@ struct AerosolWater_SingleParticle
             switch( i_ionpair.calc_type ){
                 case JACOBSON:
                     //printf("[AerosolWater_SingleParticle::team_invoke] in jacobson evaluation\n");
-                    effective_aw = ats<real_type>::max(rh, i_ionpair.jacobson_low_rh);
+                    //effective_aw = ats<real_type>::max(rh, i_ionpair.jacobson_low_rh);
+                    
+                    // if rh larger than jacobson low rh, return rh, otherwise return jacobson low rh
+                    effective_aw = rh > i_ionpair.jacobson_low_rh ? rh : i_ionpair.jacobson_low_rh;
 
                     // calculate molality from power series 
                     for (int i_order=0; i_order < N_JACOBSON_COEFFS; i_order++) {

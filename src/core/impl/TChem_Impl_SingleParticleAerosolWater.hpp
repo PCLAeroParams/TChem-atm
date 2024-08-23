@@ -28,7 +28,7 @@ struct AerosolWater_SingleParticle
         const ordinal_type i_part,
         //real_type number_conc,
         const real_type_1d_view_type& number_conc,
-        value_type_1d_view_type& state,             // NOTE: should this be const?
+        const value_type_1d_view_type& state,             // NOTE: should this be const?
         const aerosol_model_data_type& amcd,
         const ordinal_type rh_idx,
         const ordinal_type aqueous_water_idx

@@ -60,23 +60,10 @@ main(int argc, char* argv[])
 
     //real_type state[amd.aerosol_sp_name_idx_.size()+1]; // add 1 for gas phase water
     //printf("[TChem_ZSR::main] Number of aerosol species according to aerosol_sp_name_idx_: %d\n", amd.aerosol_sp_name_idx_.size());
-    //int rh_index = amd.aerosol_sp_name_idx_.size();
-    int i_part = 0;
-    //int number_conc = 1.0;
-
-    
-    //ordinal_type rh_idx = amd.aerosol_sp_name_idx_.size();
 
     // relative index of H2O_aq amongst aerosol species (not amongst both gas and aerosol + multiple particles)
     ordinal_type aqueous_water_idx = amd.aerosol_sp_name_idx_.at("H2O_aq");
 
-
-    //printf("[TChem_ZSR::main] index of H2O: %d\n", rh_idx);
-    //printf("[TChem_ZSR::main] index of H2O_aq: %d\n", aqueous_water_idx);
-    //printf("[TChem_ZSR::main] index of Cl_m: %d\n", amd.aerosol_sp_name_idx_.at("Cl_m"));
-    //printf("[TChem_ZSR::main] index of Ca_pp: %d\n", amd.aerosol_sp_name_idx_.at("Ca_pp"));
-    //printf("[TChem_ZSR::main] index of Na_p: %d\n", amd.aerosol_sp_name_idx_.at("Na_p"));
-            
     // Loop over RH
     for (int i; i<101; i++){
 

@@ -199,6 +199,19 @@ static constexpr real_type KBOLT = 1.3806504E-23;
  */
 static constexpr real_type EVOLT = 1.60217653E-19;
 
+/** 
+ * \def H2O_MOLALITY
+ * Water molality \f$[mol/kg]\f$
+*/
+static constexpr real_type H2O_MOLALITY = 55.51;
+
+/** 
+ * \def H2O_MW
+ * Water molecular weight \f$[g/mol]\f$
+*/
+static constexpr real_type H2O_MW = 18.01;
+
+
 /// callable from device
 /// old cuda compilers do not support constexpr values well
 /// need to make a constexpr function

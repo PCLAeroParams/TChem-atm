@@ -53,26 +53,35 @@ void static AerosolWater_test()
 
     using aerosol_water_single_particle_type = TChem::Impl::AerosolWater_SingleParticle<value_type, device_type>;
 
-    /*
-    using value_type_1d_view_type = typename SIMPOL_single_particle_type::value_type_1d_view_type;
-    using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
+    
+    //using value_type_1d_view_type = typename SIMPOL_single_particle_type::value_type_1d_view_type;
+    //using real_type_1d_view_type = typename SIMPOL_single_particle_type::real_type_1d_view_type;
 
-    real_type_1d_view_type number_conc("number_conc", amcd.nParticles);
+    // create a 1d view number_conc with length equal to the number of computational particles
+    // (set via YAML AERO_REP_SINGLE_PARTICLE entry "maximum computational particles"), currently set = 1
+    real_type_1d_view number_conc("number_conc", amcd.nParticles);
+    
     // assuming constant number concentration
+    // set each computational particle to have multiplicity 1.3e6
     Kokkos::deep_copy(number_conc, 1.3e6); // particle number concentration (#/cc)
 
     ordinal_type ntotal_species = amcd.nSpec_gas + amcd.nSpec*amcd.nParticles;
 
-    value_type_1d_view_type state("state", ntotal_species);
+    real_type_1d_view state("state", ntotal_species);
     // by default view are initialized with zeros.
-    value_type_1d_view_type omega("omega", ntotal_species);
+    //value_type_1d_view_type omega("omega", ntotal_species);
 
-    auto omega_out = omega;
+    //auto omega_out = omega;
+
+    // relative index of H2O_aq amongst aerosol species (not amongst both gas and aerosol + multiple particles)
+    ordinal_type aqueous_water_idx = amd.aerosol_sp_name_idx_.at("H2O_aq");
 
     const auto exec_space_instance = TChem::exec_space();
 
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+    
+    
     // FIXME:
     // is this a bug in nvcc?
     //https://github.com/google/googletest/issues/4104
@@ -81,40 +90,53 @@ void static AerosolWater_test()
     ordinal_type nBatch =1;
     policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
     Kokkos::parallel_for
-      ("SIMPOL RHS",
+      ("AEROSOL WATER",
        policy,
        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-       real_type t = 272.5; // K
-       real_type p = 101253.3; // pa
+      // Loop over RH
+      for (int i; i<101; i++){
 
-       // initial concentration
-       real_type ethanol=0.1;
-       real_type ethanol_aq = 1.0e-8 ;
-       real_type H2O_aq = 1.4e-2;
+        // gas species
+        ordinal_type rh_idx = 0;
+        state(rh_idx) = i/100.0; //  H2O (gas phase)
 
-       // gas species
-       state(0) = ethanol;
-       // aerosol species
-       for (int i_part = 0; i_part < amcd.nParticles; i_part++)
-       {
-        state(1+amcd.nSpec*i_part) = ethanol_aq/number_conc(i_part);
-        state(2+amcd.nSpec*i_part) = H2O_aq/number_conc(i_part);
-       }// i_part
-       member.team_barrier();
-
-       ordinal_type i_simpol=0;
-       Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(member, amcd.nParticles),
-       [&](const ordinal_type& i_part) {
-           SIMPOL_single_particle_type
-          ::team_invoke(member, i_part, i_simpol, t, p, number_conc, state, omega, amcd);
-        });
+          // aerosol species
+          for (int i_part = 0; i_part < amcd.nParticles; i_part++){
+              state(1+amcd.nSpec*i_part) = 2.5; // Na_p
+              state(2+amcd.nSpec*i_part) = 5.3; // Cl_m
+              state(3+amcd.nSpec*i_part) = 1.3; // Ca_pp
+              state(4+amcd.nSpec*i_part) = 0.0; // H2O_aq
+          }// i_part
         member.team_barrier();
 
+        /*
+        Kokkos::parallel_for(
+          Kokkos::TeamThreadRange(member, amcd.nParticles),
+          [&](const ordinal_type& i_part) {
+              aerosol_water_single_particle_type
+              ::team_invoke(member, i_part, number_conc, state, amcd, rh_idx, aqueous_water_idx);
+            });
+        member.team_barrier();
+        */
+
+        
+        ordinal_type i_part = 0;
+       
+        aerosol_water_single_particle_type::team_invoke(member, i_part, number_conc, state, amcd, rh_idx, aqueous_water_idx);
+        //printf("[TChem_ZSR::main] RH %f\n", state[2]);
+        //printf("[TChem_ZSR::main] Total aerosol water content %f\n\n", state[3]);
+     
+        printf("%f,%f\n", state(rh_idx), state(amcd.nSpec_gas + amcd.nSpec*i_part + aqueous_water_idx));
+      
+      }
+        
   });
+  
 
 #endif
+
+  /*
   // we need to copy data from device to host.
   auto omega_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), omega_out);
   // save results to a file.

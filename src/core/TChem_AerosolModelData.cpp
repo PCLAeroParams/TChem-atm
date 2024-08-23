@@ -171,6 +171,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     } // if MECHANISM
 
     // Extract attributes for aerosol water sub model
+    // Aersol water is calculated using the Zdanovskii, Stokes, and Robinson (ZSR) method
     if (type=="SUB_MODEL_ZSR_AEROSOL_WATER"){
        printf("[AerosolModelData::initChem] Parsing aerosol water sub model\n"); 
        

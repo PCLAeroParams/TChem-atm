@@ -37,7 +37,7 @@ TCHEM_REPOSITORY_PATH=$ROOT
 
 get_submodules() {
   echo "Getting submodules:"
-  run_this="cd $TCHEM_BASE;git submodule update --init --recursive;cd -"
+  run_this="cd $TCHEM_REPOSITORY_PATH;git submodule update --init --recursive;cd -"
   eval $run_this
 }
 
@@ -209,12 +209,12 @@ if [[ "${CUDA}" = "OFF" &&  "${HIP}" = "OFF" ]]; then
   YAML_INSTALL_PATH=${INSTALL_BASE}/yaml
   build_install_yaml
 
-  SUNDIALS_REPOSITORY_PATH=$TCHEM_BASE/Sundials
+  SUNDIALS_REPOSITORY_PATH=$TCHEM_REPOSITORY_PATH/Sundials
   SUNDIALS_BUILD_PATH=${BUILD_BASE}/sundials
   SUNDIALS_INSTALL_PATH=${INSTALL_BASE}/sundials
   build_install_sundials
 
-  SKYWALKER_REPOSITORY_PATH=$TCHEM_BASE/Skywalker
+  SKYWALKER_REPOSITORY_PATH=$TCHEM_REPOSITORY_PATH/Skywalker
   SKYWALKER_BUILD_PATH=${BUILD_BASE}/skywalker
   SKYWALKER_INSTALL_PATH=${INSTALL_BASE}/skywalker
   build_install_skywalker

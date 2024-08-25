@@ -166,7 +166,7 @@ make ${JFLAG} install
 #=======================================================================================
 # main
 
-REPO_BASE=$TCHEM_REPOSITORY_PATH/Tines/ext
+REPO_BASE=$TCHEM_REPOSITORY_PATH/external/Tines/ext
 
 if [ "${CUDA}" = "ON" ]; then
     BUILD_BASE=${PWD}/CUDA/build

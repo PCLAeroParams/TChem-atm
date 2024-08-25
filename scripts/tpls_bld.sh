@@ -7,20 +7,24 @@
 # User configuration  -- begin
 
 # example:
-# set CUDA="ON" to use GPU, else set to "OFF"
+# set CUDA="ON" to use a NVIDIA GPU
+# set HIP="ON" to use a AMD GPU
+# set CUDA and HIP =OFF to use host
 # JFLAG is for makefile compilation on multiple cores, here 4
 # if CUDA="ON", make sure nvcc is in your system PATH
 
 MY_CC=gcc
 MY_CXX=g++
 MY_FC=gfortran
-JFLAG="-j 40"
+JFLAG="-j 10"
 CUDA="OFF"
-
+HIP="OFF"
+OPENMP="ON"
 # will build under BUILD_BASE
 # will install under INSTALL_BASE
 # example: as follows under .
 ROOT=/path/to/tchem/
+TCHEM_REPOSITORY_PATH=$ROOT
 # User configuration  -- end
 #=======================================================================================
 # OpenBLAS
@@ -42,7 +46,11 @@ echo "Building OpenBLAS:"
 cd ${OPENBLAS_REPOSITORY_PATH}
 make CC=${MY_CC} FC=${MY_FC} HOSTCC=${MY_CC} USE_OPENMP=1
 }
-
+clean_openblas (){
+echo "Cleaning OpenBLAS:"
+cd ${OPENBLAS_REPOSITORY_PATH}
+make clean
+}
 install_openblas (){
 echo "Installing OpenBLAS:"
 cd ${OPENBLAS_REPOSITORY_PATH}
@@ -54,13 +62,13 @@ echo "Building kokkos kernels:"
 mkdir ${KOKKOSKERNELS_BUILD_PATH}
 mkdir ${KOKKOSKERNELS_INSTALL_PATH}
 cd ${KOKKOSKERNELS_BUILD_PATH}
+# -D CMAKE_CXX_FLAGS="-g" \
+# -D CMAKE_EXE_LINKER_FLAGS="-lgfortran" \
 cmake \
     -D CMAKE_INSTALL_PREFIX="${KOKKOSKERNELS_INSTALL_PATH}" \
     -D CMAKE_CXX_COMPILER="${KOKKOS_CXX_COMPILER}" \
-    -D CMAKE_CXX_FLAGS="-g" \
     -D CMAKE_C_COMPILER="${MY_CC}" \
-    -D CMAKE_EXE_LINKER_FLAGS="-lgfortran" \
-    -D CMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -D CMAKE_BUILD_TYPE=RELEASE \
     -D KOKKOS_INSTALL_PATH="${KOKKOS_INSTALL_PATH}" \
     -D Kokkos_ROOT=$KOKKOS_INSTALL_PATH \
     ${KOKKOSKERNELS_REPOSITORY_PATH}
@@ -71,13 +79,13 @@ echo "Building kokkos:"
 mkdir ${KOKKOS_BUILD_PATH}
 mkdir ${KOKKOS_INSTALL_PATH}
 cd ${KOKKOS_BUILD_PATH}
-# kokkos install bin directory is not yet created
 cmake \
     -D CMAKE_INSTALL_PREFIX=${KOKKOS_INSTALL_PATH} \
     -D CMAKE_CXX_COMPILER=${KOKKOS_CXX_REPO_COMPILER} \
-    -D CMAKE_CXX_FLAGS="-fopenmp -g" \
+    -D CMAKE_CXX_STANDARD="17" \
     -D Kokkos_ENABLE_SERIAL=ON \
-    -D Kokkos_ENABLE_OPENMP=ON \
+    -D Kokkos_ENABLE_HIP=${HIP} \
+    -D Kokkos_ENABLE_OPENMP=${OPENMP} \
     -D Kokkos_ENABLE_CUDA=${CUDA} \
     -D Kokkos_ENABLE_CUDA_CONSTEXPR=${CUDA} \
     -D Kokkos_ENABLE_CUDA_LAMBDA=${CUDA} \
@@ -158,12 +166,14 @@ make ${JFLAG} install
 #=======================================================================================
 # main
 
-TCHEM_BASE=$ROOT/TChem-atm/external
-REPO_BASE=$TCHEM_BASE/Tines/ext
+REPO_BASE=$TCHEM_REPOSITORY_PATH/Tines/ext
 
 if [ "${CUDA}" = "ON" ]; then
-    BUILD_BASE=${PWD}/DEVICE/build
-    INSTALL_BASE=${PWD}/DEVICE/install
+    BUILD_BASE=${PWD}/CUDA/build
+    INSTALL_BASE=${PWD}/CUDA/install
+elif [ "${HIP}" = "ON" ]; then
+    BUILD_BASE=${PWD}/HIP/build
+    INSTALL_BASE=${PWD}/HIP/install
 else
     BUILD_BASE=${PWD}/HOST/build
     INSTALL_BASE=${PWD}/HOST/install
@@ -171,14 +181,21 @@ fi
 
 mkdir -p ${BUILD_BASE}
 mkdir -p ${INSTALL_BASE}
+
+if [ "${HIP}" = "ON" ]; then
+    MY_CC="hipcc"
+    MY_CXX="hipcc"
+fi
+
 # Note: git submodule update --init --recursive
 get_submodules
 
 #only build for host
-if [ "${CUDA}" = "OFF" ]; then
+if [[ "${CUDA}" = "OFF" &&  "${HIP}" = "OFF" ]]; then
   # clone tpls
   OPENBLAS_REPOSITORY_PATH=${REPO_BASE}/OpenBLAS
   OPENBLAS_INSTALL_PATH=${INSTALL_BASE}/openblas
+  clean_openblas
   build_openblas
   install_openblas
 
@@ -213,11 +230,13 @@ else
     KOKKOS_CXX_COMPILER="${MY_CXX}"
     KOKKOS_CXX_REPO_COMPILER="${MY_CXX}"
 fi
+
 build_install_kokkos
 
-KOKKOSKERNELS_REPOSITORY_PATH=$ROOT/TChem-atm/external/kokkos-kernels
+KOKKOSKERNELS_REPOSITORY_PATH=$TCHEM_REPOSITORY_PATH/external/kokkos-kernels
 KOKKOSKERNELS_BUILD_PATH=${BUILD_BASE}/kokkos-kernels
 KOKKOSKERNELS_INSTALL_PATH=${INSTALL_BASE}/kokkos-kernels
+
 build_install_kokkoskernels
 
 exit

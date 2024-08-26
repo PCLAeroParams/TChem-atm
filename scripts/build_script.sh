@@ -32,7 +32,7 @@ BUILD_TYPE=DEBUG
 # MODULE: from module load openblas
 USE_THIS_OPENBLAS="MODULE"
 # ""(empty): do not use openblass in tines.
-USE_THIS_OPENBLAS=""
+#USE_THIS_OPENBLAS=""
 
 if [ "${USE_THIS_OPENBLAS}" = "MODULE" ]; then
   OPENBLAS_INSTALL_PATH=$OPENBLAS_ROOT

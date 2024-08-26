@@ -196,7 +196,7 @@ if [[ "${CUDA}" = "OFF" &&  "${HIP}" = "OFF" ]]; then
   # clone tpls
   if [ "${INSTALL_OPENBLAS}" = "ON" ]; then
     OPENBLAS_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/OpenBLAS
-    OPENBLAS_INSTALL_PATH=${INSTALL_BASE}Tines/ext/openblas
+    OPENBLAS_INSTALL_PATH=${INSTALL_BASE}/openblas
     clean_openblas
     build_openblas
     install_openblas
@@ -204,13 +204,13 @@ if [[ "${CUDA}" = "OFF" &&  "${HIP}" = "OFF" ]]; then
 
 
   GTEST_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/gtest
-  GTEST_BUILD_PATH=${BUILD_BASE}Tines/ext/gtest
-  GTEST_INSTALL_PATH=${INSTALL_BASE}Tines/ext/gtest
+  GTEST_BUILD_PATH=${BUILD_BASE}/gtest
+  GTEST_INSTALL_PATH=${INSTALL_BASE}/gtest
   build_install_gtest
   #
   YAML_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/yaml
-  YAML_BUILD_PATH=${BUILD_BASE}Tines/ext/yaml
-  YAML_INSTALL_PATH=${INSTALL_BASE}Tines/ext/yaml
+  YAML_BUILD_PATH=${BUILD_BASE}/yaml
+  YAML_INSTALL_PATH=${INSTALL_BASE}/yaml
   build_install_yaml
 
   SUNDIALS_REPOSITORY_PATH=$REPO_BASE_EXTERNAL/Sundials

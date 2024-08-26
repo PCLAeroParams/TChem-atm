@@ -20,6 +20,8 @@ JFLAG="-j 10"
 CUDA="OFF"
 HIP="OFF"
 OPENMP="ON"
+
+INSTALL_OPENBLAS="ON"
 # will build under BUILD_BASE
 # will install under INSTALL_BASE
 # example: as follows under .
@@ -192,11 +194,14 @@ get_submodules
 #only build for host
 if [[ "${CUDA}" = "OFF" &&  "${HIP}" = "OFF" ]]; then
   # clone tpls
-  OPENBLAS_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/OpenBLAS
-  OPENBLAS_INSTALL_PATH=${INSTALL_BASE}Tines/ext/openblas
-  clean_openblas
-  build_openblas
-  install_openblas
+  if [ "${INSTALL_OPENBLAS}" = "ON" ]; then
+    OPENBLAS_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/OpenBLAS
+    OPENBLAS_INSTALL_PATH=${INSTALL_BASE}Tines/ext/openblas
+    clean_openblas
+    build_openblas
+    install_openblas
+  fi
+
 
   GTEST_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/gtest
   GTEST_BUILD_PATH=${BUILD_BASE}Tines/ext/gtest

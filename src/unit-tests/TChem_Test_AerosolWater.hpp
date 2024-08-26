@@ -62,15 +62,14 @@ void static AerosolWater_test()
     
     // assuming constant number concentration
     // set each computational particle to have multiplicity 1.3e6
+    // deep copy values in the device
     Kokkos::deep_copy(number_conc, 1.3e6); // particle number concentration (#/cc)
 
     ordinal_type ntotal_species = amcd.nSpec_gas + amcd.nSpec*amcd.nParticles;
 
     value_type_1d_view_type state("state", ntotal_species);
+    value_type_1d_view_type aerowater("aerowater", 101);
     // by default view are initialized with zeros.
-    //value_type_1d_view_type omega("omega", ntotal_species);
-
-    //auto omega_out = omega;
 
     // relative index of H2O_aq amongst aerosol species (not amongst both gas and aerosol + multiple particles)
     ordinal_type aqueous_water_idx = amd.aerosol_sp_name_idx_.at("H2O_aq");
@@ -79,8 +78,7 @@ void static AerosolWater_test()
 
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
-    
-    
+        
     // FIXME:
     // is this a bug in nvcc?
     //https://github.com/google/googletest/issues/4104
@@ -94,22 +92,21 @@ void static AerosolWater_test()
        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
       // Loop over RH
-      for (int i; i<101; i++){
+      for (int i = 0; i<101; i++){
 
         // gas species
         ordinal_type rh_idx = 0;
         state(rh_idx) = i/100.0; //  H2O (gas phase)
 
-          // aerosol species
-          for (int i_part = 0; i_part < amcd.nParticles; i_part++){
-              state(1+amcd.nSpec*i_part) = 2.5; // Na_p
-              state(2+amcd.nSpec*i_part) = 5.3; // Cl_m
-              state(3+amcd.nSpec*i_part) = 1.3; // Ca_pp
-              state(4+amcd.nSpec*i_part) = 0.0; // H2O_aq
-          }// i_part
+        // aerosol species
+        for (int i_part = 0; i_part < amcd.nParticles; i_part++){
+            state(1+amcd.nSpec*i_part) = 2.5; // Na_p
+            state(2+amcd.nSpec*i_part) = 5.3; // Cl_m
+            state(3+amcd.nSpec*i_part) = 1.3; // Ca_pp
+            state(4+amcd.nSpec*i_part) = 0.0; // H2O_aq
+        }// i_part
         member.team_barrier();
 
-        /*
         Kokkos::parallel_for(
           Kokkos::TeamThreadRange(member, amcd.nParticles),
           [&](const ordinal_type& i_part) {
@@ -117,40 +114,35 @@ void static AerosolWater_test()
               ::team_invoke(member, i_part, number_conc, state, amcd, rh_idx, aqueous_water_idx);
             });
         member.team_barrier();
-        */
 
-        
         ordinal_type i_part = 0;
-       
-        aerosol_water_single_particle_type::team_invoke(member, i_part, number_conc, state, amcd, rh_idx, aqueous_water_idx);
-        //printf("[TChem_ZSR::main] RH %f\n", state[2]);
-        //printf("[TChem_ZSR::main] Total aerosol water content %f\n\n", state[3]);
-     
-        printf("%f,%f\n", state(rh_idx), state(amcd.nSpec_gas + amcd.nSpec*i_part + aqueous_water_idx));
-      
-      }
-        
+        aerowater(i) = state(amcd.nSpec_gas + amcd.nSpec*i_part + aqueous_water_idx);
+                      
+      }     
   });
-  
-
 #endif
-
-  /*
-  // we need to copy data from device to host.
-  auto omega_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), omega_out);
-  // save results to a file.
-  std::string outputFile ="Simpol_RHS_DEVICE.txt";
-  FILE *fout = fopen(outputFile.c_str(), "w");
-  TChem::Test::writeReactionRates(outputFile, omega_host.extent(0), omega_host);
-  fclose(fout);
-
   
-    */
+  // copy the values of aerowater from the device to host
+  auto aerowater_host = Kokkos::create_mirror_view_and_copy(TChem::host_exec_space(), aerowater);
 
-}
+  // write aerosol water values to text file
+  std::ofstream outFile("output.txt");
+  if (outFile.is_open()) {
+      outFile << std::scientific;
+      outFile << "rh" << "," << "aerosol_water" << "\n";
+      for (int i=0; i < 101; i++) {
+          real_type rh = i/100.0;
+          outFile << rh << "," << aerowater_host(i) << "\n";
+      }
+
+      outFile.close();
+      std::cout << "Data written to file successfully." << std::endl;
+  } else {
+      std::cerr << "Unable to open file for writing." << std::endl;
+  }
+
+}// AerosolWater_test
 }// namespace Test
-
-
 }// namespace TChem
 
 
@@ -160,6 +152,7 @@ TEST(AerosolWater, Device)
 }
 
 
+// Compare device and host output
 /*
 TEST(AerosolWater, verification_device)
 {

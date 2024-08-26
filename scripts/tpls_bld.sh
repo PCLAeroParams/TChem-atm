@@ -7,9 +7,9 @@
 # User configuration  -- begin
 
 # example:
-# set CUDA="ON" to use a NVIDIA GPU
-# set HIP="ON" to use a AMD GPU
-# set CUDA and HIP =OFF to use host
+
+
+# set CUDA="OFF" and HIP= OFF to use openMP
 # JFLAG is for makefile compilation on multiple cores, here 4
 # if CUDA="ON", make sure nvcc is in your system PATH
 
@@ -17,16 +17,24 @@ MY_CC=gcc
 MY_CXX=g++
 MY_FC=gfortran
 JFLAG="-j 10"
+# Kokkos backends
+# set CUDA="ON" to use a NVIDIA GPU
 CUDA="OFF"
+# set HIP="ON" to use a AMD GPU
 HIP="OFF"
+#Note that both CUDA and HIP cannot be enabled simultaneously.
 OPENMP="ON"
 
+# Path to TChem repository.
+# Where we git clone TChem-atm. Hint: look for the external folder.
+TCHEM_REPOSITORY_PATH=/path/to/tchem/
+
+# Whether to install OpenBLAS using this script.
+# Some clusters already have a version of OpenBLAS installed.
 INSTALL_OPENBLAS="ON"
+# This script will install/build TPLs in the current working directory.
 # will build under BUILD_BASE
 # will install under INSTALL_BASE
-# example: as follows under .
-ROOT=/path/to/tchem/
-TCHEM_REPOSITORY_PATH=$ROOT
 # User configuration  -- end
 #=======================================================================================
 # OpenBLAS

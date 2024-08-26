@@ -15,16 +15,24 @@ MY_CC=gcc
 MY_CXX=g++
 MY_FC=gfortran
 JFLAG="-j 10"
+# Kokkos backends
+# set CUDA="ON" to use a NVIDIA GPU
 CUDA="OFF"
+# set HIP="ON" to use a AMD GPU
 HIP="OFF"
-
+#Note that both CUDA and HIP cannot be enabled simultaneously.
 SACADO="OFF"
 
-## update this path.
-ROOT=/path/to/tchem
-BUILD_PATH=$ROOT/build
+# Path to TChem repository.
+# Where we git clone TChem-atm.
+TCHEM_REPOSITORY_PATH=/path/to/tchem
+# Path where we install TPLs for both host and device.
+# It may be the current working directory if we use the tpls_bld.sh script.
+BUILD_PATH=/path/to/tpls
 ## where host tpls libraries were installed
 INSTALL_BASE_TPL_HOST=${BUILD_PATH}/HOST/install
+
+## RELEASE or DEBUG
 BUILD_TYPE=DEBUG
 
 # INSTALLED: version installed by this script
@@ -42,15 +50,13 @@ else
   OPENBLAS_INSTALL_PATH=""
 fi
 
-TCHEM_REPOSITORY_PATH=$ROOT
+
 INSTALL_BASE_TPL_DEVICE=""
 if [ "${CUDA}" = "ON" ]; then
   INSTALL_BASE_TPL_DEVICE=${BUILD_PATH}/CUDA/install
 elif [ "${HIP}" = "ON" ]; then
   INSTALL_BASE_TPL_DEVICE=${BUILD_PATH}/HIP/install
 fi
-#BUILD_TYPE=RELEASE
-
 # User configuration  -- end
 
 #=======================================================================================

@@ -166,11 +166,6 @@ IF (SKYWALKER_INSTALL_PATH)
 ENDIF()
 ENDIF()
 
-# Fortran
-IF (TCHEM_ENABLE_FORTRAN)
-  ENABLE_LANGUAGE(Fortran)
-ENDIF()
-
 #
 # Linking libraries used in example and test
 #

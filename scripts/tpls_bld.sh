@@ -93,7 +93,6 @@ cmake \
 make ${JFLAG} install
 }
 #=======================================================================================
-
 build_install_gtest(){
 echo "Building gtest:"
 mkdir ${GTEST_BUILD_PATH}
@@ -166,7 +165,7 @@ make ${JFLAG} install
 #=======================================================================================
 # main
 
-REPO_BASE=$TCHEM_REPOSITORY_PATH/external/Tines/ext
+REPO_BASE_EXTERNAL=$TCHEM_REPOSITORY_PATH/external/
 
 if [ "${CUDA}" = "ON" ]; then
     BUILD_BASE=${PWD}/CUDA/build
@@ -193,34 +192,34 @@ get_submodules
 #only build for host
 if [[ "${CUDA}" = "OFF" &&  "${HIP}" = "OFF" ]]; then
   # clone tpls
-  OPENBLAS_REPOSITORY_PATH=${REPO_BASE}/OpenBLAS
-  OPENBLAS_INSTALL_PATH=${INSTALL_BASE}/openblas
+  OPENBLAS_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/OpenBLAS
+  OPENBLAS_INSTALL_PATH=${INSTALL_BASE}Tines/ext/openblas
   clean_openblas
   build_openblas
   install_openblas
 
-  GTEST_REPOSITORY_PATH=${REPO_BASE}/gtest
-  GTEST_BUILD_PATH=${BUILD_BASE}/gtest
-  GTEST_INSTALL_PATH=${INSTALL_BASE}/gtest
+  GTEST_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/gtest
+  GTEST_BUILD_PATH=${BUILD_BASE}Tines/ext/gtest
+  GTEST_INSTALL_PATH=${INSTALL_BASE}Tines/ext/gtest
   build_install_gtest
   #
-  YAML_REPOSITORY_PATH=${REPO_BASE}/yaml
-  YAML_BUILD_PATH=${BUILD_BASE}/yaml
-  YAML_INSTALL_PATH=${INSTALL_BASE}/yaml
+  YAML_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/yaml
+  YAML_BUILD_PATH=${BUILD_BASE}Tines/ext/yaml
+  YAML_INSTALL_PATH=${INSTALL_BASE}Tines/ext/yaml
   build_install_yaml
 
-  SUNDIALS_REPOSITORY_PATH=$TCHEM_REPOSITORY_PATH/Sundials
+  SUNDIALS_REPOSITORY_PATH=$REPO_BASE_EXTERNAL/Sundials
   SUNDIALS_BUILD_PATH=${BUILD_BASE}/sundials
   SUNDIALS_INSTALL_PATH=${INSTALL_BASE}/sundials
   build_install_sundials
 
-  SKYWALKER_REPOSITORY_PATH=$TCHEM_REPOSITORY_PATH/Skywalker
+  SKYWALKER_REPOSITORY_PATH=$REPO_BASE_EXTERNAL/Skywalker
   SKYWALKER_BUILD_PATH=${BUILD_BASE}/skywalker
   SKYWALKER_INSTALL_PATH=${INSTALL_BASE}/skywalker
   build_install_skywalker
 fi
 
-KOKKOS_REPOSITORY_PATH=${REPO_BASE}/kokkos
+KOKKOS_REPOSITORY_PATH=${REPO_BASE_EXTERNAL}Tines/ext/kokkos
 KOKKOS_BUILD_PATH=${BUILD_BASE}/kokkos
 KOKKOS_INSTALL_PATH=${INSTALL_BASE}/kokkos
 if [ "${CUDA}" = "ON" ]; then
@@ -233,7 +232,7 @@ fi
 
 build_install_kokkos
 
-KOKKOSKERNELS_REPOSITORY_PATH=$TCHEM_REPOSITORY_PATH/external/kokkos-kernels
+KOKKOSKERNELS_REPOSITORY_PATH=$REPO_BASE_EXTERNAL/kokkos-kernels
 KOKKOSKERNELS_BUILD_PATH=${BUILD_BASE}/kokkos-kernels
 KOKKOSKERNELS_INSTALL_PATH=${INSTALL_BASE}/kokkos-kernels
 

@@ -15,7 +15,7 @@ MY_CC=gcc
 MY_CXX=g++
 MY_FC=gfortran
 JFLAG="-j 10"
-CUDA="ON"
+CUDA="OFF"
 HIP="OFF"
 
 SACADO="OFF"

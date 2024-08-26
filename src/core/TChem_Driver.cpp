@@ -20,11 +20,17 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
 
   Kokkos::InitializationSettings settings;
   settings.set_num_threads(8);
-  settings.set_device_id(1);
+  settings.set_device_id(0);
   Kokkos::initialize(settings);
+
+  const bool detail = false;
 
   using exec_space = Kokkos::DefaultExecutionSpace;
   using host_exec_space = Kokkos::DefaultHostExecutionSpace;
+
+  TChem::exec_space().print_configuration(std::cout, detail);
+  TChem::host_exec_space().print_configuration(std::cout, detail);
+
 
   using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
   using device_type = typename Tines::UseThisDevice<exec_space>::type;
@@ -89,11 +95,11 @@ void TChem::Driver::createGasKineticModel(const std::string &chem_file) {
 // FIXME: Add some checks
 void TChem::Driver::createGasKineticModelConstData() {
   printf("Creating kmcd \n");
-  using interf_host_device_type = typename Tines::UseThisDevice<host_exec_space>::type;
-  _kmcd = TChem::createNCAR_KineticModelConstData<interf_device_type>(_kmd);
-
-  printf("Number of Species %d \n", _kmcd.nSpec);
-  printf("Number of Reactions %d \n", _kmcd.nReac);
+  using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+  _kmcd_host = TChem::createNCAR_KineticModelConstData<interf_host_device_type>(_kmd);
+  _kmcd_device = TChem::createNCAR_KineticModelConstData<device_type>(_kmd);
+  printf("Number of Species %d \n", _kmcd_host.nSpec);
+  printf("Number of Reactions %d \n", _kmcd_host.nReac);
 
   printf("End creating kmcd \n");
 
@@ -111,7 +117,7 @@ void TChem::Driver::freeGasKineticModel() {
 
 void TChem::Driver::createStateVector() {
   // FIXME: add error checking
-  const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd.nSpec);
+  const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec);
   const ordinal_type nBatch = 1;
   _state = real_type_2d_view_host("state dev", nBatch, len);
   for (ordinal_type k = 0; k < len; k++) { //_kmcd.nSpec; k++){
@@ -144,14 +150,14 @@ void TChem::Driver::setStateVector(double *array) {
 }
 
 std::string TChem::Driver::getSpeciesName(int *index){
-  const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd.speciesNames);
-  Kokkos::deep_copy(speciesNamesHost, _kmcd.speciesNames);
+  const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd_host.speciesNames);
+  Kokkos::deep_copy(speciesNamesHost, _kmcd_host.speciesNames);
   int k = *index;
   std::string species_name = &speciesNamesHost(k,0);
   return species_name;
 }
 
-ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd.nSpec;}
+ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd_host.nSpec;}
 
 ordinal_type TChem_getNumberOfSpecies(){
    ordinal_type nSpec = g_tchem->getNumberOfSpecies();
@@ -163,7 +169,7 @@ int TChem_getLengthOfStateVector() {
 }
 
 ordinal_type TChem::Driver::getLengthOfStateVector() const {
-  return Impl::getStateVectorSize(_kmcd.nSpec);
+  return Impl::getStateVectorSize(_kmcd_host.nSpec);
 }
 
 int TChem_getSpeciesName(int * index, char* result, const std::string::size_type buffer_size){
@@ -180,22 +186,23 @@ void TChem_doTimestep(const double &del_t){
 void TChem::Driver::doTimestep(const double del_t){
 
   const auto exec_space_instance = TChem::exec_space();
-  using device_type = typename Tines::UseThisDevice<exec_space>::type;
-  using problem_type = TChem::Impl::AtmosphericChemistry_Problem<real_type, device_type>;
+//  using device_type = typename Tines::UseThisDevice<exec_space>::type;
+  using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
+  using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+  using problem_type = TChem::Impl::AtmosphericChemistry_Problem<real_type, interf_host_device_type>;
   using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
   policy_type policy(exec_space_instance, 1, Kokkos::AUTO());
 
   const ordinal_type level = 1;
   ordinal_type per_team_extent(0);
 
-  per_team_extent = TChem::AtmosphericChemistry::getWorkSpaceSize(_kmcd);
+  per_team_extent = TChem::AtmosphericChemistry::getWorkSpaceSize(_kmcd_host);
 
   const ordinal_type per_team_scratch =
       TChem::Scratch<real_type_1d_view>::shmem_size(per_team_extent);
   policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
 
-
-  auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd);
+  auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host);
   real_type_2d_view tol_time("tol time", number_of_equations, 2);
   real_type_1d_view tol_newton("tol newton", 2);
   real_type_2d_view fac("fac", 1, number_of_equations);
@@ -233,9 +240,12 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type tend = del_t;
   ordinal_type iter = 0;
   real_type tsum(0);
+  auto stateVecDim = TChem_getLengthOfStateVector();
+  real_type_2d_view state("StateVector Devices", 1, stateVecDim);
+  Kokkos::deep_copy(state, _state);
   for (; iter < max_num_time_iterations && tsum <= tend * 0.9999; ++iter) {
     TChem::AtmosphericChemistry::runDeviceBatch(policy, tol_newton, tol_time, fac, tadv,
-              _state, t, dt, _state, _kmcd);
+              state, t, dt, state, _kmcd_device);
 
     tsum = 0.0;
     Kokkos::parallel_reduce(
@@ -246,6 +256,7 @@ void TChem::Driver::doTimestep(const double del_t){
           update += t(i);
      }, tsum);
      }
+  Kokkos::deep_copy(_state,state);
   }
 }
 

@@ -6,6 +6,7 @@ namespace TChem {
 struct Driver {
 public:
    using real_type_2d_view_host = TChem::real_type_2d_view_host;
+   using host_exec_space = Kokkos::DefaultHostExecutionSpace;
    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
    using device_type = typename Tines::UseThisDevice<exec_space>::type;
 
@@ -18,11 +19,11 @@ public:
    auto getStateVector();
    void setStateVector(double *array);
    void getStateVectorHost(real_type_2d_const_view_host &view);
- 
 
    // Gases
    TChem::KineticModelData _kmd;
-   TChem::KineticModelNCAR_ConstData<host_device_type> _kmcd;   
+   TChem::KineticModelNCAR_ConstData<host_device_type> _kmcd_host;
+   TChem::KineticModelNCAR_ConstData<device_type> _kmcd_device;
    void createGasKineticModel(const std::string &chem_file);
    void createGasKineticModelConstData();
 

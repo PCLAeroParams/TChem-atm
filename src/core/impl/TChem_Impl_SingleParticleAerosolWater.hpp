@@ -48,7 +48,6 @@ struct AerosolWater_SingleParticle
         real_type ZW;
         // NOTE: should this be type static constexpr?
         static constexpr real_type MW_H20 = H2O_MOLALITY*H2O_MW; // constants defined in TChem_Util.hpp 
-        ordinal_type ion_idx;
         ordinal_type anion_idx;
         ordinal_type cation_idx;
         ordinal_type ion_species_idx;

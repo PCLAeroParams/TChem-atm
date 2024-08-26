@@ -39,10 +39,14 @@ main(int argc, char* argv[])
     const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
 
     using aerosol_water_single_particle_type = TChem::Impl::AerosolWater_SingleParticle<real_type, host_device_type>;
+
+    using value_type_1d_view_type = typename aerosol_water_single_particle_type::value_type_1d_view_type;
+    using real_type_1d_view_type = typename aerosol_water_single_particle_type::real_type_1d_view_type;
     
     // create a 1d view number_conc with length equal to the number of computational particles
     // (set via YAML AERO_REP_SINGLE_PARTICLE entry "maximum computational particles"), currently set = 1
-    real_type_1d_view number_conc("number_conc", amcd.nParticles);
+    //real_type_1d_view number_conc("number_conc", amcd.nParticles);
+    real_type_1d_view_type number_conc("number_conc", amcd.nParticles);
 
     // assuming constant number concentration
     // set each computational particle to have multiplicity 1.3e6
@@ -56,7 +60,8 @@ main(int argc, char* argv[])
     //printf("[TChem_ZSR::main] Number of gas species: %d\n", amcd.nSpec_gas);
     //printf("[TChem_ZSR::main] Number of aerosol species: %d\n", amcd.nSpec);
     // TChem's state data structure
-    real_type_1d_view state("state", ntotal_species);
+    //real_type_1d_view state("state", ntotal_species);
+    value_type_1d_view_type state("state", ntotal_species);
 
     //real_type state[amd.aerosol_sp_name_idx_.size()+1]; // add 1 for gas phase water
     //printf("[TChem_ZSR::main] Number of aerosol species according to aerosol_sp_name_idx_: %d\n", amd.aerosol_sp_name_idx_.size());

@@ -33,5 +33,5 @@ constant_species:
 - description: tracer-CONSTANT
   name: M
 species:
-- description: ETHANOL 
-  name: ethanol 
+- description: ETHANOL
+  name: ethanol

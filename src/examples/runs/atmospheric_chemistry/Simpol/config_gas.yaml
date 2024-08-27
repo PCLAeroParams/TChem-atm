@@ -31,7 +31,7 @@ model_info:
 reactions:
 constant_species:
 - description: tracer-CONSTANT
-  name: M 
+  name: M
 species:
 - description: ETHANOL 
   name: ethanol 

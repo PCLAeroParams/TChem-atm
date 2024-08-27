@@ -9,7 +9,7 @@ environmental_conditions:
     initial_value: [272.5]
     units: K
 initial_state:
-  ethanol: 
+  ethanol:
     initial_value: [0.1]
     units: mol m-3
   M: 

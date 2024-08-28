@@ -43,17 +43,20 @@ struct AerosolChemistry_KokkosKernels
   using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type,host_device_type>;
   using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type,host_device_type>;
 
-   KOKKOS_INLINE_FUNCTION
-   static  void get_subTemp_dims(ordinal_type neqs, ordinal_type dims[4])
-   {
-      // mat_type temp("buffer1", neqs, 23 + 2 * neqs + 4, num_odes),
-      // temp2("buffer2", 6, 7, num_odes);
-      // Note: size is from Luc's example. 
-      dims[0] = neqs; //subTemp_dim1
-      dims[1] = 23 + 2 * neqs + 4 ; // subTemp_dim2
-      dims[2] = 6; //subTemp2_dim1
-      dims[3] = 7; //subTemp2_dim2
-   }
+  // Get dimensions of two temporal views employed in KokkosKernels.
+  KOKKOS_INLINE_FUNCTION
+  static  void get_subTemp_dims(ordinal_type neqs, ordinal_type dims[4])
+  {
+    // Following Luc Berger-Vergiat's example,
+    // kokkos-kernels/perf_test/ode/KokkosODE_BDF.cpp,
+    // where he defines:
+    // mat_type temp("buffer1", neqs, 23 + 2 * neqs + 4, num_odes),
+    // temp2("buffer2", 6, 7, num_odes);
+    dims[0] = neqs; //subTemp_dim1
+    dims[1] = 23 + 2 * neqs + 4 ; // subTemp_dim2
+    dims[2] = 6; //subTemp2_dim1
+    dims[3] = 7; //subTemp2_dim2
+  }
 
     template<typename DeviceType>
   static inline ordinal_type getWorkSpaceSize(

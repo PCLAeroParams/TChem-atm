@@ -19,10 +19,12 @@ def norms(x_comp, x_ref) :
     Linf = lin.norm(diff,np.inf,axis)
     return (L1, L2, Linf)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-r_file','--ref_file',type=str,required=True, default="", help="File with reference data, including its path, this file must be saved in hdf5 format. ")
+parser = argparse.ArgumentParser(prog="compare_tchem_hdf5",
+                                 description="It takes two files and compares them using the relative root mean square error. If the differences are larger than the error threshold, this program produces an error.")
+parser.add_argument('-r_file','--ref_file',type=str,required=True, default="", help="File with reference data, including its path, this file must be saved in hdf5 format.")
 parser.add_argument('-t_file','--test_file',type=str,required=True, default="", help="File with test data, including its path")
 parser.add_argument('-error','--error_threshold',type=float,required=False, default=1e-6, help="Threshold to pass a test: relative error")
+parser.add_argument('-use_hdf5','--use_hdf5',type=bool,required=False, default=True, help="To use HDF5 format for the reference file. ")
 parser.add_argument('-check_norms','--check_norms',type=bool,required=False, default=False, help="Check norms")
 args = parser.parse_known_args(args=sys.argv)
 
@@ -31,11 +33,18 @@ check_norms=args[0].check_norms
 error_threshold=args[0].error_threshold
 ref_file = args[0].ref_file
 test_file= args[0].test_file
+use_hdf5= args[0].use_hdf5
 ## We consider any number smaller than small_number to be extremely small.
 small_number=1e-23
 
-with h5py.File(ref_file, 'r') as hdf:
-    ref = hdf['ref'][:]
+
+if use_hdf5 :
+    with h5py.File(ref_file, 'r') as hdf:
+        ref = hdf['ref'][:]
+else :
+    data = np.genfromtxt(ref_file, dtype=str)
+    #do not use header
+    ref = (data[1:,:]).astype(float)
 
 data = np.genfromtxt(test_file, dtype=str)
 #do not use header

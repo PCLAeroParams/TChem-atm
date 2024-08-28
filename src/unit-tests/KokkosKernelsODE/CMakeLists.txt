@@ -10,7 +10,7 @@ SET(EXE_NAME ../../examples/TChem_${TEST_NAME}.x)
 SET(INPUT_PATH ../../examples/runs/atmospheric_chemistry/Simpol)
 
 # Set the validation script path
-SET(VALIDATION_SCRIPT ../scripts/compare_tchem_hdf5.py)
+SET(VALIDATION_SCRIPT ../scripts/compare_tchem.py)
 
 # Threshold error for the passing test
 SET(PASSING_ERROR 1e-8)

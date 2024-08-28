@@ -171,17 +171,15 @@ namespace TChem
       real_type t = t_out_at_i();
       Impl::KokkosKernelsODE my_ode(m, problem, member);
 
-      // FIXME: do I need these copies?
       auto t_start = 0.0; //tadv_at_i._tbeg;
       auto dt = tadv_at_i._dt; 
       auto t_end = dt;//adv_at_i._tend;
 
 
-      //FIXME: hard-coded value.
+      //NOTE: hard-coded value.
       // I got this from the example code. 
       real_type max_step = (t_end - t_start) / 10;
      
-      // FIXME: can I use same variable for in and out? 
       KokkosODE::Experimental::BDFSolve(my_ode, t_start, t_end, dt, max_step,
                                       vals, vals, subTemp, subTemp2, rhs, update);
 

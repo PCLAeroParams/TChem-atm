@@ -20,8 +20,8 @@ def norms(x_comp, x_ref) :
     return (L1, L2, Linf)
 
 parser = argparse.ArgumentParser(prog="compare_tchem_hdf5",
-                                 description="It takes two files and compares them using the relative root mean square error. If the differences are larger than the error threshold, this program produces an error.")
-parser.add_argument('-r_file','--ref_file',type=str,required=True, default="", help="File with reference data, including its path, this file must be saved in hdf5 format.")
+description="It takes two files and compares them using the relative root mean square error. If the differences are larger than the error threshold, this program produces an error.")
+parser.add_argument('-r_file','--ref_file',type=str,required=True, default="", help="File with reference data, including its path. This file must be saved in HDF5 format if use_hdf5 is set to True.")
 parser.add_argument('-t_file','--test_file',type=str,required=True, default="", help="File with test data, including its path")
 parser.add_argument('-error','--error_threshold',type=float,required=False, default=1e-6, help="Threshold to pass a test: relative error")
 parser.add_argument('-use_hdf5','--use_hdf5',type=bool,required=False, default=True, help="To use HDF5 format for the reference file. ")

@@ -2,9 +2,11 @@ import numpy as np
 import h5py
 import argparse, sys
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(prog="make_hdf5_ref",
+                                 description="It converts a TChem-atm output to HDF5 format.")
+
 parser.add_argument('-r_file','--ref_file',type=str,required=True, default="",
- help="File with reference data, including its path. ")
+ help="Name of the TChem-atm output to be converted to HDF5 format.")
 
 
 args = parser.parse_known_args(args=sys.argv)

@@ -6,11 +6,11 @@
 using real_type = TChem::real_type;
 using ordinal_type = TChem::ordinal_type;
 
-  using exec_space = Kokkos::DefaultExecutionSpace;
-  using host_exec_space = Kokkos::DefaultHostExecutionSpace;
+using exec_space = Kokkos::DefaultExecutionSpace;
+using host_exec_space = Kokkos::DefaultHostExecutionSpace;
 
-  using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
-  using device_type      = typename Tines::UseThisDevice<exec_space>::type;
+using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+using device_type = typename Tines::UseThisDevice<exec_space>::type;
 
 static TChem::Driver *g_tchem = nullptr;
 
@@ -23,14 +23,12 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
   settings.set_device_id(0);
   Kokkos::initialize(settings);
 
-  const bool detail = false;
-
   using exec_space = Kokkos::DefaultExecutionSpace;
   using host_exec_space = Kokkos::DefaultHostExecutionSpace;
 
+  const bool detail = false;
   TChem::exec_space().print_configuration(std::cout, detail);
   TChem::host_exec_space().print_configuration(std::cout, detail);
-
 
   using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
   using device_type = typename Tines::UseThisDevice<exec_space>::type;
@@ -53,18 +51,11 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
   g_tchem->createGasKineticModelConstData();
   g_tchem->createStateVector();
   g_tchem->getLengthOfStateVector();
-
-//  real_type_2d_view_host_type state;
-//  void getStateVectorHost(real_type_2d_const_view_host &view);
-
-//  g_tchem->getAllStateVectorHost(state);
-
   g_tchem->createNumerics(numericsFile);
 
 }
 
 void finalize(){
-
   g_tchem->freeAll();
   delete g_tchem;
   Kokkos::finalize();
@@ -80,11 +71,11 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
    auto atol_time = root["solver_info"]["atol_time"];
    auto rtol_time = root["solver_info"]["rtol_time"];
 
-   _atol_newton = atol_newton.as<real_type>(); //1e-3;
-   _rtol_newton = rtol_newton.as<real_type>(); //1e-6;
-   _dtmin = dtmin.as<real_type>(); //1e-20;
-   _atol_time = atol_time.as<real_type>(); //1e-6;
-   _rtol_time = rtol_time.as<real_type>(); //1e-6;
+   _atol_newton = atol_newton.as<real_type>();
+   _rtol_newton = rtol_newton.as<real_type>();
+   _dtmin = dtmin.as<real_type>();
+   _atol_time = atol_time.as<real_type>();
+   _rtol_time = rtol_time.as<real_type>();
 }
 
 void TChem::Driver::createGasKineticModel(const std::string &chem_file) {
@@ -92,7 +83,6 @@ void TChem::Driver::createGasKineticModel(const std::string &chem_file) {
   _kmd = KineticModelData(_chem_file);
 }
 
-// FIXME: Add some checks
 void TChem::Driver::createGasKineticModelConstData() {
   printf("Creating kmcd \n");
   using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
@@ -105,7 +95,6 @@ void TChem::Driver::createGasKineticModelConstData() {
 
 }
 
-// FIXME: Free things
 void TChem::Driver::freeAll() {
   g_tchem->freeGasKineticModel();
 }
@@ -116,11 +105,10 @@ void TChem::Driver::freeGasKineticModel() {
 }
 
 void TChem::Driver::createStateVector() {
-  // FIXME: add error checking
   const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec);
   const ordinal_type nBatch = 1;
   _state = real_type_2d_view_host("state dev", nBatch, len);
-  for (ordinal_type k = 0; k < len; k++) { //_kmcd.nSpec; k++){
+  for (ordinal_type k = 0; k < len; k++) {
     _state(0,k) = 0.0;
   }
 }
@@ -210,25 +198,26 @@ void TChem::Driver::doTimestep(const double del_t){
   {
       auto tol_time_host = Kokkos::create_mirror_view(tol_time);
       auto tol_newton_host = Kokkos::create_mirror_view(tol_newton);
-      const real_type atol_time = _atol_time; // 1e-12;
       for (ordinal_type i = 0, iend = tol_time.extent(0); i < iend; ++i) {
-          tol_time_host(i, 0) = atol_time;
-          tol_time_host(i, 1) = _rtol_time; //1e-6; //rtol_time;
-          tol_newton_host(0) = _atol_newton; //1e-3; //atol_newton;
-          tol_newton_host(1) = _rtol_newton; //1e-6; //rtol_newton;
-          Kokkos::deep_copy(tol_time, tol_time_host);
-          Kokkos::deep_copy(tol_newton, tol_newton_host);
-  }
+          tol_time_host(i, 0) = _atol_time;
+          tol_time_host(i, 1) = _rtol_time;
+      }
+      tol_newton_host(0) = _atol_newton;
+      tol_newton_host(1) = _rtol_newton;
+      
+      Kokkos::deep_copy(tol_time, tol_time_host);
+      Kokkos::deep_copy(tol_newton, tol_newton_host);
+  } 
   using time_advance_type = TChem::time_advance_type;
   time_advance_type tadv_default;
-  tadv_default._tbeg = 0.0; // tbeg;
-  tadv_default._tend = del_t; // tend;
-  tadv_default._dt = _dtmin; //1e-20; // dtmin;
-  tadv_default._dtmin = _dtmin; // dtmin;
-  tadv_default._dtmax = del_t; // dtmax;
-  tadv_default._max_num_newton_iterations = 1e2; //max_num_newton_iterations;
-  tadv_default._num_time_iterations_per_interval = 1e5; //num_time_iterations_per_interval;
-  tadv_default._jacobian_interval = 100; //jacobian_interval;
+  tadv_default._tbeg = 0.0;
+  tadv_default._tend = del_t;
+  tadv_default._dt = _dtmin;
+  tadv_default._dtmin = _dtmin;
+  tadv_default._dtmax = del_t;
+  tadv_default._max_num_newton_iterations = 1e2;
+  tadv_default._num_time_iterations_per_interval = 1e5;
+  tadv_default._jacobian_interval = 100;
 
   time_advance_type_1d_view tadv("tadv", 1);
   Kokkos::deep_copy(tadv, tadv_default);
@@ -255,17 +244,8 @@ void TChem::Driver::doTimestep(const double del_t){
           tadv(i)._dt = dt(i);
           update += t(i);
      }, tsum);
-     }
+  }
   Kokkos::deep_copy(_state,state);
-  }
-}
-
-void TChem_getAllStateVectorHost(real_type *view) {
-  if (g_tchem != nullptr) {
-    TChem::real_type_2d_const_view_host const_view;
-    g_tchem->getStateVectorHost(const_view);
-    memcpy(view, const_view.data(), sizeof(real_type) * const_view.span());
-  }
 }
 
 void TChem::Driver::getStateVectorHost(real_type_2d_const_view_host &view) {

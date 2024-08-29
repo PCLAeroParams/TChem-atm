@@ -70,12 +70,19 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
    auto dtmin = root["solver_info"]["dtmin"];
    auto atol_time = root["solver_info"]["atol_time"];
    auto rtol_time = root["solver_info"]["rtol_time"];
+   auto max_num_newton_iterations = root["solver_info"]["max_newton_iterations"];
+   auto num_time_iterations_per_interval = root["solver_info"]["max_time_iterations"];
+   auto jacobian_interval = root["solver_info"]["jacobian_interval"];
 
-   _atol_newton = atol_newton.as<real_type>();
-   _rtol_newton = rtol_newton.as<real_type>();
-   _dtmin = dtmin.as<real_type>();
-   _atol_time = atol_time.as<real_type>();
-   _rtol_time = rtol_time.as<real_type>();
+   _atol_newton = atol_newton.as<real_type>(1e-10);
+   _rtol_newton = rtol_newton.as<real_type>(1e-6);
+   _dtmin = dtmin.as<real_type>(1e-8);
+   _atol_time = atol_time.as<real_type>(1e-12);
+   _rtol_time = rtol_time.as<real_type>(1e-4);
+   _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
+   _num_time_iterations_per_interval = num_time_iterations_per_interval.as<ordinal_type>(1e3);
+   _jacobian_interval = jacobian_interval.as<ordinal_type>(1);
+
 }
 
 void TChem::Driver::createGasKineticModel(const std::string &chem_file) {
@@ -215,9 +222,9 @@ void TChem::Driver::doTimestep(const double del_t){
   tadv_default._dt = _dtmin;
   tadv_default._dtmin = _dtmin;
   tadv_default._dtmax = del_t;
-  tadv_default._max_num_newton_iterations = 1e2;
-  tadv_default._num_time_iterations_per_interval = 1e5;
-  tadv_default._jacobian_interval = 100;
+  tadv_default._max_num_newton_iterations = _max_num_newton_iterations;
+  tadv_default._num_time_iterations_per_interval = _num_time_iterations_per_interval;
+  tadv_default._jacobian_interval = _jacobian_interval;
 
   time_advance_type_1d_view tadv("tadv", 1);
   Kokkos::deep_copy(tadv, tadv_default);

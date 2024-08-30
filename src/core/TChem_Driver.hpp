@@ -10,9 +10,11 @@ public:
    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
    using device_type = typename Tines::UseThisDevice<exec_space>::type;
 
+   // Input files
    std::string _chem_file, _therm_file;
-   real_type_2d_view_host _state;
 
+   // State vector
+   real_type_2d_view_host _state;
    void createStateVector();
    ordinal_type getLengthOfStateVector() const;
    auto getStateVectorSize();
@@ -20,7 +22,7 @@ public:
    void setStateVector(double *array);
    void getStateVectorHost(real_type_2d_const_view_host &view);
 
-   // Gases
+   // Gas variables
    TChem::KineticModelData _kmd;
    TChem::KineticModelNCAR_ConstData<host_device_type> _kmcd_host;
    TChem::KineticModelNCAR_ConstData<device_type> _kmcd_device;
@@ -29,30 +31,32 @@ public:
 
    // Aerosols
 
-
-   // Get sizes
-   ordinal_type getNumberOfSpecies();
+   // Return number of gas species
+   TChem::ordinal_type getNumberOfSpecies();
+   // Return gasspecies name
    std::string getSpeciesName(int *index);
 
-
+   // Integrate a single time step
    void doTimestep(const double del_t);
-   // Clean up
-   void freeAll();
-   void freeGasKineticModel();
 
-   // Diagnostics
-   void printSpecies();
-
-   // time integration
+   // Time integration information
    real_type _atol_newton;
    real_type _rtol_newton;
    real_type _dtmin;
    real_type _atol_time;
    real_type _rtol_time;
+   TChem::ordinal_type _max_num_newton_iterations;
+   TChem::ordinal_type _num_time_iterations_per_interval;
+   TChem::ordinal_type _jacobian_interval;
 
+   // Read in time integration information
    void createNumerics(const std::string &numerics_file);
 
-   void setTimeAdvance();
+   // Clean up
+   void freeAll();
+   void freeGasKineticModel();
+
+   // Diagnostics
 
 };
 }

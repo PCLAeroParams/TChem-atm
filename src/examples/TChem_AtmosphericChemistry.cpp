@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
       jacobian_interval(1);
 
   int nBatch(1), team_size(-1), vector_size(-1);
-  bool verbose(true);
+  bool verbose(false);
   std::string chemFile("chem.yaml");
   std::string outputFile("AtmosphericChemistry.dat");
 
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     timer.reset();
     Kokkos::deep_copy(state, state_host);
     const real_type t_deepcopy = timer.seconds();
-
+    if (verbose)
     {
       for (ordinal_type i = 0; i < nBatch; i++) {
         printf("Host::Initial condition sample No %d\n", i);
@@ -130,7 +130,8 @@ int main(int argc, char *argv[]) {
         printf("\n");
       }
     }
-
+    if (verbose)
+    {
     Kokkos::parallel_for(
         Kokkos::RangePolicy<TChem::exec_space>(0, nBatch), KOKKOS_LAMBDA(const ordinal_type &i) {
           printf("Devices::Initial condition sample No %d\n", i);
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) {
             printf(" %e", state_at_i(k));
           printf("\n");
         });
-
+    }
     //
 
     auto writeState = [](const ordinal_type iter, const real_type_1d_view_host _t, const real_type_1d_view_host _dt,
@@ -157,13 +158,13 @@ int main(int argc, char *argv[]) {
 
     };
 
-    auto printState = [](const time_advance_type _tadv, const real_type _t, const real_type_1d_view_host _state_at_i) {
-      /// iter, t, dt, rho, pres, temp, Ys ....
+    auto printState = [](const time_advance_type _tadv, const real_type _t, const real_type_1d_view_host _state_at_i)
+    {
       printf("%e %e %e %e %e", _t, _t - _tadv._tbeg, _state_at_i(0), _state_at_i(1), _state_at_i(2));
       for (ordinal_type k = 3, kend = _state_at_i.extent(0); k < kend; ++k)
         printf(" %e", _state_at_i(k));
       printf("\n");
-
+    /// iter, t, dt, rho, pres, temp, Ys ...
     };
 
     timer.reset();
@@ -253,6 +254,7 @@ int main(int argc, char *argv[]) {
 
         ordinal_type iter = 0;
         /// print of store QOI for the first sample
+        if (verbose)
         {
           /// could use cuda streams
           Kokkos::deep_copy(tadv_at_i_host, tadv_at_i);
@@ -278,7 +280,7 @@ int main(int argc, char *argv[]) {
 
           TChem::AtmosphericChemistry::runDeviceBatch(policy, tol_newton, tol_time, fac, tadv, state, t, dt, state,
                                                       kmcd);
-          {
+          if (verbose) {
             /// could use cuda streams
             Kokkos::deep_copy(tadv_at_i_host, tadv_at_i);
             Kokkos::deep_copy(t_at_i_host, t_at_i);
@@ -314,6 +316,9 @@ int main(int argc, char *argv[]) {
     const real_type t_device_batch = timer.seconds();
 
     printf("Time ignition  %e [sec] %e [sec/sample]\n", t_device_batch, t_device_batch / real_type(nBatch));
+
+    if (verbose)
+    {
     Kokkos::parallel_for(
         Kokkos::RangePolicy<TChem::exec_space>(0, nBatch), KOKKOS_LAMBDA(const ordinal_type &i) {
           printf("Devices:: Solution sample No %d\n", i);
@@ -322,6 +327,7 @@ int main(int argc, char *argv[]) {
             printf(" %e", state_at_i(k));
           printf("\n");
         });
+    }
 
 
     fclose(fout);

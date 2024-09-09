@@ -139,7 +139,7 @@ int KineticModelData::initChemNCAR(YAML::Node &root, std::ostream& echofile) {
     // reacSidxHost(i, count) = it->second;
   } else {
     printf("Yaml : Error when interpreting kinetic model  !!!");
-    printf("M species does not exit; Note: Name of M species is hard-coded to M %d\n");
+    printf("M species does not exit; Note: Name of M species is hard-coded to M \n");
       exit(1);
   }
   }

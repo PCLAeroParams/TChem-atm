@@ -16,9 +16,13 @@ RUN apt-get update \
         git \
         lcov \
         make \
+        python3 \
+        python3-pip \
         libopenblas-dev \
         pkg-config \
         ca-certificates
+
+RUN pip install numpy h5py 
 
 COPY . /tchem_dir/
 

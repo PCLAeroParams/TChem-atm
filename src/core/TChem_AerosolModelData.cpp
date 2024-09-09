@@ -147,7 +147,7 @@ int AerosolModelData::initChem(YAML::Node &root,
            //Note: that we do not use number of particles here.
            simpol_info_at.aerosol_sp_index = it_aero->second + nSpec_gas_;
            } else {
-           printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp);
+           printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", aero_sp.c_str());
            TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
           }
 
@@ -157,7 +157,7 @@ int AerosolModelData::initChem(YAML::Node &root,
             //
             simpol_info_at.gas_sp_index = it_gas->second;
            } else {
-            printf("Error : species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER\n", gas_sp);
+            printf("Error : species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER\n", gas_sp.c_str());
             TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting aerosol model" );
           }
           simpol_info.push_back(simpol_info_at);
@@ -253,7 +253,7 @@ void AerosolModelData::scenarioConditionParticles(const std::string &mechfile,
       auto species_name = sp_cond.first.as<std::string>();
       auto it = aerosol_sp_name_idx_.find(species_name);
       if (it == aerosol_sp_name_idx_.end()) {
-          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", species_name);
+          printf("species does not exit %s in reactants of SIMPOL_PHASE_TRANSFER reaction No \n", species_name.c_str());
           TCHEM_CHECK_ERROR(true,"Yaml : Error when interpreting kinetic model" );
       }
       const ordinal_type species_idx = it->second;

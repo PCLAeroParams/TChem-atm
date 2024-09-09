@@ -1,15 +1,13 @@
-exec=$TCHEM_INSTALL_PATH/examples/TChem_AerosolChemistry.x
+exec=$TCHEM_INSTALL_PATH/examples/TChem_AerosolChemistry_KokkosKernels.x
 
 run_this="$exec --chemfile=config_gas.yaml \
 	  --aerofile=test_SIMPOL_phase_transfer.yaml \
           --inputfile_particles=scenario_conditions_particle.yaml \
-	  --outputfile=full_gas_tines.dat \
-          --use-cvode=true \
+	  --outputfile=full_gas_KK.dat \
 	  --time-iterations-per-interval=10 \
-          --max-time-iterations=100\
 	  --tol-time=1e-3 \
           --atol-time=1e-12 \
-	  --dtmin=1e-20 \
+	  --dtmin=10 \
           --dtmax=10\
           --tend=1000 \
           --atol-newton=1e-12 \

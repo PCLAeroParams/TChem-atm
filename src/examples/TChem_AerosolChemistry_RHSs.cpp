@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
   int nBatch(1), team_size(-1), vector_size(-1);
   bool verbose(true);
   bool use_cloned_samples(false);
+  int number_of_particles(-1);
 
   /// parse command line arguments
   TChem::CommandLineParser opts("This example computes the net production rates with a given state vector");
@@ -51,6 +52,7 @@ int main(int argc, char *argv[]) {
   opts.set_option<std::string>("outputfile_times", "Wal times file name e.g., times.json", &outputFileTimes);
   opts.set_option<int>("team_thread_size", "time thread size ", &team_size);
   opts.set_option<int>("vector_thread_size", "vector thread size ", &vector_size);
+  opts.set_option<int>("number_of_particles", "Set the number of particles; this will overwrite the value from the input file. ", &number_of_particles);
   opts.set_option<bool>("verbose", "If true, printout the first omega values", &verbose);
   opts.set_option<int>("batch_size", " number of batches or samples, e.g. 10  ", &nBatch);
   opts.set_option<bool>(
@@ -98,6 +100,9 @@ int main(int argc, char *argv[]) {
 
     printf("amd parsing ...\n");
     TChem::AerosolModelData amd(aeroFile, kmd);
+    if(number_of_particles > 0) {
+      amd.setNumberofParticles(number_of_particles);
+    }
     const auto amcd = TChem::create_AerosolModelConstData<device_type>(amd);
 
     const ordinal_type total_n_species =kmcd.nSpec + amcd.nSpec * amcd.nParticles;
@@ -275,7 +280,6 @@ int main(int argc, char *argv[]) {
 
     {
       const ordinal_type level = 1;
-      fprintf(fout_times, "{\n");
       fprintf(fout_times, " \"Aerosol Numerical Jacobian\": \n {\n");
       const std::string profile_name = "TChem::AerosolChemistry::NumericalJacobian_evaluation";
       Kokkos::fence();

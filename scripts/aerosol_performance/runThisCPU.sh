@@ -5,7 +5,7 @@ for N in ${nbatch[@]}; do
       echo "Nthread = $threads"
       thread_size=${threads}
       output_wall_times="${tchem_outputs}/${experiment_name}/wall_times_nbatch_${N}_thread_size_${thread_size}_number_of_particles${number_of_particles}.json"
-      output="${tchem_outputs}/${experiment_name}/reaction_rates_nbatch_${N}_thread_size_${thread_size}.txt"
+      output="${tchem_outputs}/${experiment_name}/reaction_rates_nbatch_${N}_thread_size_${thread_size}_number_of_particles${number_of_particles}.txt"
       echo "${tchem_outputs}"
       echo "${experiment_name}"
       echo "/reaction_rates_nbatch_${N}_thread_size_${thread_size}.txt"

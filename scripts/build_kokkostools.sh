@@ -3,8 +3,9 @@ MY_CC=gcc
 MY_CXX=g++
 JFLAG="-j 10"
 
-BUILD_BASE=${PWD}
-INSTALL_BASE=${PWD}/install
+REPO_BASE=${PWD}/kokkos-tools
+BUILD_BASE=${PWD}/kokkos-tools
+INSTALL_BASE=${PWD}/kokkos-tools
 
 get_kokkostools (){
 echo "get kokkostools:"
@@ -26,9 +27,11 @@ cmake \
     ${KOKKOSTOOLS_REPOSITORY_PATH}
 make ${JFLAG} install
 }
-KOKKOSTOOLS_REPOSITORY_PATH=/ascldap/users/odiazib/Documents/Oscar/TChem/kokkos-tools
-KOKKOSTOOLS_BUILD_PATH=${BUILD_BASE}/kokkos-tools
-KOKKOSTOOLS_INSTALL_PATH=${INSTALL_BASE}/kokkos-tools
+KOKKOSTOOLS_REPOSITORY_PATH=${REPO_BASE}/main
+KOKKOSTOOLS_BUILD_PATH=${BUILD_BASE}/build
+KOKKOSTOOLS_INSTALL_PATH=${INSTALL_BASE}/install
+
+get_kokkostools
 build_install_kokkostools
 
 exit

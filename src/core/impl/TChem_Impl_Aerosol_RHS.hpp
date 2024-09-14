@@ -84,10 +84,10 @@ struct Aerosol_RHS
                          work,
                          kmcd);
     // 2. update RHS of gas and aerosol species
-    member.team_barrier();
+    // member.team_barrier();
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, device_type >;
     Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(member, amcd.nParticles),
+      Kokkos::ThreadVectorRange(member, amcd.nParticles),
        [&](const ordinal_type& i_part) {
     for (size_t i_simpol = 0; i_simpol < amcd.nSimpol_tran; i_simpol++)
     {

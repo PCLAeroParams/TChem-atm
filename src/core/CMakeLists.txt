@@ -5,7 +5,7 @@ FILE(GLOB TCHEM_ATM_HDR "*.hpp"
                     "strat_chem_solve/impl/*.hpp"
 )
 
-FILE(GLOB TCHEM_ATM_SRC "*.cpp"  "strat_chem_solve/*.cpp" "*.F90")
+FILE(GLOB TCHEM_ATM_SRC "*.cpp"  "strat_chem_solve/*.cpp")
 
 ADD_LIBRARY(tchem_atm STATIC ${TCHEM_ATM_SRC})
 IF (TCHEM_ATM_ENABLE_SHARED_BUILD)

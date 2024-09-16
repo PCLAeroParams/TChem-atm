@@ -32,7 +32,7 @@ public:
    // Aerosols
 
    // Return number of gas species
-   TChem::ordinal_type getNumberOfSpecies();
+   ordinal_type getNumberOfSpecies();
    // Return gasspecies name
    std::string getSpeciesName(int *index);
 
@@ -45,9 +45,9 @@ public:
    real_type _dtmin;
    real_type _atol_time;
    real_type _rtol_time;
-   TChem::ordinal_type _max_num_newton_iterations;
-   TChem::ordinal_type _num_time_iterations_per_interval;
-   TChem::ordinal_type _jacobian_interval;
+   ordinal_type _max_num_newton_iterations;
+   ordinal_type _num_time_iterations_per_interval;
+   ordinal_type _jacobian_interval;
 
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);

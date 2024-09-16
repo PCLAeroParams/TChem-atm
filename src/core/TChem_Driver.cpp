@@ -102,7 +102,6 @@ void TChem::Driver::createGasKineticModelConstData() {
   _kmcd_device = TChem::createNCAR_KineticModelConstData<device_type>(_kmd);
   printf("Number of Species %d \n", _kmcd_host.nSpec);
   printf("Number of Reactions %d \n", _kmcd_host.nReac);
-
   printf("End creating kmcd \n");
 
 }
@@ -127,17 +126,17 @@ void TChem::Driver::createStateVector() {
 }
 
 /* Get the state vector */
+auto TChem::Driver::getStateVector() {
+  auto state_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL);
+  return state_at_0;
+}
+
 void TChem_getStateVector(TChem::real_type *state){
   auto q = g_tchem->getStateVector();
   auto len = TChem_getLengthOfStateVector();
   for (ordinal_type k = 0; k < len; k++) {
      state[k] = q[k];
   }
-}
-
-auto TChem::Driver::getStateVector() {
-  auto state_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL);
-  return state_at_0;
 }
 
 /* Set the values of the state vector */
@@ -204,7 +203,7 @@ void TChem::Driver::doTimestep(const double del_t){
   const ordinal_type level = 1;
   ordinal_type per_team_extent(0);
 
-  per_team_extent = TChem::AtmosphericChemistry::getWorkSpaceSize(_kmcd_host);
+  per_team_extent = TChem::AtmosphericChemistry::getWorkSpaceSize(_kmcd_device);
 
   const ordinal_type per_team_scratch =
       TChem::Scratch<real_type_1d_view>::shmem_size(per_team_extent);
@@ -245,7 +244,7 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_1d_view t("time", 1);
   Kokkos::deep_copy(t, tadv_default._tbeg);
   real_type_1d_view dt("delta time", 1);
-  Kokkos::deep_copy(dt, tadvx_default._dt);
+  Kokkos::deep_copy(dt, tadv_default._dt);
 
   int max_num_time_iterations = 1e5;
   real_type tend = del_t;
@@ -266,6 +265,7 @@ void TChem::Driver::doTimestep(const double del_t){
           tadv(i)._dt = dt(i);
           update += t(i);
      }, tsum);
+     Kokkos::fence();
   }
   Kokkos::deep_copy(_state, state);
 }

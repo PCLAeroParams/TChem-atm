@@ -166,6 +166,7 @@ IF (SKYWALKER_INSTALL_PATH)
 ENDIF()
 ENDIF()
 
+
 #
 # Linking libraries used in example and test
 #

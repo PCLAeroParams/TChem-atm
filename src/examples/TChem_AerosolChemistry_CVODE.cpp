@@ -163,9 +163,19 @@ int main(int argc, char *argv[]) {
     const auto speciesNamesHost = Kokkos::create_mirror_view(kmcd.speciesNames);
     Kokkos::deep_copy(speciesNamesHost, kmcd.speciesNames);
 
-    FILE *fout = fopen(outputFile.c_str(), "w");
+    bool write_time_profiles(true);
+    // For scaling studies, we must execute this example many times.
+    // Thus, we do not want to write the solution to a file.
+    // In those cases, we pass outputFile=None.
+    if (outputFile =="None"){
+      write_time_profiles=false;
+    }//
+    FILE *fout;
+    if (write_time_profiles) {
+      fout = fopen(outputFile.c_str(), "w");
+    }
     // read scenario condition from yaml file
-   // read scenario condition from yaml file
+    // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
     ordinal_type nbacth_files=1;
     printf("conditions parsing ...\n");
@@ -200,7 +210,7 @@ int main(int argc, char *argv[]) {
       nBatch = nbacth_files;
       state = state_scenario_host;
 
-      // scenario particles 
+      // scenario particles
       num_concentration = real_type_2d_view_host("num_concentration", nBatch, amd.nParticles_);
       Kokkos::deep_copy(num_concentration, num_concentration_scenario);
     }
@@ -310,33 +320,32 @@ int main(int argc, char *argv[]) {
 
         ordinal_type iter = 0;
 
-        fprintf(fout, "%s \t %s \t %s \t ", "iter", "t", "dt");
-        fprintf(fout, "%s \t %s \t %s \t", "Density[kg/m3]", "Pressure[Pascal]",
+        if (write_time_profiles) {
+          fprintf(fout, "%s \t %s \t %s \t ", "iter", "t", "dt");
+          fprintf(fout, "%s \t %s \t %s \t", "Density[kg/m3]", "Pressure[Pascal]",
                 "Temperature[K]");
 
-        for (ordinal_type k = 0; k < kmcd.nSpec; k++)
-          fprintf(fout, "%s \t", &speciesNamesHost(k, 0));
-        //given aero idx return species name
-        std::map<int, std::string> aero_idx_sp_name;
-        for (std::map<std::string, int>::iterator
-           i = amd.aerosol_sp_name_idx_.begin();
-          i != amd.aerosol_sp_name_idx_.end(); ++i)
-          aero_idx_sp_name[i->second] = i->first;
-
-        for (ordinal_type ipart = 0; ipart < amd.nParticles_; ipart++)
-        {
-          for (ordinal_type isp = 0; isp < amd.nSpec_; isp++)
+          for (ordinal_type k = 0; k < kmcd.nSpec; k++)
+            fprintf(fout, "%s \t", &speciesNamesHost(k, 0));
+          //given aero idx return species name
+          std::map<int, std::string> aero_idx_sp_name;
+          for (std::map<std::string, int>::iterator
+             i = amd.aerosol_sp_name_idx_.begin();
+            i != amd.aerosol_sp_name_idx_.end(); ++i)
+            aero_idx_sp_name[i->second] = i->first;
+          for (ordinal_type ipart = 0; ipart < amd.nParticles_; ipart++)
           {
-            // std::cout << "species Name : "<< aero_idx_sp_name[i] << "\n";
-            auto aero_sp_name = aero_idx_sp_name[isp]+"_p"+std::to_string(ipart);
-            fprintf(fout, "%s \t", aero_sp_name.c_str());
-          }// isp
-        }// ipar
+            for (ordinal_type isp = 0; isp < amd.nSpec_; isp++)
+            {
+              // std::cout << "species Name : "<< aero_idx_sp_name[i] << "\n";
+              auto aero_sp_name = aero_idx_sp_name[isp]+"_p"+std::to_string(ipart);
+              fprintf(fout, "%s \t", aero_sp_name.c_str());
+            }// isp
+          }// ipar
 
-
-
-        fprintf(fout, "\n");
-        writeState(-1, t, dt, state, fout);
+          fprintf(fout, "\n");
+          writeState(-1, t, dt, state, fout);
+        }// write_time_profiles
 
         real_type tsum(0);
         Kokkos::Timer timer;
@@ -355,8 +364,9 @@ int main(int argc, char *argv[]) {
           fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iter,
                   t_device_batch);
 
-          writeState(iter, t, dt, state, fout);
-
+          if (write_time_profiles) {
+            writeState(iter, t, dt, state, fout);
+          }
           /// carry over time and dt computed in this step
           tsum = zero;
           Kokkos::parallel_reduce(
@@ -381,8 +391,9 @@ int main(int argc, char *argv[]) {
     fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
     fprintf(fout_times, "} \n "); // reaction rates
 
-
-    fclose(fout);
+    if (write_time_profiles) {
+      fclose(fout);
+     }
     fprintf(fout_times, "}\n "); // end index time
     fclose(fout_times);
   }

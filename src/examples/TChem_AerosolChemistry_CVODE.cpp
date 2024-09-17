@@ -62,7 +62,10 @@ int main(int argc, char *argv[]) {
   std::string inputFile("None");
   std::string input_file_particles("None");
   bool use_cloned_samples(false);
-  bool use_cvode(false);
+  // For scaling studies, we must execute this example many times.
+  // Thus, we do not want to write the solution to a file.
+  // In those cases, we pass write_time_profiles false.
+  bool write_time_profiles(true);
   /// parse command line arguments
   TChem::CommandLineParser opts(
       "This example computes the solution of gas chemistry problem");
@@ -105,6 +108,7 @@ int main(int argc, char *argv[]) {
                        &max_num_newton_iterations);
   opts.set_option<bool>(
       "verbose", "If true, printout the first Jacobian values", &verbose);
+
   opts.set_option<int>("team_thread_size", "time thread size ", &team_size);
   opts.set_option<int>("batch_size", " number of batches or samples, e.g. 10  ", &nBatch);
   opts.set_option<int>("vector_thread_size", "vector thread size ",
@@ -112,9 +116,8 @@ int main(int argc, char *argv[]) {
   opts.set_option<real_type>("atol-time", "Absolute tolerance used for adaptive time stepping", &atol_time);
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
-  opts.set_option<bool>("use-cvode",
-      "if true code runs ignition zero d reactor with cvode; otherwise, it uses TrBDF2",
-      &use_cvode);
+  opts.set_option<bool>(
+      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles)
 
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
@@ -163,13 +166,6 @@ int main(int argc, char *argv[]) {
     const auto speciesNamesHost = Kokkos::create_mirror_view(kmcd.speciesNames);
     Kokkos::deep_copy(speciesNamesHost, kmcd.speciesNames);
 
-    bool write_time_profiles(true);
-    // For scaling studies, we must execute this example many times.
-    // Thus, we do not want to write the solution to a file.
-    // In those cases, we pass outputFile=None.
-    if (outputFile =="None"){
-      write_time_profiles=false;
-    }//
     FILE *fout;
     if (write_time_profiles) {
       fout = fopen(outputFile.c_str(), "w");
@@ -258,11 +254,10 @@ int main(int argc, char *argv[]) {
     using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
     Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type> cvodes;
 
-    if (use_cvode) {
-      cvodes = Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type>("cvodes", nBatch);
-      for (ordinal_type i=0;i<nBatch;++i)
+
+    cvodes = Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type>("cvodes", nBatch);
+    for (ordinal_type i=0;i<nBatch;++i)
         cvodes(i).create(n_active_vars);
-    }
 
         ordinal_type number_of_equations(0);
 

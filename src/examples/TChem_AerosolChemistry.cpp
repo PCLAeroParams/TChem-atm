@@ -61,6 +61,10 @@ int main(int argc, char *argv[]) {
   std::string inputFile("None");
   std::string input_file_particles("None");
   bool use_cloned_samples(false);
+  // For scaling studies, we must execute this example many times.
+  // Thus, we do not want to write the solution to a file.
+  // In those cases, we pass write_time_profiles false.
+  bool write_time_profiles(true);
   /// parse command line arguments
   TChem::CommandLineParser opts(
       "This example computes the solution of gas chemistry problem");
@@ -103,6 +107,8 @@ int main(int argc, char *argv[]) {
                        &max_num_newton_iterations);
   opts.set_option<bool>(
       "verbose", "If true, printout the first Jacobian values", &verbose);
+  opts.set_option<bool>(
+      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles);
   opts.set_option<int>("team_thread_size", "time thread size ", &team_size);
   opts.set_option<int>("batch_size", " number of batches or samples, e.g. 10  ", &nBatch);
   opts.set_option<int>("vector_thread_size", "vector thread size ",
@@ -160,14 +166,6 @@ int main(int argc, char *argv[]) {
     const auto speciesNamesHost = Kokkos::create_mirror_view(kmcd.speciesNames);
     Kokkos::deep_copy(speciesNamesHost, kmcd.speciesNames);
 
-
-    bool write_time_profiles(true);
-    // For scaling studies, we must execute this example many times.
-    // Thus, we do not want to write the solution to a file.
-    // In those cases, we pass outputFile=None.
-    if (outputFile =="None"){
-      write_time_profiles=false;
-    }//
     FILE *fout;
     if (write_time_profiles) {
      fout = fopen(outputFile.c_str(), "w");

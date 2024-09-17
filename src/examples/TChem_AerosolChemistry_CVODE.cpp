@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
   opts.set_option<bool>(
-      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles)
+      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles);
 
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
@@ -173,19 +173,19 @@ int main(int argc, char *argv[]) {
     // read scenario condition from yaml file
     // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
-    ordinal_type nbacth_files=1;
+    ordinal_type nbatch_files=1;
     printf("conditions parsing ...\n");
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbatch_files);
     const ordinal_type n_active_vars = total_n_species - kmcd.nConstSpec;
     printf("Number of const species %d \n", kmcd.nConstSpec);
 
     real_type_2d_view_host num_concentration_scenario, num_concentration;
-    amd.scenarioConditionParticles(input_file_particles, nbacth_files, num_concentration_scenario, state_scenario_host);
+    amd.scenarioConditionParticles(input_file_particles, nbatch_files, num_concentration_scenario, state_scenario_host);
 
     real_type_2d_view_host state;
-    if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
-      // only clone samples if nbacth_files is 1
+    if (nbatch_files == 1 && use_cloned_samples && nBatch > 1) {
+      // only clone samples if nbatch_files is 1
       printf("-------------------------------------------------------\n");
       printf("--------------------Warning----------------------------\n");
       printf("Using cloned samples ... only for numerical experiments\n");
@@ -203,14 +203,14 @@ int main(int argc, char *argv[]) {
       TChem::Test::cloneView(num_concentration);
 
     } else {
-      nBatch = nbacth_files;
+      nBatch = nbatch_files;
       state = state_scenario_host;
 
       // scenario particles
       num_concentration = real_type_2d_view_host("num_concentration", nBatch, amd.nParticles_);
       Kokkos::deep_copy(num_concentration, num_concentration_scenario);
     }
-    printf("Number of nbacth %d \n",nBatch);
+    printf("Number of nbatch %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,
                          const real_type_1d_view_host _t,
                          const real_type_1d_view_host _dt,

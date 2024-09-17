@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
   opts.set_option<bool>(
-      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles)
+      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles);
 
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)

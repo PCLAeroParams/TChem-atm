@@ -160,8 +160,16 @@ int main(int argc, char *argv[]) {
     const auto speciesNamesHost = Kokkos::create_mirror_view(kmcd.speciesNames);
     Kokkos::deep_copy(speciesNamesHost, kmcd.speciesNames);
 
+
+    bool write_time_profiles(true);
+    // For scaling studies, we must execute this example many times.
+    // Thus, we do not want to write the solution to a file.
+    // In those cases, we pass outputFile=None.
+    if (outputFile =="None"){
+      write_time_profiles=false;
+    }//
     FILE *fout;
-    if (verbose) {
+    if (write_time_profiles) {
      fout = fopen(outputFile.c_str(), "w");
     }
     // read scenario condition from yaml file
@@ -317,7 +325,7 @@ int main(int argc, char *argv[]) {
         dt_host = real_type_1d_view_host("dt host", nBatch);
 
         ordinal_type iter = 0;
-        if (verbose) {
+        if (write_time_profiles) {
           fprintf(fout, "%s \t %s \t %s \t ", "iter", "t", "dt");
           fprintf(fout, "%s \t %s \t %s \t", "Density[kg/m3]", "Pressure[Pascal]",
                 "Temperature[K]");
@@ -398,7 +406,7 @@ int main(int argc, char *argv[]) {
     fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
     fprintf(fout_times, "} \n "); // reaction rates
 
-    if (verbose) {
+    if (write_time_profiles) {
       fclose(fout);
     }
     fprintf(fout_times, "}\n "); // end index time

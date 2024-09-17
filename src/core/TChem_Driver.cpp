@@ -74,6 +74,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
    auto atol_time = root["solver_info"]["atol_time"];
    auto rtol_time = root["solver_info"]["rtol_time"];
    auto max_num_newton_iterations = root["solver_info"]["max_newton_iterations"];
+   auto max_num_time_iterations = root["solver_info"]["max_time_iterations"];
    auto num_time_iterations_per_interval = root["solver_info"]["max_time_iterations"];
    auto jacobian_interval = root["solver_info"]["jacobian_interval"];
 
@@ -83,6 +84,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
    _atol_time = atol_time.as<real_type>(1e-12);
    _rtol_time = rtol_time.as<real_type>(1e-4);
    _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
+   _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
    _num_time_iterations_per_interval = num_time_iterations_per_interval.as<ordinal_type>(1e3);
    _jacobian_interval = jacobian_interval.as<ordinal_type>(1);
 
@@ -246,14 +248,13 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_1d_view dt("delta time", 1);
   Kokkos::deep_copy(dt, tadv_default._dt);
 
-  int max_num_time_iterations = 1e5;
   real_type tend = del_t;
   ordinal_type iter = 0;
   real_type tsum(0);
   auto stateVecDim = TChem_getLengthOfStateVector();
   real_type_2d_view state("StateVector Devices", 1, stateVecDim);
   Kokkos::deep_copy(state, _state);
-  for (; iter < max_num_time_iterations && tsum <= tend * 0.9999; ++iter) {
+  for (; iter < _max_num_time_iterations && tsum <= tend * 0.9999; ++iter) {
     TChem::AtmosphericChemistry::runDeviceBatch(policy, tol_newton, tol_time, fac, tadv,
               state, t, dt, state, _kmcd_device);
 

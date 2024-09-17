@@ -40,14 +40,15 @@ public:
    void doTimestep(const double del_t);
 
    // Time integration information
-   real_type _atol_newton;
-   real_type _rtol_newton;
-   real_type _dtmin;
-   real_type _atol_time;
-   real_type _rtol_time;
-   ordinal_type _max_num_newton_iterations;
-   ordinal_type _num_time_iterations_per_interval;
-   ordinal_type _jacobian_interval;
+   real_type _atol_newton; // Absolute tolerance used in Newton solver
+   real_type _rtol_newton; // Relative tolerance used in Newton solver
+   real_type _dtmin; // Minimum time step size (s).
+   real_type _atol_time; // Absolute tolerance used for adaptive time stepping
+   real_type _rtol_time; // Relative tolerance used for adaptive time stepping
+   ordinal_type _max_num_newton_iterations; // Maximum number of Newton iterations
+   ordinal_type _max_num_time_iterations; // Maximum number of time iterations
+   ordinal_type _num_time_iterations_per_interval; // 
+   ordinal_type _jacobian_interval; // Interval for evaluating Jacobians
 
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);

@@ -15,11 +15,11 @@ public:
 
    // State vector
    real_type_2d_view_host _state;
-   void createStateVector();
+   void createStateVector(ordinal_type nBatch);
    ordinal_type getLengthOfStateVector() const;
    auto getStateVectorSize();
-   auto getStateVector();
-   void setStateVector(double *array);
+   auto getStateVector(const ordinal_type iBatch);
+   void setStateVector(double *array, const ordinal_type iBatch);
    void getStateVectorHost(real_type_2d_const_view_host &view);
 
    // Gas variables
@@ -63,13 +63,13 @@ public:
 }
 
 extern "C" void initialize(const char* gasFile, const char* aeroFile,
-                           const char* numericsFile);
+                           const char* numericsFile, const TChem::ordinal_type nBatch);
 extern "C" void finalize();
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
 extern "C" int TChem_getLengthOfStateVector();
-extern "C" void TChem_getStateVector(TChem::real_type *array);
-extern "C" void TChem_setStateVector(TChem::real_type *array);
+extern "C" void TChem_getStateVector(TChem::real_type *array, const TChem::ordinal_type iBatch);
+extern "C" void TChem_setStateVector(TChem::real_type *array, const TChem::ordinal_type iBatch);
 extern "C" int TChem_getSpeciesName(int* index, char* result,
                                     const std::string::size_type buffer_size);
 extern "C" void TChem_doTimestep(const double &del_t);

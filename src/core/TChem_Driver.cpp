@@ -15,7 +15,8 @@ using device_type = typename Tines::UseThisDevice<exec_space>::type;
 static TChem::Driver *g_tchem = nullptr;
 
 /* Initialize the model given input YAML files */
-void initialize(const char* chemFile, const char* aeroFile, const char* numericsFile){
+void initialize(const char* chemFile, const char* aeroFile, const char* numericsFile,
+  const ordinal_type nBatch){
 
   g_tchem = new TChem::Driver();
 
@@ -48,9 +49,11 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
 
   using ordinal_type = TChem::ordinal_type;
 
+//  ordinal_type nBatch = 1;
+
   g_tchem->createGasKineticModel(chemFile);
   g_tchem->createGasKineticModelConstData();
-  g_tchem->createStateVector();
+  g_tchem->createStateVector(nBatch);
   g_tchem->getLengthOfStateVector();
   g_tchem->createNumerics(numericsFile);
 
@@ -118,23 +121,20 @@ void TChem::Driver::freeGasKineticModel() {
   _therm_file = std::string();
 }
 
-void TChem::Driver::createStateVector() {
+void TChem::Driver::createStateVector(ordinal_type nBatch) {
   const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec);
-  const ordinal_type nBatch = 1;
   _state = real_type_2d_view_host("state dev", nBatch, len);
-  for (ordinal_type k = 0; k < len; k++) {
-    _state(0,k) = 0.0;
-  }
+  Kokkos::deep_copy(_state, 0.0);
 }
 
 /* Get the state vector */
-auto TChem::Driver::getStateVector() {
-  auto state_at_0 = Kokkos::subview(_state, 0, Kokkos::ALL);
+auto TChem::Driver::getStateVector(const ordinal_type iBatch) {
+  auto state_at_0 = Kokkos::subview(_state, iBatch, Kokkos::ALL);
   return state_at_0;
 }
 
-void TChem_getStateVector(TChem::real_type *state){
-  auto q = g_tchem->getStateVector();
+void TChem_getStateVector(TChem::real_type *state, const ordinal_type iBatch){
+  auto q = g_tchem->getStateVector(iBatch);
   auto len = TChem_getLengthOfStateVector();
   for (ordinal_type k = 0; k < len; k++) {
      state[k] = q[k];
@@ -142,14 +142,14 @@ void TChem_getStateVector(TChem::real_type *state){
 }
 
 /* Set the values of the state vector */
-void TChem_setStateVector(double *array){
-  g_tchem->setStateVector(array);
+void TChem_setStateVector(double *array, const ordinal_type iBatch){
+  g_tchem->setStateVector(array, iBatch);
 }
 
-void TChem::Driver::setStateVector(double *array) {
+void TChem::Driver::setStateVector(double *array, const ordinal_type iBatch) {
   auto len = TChem_getLengthOfStateVector();
   for (ordinal_type k = 0; k < len; k++){
-     _state(0,k) = array[k];
+     _state(iBatch,k) = array[k];
   }
 }
 
@@ -163,9 +163,9 @@ int TChem_getSpeciesName(int * index, char* result, const std::string::size_type
 
 std::string TChem::Driver::getSpeciesName(int *index){
   const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd_host.speciesNames);
-  Kokkos::deep_copy(speciesNamesHost, _kmcd_host.speciesNames);
+//  Kokkos::deep_copy(speciesNamesHost, _kmcd_host.speciesNames);
   int k = *index;
-  std::string species_name = &speciesNamesHost(k,0);
+  std::string species_name = &_kmcd_host.speciesNames(k,0); //speciesNamesHost(k,0);
   return species_name;
 }
 
@@ -274,6 +274,5 @@ void TChem::Driver::doTimestep(const double del_t){
 /* Return the state vector from host */
 void TChem::Driver::getStateVectorHost(real_type_2d_const_view_host &view) {
   TCHEM_CHECK_ERROR(_state.span() == 0, "State vector should be constructed");
-  auto hv = Kokkos::create_mirror_view(_state);
-  view = real_type_2d_const_view_host(&hv(0, 0), hv.extent(0), hv.extent(1));
+  view = real_type_2d_const_view_host(&_state(0,0), _state.extent(0), _state.extent(1));
 } 

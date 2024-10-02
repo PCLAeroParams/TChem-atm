@@ -14,6 +14,8 @@ public:
    std::string _chem_file, _therm_file;
 
    // State vector
+   ordinal_type _nBatch;
+   void setBatchSize(ordinal_type nBatch);
    real_type_2d_view_host _state;
    void createStateVector(ordinal_type nBatch);
    ordinal_type getLengthOfStateVector() const;
@@ -33,7 +35,7 @@ public:
 
    // Return number of gas species
    ordinal_type getNumberOfSpecies();
-   // Return gasspecies name
+   // Return gas species name
    std::string getSpeciesName(int *index);
 
    // Integrate a single time step

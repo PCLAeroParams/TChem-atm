@@ -49,8 +49,7 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
 
   using ordinal_type = TChem::ordinal_type;
 
-//  ordinal_type nBatch = 1;
-
+  g_tchem->setBatchSize(nBatch);
   g_tchem->createGasKineticModel(chemFile);
   g_tchem->createGasKineticModelConstData();
   g_tchem->createStateVector(nBatch);
@@ -64,6 +63,10 @@ void finalize(){
   g_tchem->freeAll();
   delete g_tchem;
   Kokkos::finalize();
+}
+
+void TChem::Driver::setBatchSize(const ordinal_type nBatch) {
+   _nBatch = nBatch;
 }
 
 /* Read in the solver settings */
@@ -200,7 +203,7 @@ void TChem::Driver::doTimestep(const double del_t){
   using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
   using problem_type = TChem::Impl::AtmosphericChemistry_Problem<real_type, interf_host_device_type>;
   using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
-  policy_type policy(exec_space_instance, 1, Kokkos::AUTO());
+  policy_type policy(exec_space_instance, _nBatch, Kokkos::AUTO());
 
   const ordinal_type level = 1;
   ordinal_type per_team_extent(0);

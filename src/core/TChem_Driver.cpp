@@ -215,7 +215,7 @@ void TChem::Driver::doTimestep(const double del_t){
   auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host);
   real_type_2d_view tol_time("tol time", number_of_equations, 2);
   real_type_1d_view tol_newton("tol newton", 2);
-  real_type_2d_view fac("fac", 1, number_of_equations);
+  real_type_2d_view fac("fac", _nBatch, number_of_equations);
 
   {
       auto tol_time_host = Kokkos::create_mirror_view(tol_time);
@@ -242,11 +242,11 @@ void TChem::Driver::doTimestep(const double del_t){
   tadv_default._num_time_iterations_per_interval = _num_time_iterations_per_interval;
   tadv_default._jacobian_interval = _jacobian_interval;
 
-  time_advance_type_1d_view tadv("tadv", 1);
+  time_advance_type_1d_view tadv("tadv", _nBatch);
   Kokkos::deep_copy(tadv, tadv_default);
-  real_type_1d_view t("time", 1);
+  real_type_1d_view t("time", _nBatch);
   Kokkos::deep_copy(t, tadv_default._tbeg);
-  real_type_1d_view dt("delta time", 1);
+  real_type_1d_view dt("delta time", _nBatch);
   Kokkos::deep_copy(dt, tadv_default._dt);
 
   real_type tend = del_t;
@@ -261,7 +261,7 @@ void TChem::Driver::doTimestep(const double del_t){
 
     tsum = 0.0;
     Kokkos::parallel_reduce(
-        Kokkos::RangePolicy<TChem::exec_space>(0, 1),
+        Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
         KOKKOS_LAMBDA(const ordinal_type &i, real_type &update) {
           tadv(i)._tbeg = t(i);
           tadv(i)._dt = dt(i);

@@ -13,6 +13,9 @@ public:
    // Input files
    std::string _chem_file, _therm_file;
 
+   ordinal_type _team_size;
+   ordinal_type _vector_size;
+
    // State vector
    ordinal_type _nBatch;
    void setBatchSize(ordinal_type nBatch);

@@ -84,6 +84,10 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
    auto num_time_iterations_per_interval = root["solver_info"]["max_time_iterations"];
    auto jacobian_interval = root["solver_info"]["jacobian_interval"];
 
+   auto team_size = root["solver_info"]["team_size"];
+   auto vector_size = root["solver_info"]["vector_size"];
+
+
    _atol_newton = atol_newton.as<real_type>(1e-10);
    _rtol_newton = rtol_newton.as<real_type>(1e-6);
    _dtmin = dtmin.as<real_type>(1e-8);
@@ -93,6 +97,10 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
    _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
    _num_time_iterations_per_interval = num_time_iterations_per_interval.as<ordinal_type>(1e3);
    _jacobian_interval = jacobian_interval.as<ordinal_type>(1);
+
+   // If team_size and vector_size are not specified, default to -1
+   _team_size = team_size.as<ordinal_type>(-1);
+   _vector_size = vector_size.as<ordinal_type>(-1);
 
 }
 
@@ -201,7 +209,14 @@ void TChem::Driver::doTimestep(const double del_t){
   using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
   using problem_type = TChem::Impl::AtmosphericChemistry_Problem<real_type, interf_host_device_type>;
   using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+
   policy_type policy(exec_space_instance, _nBatch, Kokkos::AUTO());
+
+  if (_team_size > 0 && _vector_size > 0) {
+      policy = policy_type(exec_space_instance,  _nBatch, _team_size, _vector_size);
+  } else if (_team_size > 0 && _vector_size < 0) {
+      policy = policy_type(exec_space_instance, _nBatch,  _team_size);
+  }
 
   const ordinal_type level = 1;
   ordinal_type per_team_extent(0);

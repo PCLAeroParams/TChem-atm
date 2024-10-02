@@ -132,8 +132,8 @@ void TChem::Driver::createStateVector(ordinal_type nBatch) {
 
 /* Get the state vector */
 auto TChem::Driver::getStateVector(const ordinal_type iBatch) {
-  auto state_at_0 = Kokkos::subview(_state, iBatch, Kokkos::ALL);
-  return state_at_0;
+  auto state_at_i_batch = Kokkos::subview(_state, iBatch, Kokkos::ALL);
+  return state_at_i_batch;
 }
 
 void TChem_getStateVector(TChem::real_type *state, const ordinal_type iBatch){
@@ -166,9 +166,8 @@ int TChem_getSpeciesName(int * index, char* result, const std::string::size_type
 
 std::string TChem::Driver::getSpeciesName(int *index){
   const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd_host.speciesNames);
-//  Kokkos::deep_copy(speciesNamesHost, _kmcd_host.speciesNames);
   int k = *index;
-  std::string species_name = &_kmcd_host.speciesNames(k,0); //speciesNamesHost(k,0);
+  std::string species_name = &_kmcd_host.speciesNames(k,0);
   return species_name;
 }
 
@@ -198,7 +197,6 @@ void TChem_doTimestep(const double &del_t){
 void TChem::Driver::doTimestep(const double del_t){
 
   const auto exec_space_instance = TChem::exec_space();
-//  using device_type = typename Tines::UseThisDevice<exec_space>::type;
   using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
   using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
   using problem_type = TChem::Impl::AtmosphericChemistry_Problem<real_type, interf_host_device_type>;

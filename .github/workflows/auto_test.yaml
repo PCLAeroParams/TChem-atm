@@ -37,3 +37,5 @@ jobs:
       run: docker build -f Dockerfile -t tchem . --build-arg BUILD_TYPE=${{ matrix.build-type }} --build-arg SACADO=${{ matrix.sacado-on }}
     - name: Testing TChem
       run: docker run -t tchem bash -c 'cd /tchem_build; ctest'
+    - name: Evaluating code coverage
+      run: docker run -t tchem-coverage bash -c 'cd /tchem_build; make coverage'

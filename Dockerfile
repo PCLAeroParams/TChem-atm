@@ -129,6 +129,7 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DTCHEM_ATM_ENABLE_TEST=ON \
           -DTCHEM_ATM_ENABLE_EXAMPLE=ON \
           -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=${SACADO} \
+          -DTCHEM_ATM_ENABLE_COVERAGE=ON \
           -DKOKKOS_INSTALL_PATH=/install/kokkos_install \
           -DTINES_INSTALL_PATH=/install/tines_install \
           -DTCHEM_ATM_ENABLE_SKYWALKER=ON \

@@ -38,4 +38,4 @@ jobs:
     - name: Testing TChem
       run: docker run -t tchem bash -c 'cd /tchem_build; ctest'
     - name: Evaluating code coverage
-      run: docker run -t tchem-coverage bash -c 'cd /tchem_build; make coverage'
+      run: docker run -t tchem bash -c 'cd /tchem_build; make coverage'

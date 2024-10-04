@@ -192,6 +192,9 @@ ENDIF()
 IF (TCHEM_ATM_ENABLE_EXAMPLE)
   ADD_SUBDIRECTORY (examples)
 ENDIF()
+IF (TCHEM_ATM_ENABLE_SKYWALKER)
+  ADD_SUBDIRECTORY (verification)
+ENDIF()
 
 # add in target include for build to enable finding TChem_atm_Config
 TARGET_INCLUDE_DIRECTORIES(tchem_atm

@@ -2,8 +2,12 @@
 #define TCHEM_ATM_VERIFICATION_HPP
 
 #include "TChem.hpp"
+
 namespace tchem {
+
 namespace verification {
+using real_type = TChem::real_type;
+using real_type_2d_view = TChem::real_type_2d_view;
 
 /// Call this function to initialize a validation driver.
 void initialize(int argc, char **argv);
@@ -12,6 +16,12 @@ void initialize(int argc, char **argv);
 void finalize();
 
 std::string output_name(const std::string &input_file);
+
+void convert_1d_vector_to_2d_view_device(const std::vector<real_type> &var_std,
+                                         const real_type_2d_view &var_device);
+
+void convert_2d_view_device_to_1d_vector(const real_type_2d_view &var_device,
+                                         std::vector<real_type> &var_std);
 }// namespace verification
 } // namespace tchem
 

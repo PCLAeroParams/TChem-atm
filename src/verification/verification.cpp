@@ -40,7 +40,8 @@ void convert_1d_vector_to_2d_view_device(const std::vector<real_type> &var_std,
 }
 
 void convert_2d_view_device_to_1d_vector(const real_type_2d_view &var_device,
-                                         std::vector<real_type> &var_std) {
+                                         std::vector<real_type> &var_std)
+{
   auto host = Kokkos::create_mirror_view(var_device);
   Kokkos::deep_copy(host, var_device);
   int count = 0;
@@ -50,6 +51,13 @@ void convert_2d_view_device_to_1d_vector(const real_type_2d_view &var_device,
       count++;
     }
   }
+}
+
+void convert_1d_vector_to_1d_view_device(const std::vector<real_type> &var_std,
+                                         const real_type_1d_view &var_device)
+{
+  auto var_host = real_type_1d_view_host((real_type *)var_std.data(), var_std.size());
+  Kokkos::deep_copy(var_device, var_host);
 }
 
 }   // namespace verification

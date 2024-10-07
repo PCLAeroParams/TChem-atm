@@ -14,7 +14,7 @@ void usage() {
   std::cerr << "mesa_driver <input.yaml>" << std::endl;
   exit(0);
 }
-// void adjust_solid_aerosol(Ensemble *ensemble);
+void adjust_solid_aerosol(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   // Dispatch to the requested function.
   auto func_name = settings.get("function");
   try {
-#if 0
+#if 1
     if (func_name == "adjust_solid_aerosol") {
       adjust_solid_aerosol(ensemble);
     } else {

@@ -39,3 +39,12 @@ jobs:
       run: docker run -t tchem bash -c 'cd /tchem_build; ctest'
     - name: Evaluating code coverage
       run: docker run -t tchem bash -c 'cd /tchem_build; make coverage'
+    - name: Uploading coverage report to codecov.io
+      if: ${{ (contains(matrix.os, 'ubuntu-22.04')) && (matrix.build-type == 'Debug') && (matrix.sacado-on == 'OFF') }}
+      uses: codecov/codecov-action@v3
+      with:
+        fail_ci_if_error: true
+        files: build/coverage.info
+        name: TChem-atm
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true

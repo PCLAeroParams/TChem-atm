@@ -7,3 +7,4 @@ TARGET_INCLUDE_DIRECTORIES(verification
 # Skywalker drivers
 #--------------------------
 add_subdirectory(mesa)
+add_subdirectory(linozv3)

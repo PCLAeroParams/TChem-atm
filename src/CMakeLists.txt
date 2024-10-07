@@ -43,6 +43,7 @@ OPTION(TCHEM_ATM_ENABLE_INSTALL "Flag to enable install exports for TCHEM_ATM" O
 OPTION(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY "Flag to enable sacado jacobian for atmospheric chemistry" OFF)
 OPTION(TCHEM_ATM_ENABLE_SKYWALKER "Flag to enable Skywalker" OFF)
 OPTION(TCHEM_ATM_ENABLE_KOKKOSKERNELS "Flag to enable Kokkos-kernels" OFF)
+OPTION(TCHEM_ATM_ENABLE_COVERAGE  "Enable code coverage instrumentation" OFF)
 
 OPTION(KOKKOS_INSTALL_PATH "Path to Kokkos installation")
 OPTION(TINES_INSTALL_PATH "Path to Tines installation")
@@ -165,6 +166,27 @@ IF (SKYWALKER_INSTALL_PATH)
 
 ENDIF()
 ENDIF()
+
+
+# Code coverage
+
+if (TCHEM_ATM_ENABLE_COVERAGE)
+  MESSAGE(STATUS "Enabling code coverage instrumentation")
+  FIND_PROGRAM(LCOV_EXE lcov DOC "Lcov code coverage tool")
+  if (LCOV_EXE MATCHES "NOTFOUND")
+    MESSAGE(FATAL_ERROR "Could not find lcov for code coverage reporting!")
+  endif()
+
+  # Add code coverage compiler/linker flags
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+
+  # Add a "make coverage" target.
+  add_custom_target(coverage ${LCOV_EXE} --capture --directory . -o unfiltered_coverage.info
+    COMMAND ${LCOV_EXE} --remove unfiltered_coverage.info -o coverage.info '*/external/*' '*/tests/*' '*/validation/*'
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMENT "Generating coverage report (coverage.info)")
+endif()
 
 
 #

@@ -41,7 +41,6 @@ using time_advance_type_0d_view_host = TChem::time_advance_type_0d_view_host;
 using time_advance_type_1d_view_host = TChem::time_advance_type_1d_view_host;
 
 int main(int argc, char *argv[]) {
-#if defined(TINES_ENABLE_TPL_SUNDIALS)
 
   /// default inputs
   std::string prefixPath("");
@@ -62,7 +61,6 @@ int main(int argc, char *argv[]) {
   std::string inputFile("None");
   std::string input_file_particles("None");
   bool use_cloned_samples(false);
-  bool use_cvode(false);
   /// parse command line arguments
   TChem::CommandLineParser opts(
       "This example computes the solution of gas chemistry problem");
@@ -112,9 +110,6 @@ int main(int argc, char *argv[]) {
   opts.set_option<real_type>("atol-time", "Absolute tolerance used for adaptive time stepping", &atol_time);
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
-  opts.set_option<bool>("use-cvode",
-      "if true code runs ignition zero d reactor with cvode; otherwise, it uses TrBDF2",
-      &use_cvode);
 
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
@@ -132,21 +127,23 @@ int main(int argc, char *argv[]) {
     if (input_file_particles == "None") {
        input_file_particles=chemFile;
     }
-    printf("   TChem is running ATM model box with CVODE\n");
 
+#if defined(TCHEM_EXAMPLE_KOKKOS_KERNELS_ODE)     
+    printf("   TChem is running ATM model box with KokkosKernels\n");
+#else 
+    printf("   TChem is running ATM model box with Tines\n");
+#endif     
     TChem::exec_space().print_configuration(std::cout, detail);
     TChem::host_exec_space().print_configuration(std::cout, detail);
-
-    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
 
     /// construct kmd and use the view for testing
     printf("kmd parsing ...\n");
     TChem::KineticModelData kmd(chemFile);
-    const auto kmcd = TChem::createNCAR_KineticModelConstData<host_device_type>(kmd);
+    const auto kmcd = TChem::createNCAR_KineticModelConstData<TChem::interf_device_type>(kmd);
 
     printf("amd parsing ...\n");
     TChem::AerosolModelData amd(aeroFile, kmd);
-    const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
+    const auto amcd = TChem::create_AerosolModelConstData<TChem::interf_device_type>(amd);
 
     const ordinal_type total_n_species =kmcd.nSpec + amcd.nSpec * amcd.nParticles;
     const ordinal_type stateVecDim =
@@ -171,38 +168,47 @@ int main(int argc, char *argv[]) {
     printf("conditions parsing ...\n");
     TChem::AtmChemistry::setScenarioConditions(inputFile,
      speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
-    const ordinal_type n_active_vars = total_n_species - kmcd.nConstSpec;
     printf("Number of const species %d \n", kmcd.nConstSpec);
 
-    real_type_2d_view_host num_concentration_scenario, num_concentration;
-    amd.scenarioConditionParticles(input_file_particles, nbacth_files, num_concentration_scenario, state_scenario_host);
+    real_type_2d_view_host num_concentration_host;
+    real_type_2d_view_host state_host;
 
-    real_type_2d_view_host state;
+    
+    // scenario particles
+    amd.scenarioConditionParticles(input_file_particles, nbacth_files, num_concentration_host, state_scenario_host);
+    
+    real_type_2d_view num_concentration;
+    real_type_2d_view state;
+
     if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
       // only clone samples if nbacth_files is 1
       printf("-------------------------------------------------------\n");
       printf("--------------------Warning----------------------------\n");
       printf("Using cloned samples ... only for numerical experiments\n");
-      state = real_type_2d_view_host("StateVector Devices", nBatch, stateVecDim);
+      state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
+      state_host = Kokkos::create_mirror_view(state);
       auto state_scenario_host_at_0 = Kokkos::subview(state_scenario_host, 0, Kokkos::ALL);
-      auto state_host_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
-      Kokkos::deep_copy(state_host_at_0, state_scenario_host_at_0);
+      auto state_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
+      Kokkos::deep_copy(state_at_0, state_scenario_host_at_0);
       TChem::Test::cloneView(state);
-
+      //make sure to copy state to host view. 
+      Kokkos::deep_copy(state_host, state);
       //scenario particles
-      auto num_concentration_host_at_0 = Kokkos::subview(num_concentration_scenario, 0, Kokkos::ALL);
-      num_concentration = real_type_2d_view_host("num_concentration", nBatch, amd.nParticles_);
+      auto num_concentration_host_at_0 = Kokkos::subview(num_concentration_host, 0, Kokkos::ALL);
+      num_concentration = real_type_2d_view("num_concentration", nBatch, amd.nParticles_);
       auto num_concentration_at_0 = Kokkos::subview(num_concentration, 0, Kokkos::ALL);
       Kokkos::deep_copy(num_concentration_at_0, num_concentration_host_at_0);
       TChem::Test::cloneView(num_concentration);
 
     } else {
       nBatch = nbacth_files;
-      state = state_scenario_host;
+      state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
+      Kokkos::deep_copy(state, state_scenario_host);
+      state_host = state_scenario_host;
 
       // scenario particles 
-      num_concentration = real_type_2d_view_host("num_concentration", nBatch, amd.nParticles_);
-      Kokkos::deep_copy(num_concentration, num_concentration_scenario);
+      num_concentration = real_type_2d_view("num_concentration", nBatch, amd.nParticles_);
+      Kokkos::deep_copy(num_concentration, num_concentration_host);
     }
     printf("Number of nbacth %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,
@@ -222,16 +228,6 @@ int main(int argc, char *argv[]) {
 
     };
 
-    auto printState = [](const time_advance_type _tadv, const real_type _t,
-                         const real_type_1d_view_host _state_at_i) {
-      /// iter, t, dt, rho, pres, temp, Ys ....
-      printf("%e %e %e %e %e", _t, _t - _tadv._tbeg, _state_at_i(0),
-             _state_at_i(1), _state_at_i(2));
-      for (ordinal_type k = 3, kend = _state_at_i.extent(0); k < kend; ++k)
-        printf(" %e", _state_at_i(k));
-      printf("\n");
-    };
-
     FILE *fout_times = fopen(outputFileTimes.c_str(), "w");
     fprintf(fout_times, "{\n");
     fprintf(fout_times, " \"Aerosol Chemistry\": \n {\n");
@@ -242,57 +238,61 @@ int main(int argc, char *argv[]) {
       using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
+#if defined(TCHEM_EXAMPLE_KOKKOS_KERNELS_ODE)           
+
       /// team policy
+      // The Kokkos-kernels BDF solver is designed for range policy. Therefore, I will use a team size of 1.
+      policy_type policy(exec_space_instance, nBatch, 1);
+#else 
       policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
-
-    using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
-    Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type> cvodes;
-
-    if (use_cvode) {
-      cvodes = Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type>("cvodes", nBatch);
-      for (ordinal_type i=0;i<nBatch;++i)
-        cvodes(i).create(n_active_vars);
-    }
+#endif       
 
         ordinal_type number_of_equations(0);
 
         using problem_type =
             TChem::Impl::AerosolChemistry_Problem<real_type,
-                                                          host_device_type>;
+                                                          TChem::interf_device_type>;
         number_of_equations = problem_type::getNumberOfTimeODEs(kmcd, amcd);
 
 
       const ordinal_type level = 1;
       ordinal_type per_team_extent(0);
 
-      per_team_extent = TChem::AerosolChemistry_CVODE::getWorkSpaceSize(kmcd, amcd);
-
+#if defined(TCHEM_EXAMPLE_KOKKOS_KERNELS_ODE) 
+      per_team_extent = TChem::AerosolChemistry_KokkosKernels::getWorkSpaceSize(kmcd, amcd);
+#else
+      per_team_extent = TChem::AerosolChemistry::getWorkSpaceSize(kmcd, amcd);
+#endif      
       const ordinal_type per_team_scratch =
-          TChem::Scratch<real_type_1d_view_host>::shmem_size(per_team_extent);
+          TChem::Scratch<real_type_1d_view>::shmem_size(per_team_extent);
       policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
 
       { /// time integration
-        real_type_1d_view_host t("time", nBatch);
+        real_type_1d_view t("time", nBatch);
         Kokkos::deep_copy(t, tbeg);
-        real_type_1d_view_host dt("delta time", nBatch);
+        real_type_1d_view dt("delta time", nBatch);
         Kokkos::deep_copy(dt, dtmax);
 
-        real_type_2d_view_host tol_time("tol time", number_of_equations, 2);
-        real_type_1d_view_host tol_newton("tol newton", 2);
+        real_type_2d_view tol_time("tol time", number_of_equations, 2);
+        real_type_1d_view tol_newton("tol newton", 2);
 
-        real_type_2d_view_host fac("fac", nBatch, number_of_equations);
+        real_type_2d_view fac("fac", nBatch, number_of_equations);
 
-
+        auto tol_time_host = Kokkos::create_mirror_view(tol_time);
+        auto tol_newton_host = Kokkos::create_mirror_view(tol_newton);
 
         /// tune tolerence
         {
           for (ordinal_type i = 0, iend = tol_time.extent(0); i < iend; ++i) {
-            tol_time(i, 0) = atol_time;
-            tol_time(i, 1) = rtol_time;
+            tol_time_host(i, 0) = atol_time;
+            tol_time_host(i, 1) = rtol_time;
           }
-          tol_newton(0) = atol_newton;
-          tol_newton(1) = rtol_newton;
+          tol_newton_host(0) = atol_newton;
+          tol_newton_host(1) = rtol_newton;
         }
+
+        Kokkos::deep_copy(tol_time, tol_time_host);
+        Kokkos::deep_copy(tol_newton, tol_newton_host);
 
         time_advance_type tadv_default;
         tadv_default._tbeg = tbeg;
@@ -305,8 +305,13 @@ int main(int argc, char *argv[]) {
             num_time_iterations_per_interval;
         tadv_default._jacobian_interval = jacobian_interval;
 
-        time_advance_type_1d_view_host tadv("tadv", nBatch);
+        time_advance_type_1d_view tadv("tadv", nBatch);
         Kokkos::deep_copy(tadv, tadv_default);
+
+        real_type_1d_view_host t_host;
+        real_type_1d_view_host dt_host;
+        t_host = real_type_1d_view_host("time host", nBatch);
+        dt_host = real_type_1d_view_host("dt host", nBatch);
 
         ordinal_type iter = 0;
 
@@ -336,7 +341,7 @@ int main(int argc, char *argv[]) {
 
 
         fprintf(fout, "\n");
-        writeState(-1, t, dt, state, fout);
+        writeState(-1, t_host, dt_host, state_host, fout);
 
         real_type tsum(0);
         Kokkos::Timer timer;
@@ -344,23 +349,37 @@ int main(int argc, char *argv[]) {
         for (; iter < max_num_time_iterations && tsum <= tend * 0.9999;
              ++iter) {
 
+          timer.reset();
 
-      timer.reset();
-       TChem::AerosolChemistry_CVODE::runHostBatch(
+#if defined(TCHEM_EXAMPLE_KOKKOS_KERNELS_ODE)         
+          TChem::AerosolChemistry_KokkosKernels::runDeviceBatch(
               policy, tol_time, fac, tadv, state, num_concentration, t, dt, state,
-              kmcd, amcd, cvodes);
-      exec_space_instance.fence();
+              kmcd, amcd);
+#else
+          TChem::AerosolChemistry::runDeviceBatch(
+              policy, tol_newton, tol_time, fac, tadv, state, num_concentration, t, dt, state,
+              kmcd, amcd);
+#endif
+
+          exec_space_instance.fence();
 
           const real_type t_device_batch = timer.seconds();
           fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iter,
                   t_device_batch);
 
-          writeState(iter, t, dt, state, fout);
+
+
+          Kokkos::deep_copy(dt_host, dt);
+          Kokkos::deep_copy(t_host, t);
+          Kokkos::deep_copy(state_host, state);
+
+
+          writeState(iter, t_host, dt_host, state_host, fout);
 
           /// carry over time and dt computed in this step
           tsum = zero;
           Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<TChem::host_exec_space>(0, nBatch),
+              Kokkos::RangePolicy<TChem::exec_space>(0, nBatch),
               KOKKOS_LAMBDA(const ordinal_type &i, real_type &update) {
                 tadv(i)._tbeg = t(i);
                 tadv(i)._dt = dt(i);
@@ -387,10 +406,6 @@ int main(int argc, char *argv[]) {
     fclose(fout_times);
   }
   Kokkos::finalize();
-
-#else
-  printf("This example requires Yaml ...\n");
-#endif
 
   return 0;
 }

@@ -1,7 +1,9 @@
 # TChem-atm
 
-[![Build Status](https://github.com/PCLAeroParams/TChem-atm/workflows/auto_test/badge.svg)](https://github.com/PCLAeroParams/TChem-atm/actions)
-
+[![Latest version](https://img.shields.io/github/v/release/PCLAeroParams/TChem-atm.svg?sort=semver)](https://github.com/PCLAeroParams/TChem-atm/releases)
+[![Github Actions Status](https://github.com/PCLAeroParams/TChem-atm/actions/workflows/auto_test.yaml/badge.svg?branch=main)](https://github.com/PCLAeroParams/TChem-atm/actions)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-121013?logo=github&logoColor=white)](https://PCLAeroParams.github.io/TChem-atm/)
+[![License](https://img.shields.io/badge/License-BSD_2--Clause-green.svg)](https://github.com/PCLAeroParams/TChem-atm/blob/main/LICENSE)
 
 ## Installation 
 

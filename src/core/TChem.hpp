@@ -25,6 +25,8 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem_KineticModelData.hpp"
 #include "TChem_AerosolModelData.hpp"
 #include "TChem_AerosolChemistry_CVODE.hpp"
+#include "TChem_AerosolChemistry_KokkosKernels.hpp"
+#include "TChem_AerosolChemistry.hpp"
 #include "TChem_AtmosphericChemistry.hpp"
 #include "TChem_AtmosphericChemistryE3SM.hpp"
 #include "TChem_AtmosphericChemistryE3SM_CVODE.hpp"

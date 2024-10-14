@@ -135,7 +135,6 @@ void TChem::Driver::freeGasKineticModel() {
 void TChem::Driver::createStateVector(ordinal_type nBatch) {
   const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec);
   _state = real_type_2d_view_host("state dev", nBatch, len);
-  Kokkos::deep_copy(_state, 0.0);
 }
 
 /* Get the state vector */

@@ -22,7 +22,7 @@ RUN apt-get update \
         pkg-config \
         ca-certificates
 
-RUN pip install numpy h5py 
+RUN pip install numpy h5py
 
 COPY . /tchem_dir/
 
@@ -137,7 +137,6 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DSKYWALKER_INSTALL_PATH=/install/skywalker_install \
           -DTCHEM_ATM_ENABLE_KOKKOSKERNELS=ON \
           -DKOKKOSKERNELS_INSTALL_PATH=/install/kokkoskernels_install \
-          -DTCHEM_ATM_ENABLE_SKYWALKER=ON \
           -DGTEST_INSTALL_PATH=/install/gtest_install
 WORKDIR /tchem_build
 RUN make -j \

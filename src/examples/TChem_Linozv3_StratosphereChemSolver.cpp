@@ -373,7 +373,7 @@ void linv3_stratosphere_solver_test( const int team_size,
     if (team_size > 0 && vector_size > 0) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
-      // only set team size 
+      // only set team size
        policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 

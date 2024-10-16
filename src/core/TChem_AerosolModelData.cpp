@@ -225,6 +225,17 @@ int AerosolModelData::initChem(YAML::Node &root,
     return 0;
 }
 
+void AerosolModelData::setNumberofParticles(const ordinal_type number_of_particles)
+{
+  printf("-------------------------------------------------------\n");
+  printf("--------------------Warning----------------------------\n");
+  printf("Setting number of particles\n");
+  printf("Old value : %d \n", nParticles_);
+  nParticles_=number_of_particles;
+  printf("Current value : %d \n", nParticles_);
+  printf("-------------------------------------------------------\n");
+}
+
 void AerosolModelData::scenarioConditionParticles(const std::string &mechfile,
                                                   const ordinal_type nBatch,
                                                   real_type_2d_view_host& num_concentration,

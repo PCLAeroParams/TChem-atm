@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
       num_concentration = real_type_2d_view_host("num_concentration", nBatch, amd.nParticles_);
       Kokkos::deep_copy(num_concentration, num_concentration_scenario);
     }
-    printf("Number of nbacth %d \n",nBatch);
+    printf("Number of nbatch %d \n",nBatch);
     auto writeState = [](const ordinal_type iter,
                          const real_type_1d_view_host _t,
                          const real_type_1d_view_host _dt,

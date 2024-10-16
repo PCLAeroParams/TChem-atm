@@ -1,0 +1,8 @@
+# This file configures CodeCov to require 80% code coverage. New PRs can
+# increase or decrease coverage--only the total coverage threshold matters.
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+    patch: off # we can enable this if we figure out a reasonable policy

@@ -122,10 +122,10 @@ int main(int argc, char *argv[]) {
 
  // read scenario condition from yaml file
     real_type_2d_view_host_type state_scenario_host;
-    ordinal_type nbacth_files=1;
+    ordinal_type nbatch_files=1;
     printf("conditions parsing ...\n");
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbatch_files);
     printf("Number of const species %d \n", kmcd.nConstSpec);
 
     real_type_2d_view_host_type num_concentration_host;
@@ -133,15 +133,15 @@ int main(int argc, char *argv[]) {
 
     // scenario particles
     amd.scenarioConditionParticles(input_file_particles,
-                                   nbacth_files,
+                                   nbatch_files,
                                    num_concentration_host,
                                    state_scenario_host);
 
     real_type_2d_view_type num_concentration;
     real_type_2d_view_type state;
 
-    if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
-      // only clone samples if nbacth_files is 1
+    if (nbatch_files == 1 && use_cloned_samples && nBatch > 1) {
+      // only clone samples if nbatch_files is 1
       printf("-------------------------------------------------------\n");
       printf("--------------------Warning----------------------------\n");
       printf("Using cloned samples ... only for numerical experiments\n");
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
       TChem::Test::cloneView(num_concentration);
 
     } else {
-      nBatch = nbacth_files;
+      nBatch = nbatch_files;
       state = real_type_2d_view_type("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
       state_host = state_scenario_host;

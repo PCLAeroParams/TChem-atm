@@ -1859,19 +1859,6 @@ public:
     MW_a(mmd.ja_no3)  = 62.0;
     MW_a(mmd.ja_cl)   = 35.5;
     MW_a(mmd.ja_msa)  = 95.0;
-
-    // a_zsr = mmd.a_zsr.template view<device_type>();
-    // aw_min = mmd.aw_min.template view<device_type>();
-    // b_zsr = mmd.b_zsr.template view<device_type>();
-    // Keq_298_ll = mmd.Keq_298_ll.template view<device_type>();
-    // Keq_a_ll = mmd.Keq_a_ll.template view<device_type>();
-    // Keq_b_ll = mmd.Keq_b_ll.template view<device_type>();
-    // b_mtem = mmd.b_mtem.template view<device_type>();
-    // mw_aer_mac = mmd.mw_aer_mac.template view<device_type>();
-    // dens_aer_mac = mmd.dens_aer_mac.template view<device_type>();
-    // mw_electrolyte = mmd.mw_electrolyte.template view<device_type>();
-    // zc = mmd.zc.template view<device_type>();
-    // za = mmd.za.template view<device_type>();
   }
 };
 

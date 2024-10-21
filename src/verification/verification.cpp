@@ -5,7 +5,6 @@ namespace verification {
 void initialize(int argc, char **argv) { Kokkos::initialize(argc, argv); }
 
 void finalize() {
-  finalize();
   Kokkos::finalize();
   }
 

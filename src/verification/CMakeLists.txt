@@ -1,3 +1,5 @@
+SET(TCHEM_VERIFICATION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data_sets)
+
 ADD_LIBRARY(verification verification.cpp)
 target_link_libraries(verification ${TCHEM_ATM_LINK_LIBRARIES})
 

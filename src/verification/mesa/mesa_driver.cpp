@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   std::cout << argv[0] << ": reading " << input_file << std::endl;
 
   // Load the ensemble. Any error encountered is fatal.
-  Ensemble *ensemble = skywalker::load_ensemble(input_file, "mam4xx");
+  Ensemble *ensemble = skywalker::load_ensemble(input_file, "TChem-atm");
 
   // the settings.
   Settings settings = ensemble->settings();
@@ -39,7 +39,6 @@ int main(int argc, char **argv) {
   // Dispatch to the requested function.
   auto func_name = settings.get("function");
   try {
-#if 1
     if (func_name == "adjust_solid_aerosol") {
       adjust_solid_aerosol(ensemble);
     } else {
@@ -47,7 +46,6 @@ int main(int argc, char **argv) {
                 << "' does not have an implemented test!" << std::endl;
       exit(1);
     }
-#endif
   } catch (std::exception &e) {
     std::cerr << argv[0] << ": Error: " << e.what() << std::endl;
   }

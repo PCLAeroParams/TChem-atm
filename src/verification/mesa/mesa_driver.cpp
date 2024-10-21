@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
   // the settings.
   Settings settings = ensemble->settings();
   if (!settings.has("function")) {
-    std::cerr << "No function specified in mam4xx.settings!" << std::endl;
+    std::cerr << "No function specified in TChem-atm.settings!" << std::endl;
     exit(1);
   }
 

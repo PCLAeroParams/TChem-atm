@@ -59,5 +59,12 @@ void convert_1d_vector_to_1d_view_device(const std::vector<real_type> &var_std,
   Kokkos::deep_copy(var_device, var_host);
 }
 
+void convert_1d_view_device_to_1d_vector(const real_type_1d_view &var_device,
+                                         std::vector<real_type> &var_std)
+{
+  auto var_host = real_type_1d_view_host((real_type *)var_std.data(), var_std.size());
+  Kokkos::deep_copy(var_host, var_device);
+}
+
 }   // namespace verification
 } // namespace tchem

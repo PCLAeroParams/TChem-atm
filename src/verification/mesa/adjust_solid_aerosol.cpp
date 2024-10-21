@@ -66,10 +66,11 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     // Convert input data from std::vector or similar structure to Kokkos views
     verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[0], electrolyte_solid);
     verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[1], electrolyte_liquid);
-    verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[2], electrolyte_total);
+    verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[2], electrolyte_liquid);
+
 
     // Prepare variables for output
-    Real water_a, jphase, jhyst_leg=0.0;
+    Real water_a=0.0, jphase=0.0, jhyst_leg=0.0;
  #if 0
     // Perform the adjustment calculation
     adjust_solid_aerosol(
@@ -83,6 +84,24 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     output.set("water_a", water_a);
     output.set("jphase", jphase);
     output.set("jhyst_leg", jhyst_leg);
+
+    // Convert input data from Kokkos views to std::vector
+    verification::convert_1d_view_device_to_1d_vector(aer_solid, aer_db_2d[0]);
+    verification::convert_1d_view_device_to_1d_vector(aer_liquid, aer_db_2d[1]);
+    verification::convert_1d_view_device_to_1d_vector(aer_total, aer_db_2d[2]);
+    output.set("aer", aer_db);
+
+    verification::convert_1d_view_device_to_1d_vector(epercent_solid, epercent_db_2d[0]);
+    verification::convert_1d_view_device_to_1d_vector(epercent_liquid, epercent_db_2d[1]);
+    verification::convert_1d_view_device_to_1d_vector(epercent_total, epercent_db_2d[2]);
+    output.set("epercent", epercent_db);
+
+
+    verification::convert_1d_view_device_to_1d_vector(electrolyte_solid, electrolyte_db_2d[0]);
+    verification::convert_1d_view_device_to_1d_vector(electrolyte_liquid, electrolyte_db_2d[1]);
+    verification::convert_1d_view_device_to_1d_vector(electrolyte_total, electrolyte_db_2d[2]);
+    output.set("electrolyte", electrolyte_db);
+
 
 
 

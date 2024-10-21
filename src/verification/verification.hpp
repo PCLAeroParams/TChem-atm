@@ -26,6 +26,9 @@ void convert_2d_view_device_to_1d_vector(const real_type_2d_view &var_device,
 
 void convert_1d_vector_to_1d_view_device(const std::vector<real_type> &var_std,
                                          const real_type_1d_view &var_device);
+
+void convert_1d_view_device_to_1d_vector(const real_type_1d_view &var_device,
+                                         std::vector<real_type> &var_std);
 }// namespace verification
 } // namespace tchem
 

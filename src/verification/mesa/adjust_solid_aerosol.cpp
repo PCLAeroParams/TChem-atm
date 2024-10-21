@@ -70,7 +70,26 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
 
 
     // Prepare variables for output
-    Real water_a=0.0, jphase=0.0, jhyst_leg=0.0;
+
+    // Reals or int that are defined outside of the parallel_for region are passed as const.
+    real_type_1d_view ouputs_adjust_solid_aerosol("ouputs_adjust_solid_aerosol", 3);
+
+    std::string profile_name ="Verification_test_adjust_solid_aerosol";
+    using policy_type =
+          typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+    const auto exec_space_instance = TChem::exec_space();
+    const auto host_exec_space = TChem::host_exec_space();
+    policy_type policy(exec_space_instance, 1, Kokkos::AUTO());
+
+    // Check this routines on GPUs.
+     Kokkos::parallel_for(
+    profile_name,
+    policy,
+    KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+
+      Real& water_a = ouputs_adjust_solid_aerosol(0);
+      Real& jphase = ouputs_adjust_solid_aerosol(1);
+      Real& jhyst_leg = ouputs_adjust_solid_aerosol(2);
  #if 0
     // Perform the adjustment calculation
     adjust_solid_aerosol(
@@ -80,6 +99,15 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
       epercent_solid, epercent_liquid, epercent_total,
       water_a, jphase, jhyst_leg);
 #endif
+    });
+
+     const auto ouputs_adjust_solid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space,ouputs_adjust_solid_aerosol);
+
+      Real water_a = ouputs_adjust_solid_aerosol_h(0);
+      Real jphase = ouputs_adjust_solid_aerosol_h(1);
+      Real jhyst_leg = ouputs_adjust_solid_aerosol_h(2);
+
+
     // Assuming the outputs are scalar and can be directly set in the ensemble
     output.set("water_a", water_a);
     output.set("jphase", jphase);
@@ -101,8 +129,6 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     verification::convert_1d_view_device_to_1d_vector(electrolyte_liquid, electrolyte_db_2d[1]);
     verification::convert_1d_view_device_to_1d_vector(electrolyte_total, electrolyte_db_2d[2]);
     output.set("electrolyte", electrolyte_db);
-
-
 
 
   });

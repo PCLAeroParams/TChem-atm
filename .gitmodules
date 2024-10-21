@@ -9,4 +9,4 @@
 	url = https://github.com/LLNL/sundials.git
 [submodule "external/kokkos-kernels"]
 	path = external/kokkos-kernels
-	url = git@github.com:odiazib/kokkos-kernels.git
+	url = https://github.com/odiazib/kokkos-kernels.git

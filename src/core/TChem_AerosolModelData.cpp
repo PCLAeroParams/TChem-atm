@@ -85,7 +85,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     // given the name of species return the YAML::NODE
     std::map<std::string, YAML::Node> gas_sp_info;
     // 2. get molecular weitghs and density of aerosol_species
-    std::vector<real_type> mw_aerosol_sp, density_aero_sp;
+    std::vector<real_type> mw_aerosol_sp, density_aero_sp, kappa_aero_sp;
     int i_aero_sp=0;
     // loops over species, only make map from aerosol species.
     // we assume that map of gas species was previously created in kmd.
@@ -104,6 +104,7 @@ int AerosolModelData::initChem(YAML::Node &root,
             //  std::cout <<"molecular weight" << item["molecular weight [kg mol-1]"]<<"\n";
              mw_aerosol_sp.push_back(item["molecular weight [kg mol-1]"].as<real_type>());
              density_aero_sp.push_back(item["density [kg m-3]"].as<real_type>());
+             kappa_aero_sp.push_back(item["kappa"].as<real_type>())
            }
         } else
         {
@@ -208,10 +209,13 @@ int AerosolModelData::initChem(YAML::Node &root,
     auto molecular_weights_host = molecular_weights_.view_host();
     aerosol_density_= real_type_1d_dual_view(do_not_init_tag("AMD::aerosol_density_"), nSpec_);
     auto aerosol_density_host = aerosol_density_.view_host();
+    aerosol_kappa_ = real_type_1d_dual_view(do_not_init_tag("AMD::kappa"), nSpec_);
+    auto aerosol_kappa_host = aero_kappa_.view_host();
     for (int i = 0; i < nSpec_; i++)
     {
       molecular_weights_host(i) = mw_aerosol_sp[i];
       aerosol_density_host(i) = density_aero_sp[i];
+      aerosol_kappa_host(i) = kappa_aero_sp[i];
     }
 
     molecular_weights_.modify_host();

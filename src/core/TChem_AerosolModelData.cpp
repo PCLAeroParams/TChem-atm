@@ -104,7 +104,7 @@ int AerosolModelData::initChem(YAML::Node &root,
             //  std::cout <<"molecular weight" << item["molecular weight [kg mol-1]"]<<"\n";
              mw_aerosol_sp.push_back(item["molecular weight [kg mol-1]"].as<real_type>());
              density_aero_sp.push_back(item["density [kg m-3]"].as<real_type>());
-             kappa_aero_sp.push_back(item["kappa"].as<real_type>())
+             kappa_aero_sp.push_back(item["kappa"].as<real_type>());
            }
         } else
         {
@@ -210,7 +210,7 @@ int AerosolModelData::initChem(YAML::Node &root,
     aerosol_density_= real_type_1d_dual_view(do_not_init_tag("AMD::aerosol_density_"), nSpec_);
     auto aerosol_density_host = aerosol_density_.view_host();
     aerosol_kappa_ = real_type_1d_dual_view(do_not_init_tag("AMD::kappa"), nSpec_);
-    auto aerosol_kappa_host = aero_kappa_.view_host();
+    auto aerosol_kappa_host = aerosol_kappa_.view_host();
     for (int i = 0; i < nSpec_; i++)
     {
       molecular_weights_host(i) = mw_aerosol_sp[i];

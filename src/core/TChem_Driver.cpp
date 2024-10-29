@@ -129,9 +129,27 @@ void TChem::Driver::freeAll() {
 
 void TChem::Driver::freeGasKineticModel() {
   _chem_file = std::string();
-  _therm_file = std::string();
+  _aero_file = std::string();
 }
 
+/* Create the aerosol model from a YAML file */
+void TChem::Driver::createAerosolModel(const std::string &aero_file) {
+  _aero_file = aero_file;
+  _amd = AerosolModelData(_aero_file, _kmd);
+}
+
+/* Create the aerosol constant model data */
+void TChem::Driver::createAerosolModelConstData() {
+  printf("Creating amcd \n");
+  using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+  _amcd_host = TChem::create_AerosolModelConstData<interf_host_device_type>(_amd);
+  _amcd_device = TChem::create_AerosolModelConstData<device_type>(_amd);
+  printf("Number of aerosol species %d \n", _amcd_host.nSpec);
+  printf("Maximum number of particles %d \n", _amcd_host.nParticles);
+  printf("End creating amcd \n");
+}
+
+/* Create state vector */
 void TChem::Driver::createStateVector(ordinal_type nBatch) {
   const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec);
   _state = real_type_2d_view_host("state dev", nBatch, len);
@@ -185,6 +203,39 @@ ordinal_type TChem_getNumberOfSpecies(){
 }
 
 ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd_host.nSpec;}
+
+/* Get the density of the aerosol species at a given index */
+real_type TChem_getAerosolSpeciesDensity(int *index) {
+   auto density = g_tchem->getAerosolSpeciesDensity(index);
+   return density;
+}
+
+real_type TChem::Driver::getAerosolSpeciesDensity(int *index) {
+   printf("Species index %d \n", *index);
+   return (_amcd_host.aerosol_density(*index));
+}
+
+/* Get the molecular weight of the aerosol species at a given index */
+real_type TChem_getAerosolSpeciesMW(int *index) {
+   auto mw = g_tchem->getAerosolSpeciesMW(index);
+   return mw;
+}
+
+real_type TChem::Driver::getAerosolSpeciesMW(int *index) {
+   printf("Species index %d \n", *index);
+   return (_amcd_host.molecular_weights(*index)); //18.0;
+}
+
+/* Get the hygroscopicity parameter kappa of the aerosol species at a given index */
+real_type TChem_getAerosolSpeciesKappa(int *index) {
+   auto kappa = g_tchem->getAerosolSpeciesKappa(index);
+   return kappa;
+}
+
+real_type TChem::Driver::getAerosolSpeciesKappa(int *index) {
+   printf("Species index %d \n", *index);
+   return (_amcd_host.aerosol_kappa(*index));
+}
 
 /* Return length of the state vector */
 int TChem_getLengthOfStateVector() { 

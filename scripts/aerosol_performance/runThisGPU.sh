@@ -6,8 +6,8 @@ for N in ${nbatch[@]}; do
       echo "nbatch = $N"
       echo "vector thread size = $vector_thread_size"
       echo "team thread size = $team_thread_size"
-      output_wall_times="${tchem_outputs}/${experiment_name}/wall_times_nbatch_${N}_vecsize_${vector_thread_size}_teamThread_size_${team_thread_size}_number_of_particles${number_of_particles}.json"
-      output_file="${tchem_outputs}/${experiment_name}/reaction_rates_nbatch_${N}_vecsize_${vector_thread_size}_teamThread_size_${team_thread_size}_number_of_particles${number_of_particles}.txt"
+      output_wall_times="${tchem_outputs}/${experiment_name}/wall_times_nbatch_${N}_vecsize_${vector_thread_size}_teamThread_size_${team_thread_size}_number_of_particles_${number_of_particles}.json"
+      output_file="${tchem_outputs}/${experiment_name}/reaction_rates_nbatch_${N}_vecsize_${vector_thread_size}_teamThread_size_${team_thread_size}_number_of_particles_${number_of_particles}.txt"
       echo "${tchem_outputs}"
       echo "${experiment_name}"
       echo "/reaction_rates_nbatch_${N}_vecsize_${vector_thread_size}_teamThread_size_${team_thread_size}.txt"
@@ -25,7 +25,7 @@ for N in ${nbatch[@]}; do
       echo $run_this
       eval $run_this
       sleep 2
-      kp_json_writer $machine_name* > "${tchem_outputs}/${experiment_name}/simple_timer_nbatch_${N}_vecsize_${vector_thread_size}_teamThread_size_${team_thread_size}_number_of_particles${number_of_particles}.json"
+      kp_json_writer $machine_name* > "${tchem_outputs}/${experiment_name}/simple_timer_nbatch_${N}_vecsize_${vector_thread_size}_teamThread_size_${team_thread_size}_number_of_particles_${number_of_particles}.json"
       sleep 2
       rm -rf $machine_name*
 done

@@ -52,6 +52,8 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
   g_tchem->setBatchSize(nBatch);
   g_tchem->createGasKineticModel(chemFile);
   g_tchem->createGasKineticModelConstData();
+  g_tchem->createAerosolModel(aeroFile);
+  g_tchem->createAerosolModelConstData();
   g_tchem->createStateVector(nBatch);
   g_tchem->getLengthOfStateVector();
   g_tchem->createNumerics(numericsFile);
@@ -151,7 +153,7 @@ void TChem::Driver::createAerosolModelConstData() {
 
 /* Create state vector */
 void TChem::Driver::createStateVector(ordinal_type nBatch) {
-  const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec);
+  const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec + _amcd_host.nSpec * _amcd_host.nParticles);
   _state = real_type_2d_view_host("state dev", nBatch, len);
 }
 
@@ -204,6 +206,13 @@ ordinal_type TChem_getNumberOfSpecies(){
 
 ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd_host.nSpec;}
 
+ordinal_type TChem_getNumberOfAeroSpecies(){
+   ordinal_type nSpec = g_tchem->getNumberOfAeroSpecies();
+   return nSpec;
+}
+
+ordinal_type TChem::Driver::getNumberOfAeroSpecies() { return _amcd_host.nSpec;}
+
 /* Get the density of the aerosol species at a given index */
 real_type TChem_getAerosolSpeciesDensity(int *index) {
    auto density = g_tchem->getAerosolSpeciesDensity(index);
@@ -223,7 +232,7 @@ real_type TChem_getAerosolSpeciesMW(int *index) {
 
 real_type TChem::Driver::getAerosolSpeciesMW(int *index) {
    printf("Species index %d \n", *index);
-   return (_amcd_host.molecular_weights(*index)); //18.0;
+   return (_amcd_host.molecular_weights(*index));
 }
 
 /* Get the hygroscopicity parameter kappa of the aerosol species at a given index */
@@ -237,13 +246,29 @@ real_type TChem::Driver::getAerosolSpeciesKappa(int *index) {
    return (_amcd_host.aerosol_kappa(*index));
 }
 
+/* Return species name */
+int TChem_getAerosolSpeciesName(int * index, char* result, const std::string::size_type buffer_size){
+  std::string specName = g_tchem->getAerosolSpeciesName(index);
+  specName.copy(result, buffer_size);
+  result[specName.length()] = '\0';
+  return specName.length();
+}
+
+std::string TChem::Driver::getAerosolSpeciesName(int *index){
+  const auto speciesNamesHost = Kokkos::create_mirror_view(_kmcd_host.speciesNames);
+  int k = *index;
+  std::string species_name = &_kmcd_host.speciesNames(k,0);
+  return species_name;
+}
+
+
 /* Return length of the state vector */
 int TChem_getLengthOfStateVector() { 
   return g_tchem == nullptr ? -1 : g_tchem->getLengthOfStateVector();
 }
 
 ordinal_type TChem::Driver::getLengthOfStateVector() const {
-  return Impl::getStateVectorSize(_kmcd_host.nSpec);
+  return Impl::getStateVectorSize(_kmcd_host.nSpec + _amcd_host.nSpec * _amcd_host.nParticles);
 }
 
 /* Integrate a time step */
@@ -257,7 +282,8 @@ void TChem::Driver::doTimestep(const double del_t){
   const auto exec_space_instance = TChem::exec_space();
   using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
   using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
-  using problem_type = TChem::Impl::AtmosphericChemistry_Problem<real_type, interf_host_device_type>;
+//  using problem_type = TChem::Impl::AtmosphericChemistry_Problem<real_type, interf_host_device_type>;
+  using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
   using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
   policy_type policy(exec_space_instance, _nBatch, Kokkos::AUTO());
@@ -277,7 +303,10 @@ void TChem::Driver::doTimestep(const double del_t){
       TChem::Scratch<real_type_1d_view>::shmem_size(per_team_extent);
   policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
 
-  auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host);
+  //auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host);
+
+  auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host, _amcd_host);
+
   real_type_2d_view tol_time("tol time", number_of_equations, 2);
   real_type_1d_view tol_newton("tol newton", 2);
   real_type_2d_view fac("fac", _nBatch, number_of_equations);
@@ -318,11 +347,25 @@ void TChem::Driver::doTimestep(const double del_t){
   ordinal_type iter = 0;
   real_type tsum(0);
   auto stateVecDim = TChem_getLengthOfStateVector();
-  real_type_2d_view state("StateVector Devices", 1, stateVecDim);
+  real_type_2d_view state("StateVector Devices", _nBatch, stateVecDim);
+  _state(0,87) = 1e-8;
   Kokkos::deep_copy(state, _state);
+
+  real_type_2d_view number_conc;
+  number_conc = real_type_2d_view("num_concentration", _nBatch, _amcd_host.nParticles);
+  printf("%d\n", _amcd_host.nParticles);
+  auto number_conc_host = Kokkos::create_mirror_view(number_conc);
+  number_conc_host(0,0) = 1e6;
+  Kokkos::deep_copy(number_conc, number_conc_host);
+  //Kokkos::deep_copy(number_conc, num_concentration_scenario);
+
   for (; iter < _max_num_time_iterations && tsum <= tend * 0.9999; ++iter) {
-    TChem::AtmosphericChemistry::runDeviceBatch(policy, tol_newton, tol_time, fac, tadv,
-              state, t, dt, state, _kmcd_device);
+//    TChem::AtmosphericChemistry::runDeviceBatch(policy, tol_newton, tol_time, fac, tadv,
+//              state, t, dt, state, _kmcd_device);
+
+    TChem::AerosolChemistry_KokkosKernels::runDeviceBatch(
+       policy, tol_time, fac, tadv,
+       state, number_conc, t, dt, state, _kmcd_device, _amcd_device);
 
     tsum = 0.0;
     Kokkos::parallel_reduce(

@@ -48,9 +48,10 @@ public:
    void createAerosolModelConstData();
 
    // Return number of aerosol species
-   ordinal_type getNumberOfAerosolSpecies();
+   ordinal_type getNumberOfAeroSpecies();
 
    // Return aerosol species information
+   std::string getAerosolSpeciesName(int *index); 
    real_type getAerosolSpeciesDensity(int *index);
    real_type getAerosolSpeciesMW(int *index);
    real_type getAerosolSpeciesKappa(int *index);
@@ -96,7 +97,7 @@ extern "C" void TChem_doTimestep(const double &del_t);
 extern "C" int TChem_getStateVectorSize();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
 
-extern "C" TChem::ordinal_type TChem_getNumberOfAerosolSpecies();
+extern "C" TChem::ordinal_type TChem_getNumberOfAeroSpecies();
 extern "C" int TChem_getAerosolSpeciesName(int* index, char* result,
                                     const std::string::size_type buffer_size);
 extern "C" double TChem_getAerosolSpeciesDensity(int* index);

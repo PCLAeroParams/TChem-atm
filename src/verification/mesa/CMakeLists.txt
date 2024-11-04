@@ -27,8 +27,7 @@ foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE
      COPYONLY
    )
   # add a test to validate TChem-atm's results against the baseline.
-  #FIXME: make a version of compare_mam4xx_mam4 for TChem-atm.
-  ADD_TEST(validate_${input} python3 ${TCHEM_VERIFICATION_DIR}/compare_mam4xx_mam4.py
+  ADD_TEST(validate_${input} python3 ${TCHEM_VERIFICATION_DIR}/file_difference_checker.py
             TChem_${input}.py ${input}.py
             True
             ${DEFAULT_TOL}

@@ -7,11 +7,11 @@
  using namespace tchem;
 #endif
 void usage() {
-  std::cerr << "mesa_driver: a Skywalker driver for validating the "
-               "mesa routines."
+  std::cerr << "mosaic_driver: a Skywalker driver for validating the "
+               "mosaic routines."
             << std::endl;
-  std::cerr << "mesa_driver: usage:" << std::endl;
-  std::cerr << "mesa_driver <input.yaml>" << std::endl;
+  std::cerr << "mosaic_driver: usage:" << std::endl;
+  std::cerr << "mosaic_driver <input.yaml>" << std::endl;
   exit(0);
 }
 void adjust_solid_aerosol(Ensemble *ensemble);

@@ -20,6 +20,7 @@ for N in ${nbatch[@]}; do
                --verbose=$verbose \
                --outputfile_times=$output_wall_times \
                --outputfile=$output_file \
+               --number_of_particles=$number_of_particles \
                $scenario_n_inputs \
                $numerical_params "
       echo $run_this

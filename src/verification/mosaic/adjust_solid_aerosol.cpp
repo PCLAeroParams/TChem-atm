@@ -4,8 +4,8 @@
 
 using real_type_1d_view = TChem::real_type_1d_view;
 using ordinal_type = TChem::ordinal_type;
- using namespace skywalker;
- using namespace tchem;
+using namespace skywalker;
+using namespace TChem;
 
 void adjust_solid_aerosol(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {

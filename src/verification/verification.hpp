@@ -3,7 +3,7 @@
 
 #include "TChem.hpp"
 
-namespace tchem {
+namespace TChem {
 using real_type = TChem::real_type;
 using real_type_2d_view = TChem::real_type_2d_view;
 using real_type_1d_view = TChem::real_type_1d_view;
@@ -30,6 +30,6 @@ void convert_1d_vector_to_1d_view_device(const std::vector<real_type> &var_std,
 void convert_1d_view_device_to_1d_vector(const real_type_1d_view &var_device,
                                          std::vector<real_type> &var_std);
 }// namespace verification
-} // namespace tchem
+} // namespace TChem
 
 #endif

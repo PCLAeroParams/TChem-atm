@@ -4,7 +4,7 @@
 #if defined(TCHEM_ATM_ENABLE_SKYWALKER)
  #include "skywalker.hpp"
  using namespace skywalker;
- using namespace tchem;
+ using namespace TChem;
 #endif
 void usage() {
   std::cerr << "mosaic_driver: a Skywalker driver for validating the "

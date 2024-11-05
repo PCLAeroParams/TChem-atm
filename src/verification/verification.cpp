@@ -1,6 +1,6 @@
 #include "verification.hpp"
 
-namespace tchem {
+namespace TChem {
 namespace verification {
 void initialize(int argc, char **argv) { Kokkos::initialize(argc, argv); }
 
@@ -67,4 +67,4 @@ void convert_1d_view_device_to_1d_vector(const real_type_1d_view &var_device,
 }
 
 }   // namespace verification
-} // namespace tchem
+} // namespace TChem

@@ -41,7 +41,7 @@ using ordinal_type_1d_view_host = TChem::ordinal_type_1d_view_host;
 using ordinal_type_1d_view = TChem::ordinal_type_1d_view;
 
 using namespace skywalker;
-using namespace tchem::verification;
+using namespace TChem::verification;
 
 
 void linv3_stratosphere_solver_test( const int team_size,

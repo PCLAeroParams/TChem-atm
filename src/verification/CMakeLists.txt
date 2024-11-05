@@ -8,5 +8,5 @@ TARGET_INCLUDE_DIRECTORIES(verification
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 # Skywalker drivers
 #--------------------------
-add_subdirectory(mesa)
+add_subdirectory(mosaic)
 add_subdirectory(linozv3)

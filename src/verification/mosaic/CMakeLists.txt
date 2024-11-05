@@ -1,4 +1,4 @@
-SET(MESA_VALIDATION_DIR ${TCHEM_VERIFICATION_DIR}/mosaic)
+SET(MOSAIC_VALIDATION_DIR ${TCHEM_VERIFICATION_DIR}/mosaic)
 
 SET(DRIVER_NAME "mosaic_driver")
 add_executable(${DRIVER_NAME}.x
@@ -18,11 +18,11 @@ set(ERROR_THRESHOLDS
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)
   # add a test to run the skywalker driver
-  ADD_TEST(run_${input} ${DRIVER_NAME}.x ${MESA_VALIDATION_DIR}/${input}.yaml)
+  ADD_TEST(run_${input} ${DRIVER_NAME}.x ${MOSAIC_VALIDATION_DIR}/${input}.yaml)
 
   # copy the baseline file into place.
    configure_file(
-     ${MESA_VALIDATION_DIR}/${baseline}.py
+     ${MOSAIC_VALIDATION_DIR}/${baseline}.py
      ${CMAKE_CURRENT_BINARY_DIR}/${input}.py
      COPYONLY
    )

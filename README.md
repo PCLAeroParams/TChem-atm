@@ -10,6 +10,16 @@
 The [installation](docs/installation.md) guide demonstrates how to obtain, build, and install TChem-atm along with the requisite third-party libraries.
 
 ## Citations
+* [TChem-atm ](https://www.osti.gov/biblio/2472634)
+```bibtex
+@software{Safta_TChem-atm_2024,
+author = {Safta, Cosmin and Diaz-Ibarra, Oscar H. and Schmidt, Michael},
+month = jun,
+title = {{TChem-atm}},
+version = {1.0.0},
+year = {2024}
+}
+```
 
 * [TChem: A performance portable parallel software
 toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/article/pii/S0010465522003472)

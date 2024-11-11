@@ -68,7 +68,7 @@ struct Aerosol_RHS
   {
    // set omega(rhs) to zero, because we are using Kokkos::atomic_add.
     Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(member, omega.extent(0)),
+      Kokkos::TeamVectorRange(member, omega.extent(0)),
        [&](const ordinal_type& i) {
       omega(i) = 0.0;
     });
@@ -87,7 +87,7 @@ struct Aerosol_RHS
     // member.team_barrier();
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, device_type >;
     Kokkos::parallel_for(
-      Kokkos::ThreadVectorRange(member, amcd.nParticles),
+      Kokkos::TeamVectorRange(member, amcd.nParticles),
        [&](const ordinal_type& i_part) {
     for (size_t i_simpol = 0; i_simpol < amcd.nSimpol_tran; i_simpol++)
     {

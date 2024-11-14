@@ -21,12 +21,15 @@ public:
    ordinal_type _nBatch;
    void setBatchSize(ordinal_type nBatch);
    real_type_2d_view_host _state;
+   real_type_2d_view_host _number_concentration;
    void createStateVector(ordinal_type nBatch);
    ordinal_type getLengthOfStateVector() const;
    auto getStateVectorSize();
    auto getStateVector(const ordinal_type iBatch);
    void setStateVector(double *array, const ordinal_type iBatch);
    void getStateVectorHost(real_type_2d_const_view_host &view);
+
+   void setNumberConcentrationVector(double *array, const ordinal_type iBatch);
 
    // Gas variables
    TChem::KineticModelData _kmd;
@@ -46,6 +49,7 @@ public:
    TChem::AerosolModel_ConstData<device_type> _amcd_device;
    void createAerosolModel(const std::string &aero_file);
    void createAerosolModelConstData();
+   void createNumberConcentrationVector(const ordinal_type iBatch);
 
    // Return number of aerosol species
    ordinal_type getNumberOfAeroSpecies();
@@ -103,3 +107,4 @@ extern "C" int TChem_getAerosolSpeciesName(int* index, char* result,
 extern "C" double TChem_getAerosolSpeciesDensity(int* index);
 extern "C" double TChem_getAerosolSpeciesMW(int* index);
 extern "C" double TChem_getAerosolSpeciesKappa(int* index);
+extern "C" void TChem_setNumberConcentrationVector(TChem::real_type *array, const TChem::ordinal_type iBatch);

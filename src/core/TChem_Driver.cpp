@@ -297,6 +297,14 @@ ordinal_type TChem::Driver::getLengthOfStateVector() const {
   return Impl::getStateVectorSize(_kmcd_host.nSpec + _amcd_host.nSpec * _amcd_host.nParticles);
 }
 
+int TChem_getNumberConcentrationVectorSize() {
+  return g_tchem == nullptr ? -1 : g_tchem->getNumberConcentrationVectorSize();
+}
+
+ordinal_type TChem::Driver::getNumberConcentrationVectorSize() const{
+  return _amcd_host.nParticles;
+}
+
 /* Integrate a time step */
 void TChem_doTimestep(const double &del_t){
   g_tchem->doTimestep(del_t);

@@ -29,6 +29,7 @@ public:
    void setStateVector(double *array, const ordinal_type iBatch);
    void getStateVectorHost(real_type_2d_const_view_host &view);
 
+   ordinal_type getNumberConcentrationVectorSize() const;
    void setNumberConcentrationVector(double *array, const ordinal_type iBatch);
 
    // Gas variables
@@ -99,12 +100,13 @@ extern "C" int TChem_getSpeciesName(int* index, char* result,
                                     const std::string::size_type buffer_size);
 extern "C" void TChem_doTimestep(const double &del_t);
 extern "C" int TChem_getStateVectorSize();
+extern "C" int TChem_getNumberConcentrationVectorSize();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
-
 extern "C" TChem::ordinal_type TChem_getNumberOfAeroSpecies();
 extern "C" int TChem_getAerosolSpeciesName(int* index, char* result,
-                                    const std::string::size_type buffer_size);
+                                           const std::string::size_type buffer_size);
 extern "C" double TChem_getAerosolSpeciesDensity(int* index);
 extern "C" double TChem_getAerosolSpeciesMW(int* index);
 extern "C" double TChem_getAerosolSpeciesKappa(int* index);
-extern "C" void TChem_setNumberConcentrationVector(TChem::real_type *array, const TChem::ordinal_type iBatch);
+extern "C" void TChem_setNumberConcentrationVector(TChem::real_type *array,
+                                                   const TChem::ordinal_type iBatch);

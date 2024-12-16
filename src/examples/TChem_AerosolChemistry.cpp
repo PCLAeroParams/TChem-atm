@@ -61,6 +61,8 @@ int main(int argc, char *argv[]) {
   std::string inputFile("None");
   std::string input_file_particles("None");
   bool use_cloned_samples(false);
+  int number_of_particles(-1);
+  
   // For scaling studies, we must execute this example many times.
   // Thus, we do not want to write the solution to a file.
   // In those cases, we pass write_time_profiles false.
@@ -113,6 +115,7 @@ int main(int argc, char *argv[]) {
   opts.set_option<int>("batch_size", " number of batches or samples, e.g. 10  ", &nBatch);
   opts.set_option<int>("vector_thread_size", "vector thread size ",
                        &vector_size);
+  opts.set_option<int>("number_of_particles", "Set the number of particles; this will overwrite the value from the input file. ", &number_of_particles);
   opts.set_option<real_type>("atol-time", "Absolute tolerance used for adaptive time stepping", &atol_time);
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
@@ -149,6 +152,9 @@ int main(int argc, char *argv[]) {
 
     printf("amd parsing ...\n");
     TChem::AerosolModelData amd(aeroFile, kmd);
+    if(number_of_particles > 0) {
+      amd.setNumberofParticles(number_of_particles);
+    }
     const auto amcd = TChem::create_AerosolModelConstData<TChem::interf_device_type>(amd);
 
     const ordinal_type total_n_species =kmcd.nSpec + amcd.nSpec * amcd.nParticles;

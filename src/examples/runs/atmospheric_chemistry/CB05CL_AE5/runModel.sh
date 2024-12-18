@@ -1,4 +1,3 @@
-#TCHEM_INSTALL_PATH=${HOME}/Documents/CODE/Getz/install/tchem
 exec=$TCHEM_INSTALL_PATH/examples/TChem_AtmosphericChemistry.x
 
 run_this="$exec --chemfile=config_full_gas.yaml \

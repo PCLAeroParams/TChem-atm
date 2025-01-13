@@ -105,10 +105,12 @@ namespace TChem
       const real_type density = sv_at_i.Density();
       const real_type_1d_view_type Ys = sv_at_i.MassFractions();
       const ordinal_type n_active_gas_species = kmcd.nSpec - kmcd.nConstSpec;
-      const auto activeYs = real_type_1d_view_type(Ys.data(),
-                              n_active_gas_species );
-      const auto constYs  = real_type_1d_view_type(Ys.data(),
-                            +n_active_gas_species,  kmcd.nSpec );
+//      const auto activeYs = real_type_1d_view_type(Ys.data(),
+//                              n_active_gas_species );
+//      const auto constYs  = real_type_1d_view_type(Ys.data(),
+//                            +n_active_gas_species,  kmcd.nSpec );
+      const real_type_1d_view_type activeYs = Kokkos::subview(Ys, range_type(0, n_active_gas_species));
+      const real_type_1d_view_type constYs = Kokkos::subview(Ys, range_type(n_active_gas_species, kmcd.nSpec));
        const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(kmcd.nSpec, total_n_species));
 
       const real_type_0d_view_type temperature_out(sv_out_at_i.TemperaturePtr());

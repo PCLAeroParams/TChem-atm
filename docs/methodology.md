@@ -40,7 +40,7 @@ TChem-atm facilitates the construction of source terms (or RHS) for gas-aerosol 
 
 ![RHS of gas-aerosol](figures/RHS_gas_aerosol.png)
 
-Where, the first part of the RHS corresponds to the concentration of gas species. Then, the concentration of each particle is appended. Currently, TChem-atm supports the SIMPOL mass transfer.
+Where, the first part of the RHS corresponds to the concentration of gas species. Then, the concentration of each particle is appended. Currently, TChem-atm supports the [SIMPOL mass transfer](methodology.md#simpol-mass-transfer).
 
 ## **Reaction Types**
 
@@ -190,7 +190,9 @@ $$
 2HO_2 \rightarrow H_2O_2
 $$
 
+<!--
 **Note: from here, onward, the equations and variable names don't agree, so I would make sure to provide a map between the corresponding quantities.**
+-->
 
 ```yaml
 - MUSICA_name: R34
@@ -371,9 +373,9 @@ Future work will convert `reaction_list` from a list of indices to reaction IDs,
 
 ## **Gas-Aerosol Reaction Types**
 
-### SIMPOL mass transfer 
+### SIMPOL mass transfer
 
-It calculates the evaporation rate for transitions between gas and aerosol particles, and vice versa, based on the parameterization by [Pankow and Asher (2008)](https://acp.copernicus.org/articles/8/2773/2008/acp-8-2773-2008.html).
+It calculates the evaporation rate of organic species that partition between the gas and aerosol phase, based on the parameterization by [Pankow and Asher (2008)](https://acp.copernicus.org/articles/8/2773/2008/acp-8-2773-2008.html).
 
 TChem-atm utilizes a YAML file and follows to the [CAMP format](https://github.com/open-atmos/camp) to specify SIMPOL types.
 

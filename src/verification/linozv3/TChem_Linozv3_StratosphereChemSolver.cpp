@@ -22,10 +22,8 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem.hpp"
 #include "TChem_CommandLineParser.hpp"
 #include "TChem_Linv3StratosphereSolver.hpp"
-
-#if defined(TCHEM_ATM_ENABLE_SKYWALKER)
- #include "skywalker.hpp"
-#endif
+#include <verification.hpp>
+#include "skywalker.hpp"
 
 using ordinal_type = TChem::ordinal_type;
 using real_type = TChem::real_type;
@@ -42,52 +40,9 @@ using linoz_input_parameters_type = TChem::linoz_input_parameters_type;
 using ordinal_type_1d_view_host = TChem::ordinal_type_1d_view_host;
 using ordinal_type_1d_view = TChem::ordinal_type_1d_view;
 
-#if defined(TCHEM_ATM_ENABLE_SKYWALKER)
-
 using namespace skywalker;
+using namespace TChem::verification;
 
-std::string output_name(const std::string &input_file) {
-  std::string output_file;
-  size_t slash = input_file.find_last_of('/');
-  size_t dot = input_file.find_last_of('.');
-  if ((dot == std::string::npos) and (slash == std::string::npos)) {
-    dot = input_file.length();
-  }
-  if (slash == std::string::npos) {
-    slash = 0;
-  } else {
-    slash += 1;
-    dot -= slash;
-  }
-  return std::string("TChem_") + input_file.substr(slash, dot) +
-         std::string(".py");
-}
-
-void convert_1d_vector_to_2d_view_device(const std::vector<Real> &var_std,
-                                         const real_type_2d_view &var_device) {
-  auto host = Kokkos::create_mirror_view(var_device);
-  int count = 0;
-  for (int d2 = 0; d2 < var_device.extent(1); ++d2) {
-    for (int d1 = 0; d1 < var_device.extent(0); ++d1) {
-      host(d1, d2) = var_std[count];
-      count++;
-    }
-  }
-  Kokkos::deep_copy(var_device, host);
-}
-
-void convert_2d_view_device_to_1d_vector(const real_type_2d_view &var_device,
-                                         std::vector<Real> &var_std) {
-  auto host = Kokkos::create_mirror_view(var_device);
-  Kokkos::deep_copy(host, var_device);
-  int count = 0;
-  for (int d2 = 0; d2 < var_device.extent(1); ++d2) {
-    for (int d1 = 0; d1 < var_device.extent(0); ++d1) {
-      var_std[count] = host(d1, d2);
-      count++;
-    }
-  }
-}
 
 void linv3_stratosphere_solver_test( const int team_size,
                                     const int vector_size, Ensemble *ensemble) {
@@ -373,7 +328,7 @@ void linv3_stratosphere_solver_test( const int team_size,
     if (team_size > 0 && vector_size > 0) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
-      // only set team size 
+      // only set team size
        policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 
@@ -392,7 +347,7 @@ void linv3_stratosphere_solver_test( const int team_size,
 
   });
 }
-#endif
+
 
 int main(int argc, char *argv[]) {
 
@@ -415,7 +370,6 @@ int main(int argc, char *argv[]) {
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
     return 0; // print help return
-#if defined(TCHEM_ATM_ENABLE_SKYWALKER)
   Kokkos::initialize(argc, argv);
   {
 
@@ -442,9 +396,6 @@ int main(int argc, char *argv[]) {
     // using Linv3StratosphereSolver
   }
   Kokkos::finalize();
-#else
-  printf("Skywalker is not enable. Set TCHEM_ATM_ENABLE_SKYWALKER=ON and add Skywalker's install path. \n");
-#endif
 
   return 0;
 }

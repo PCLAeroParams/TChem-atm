@@ -2,7 +2,7 @@ exec=$TCHEM_INSTALL_PATH/examples/TChem_AerosolChemistry_CVODE.x
 run_this="$exec --chemfile=config_full_gas.yaml \
 	  --aerofile=mechanism_aero.yaml \
           --inputfile_particles=scenario_conditions_particle.yaml \
-	  --outputfile=full_gas_aero_cvode.dat \
+	  --outputfile=full_gas_aero_CVODE.dat \
           --use-cvode=true \
 	  --time-iterations-per-interval=10 \
           --max-time-iterations=100\

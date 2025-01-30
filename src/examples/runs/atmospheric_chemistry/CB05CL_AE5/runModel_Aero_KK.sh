@@ -3,7 +3,7 @@ exec=$TCHEM_INSTALL_PATH/examples/TChem_AerosolChemistry_KokkosKernels.x
 run_this="$exec --chemfile=config_full_gas.yaml \
 	  --aerofile=mechanism_aero.yaml \
           --inputfile_particles=scenario_conditions_particle.yaml \
-	  --outputfile=full_gas_KK.dat \
+	  --outputfile=full_gas_aero_KK.dat \
 	  --time-iterations-per-interval=10 \
 	  --tol-time=1e-3 \
     --atol-time=1e-12 \

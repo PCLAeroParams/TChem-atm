@@ -38,7 +38,7 @@ jobs:
     - name: Testing TChem
       run: docker run -t -v "$PWD:/shared" tchem bash -c 'cd /tchem_build; ctest --output-on-failure'
     - name: Creating code coverage report
-    - run: docker run -t -v "$PWD:/shared" tchem bash -c 'make coverage; mv coverage.info /shared'
+      run: docker run -t -v "$PWD:/shared" tchem bash -c 'make coverage; mv coverage.info /shared'
     - name: Uploading coverage report to codecov.io
       if: ${{ (contains(matrix.os, 'ubuntu')) && (matrix.build-type == 'Debug') && (matrix.sacado-on == 'OFF') }}
       uses: codecov/codecov-action@v3

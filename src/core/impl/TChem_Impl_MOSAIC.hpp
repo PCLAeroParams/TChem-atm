@@ -18,6 +18,13 @@ namespace Impl {
 
 template<typename DeviceType>
 struct MosaicModelData {
+
+  using device_type = DeviceType;
+
+  using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
+  using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
+  using real_type_3d_view_type = Tines::value_type_3d_view<real_type,device_type>;
+
   public:
     const ordinal_type iso4_a  = 0;   // <-> ih2so4_g
     const ordinal_type ino3_a  = 1;   // <-> ihno3_g
@@ -1886,6 +1893,69 @@ struct MosaicModelData {
       }
 
       ~MosaicModelData() = default;
+};
+
+template<typename ValueType, typename DeviceType>
+struct MOSAIC{
+  using value_type = ValueType;
+  using device_type = DeviceType;
+  using scalar_type = typename ats<value_type>::scalar_type;
+
+  using real_type = scalar_type;
+
+  using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
+  using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
+
+  using aerosol_model_data_type= AerosolModel_ConstData<device_type>;
+
+  KOKKOS_INLINE_FUNCTION static ordinal_type getWorkSpaceSize() {
+    ordinal_type workspace_size=0;
+    return workspace_size;
+  }
+
+  KOKKOS_INLINE_FUNCTION static
+  void adjust_solid_aerosol(const MosaicModelData<DeviceType>& mosaic,
+                            const real_type_1d_view_type& aer_solid,
+                            const real_type_1d_view_type& aer_liquid,
+                            const real_type_1d_view_type& aer_total,
+                            const real_type_1d_view_type& electrolyte_solid,
+                            const real_type_1d_view_type& electrolyte_liquid,
+                            const real_type_1d_view_type& electrolyte_total,
+                            const real_type_1d_view_type& epercent_solid,
+                            const real_type_1d_view_type& epercent_liquid,
+                            const real_type_1d_view_type& epercent_total,
+                            real_type& water_a, real_type&jphase, real_type&jhyst_leg) {
+
+    jphase = mosaic.jsolid;
+    jhyst_leg = mosaic.jhyst_lo;
+    water_a = 0.0;
+
+    // Transfer aer(total) to aer(jsolid) and set aer(liquid) to 0
+    for (ordinal_type iaer = 0; iaer < mosaic.naer; iaer++) {
+        aer_solid(iaer) = aer_total(iaer);
+        aer_liquid(iaer) = 0.0;
+    }
+
+    // Transfer electrolyte(total) to electrolyte(solid) and set electrolyte(liquid) to 0
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
+      electrolyte_liquid(je) = 0.0;
+      epercent_liquid(je) = 0.0;
+      electrolyte_solid(je) = electrolyte_total(je);
+      epercent_solid(je) = epercent_total(je);
+    }
+
+    // Update aer(total) that may have been affected above
+    aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a);
+    aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a);
+    aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a);
+
+    // Update electrolyte(total)
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
+      electrolyte_total(je) = electrolyte_solid(je);
+      epercent_total(je) = epercent_solid(je);
+    }
+  } // adjust_solid_aerosol
+
 };
 
 } // namespace Impl

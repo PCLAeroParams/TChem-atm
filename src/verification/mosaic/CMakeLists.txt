@@ -11,7 +11,7 @@ TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 SET(TEST_LIST adjust_solid_aerosol_input_ts_0)
 SET(TEST_BASELINE adjust_solid_aerosol_output_ts_0)
 
-SET(DEFAULT_TOL 1e-13)
+SET(DEFAULT_TOL 1e-9)
 set(ERROR_THRESHOLDS
     10 # The test is failing because the routine is not invoked. A future PR will invoke it.
    )

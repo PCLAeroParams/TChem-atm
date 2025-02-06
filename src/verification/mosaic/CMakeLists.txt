@@ -29,7 +29,7 @@ foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE
   # add a test to validate TChem-atm's results against the baseline.
   ADD_TEST(validate_${input} python3 ${TCHEM_VERIFICATION_DIR}/file_difference_checker.py
             TChem_${input}.py ${input}.py
-            True 
+            False 
             ${DEFAULT_TOL}
             )
 

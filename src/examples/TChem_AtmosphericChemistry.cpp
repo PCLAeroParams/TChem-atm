@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
   /// default inputs
   std::string prefixPath("");
 
+  bool write_time_profiles(true);
   const real_type zero(0);
   real_type tbeg(0), tend(1);
   real_type dtmin(1e-8), dtmax(1e-1);
@@ -62,6 +63,8 @@ int main(int argc, char *argv[]) {
   bool verbose(false);
   std::string chemFile("chem.yaml");
   std::string outputFile("AtmosphericChemistry.dat");
+  std::string outputFileTimes("wall_times.json");
+  bool use_cloned_samples(false);
 
   /// parse command line arguments
   TChem::CommandLineParser opts("This example computes the solution of an ignition problem");
@@ -81,9 +84,16 @@ int main(int argc, char *argv[]) {
   opts.set_option<int>("jacobian-interval", "Jacobians are evaluated once in this interval", &jacobian_interval);
   opts.set_option<int>("max-newton-iterations", "Maximum number of newton iterations", &max_num_newton_iterations);
   opts.set_option<bool>("verbose", "If true, printout the first Jacobian values", &verbose);
-  opts.set_option<int>("team-size", "User defined team size", &team_size);
-  opts.set_option<int>("vector-size", "User defined vector size", &vector_size);
-
+  opts.set_option<int>("team_thread_size", "User defined team size", &team_size);
+  opts.set_option<int>("vector_thread_size", "User defined vector size", &vector_size);
+  opts.set_option<int>("batch_size", " number of batches or samples, e.g. 10  ", &nBatch);
+  opts.set_option<std::string>("outputfile_times",
+                               "Wal times file name e.g., times.json",
+                               &outputFileTimes);
+  opts.set_option<bool>(
+      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles);
+  opts.set_option<bool>(
+      "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
     return 0; // print help return
@@ -108,18 +118,38 @@ int main(int argc, char *argv[]) {
     const auto speciesNamesHost = Kokkos::create_mirror_view(kmcd.speciesNames);
     Kokkos::deep_copy(speciesNamesHost, kmcd.speciesNames);
 
-    FILE *fout = fopen(outputFile.c_str(), "w");
+    FILE *fout;
+    if (write_time_profiles) {
+     fout = fopen(outputFile.c_str(), "w");
+    }
+
+    FILE *fout_times = fopen(outputFileTimes.c_str(), "w");
+    fprintf(fout_times, "{\n");
+    fprintf(fout_times, " \"Aerosol Chemistry\": \n {\n");
     // read scenario condition from yaml file
+    real_type_2d_view_host state_scenario_host;
+    ordinal_type nbatch_files=1;
+    TChem::AtmChemistry ::setScenarioConditions(chemFile, speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbatch_files);
+
+    real_type_2d_view state;
     real_type_2d_view_host state_host;
-    TChem::AtmChemistry ::setScenarioConditions(chemFile, speciesNamesHost, kmcd.nSpec, stateVecDim, state_host, nBatch);
+    if (nbatch_files == 1 && use_cloned_samples && nBatch > 1) {
+      printf("-------------------------------------------------------\n");
+      printf("--------------------Warning----------------------------\n");
+      printf("Using cloned samples ... only for numerical experiments\n");
+      state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
+      state_host = Kokkos::create_mirror_view(state);
+      auto state_scenario_host_at_0 = Kokkos::subview(state_scenario_host, 0, Kokkos::ALL);
+      auto state_at_0 = Kokkos::subview(state, 0, Kokkos::ALL);
+      Kokkos::deep_copy(state_at_0, state_scenario_host_at_0);
+      TChem::Test::cloneView(state);
+    } else {
+      nBatch = nbatch_files;
+      state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
+      Kokkos::deep_copy(state, state_scenario_host);
+      state_host = state_scenario_host;
 
-    real_type_2d_view state("StateVector Devices", nBatch, stateVecDim);
-
-    Kokkos::Timer timer;
-
-    timer.reset();
-    Kokkos::deep_copy(state, state_host);
-    const real_type t_deepcopy = timer.seconds();
+    }
     if (verbose)
     {
       for (ordinal_type i = 0; i < nBatch; i++) {
@@ -166,8 +196,6 @@ int main(int argc, char *argv[]) {
       printf("\n");
     /// iter, t, dt, rho, pres, temp, Ys ...
     };
-
-    timer.reset();
     {
       const auto exec_space_instance = TChem::exec_space();
 
@@ -267,6 +295,8 @@ int main(int argc, char *argv[]) {
         Kokkos::deep_copy(dt_host, dt);
         Kokkos::deep_copy(t_host, t);
 
+        if (write_time_profiles) {
+
         fprintf(fout, "%s \t %s \t %s \t ", "iter", "t", "dt");
         fprintf(fout, "%s \t %s \t %s \t", "Density[kg/m3]", "Pressure[Pascal]", "Temperature[K]");
 
@@ -274,12 +304,20 @@ int main(int argc, char *argv[]) {
           fprintf(fout, "%s \t", &speciesNamesHost(k, 0));
         fprintf(fout, "\n");
         writeState(-1, t_host, dt_host, state_host, fout);
+        }
 
+        Kokkos::Timer timer;
         real_type tsum(0);
         for (; iter < max_num_time_iterations && tsum <= tend * 0.9999; ++iter) {
 
+          timer.reset();
           TChem::AtmosphericChemistry::runDeviceBatch(policy, tol_newton, tol_time, fac, tadv, state, t, dt, state,
                                                       kmcd);
+          exec_space_instance.fence();
+          const real_type t_device_batch = timer.seconds();
+          fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iter,
+                  t_device_batch);
+
           if (verbose) {
             /// could use cuda streams
             Kokkos::deep_copy(tadv_at_i_host, tadv_at_i);
@@ -288,12 +326,13 @@ int main(int argc, char *argv[]) {
             printState(tadv_at_i_host(), t_at_i_host(), state_at_i_host);
           }
 
-
+          if (write_time_profiles) {
           Kokkos::deep_copy(dt_host, dt);
           Kokkos::deep_copy(t_host, t);
           Kokkos::deep_copy(state_host, state);
 
           writeState(iter, t_host, dt_host, state_host, fout);
+          }
 
           /// carry over time and dt computed in this step
           tsum = zero;
@@ -310,13 +349,10 @@ int main(int argc, char *argv[]) {
           Kokkos::fence();
           tsum /= nBatch;
         }
+        fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iter);
       }
     }
     Kokkos::fence(); /// timing purpose
-    const real_type t_device_batch = timer.seconds();
-
-    printf("Time ignition  %e [sec] %e [sec/sample]\n", t_device_batch, t_device_batch / real_type(nBatch));
-
     if (verbose)
     {
     Kokkos::parallel_for(
@@ -328,9 +364,15 @@ int main(int argc, char *argv[]) {
           printf("\n");
         });
     }
+    fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
+    fprintf(fout_times, "} \n "); // reaction rates
 
+    if (write_time_profiles) {
+      fclose(fout);
+    }
+    fprintf(fout_times, "}\n "); // end index time
+    fclose(fout_times);
 
-    fclose(fout);
   }
   Kokkos::finalize();
 

@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
   std::string input_file_particles("None");
   bool use_cloned_samples(false);
   int number_of_particles(-1);
-  
+
   // For scaling studies, we must execute this example many times.
   // Thus, we do not want to write the solution to a file.
   // In those cases, we pass write_time_profiles false.
@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
           fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iter,
                   t_device_batch);
 
-          if (verbose) {
+          if (write_time_profiles) {
             Kokkos::deep_copy(dt_host, dt);
             Kokkos::deep_copy(t_host, t);
             Kokkos::deep_copy(state_host, state);

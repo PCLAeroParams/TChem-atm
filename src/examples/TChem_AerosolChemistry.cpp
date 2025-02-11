@@ -120,6 +120,7 @@ int main(int argc, char *argv[]) {
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
 
+
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
     return 0; // print help return
@@ -259,7 +260,17 @@ int main(int argc, char *argv[]) {
       // The Kokkos-kernels BDF solver is designed for range policy. Therefore, I will use a team size of 1.
       policy_type policy(exec_space_instance, nBatch, 1);
 #else
-      policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
+    policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
+
+    if (team_size > 0 && vector_size > 0) {
+      // if team_size and vector size are positives
+      // here we modified it.
+      policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
+    } else if (team_size > 0 && vector_size < 0) {
+      // here we let kokkos pick vector size
+      // only set team size
+      policy = policy_type(exec_space_instance, nBatch,  team_size);
+    }
 #endif
 
         ordinal_type number_of_equations(0);

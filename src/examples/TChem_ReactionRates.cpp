@@ -78,14 +78,14 @@ int main(int argc, char *argv[]) {
 
     // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
-    ordinal_type nbacth_files=0;
+    ordinal_type nbatch_files=0;
     TChem::AtmChemistry::setScenarioConditions(chemFile,
-     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbatch_files);
 
     real_type_2d_view state;
 
-    if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
-      // only clone samples if nbacth_files is 1
+    if (nbatch_files == 1 && use_cloned_samples && nBatch > 1) {
+      // only clone samples if nbatch_files is 1
       printf("-------------------------------------------------------\n");
       printf("--------------------Warning----------------------------\n");
       printf("Using cloned samples ... only for numerical experiments\n");
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
       TChem::Test::cloneView(state_host);
       Kokkos::deep_copy(state, state_host);
     } else {
-      nBatch = nbacth_files;
+      nBatch = nbatch_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
     }

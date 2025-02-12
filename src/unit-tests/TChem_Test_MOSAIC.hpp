@@ -26,31 +26,13 @@ void static MOSAIC_Test() {
 
     EXPECT_TRUE(mmd.b_mtem.h_view(0,mmd.jnh4so4,mmd.jnh4hso4) == -4.13219);
 
-  //   using policy_type =
-  //         typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
-  //   // team policy
-  //   ordinal_type nBatch =1;
-  //   policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
-  //   Kokkos::parallel_for
-  //     ("MOSAIC",
-  //      policy,
-  //      KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-
-
-  // });
-
 }
-}// namespace Test
 
+}// namespace Test
 }// namespace TChem
 
 TEST(MOSAIC, device) {
   TChem::Test::MOSAIC_Test();
 }
-
-// TEST(MOSAIC, verification_device)
-// {
-
-// }
 
 #endif

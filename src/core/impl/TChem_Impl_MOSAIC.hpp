@@ -12,7 +12,7 @@ Journal of Geophysical Research: Atmospheres.
 
 #include "TChem_KineticModelData.hpp"
 #include "TChem_Util.hpp"
-// #define TCHEM_ENABLE_SERIAL_TEST_OUTPUT
+
 namespace TChem {
 namespace Impl {
 

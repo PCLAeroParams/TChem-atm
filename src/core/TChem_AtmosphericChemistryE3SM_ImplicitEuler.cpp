@@ -146,9 +146,9 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
         const real_type_1d_view_type Ys_out = sv_out_at_i.MassFractions();
         const real_type_0d_view_type density_out(sv_out_at_i.DensityPtr());
 
-        const auto activeYs_out = real_type_1d_view_type(Ys_out.data(),
-                              kmcd_at_i.nSpec - kmcd_at_i.nConstSpec );
-
+        const auto activeYs_out = Kokkos::subview(Ys_out,
+            range_type(0, kmcd_at_i.nSpec - kmcd_at_i.nConstSpec));
+   
 
         member.team_barrier();
 

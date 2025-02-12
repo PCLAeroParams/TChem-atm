@@ -116,8 +116,8 @@ namespace TChem
       const real_type_0d_view_type temperature_out(sv_out_at_i.TemperaturePtr());
       const real_type_0d_view_type pressure_out(sv_out_at_i.PressurePtr());
       const real_type_1d_view_type Ys_out = sv_out_at_i.MassFractions();
-      const auto activeYs_out = real_type_1d_view_type(Ys_out.data(),
-                              kmcd.nSpec - kmcd.nConstSpec );
+      const auto activeYs_out = Kokkos::subview(Ys_out,
+          range_type(0, kmcd.nSpec - kmcd.nConstSpec));
 
       const real_type_0d_view_type density_out(sv_out_at_i.DensityPtr());
 

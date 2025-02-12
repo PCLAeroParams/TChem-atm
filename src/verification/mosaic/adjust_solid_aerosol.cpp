@@ -1,7 +1,9 @@
 #include "TChem.hpp"
+#include "TChem_Impl_MOSAIC.hpp"
 #include <verification.hpp>
 #include "skywalker.hpp"
 
+using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
 using real_type_1d_view = TChem::real_type_1d_view;
 using ordinal_type = TChem::ordinal_type;
 using namespace skywalker;
@@ -20,6 +22,8 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     const auto nsize_aero = static_cast<ordinal_type>(aer_db.size())/n;
     const auto nsize_electrolyte = static_cast<ordinal_type>(electrolyte_db.size())/n;
     const auto nsize_epercent = static_cast<ordinal_type>(epercent_db.size())/n;
+
+    const auto mmd = TChem::Impl::MosaicModelData<device_type>();
 
     real_type_1d_view aer_solid("aer_solid", nsize_aero);
     real_type_1d_view aer_liquid("aer_liquid", nsize_aero);
@@ -66,8 +70,7 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     // Convert input data from std::vector or similar structure to Kokkos views
     verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[0], electrolyte_solid);
     verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[1], electrolyte_liquid);
-    verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[2], electrolyte_liquid);
-
+    verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[2], electrolyte_total);
 
     // Prepare variables for output
 
@@ -90,22 +93,21 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
       Real& water_a = ouputs_adjust_solid_aerosol(0);
       Real& jphase = ouputs_adjust_solid_aerosol(1);
       Real& jhyst_leg = ouputs_adjust_solid_aerosol(2);
- #if 0
+
     // Perform the adjustment calculation
-    adjust_solid_aerosol(
-      /* mosaic model data */, // This needs to be defined or passed appropriately
+    TChem::Impl::MOSAIC<real_type, device_type>::adjust_solid_aerosol(
+      mmd,
       aer_solid, aer_liquid, aer_total,
       electrolyte_solid, electrolyte_liquid, electrolyte_total,
       epercent_solid, epercent_liquid, epercent_total,
       water_a, jphase, jhyst_leg);
-#endif
     });
 
-     const auto ouputs_adjust_solid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space,ouputs_adjust_solid_aerosol);
+    const auto ouputs_adjust_solid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space,ouputs_adjust_solid_aerosol);
 
-      Real water_a = ouputs_adjust_solid_aerosol_h(0);
-      Real jphase = ouputs_adjust_solid_aerosol_h(1);
-      Real jhyst_leg = ouputs_adjust_solid_aerosol_h(2);
+    Real water_a = ouputs_adjust_solid_aerosol_h(0);
+    Real jphase = ouputs_adjust_solid_aerosol_h(1);
+    Real jhyst_leg = ouputs_adjust_solid_aerosol_h(2);
 
 
     // Assuming the outputs are scalar and can be directly set in the ensemble
@@ -117,19 +119,32 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     verification::convert_1d_view_device_to_1d_vector(aer_solid, aer_db_2d[0]);
     verification::convert_1d_view_device_to_1d_vector(aer_liquid, aer_db_2d[1]);
     verification::convert_1d_view_device_to_1d_vector(aer_total, aer_db_2d[2]);
-    output.set("aer", aer_db);
+
+    std::vector<real_type> aer_flattened;
+    for (const auto& row : aer_db_2d) {
+        aer_flattened.insert(aer_flattened.end(), row.begin(), row.end());
+    }
+    output.set("aer", aer_flattened);
 
     verification::convert_1d_view_device_to_1d_vector(epercent_solid, epercent_db_2d[0]);
     verification::convert_1d_view_device_to_1d_vector(epercent_liquid, epercent_db_2d[1]);
     verification::convert_1d_view_device_to_1d_vector(epercent_total, epercent_db_2d[2]);
-    output.set("epercent", epercent_db);
 
+    std::vector<real_type> epercent_flattened;
+    for (const auto& row : epercent_db_2d) {
+        epercent_flattened.insert(epercent_flattened.end(), row.begin(), row.end());
+    }
+    output.set("epercent", epercent_flattened);
 
     verification::convert_1d_view_device_to_1d_vector(electrolyte_solid, electrolyte_db_2d[0]);
     verification::convert_1d_view_device_to_1d_vector(electrolyte_liquid, electrolyte_db_2d[1]);
     verification::convert_1d_view_device_to_1d_vector(electrolyte_total, electrolyte_db_2d[2]);
-    output.set("electrolyte", electrolyte_db);
 
+    std::vector<real_type> electrolyte_flattened;
+    for (const auto& row : electrolyte_db_2d) {
+        electrolyte_flattened.insert(electrolyte_flattened.end(), row.begin(), row.end());
+    }
+    output.set("electrolyte", electrolyte_flattened);
 
   });
 }

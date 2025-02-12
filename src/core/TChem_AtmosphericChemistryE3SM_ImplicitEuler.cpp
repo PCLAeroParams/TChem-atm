@@ -68,7 +68,6 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
 
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type, device_type>;
   using real_type_0d_view_type = Tines::value_type_0d_view<real_type, device_type>;
-
   using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
 
   auto kmcd_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),
@@ -138,7 +137,7 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
         const real_type density = sv_at_i.Density();
         const real_type_1d_view_type Ys = sv_at_i.MassFractions();
         const auto activeYs = Kokkos::subview(Ys,
-            range_type(0,  kmcd_at_i.nSpec - kmcd_at_i.nConstSpec));
+            range_type(0, kmcd_at_i.nSpec - kmcd_at_i.nConstSpec));
         const auto constYs = Kokkos::subview(Ys,
             range_type(kmcd_at_i.nSpec - kmcd_at_i.nConstSpec, kmcd_at_i.nSpec));
         const real_type_0d_view_type temperature_out(sv_out_at_i.TemperaturePtr());
@@ -148,7 +147,7 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
 
         const auto activeYs_out = Kokkos::subview(Ys_out,
             range_type(0, kmcd_at_i.nSpec - kmcd_at_i.nConstSpec));
-   
+
 
         member.team_barrier();
 

@@ -109,7 +109,7 @@ namespace TChem
       const real_type density = sv_at_i.Density();
       const real_type_1d_view_type Ys = sv_at_i.MassFractions();
       const auto activeYs = Kokkos::subview(Ys,
-          range_type(0,  kmcd.nSpec - kmcd.nConstSpec));
+          range_type(0, kmcd.nSpec - kmcd.nConstSpec));
       const auto constYs = Kokkos::subview(Ys,
           range_type(kmcd.nSpec - kmcd.nConstSpec, kmcd.nSpec));
 

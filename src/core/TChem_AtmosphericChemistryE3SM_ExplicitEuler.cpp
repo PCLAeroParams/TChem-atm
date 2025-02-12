@@ -48,6 +48,7 @@ namespace TChem
     using policy_type = PolicyType;
     using real_type_0d_view_type = Tines::value_type_0d_view<real_type, DeviceType>;
     using real_type_1d_view_type = Tines::value_type_1d_view<real_type, DeviceType>;
+    using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
     using problem_type = TChem::Impl::AtmosphericChemistryE3SM_Problem<real_type,DeviceType>;
 
     const ordinal_type level = 1;
@@ -107,10 +108,10 @@ namespace TChem
       const real_type pressure = sv_at_i.Pressure();
       const real_type density = sv_at_i.Density();
       const real_type_1d_view_type Ys = sv_at_i.MassFractions();
-      const auto activeYs = real_type_1d_view_type(Ys.data(),
-                              kmcd.nSpec - kmcd.nConstSpec );
-      const auto constYs  = real_type_1d_view_type(Ys.data()
-                            + kmcd.nSpec - kmcd.nConstSpec,  kmcd.nSpec );
+      const auto activeYs = Kokkos::subview(Ys,
+          range_type(0,  kmcd.nSpec - kmcd.nConstSpec));
+      const auto constYs = Kokkos::subview(Ys,
+          range_type(kmcd.nSpec - kmcd.nConstSpec, kmcd.nSpec));
 
       const real_type_0d_view_type temperature_out(sv_out_at_i.TemperaturePtr());
       const real_type_0d_view_type pressure_out(sv_out_at_i.PressurePtr());

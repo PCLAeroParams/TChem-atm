@@ -65,6 +65,7 @@ AtmosphericChemistryE3SM_TemplateRunModelVariation( /// required template argume
 
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type, device_type>;
   using real_type_0d_view_type = Tines::value_type_0d_view<real_type, device_type>;
+  using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
 
   auto kmcd_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),
 						       Kokkos::subview(kmcds, 0));
@@ -133,10 +134,10 @@ AtmosphericChemistryE3SM_TemplateRunModelVariation( /// required template argume
         const real_type pressure = sv_at_i.Pressure();
         const real_type density = sv_at_i.Density();
         const real_type_1d_view_type Ys = sv_at_i.MassFractions();
-        const auto activeYs = real_type_1d_view_type(Ys.data(),
-                              kmcd_at_i.nSpec - kmcd_at_i.nConstSpec );
-        const auto constYs  = real_type_1d_view_type(Ys.data()
-                            + kmcd_at_i.nSpec - kmcd_at_i.nConstSpec,  kmcd_at_i.nSpec );
+        const auto activeYs = Kokkos::subview(Ys,
+            range_type(0, kmcd_at_i.nSpec - kmcd_at_i.nConstSpec));
+        const auto constYs = Kokkos::subview(Ys,
+            range_type(kmcd_at_i.nSpec - kmcd_at_i.nConstSpec, kmcd_at_i.nSpec));
 
         const real_type_0d_view_type temperature_out(sv_out_at_i.TemperaturePtr());
         const real_type_0d_view_type pressure_out(sv_out_at_i.PressurePtr());

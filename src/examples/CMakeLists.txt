@@ -9,15 +9,17 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_ReactionRates.cpp
   TChem_NetProductionRates.cpp
   TChem_RateofProgress.cpp
+  TChem_AerosolChemistry.cpp
   TChem_AtmosphericChemistryE3SM_CVODE.cpp
   TChem_AerosolChemistry_CVODE.cpp
-  TChem_AerosolChemistry.cpp
+  TChem_CVODE_Aerosol.cpp
 )
 IF(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS)
 LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
 TChem_GEMM_KokkosKernels.cpp
 )
 ENDIF()
+
 #
 # Create examples for the above sources
 #

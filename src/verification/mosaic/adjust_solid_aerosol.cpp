@@ -41,7 +41,6 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
         std::vector<real_type> aer_temp(aer_db.begin() + i, aer_db.begin() + i + nsize_aero);
         aer_db_2d.push_back(aer_temp);
     }
-    std::cout << "aer_db_2d[0].size() "<< aer_db_2d[0].size() << "\n";
 
     // Convert input data from std::vector or similar structure to Kokkos views
     verification::convert_1d_vector_to_1d_view_device(aer_db_2d[0], aer_solid);

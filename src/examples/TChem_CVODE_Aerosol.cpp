@@ -22,6 +22,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem.hpp"
 #include "TChem_CommandLineParser.hpp"
 #include "TChem_Impl_AerosolChemistry.hpp"
+#include "TChem_Impl_Aerosol_RHS.hpp"
 
 #include <cstdio>
 #include <cvode/cvode.h>
@@ -45,6 +46,7 @@ using real_type_0d_view_type = Tines::value_type_0d_view<real_type, device_type>
 using real_type_1d_view_type = Tines::value_type_1d_view<real_type, device_type>;
 using real_type_2d_view_type = Tines::value_type_2d_view<real_type, device_type>;
 using real_type_3d_view_type = Tines::value_type_3d_view<real_type, device_type>;
+using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type, host_device_type>;
 using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type, host_device_type>;
 
 using VecType   = sundials::kokkos::Vector<TChem::exec_space>;
@@ -105,7 +107,13 @@ int main(int argc, char *argv[]) {
   int number_of_particles(-1);
   real_type rtol_time(1e-4), atol_time(1e-12);
   real_type tbeg(0), tend(1);
-  real_type dtmin(1e-8), dtmax(1e-1);
+  real_type dtmin(1e-8);
+  bool write_time_profiles(true);
+  // , dtmax(1e-1);
+  // Linear solver type
+  int solver_type = 1;
+
+
 
   /// parse command line arguments
   TChem::CommandLineParser opts("This example computes the net production rates with a given state vector");
@@ -133,6 +141,9 @@ int main(int argc, char *argv[]) {
   opts.set_option<real_type>("tbeg", "Time begin", &tbeg);
   opts.set_option<real_type>("tend", "Time end", &tend);
   opts.set_option<real_type>("dtmin", "Minimum time step size", &dtmin);
+  opts.set_option<int>("solver_type", "solver type. ", &solver_type);
+  opts.set_option<bool>(
+      "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles);
 
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
@@ -150,9 +161,46 @@ int main(int argc, char *argv[]) {
     if (input_file_particles == "None") {
        input_file_particles=chemFile;
     }
+#if 1
+    FILE *fout;
+    if (write_time_profiles) {
+     fout = fopen(outputFile.c_str(), "w");
+    }
+    FILE *fout_times = fopen(outputFileTimes.c_str(), "w");
+    fprintf(fout_times, "{\n");
+    fprintf(fout_times, " \"Aerosol Chemistry\": \n {\n");
 
+    auto writeState = [](const ordinal_type iter,
+                         const real_type _t,
+                         const real_type _dt,
+                         const real_type_1d_view_host_type density,
+                         const real_type_1d_view_host_type pressure,
+                         const real_type_1d_view_host_type temperature,
+                         const real_type_2d_view_host_type _const_tracers_at_i,
+                         const real_type_2d_view_host_type _sol_at_i,
+                         const ordinal_type n_active_species,
+                         FILE *fout) { // sample, time, density, pressure,
+                                       // temperature, mass fraction
+
+      for (size_t sp = 0; sp < _sol_at_i.extent(0); sp++) {
+        fprintf(fout, "%d \t %15.10e \t  %15.10e \t ", iter, _t, _dt);
+        //
+        fprintf(fout, "%15.10e \t", density(sp));
+        fprintf(fout, "%15.10e \t", pressure(sp));
+        fprintf(fout, "%15.10e \t", temperature(sp));
+        for (ordinal_type k = 0, kend = n_active_species; k < kend; ++k)
+          fprintf(fout, "%15.10e \t", _sol_at_i(sp, k));
+        for (ordinal_type k = 0, kend = _const_tracers_at_i.extent(1); k < kend; ++k)
+          fprintf(fout, "%15.10e \t", _const_tracers_at_i(sp, k));
+        for (ordinal_type k = n_active_species, kend = _sol_at_i.extent(1); k < kend; ++k)
+          fprintf(fout, "%15.10e \t", _sol_at_i(sp, k));
+        fprintf(fout, "\n");
+      }
+
+    };
+#endif
   	const bool detail = false;
-    constexpr real_type zero =0;
+    // constexpr real_type zero =0;
 
     TChem::exec_space().print_configuration(std::cout, detail);
     TChem::host_exec_space().print_configuration(std::cout, detail);
@@ -253,17 +301,10 @@ int main(int argc, char *argv[]) {
 
     using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
     const ordinal_type level = 1;
-    const ordinal_type per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
-    + number_of_equations;
-    const ordinal_type per_team_scratch =
-    TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
-    policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
-
     // Create UserData
     UserData udata;
 
     udata.nbatches = nBatch;
-    udata.policy = policy;
     udata.num_concentration = num_concentration;
     udata.batchSize=number_of_equations;
     udata.kmcd=kmcd;
@@ -276,8 +317,7 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_type y2d((y.View()).data(), nBatch, number_of_equations);
 
     const ordinal_type n_active_gas_species = kmcd.nSpec - kmcd.nConstSpec;
-    real_type_2d_view_type const_tracers("const_tracers",nBatch, n_active_gas_species);
-
+    real_type_2d_view_type const_tracers("const_tracers",nBatch, kmcd.nConstSpec);
 
     real_type_1d_view_type temperature("temperature",nBatch);
     real_type_1d_view_type pressure("pressure",nBatch);
@@ -315,6 +355,32 @@ int main(int argc, char *argv[]) {
     udata.temperature = temperature;
     udata.pressure = pressure;
     udata.const_tracers =const_tracers;
+    if (write_time_profiles) {
+        fprintf(fout, "%s \t %s \t %s \t ", "iter", "t", "dt");
+        fprintf(fout, "%s \t %s \t %s \t", "Density[kg/m3]", "Pressure[Pascal]",
+                "Temperature[K]");
+
+        for (ordinal_type k = 0; k < kmcd.nSpec; k++)
+          fprintf(fout, "%s \t", &speciesNamesHost(k, 0));
+        //given aero idx return species name
+        std::map<int, std::string> aero_idx_sp_name;
+        for (std::map<std::string, int>::iterator
+           i = amd.aerosol_sp_name_idx_.begin();
+          i != amd.aerosol_sp_name_idx_.end(); ++i)
+          aero_idx_sp_name[i->second] = i->first;
+
+        for (ordinal_type ipart = 0; ipart < amd.nParticles_; ipart++)
+        {
+          for (ordinal_type isp = 0; isp < amd.nSpec_; isp++)
+          {
+            // std::cout << "species Name : "<< aero_idx_sp_name[i] << "\n";
+            auto aero_sp_name = aero_idx_sp_name[isp]+"_p"+std::to_string(ipart);
+            fprintf(fout, "%s \t", aero_sp_name.c_str());
+          }// isp
+        }// ipar
+      fprintf(fout, "\n");
+    }
+
 
     // Create vector of absolute tolerances
     VecType abstol{length, sunctx};
@@ -342,10 +408,7 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<sundials::ConvertibleTo<SUNMatrix>> A;
     std::unique_ptr<sundials::ConvertibleTo<SUNLinearSolver>> LS;
 
-
-    // Linear solver type
-    int solver_type = 0;
-
+    ordinal_type per_team_extent=0;
 
     if (solver_type == 0)
     {
@@ -364,6 +427,8 @@ int main(int argc, char *argv[]) {
       if (check_flag(retval, "CVodeSetJacFn")) { return 1; }
       fac = real_type_2d_view_type("fac", nBatch, number_of_equations);
       udata.fac=fac;
+      per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
+        + number_of_equations;
     }
     else
     {
@@ -374,12 +439,19 @@ int main(int argc, char *argv[]) {
       // Attach the linear solver to CVODE
       retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
       if (check_flag(retval, "CVodeSetLinearSolver")) { return 1; }
+      per_team_extent
+         = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
+
     }
+    const ordinal_type per_team_scratch =
+      TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
+      policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
+    udata.policy = policy;
 
     // Final time and time between outputs
 
     const sunrealtype Tf    = SUN_RCONST(tend);
-    const sunrealtype dTout = SUN_RCONST(dtmax);
+    const sunrealtype dTout = SUN_RCONST(dtmin);
 
     // Number of output times
     const int Nt = static_cast<int>(ceil(Tf / dTout));
@@ -393,34 +465,54 @@ int main(int argc, char *argv[]) {
     sundials::kokkos::CopyFromDevice(y);
     Kokkos::fence();
 
-    std::cout << "At t = " << t << std::endl;
-    for (int j = 0; j < udata.nbatches; j ++)
-    {
-      std::cout << "  batch " << j << ": y = " << y2d_h(j, 0) << " "
-                << y2d_h(j, 1) << " " << y2d_h(j, 2) << std::endl;
+    // std::cout << "At t = " << t << std::endl;
+    // for (int j = 0; j < udata.nbatches; j ++)
+    // {
+    //   std::cout << "  batch " << j << ": y = " << y2d_h(j, 0) << " "
+    //             << y2d_h(j, 1) << " " << y2d_h(j, 2) << std::endl;
+    // }
+    // fprintf(fout, "\n");
+    const auto density_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , temperature);
+    const auto temperature_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , temperature);
+    const auto pressure_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), pressure);
+    const auto const_tracers_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),const_tracers);
+    if (write_time_profiles) {
+    writeState(-1, tout, dTout,
+     density_host, pressure_host, temperature_host,
+     const_tracers_host, y2d_h, n_active_gas_species, fout);
     }
-
-
     // Loop over output times
-    for (int iout = 0; iout < Nt; iout++)
+    Kokkos::Timer timer;
+    int iout = 0;
+    for (iout = 0; iout < Nt; iout++)
     {
       // Advance in time
+      timer.reset();
       retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
+      exec_space_instance.fence();
+      const real_type t_device_batch = timer.seconds();
+      fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iout,
+                  t_device_batch);
       if (check_flag(retval, "CVode")) { break; }
 
-      // Output solution from some batches
+      // // Output solution from some batches
       sundials::kokkos::CopyFromDevice(y);
       Kokkos::fence();
-      std::cout << "At t = " << t << std::endl;
-      for (int j = 0; j < udata.nbatches; j += 10)
-      {
-        std::cout << "  batch " << j << ": y = " << y2d_h(j, 0) << " "
-                  << y2d_h(j, 1) << " " << y2d_h(j, 2) << std::endl;
-      }
 
       tout += dTout;
       tout = (tout > Tf) ? Tf : tout;
+      if (write_time_profiles) {
+      writeState(iout, tout, dTout,
+       density_host, pressure_host, temperature_host,
+       const_tracers_host, y2d_h,
+        n_active_gas_species, fout);
+      }
     }
+    fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iout);
 
         // Print some final statistics
     long int nst, nfe, nsetups, nje, nni, ncfn, netf;
@@ -451,32 +543,16 @@ int main(int argc, char *argv[]) {
 
     // Free objects
     CVodeFree(&cvode_mem);
-
-#if 0
-
-    if (verbose) {
-
-
-     if (use_cloned_samples) {
-       auto rhs_at_0 = Kokkos::subview(rhs, 0, Kokkos::ALL());
-       auto rhs_host_at_0 = Kokkos::create_mirror_view(rhs_at_0);
-       Kokkos::deep_copy(rhs_host_at_0, rhs_at_0);
-       FILE *fout = fopen(outputFile.c_str(), "w");
-       TChem::Test::writeReactionRates(outputFile, number_of_equations, rhs_host_at_0);
-       fclose(fout);
-     } else {
-      auto rhs_host= Kokkos::create_mirror_view(rhs);
-      Kokkos::deep_copy(rhs_host, rhs);
-      FILE *fout = fopen(outputFile.c_str(), "w");
-      TChem::Test::write2DMatrix(outputFile, nBatch, number_of_equations,rhs_host);
-      fclose(fout);
-     }
-
-    }
-#endif
+    fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
+    fprintf(fout_times, "} \n "); // reaction rates
 
     // fprintf(fout_times, "}\n ");// end index time
     // fclose(fout_times);
+    if (write_time_profiles) {
+    fclose(fout);
+    }
+    fprintf(fout_times, "}\n "); // end index time
+    fclose(fout_times);
 
 
 
@@ -492,8 +568,6 @@ int f(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
   auto udata = static_cast<UserData*>(user_data);
 
   const auto nbatches  = udata->nbatches;
-
-
   const auto policy = udata->policy;
   const auto kmcd = udata->kmcd;
   const auto amcd = udata->amcd;
@@ -508,9 +582,9 @@ int f(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
   real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(ydot), nbatches, batchSize);
 
   const ordinal_type level = 1;
-  const ordinal_type number_of_equations = batchSize;
-  const ordinal_type per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
-    + number_of_equations;
+  // const ordinal_type number_of_equations = batchSize;
+  const ordinal_type per_team_extent
+         = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
   const std::string profile_name = "TChem::AerosolChemistry::RHS_evaluation";
   Kokkos::Profiling::pushRegion(profile_name);
   Kokkos::parallel_for
@@ -519,37 +593,23 @@ int f(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
         const ordinal_type i = member.league_rank();
-
         const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);
         const real_type_1d_view_type rhs_at_i =
         Kokkos::subview(rhs, i, Kokkos::ALL());
         const real_type_1d_view_type vals_at_i =
         Kokkos::subview(vals, i, Kokkos::ALL());
-
-                const real_type_1d_view_type number_conc_at_i =
+        const real_type_1d_view_type number_conc_at_i =
         Kokkos::subview(num_concentration, i, Kokkos::ALL());
-
         TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                        per_team_extent);
-
-        auto wptr = work.data();
-
         const real_type_1d_view_type constYs  = Kokkos::subview(const_tracers, i, Kokkos::ALL());
-
-        const ordinal_type problem_workspace_size = problem_type::getWorkSpaceSize(kmcd,amcd);
-        auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
-        wptr +=problem_workspace_size;
-        problem_type problem;
-        problem._kmcd = kmcd;
-        problem._amcd = amcd;
-        /// initialize problem
-        // problem._fac = fac_at_i;
-        problem._work = pw;
-        problem._temperature= temperature(i);
-        problem._pressure =pressure(i);
-        problem._const_concentration= constYs;
-        problem._number_conc =number_conc_at_i;
-        problem.computeFunction(member,vals_at_i,rhs_at_i);
+        auto wptr = work.data();
+        auto pw = real_type_1d_view_type(wptr, per_team_extent);
+        wptr +=per_team_extent;
+        TChem::Impl::Aerosol_RHS<real_type, device_type>
+        ::team_invoke(member,
+        temperature(i), pressure(i), number_conc_at_i, vals_at_i, constYs,
+        rhs_at_i, pw, kmcd, amcd);
       });
 
 
@@ -576,7 +636,6 @@ int Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void* user_data
 
   real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
   real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
-  // real_type_3d_view_type jacobian(SUNDenseMatrix_Data(J), nbatches, batchSize, batchSize);
 
   const ordinal_type level = 1;
   const ordinal_type number_of_equations = problem_type::getNumberOfTimeODEs(kmcd, amcd);

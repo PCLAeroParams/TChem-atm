@@ -45,6 +45,7 @@ using real_type_0d_view_type = Tines::value_type_0d_view<real_type, device_type>
 using real_type_1d_view_type = Tines::value_type_1d_view<real_type, device_type>;
 using real_type_2d_view_type = Tines::value_type_2d_view<real_type, device_type>;
 using real_type_3d_view_type = Tines::value_type_3d_view<real_type, device_type>;
+using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type, host_device_type>;
 using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type, host_device_type>;
 
 using VecType   = sundials::kokkos::Vector<TChem::exec_space>;
@@ -150,7 +151,38 @@ int main(int argc, char *argv[]) {
     if (input_file_particles == "None") {
        input_file_particles=chemFile;
     }
+#if 1
+     FILE *fout = fopen(outputFile.c_str(), "w");
 
+    auto writeState = [](const ordinal_type iter,
+                         const real_type _t,
+                         const real_type _dt,
+                         const real_type_1d_view_host_type density,
+                         const real_type_1d_view_host_type pressure,
+                         const real_type_1d_view_host_type temperature,
+                         const real_type_2d_view_host_type _const_tracers_at_i,
+                         const real_type_2d_view_host_type _sol_at_i,
+                         const ordinal_type n_active_species,
+                         FILE *fout) { // sample, time, density, pressure,
+                                       // temperature, mass fraction
+
+      for (size_t sp = 0; sp < _sol_at_i.extent(0); sp++) {
+        fprintf(fout, "%d \t %15.10e \t  %15.10e \t ", iter, _t, _dt);
+        //
+        fprintf(fout, "%15.10e \t", density(sp));
+        fprintf(fout, "%15.10e \t", pressure(sp));
+        fprintf(fout, "%15.10e \t", temperature(sp));
+        for (ordinal_type k = 0, kend = n_active_species; k < kend; ++k)
+          fprintf(fout, "%15.10e \t", _sol_at_i(sp, k));
+        for (ordinal_type k = 0, kend = _const_tracers_at_i.extent(1); k < kend; ++k)
+          fprintf(fout, "%15.10e \t", _const_tracers_at_i(sp, k));
+        for (ordinal_type k = n_active_species, kend = _sol_at_i.extent(1); k < kend; ++k)
+          fprintf(fout, "%15.10e \t", _sol_at_i(sp, k));
+        fprintf(fout, "\n");
+      }
+
+    };
+#endif
   	const bool detail = false;
     constexpr real_type zero =0;
 
@@ -278,7 +310,6 @@ int main(int argc, char *argv[]) {
     const ordinal_type n_active_gas_species = kmcd.nSpec - kmcd.nConstSpec;
     real_type_2d_view_type const_tracers("const_tracers",nBatch, n_active_gas_species);
 
-
     real_type_1d_view_type temperature("temperature",nBatch);
     real_type_1d_view_type pressure("pressure",nBatch);
 
@@ -344,7 +375,7 @@ int main(int argc, char *argv[]) {
 
 
     // Linear solver type
-    int solver_type = 0;
+    int solver_type = 1;
 
 
     if (solver_type == 0)
@@ -393,13 +424,25 @@ int main(int argc, char *argv[]) {
     sundials::kokkos::CopyFromDevice(y);
     Kokkos::fence();
 
-    std::cout << "At t = " << t << std::endl;
-    for (int j = 0; j < udata.nbatches; j ++)
-    {
-      std::cout << "  batch " << j << ": y = " << y2d_h(j, 0) << " "
-                << y2d_h(j, 1) << " " << y2d_h(j, 2) << std::endl;
-    }
+    // std::cout << "At t = " << t << std::endl;
+    // for (int j = 0; j < udata.nbatches; j ++)
+    // {
+    //   std::cout << "  batch " << j << ": y = " << y2d_h(j, 0) << " "
+    //             << y2d_h(j, 1) << " " << y2d_h(j, 2) << std::endl;
+    // }
+    // fprintf(fout, "\n");
+    const auto density_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , temperature);
+    const auto temperature_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , temperature);
+    const auto pressure_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), pressure);
+    const auto const_tracers_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),const_tracers);
 
+    writeState(-1, tout, dTout,
+     density_host, pressure_host, temperature_host,
+     const_tracers_host, y2d_h, n_active_gas_species, fout);
 
     // Loop over output times
     for (int iout = 0; iout < Nt; iout++)
@@ -420,6 +463,13 @@ int main(int argc, char *argv[]) {
 
       tout += dTout;
       tout = (tout > Tf) ? Tf : tout;
+
+      writeState(iout, tout, dTout,
+       density_host, pressure_host, temperature_host,
+       const_tracers_host, y2d_h,
+        n_active_gas_species, fout);
+
+
     }
 
         // Print some final statistics
@@ -477,6 +527,7 @@ int main(int argc, char *argv[]) {
 
     // fprintf(fout_times, "}\n ");// end index time
     // fclose(fout_times);
+    fclose(fout);
 
 
 

@@ -1,7 +1,13 @@
 #measure wall times for the following mechanisms
-dirs=(CB05CL_AE5_w_simpolSOA)
 sacado_flags=(no_sacado)
-export experiment_base=TChem_AerosolChemistry
+
+# Aerosol timings
+#dirs=(CB05CL_AE5_w_simpolSOA)
+#export experiment_base=TChem_AerosolChemistry
+
+# Gas timings
+dirs=(CB05CL_AE5)
+export experiment_base=TChem_GasChemistry
 
 cpu_solver_strList=(
   # "trbdf"
@@ -17,13 +23,13 @@ cpu_exe_string=(
 )
 gpu_solver_strList=(
  #"trbdf"
-  "kokkoskernels"
-  #"rhss"
+  #"kokkoskernels"
+  "rhss"
 )
 gpu_exe_string=(
   #""                   # note need to comment out when running Kokkos Kernels
-  "_KokkosKernels"
-  #"_RHSs"
+  #"_KokkosKernels"
+  "_RHSs"
 )
 
 rhss_params(){

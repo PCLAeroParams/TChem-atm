@@ -74,7 +74,7 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     // Prepare variables for output
 
     // Reals or int that are defined outside of the parallel_for region are passed as const.
-    real_type_1d_view ouputs_adjust_solid_aerosol("ouputs_adjust_solid_aerosol", 3);
+    real_type_1d_view outputs_adjust_solid_aerosol("outputs_adjust_solid_aerosol", 3);
 
     std::string profile_name ="Verification_test_adjust_solid_aerosol";
     using policy_type =
@@ -89,9 +89,9 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-      Real& water_a = ouputs_adjust_solid_aerosol(0);
-      Real& jphase = ouputs_adjust_solid_aerosol(1);
-      Real& jhyst_leg = ouputs_adjust_solid_aerosol(2);
+      Real& water_a = outputs_adjust_solid_aerosol(0);
+      Real& jphase = outputs_adjust_solid_aerosol(1);
+      Real& jhyst_leg = outputs_adjust_solid_aerosol(2);
 
     // Perform the adjustment calculation
     TChem::Impl::MOSAIC<real_type, device_type>::adjust_solid_aerosol(
@@ -102,11 +102,11 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
       water_a, jphase, jhyst_leg);
     });
 
-    const auto ouputs_adjust_solid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space,ouputs_adjust_solid_aerosol);
+    const auto outputs_adjust_solid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_adjust_solid_aerosol);
 
-    Real water_a = ouputs_adjust_solid_aerosol_h(0);
-    Real jphase = ouputs_adjust_solid_aerosol_h(1);
-    Real jhyst_leg = ouputs_adjust_solid_aerosol_h(2);
+    Real water_a = outputs_adjust_solid_aerosol_h(0);
+    Real jphase = outputs_adjust_solid_aerosol_h(1);
+    Real jhyst_leg = outputs_adjust_solid_aerosol_h(2);
 
 
     // Assuming the outputs are scalar and can be directly set in the ensemble

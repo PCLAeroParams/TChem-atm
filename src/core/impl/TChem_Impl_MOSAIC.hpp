@@ -10,7 +10,7 @@ Model for simulating aerosol interactions and chemistry (MOSAIC).
 Journal of Geophysical Research: Atmospheres.
 */
 
-#include "TChem_KineticModelData.hpp"
+#include "TChem.hpp"
 #include "TChem_Util.hpp"
 
 namespace TChem {
@@ -1897,6 +1897,7 @@ struct MosaicModelData {
 
 template<typename ValueType, typename DeviceType>
 struct MOSAIC{
+
   using value_type = ValueType;
   using device_type = DeviceType;
   using scalar_type = typename ats<value_type>::scalar_type;
@@ -1906,12 +1907,88 @@ struct MOSAIC{
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
 
-  using aerosol_model_data_type= AerosolModel_ConstData<device_type>;
-
   KOKKOS_INLINE_FUNCTION static ordinal_type getWorkSpaceSize() {
     ordinal_type workspace_size=0;
     return workspace_size;
   }
+
+  KOKKOS_INLINE_FUNCTION static
+  void adjust_liquid_aerosol(const MosaicModelData<DeviceType>& mosaic,
+                            const real_type_1d_view_type& aer_solid,
+                            const real_type_1d_view_type& aer_liquid,
+                            const real_type_1d_view_type& aer_total,
+                            const real_type_1d_view_type& electrolyte_solid,
+                            const real_type_1d_view_type& electrolyte_liquid,
+                            const real_type_1d_view_type& electrolyte_total,
+                            const real_type_1d_view_type& epercent_solid,
+                            const real_type_1d_view_type& epercent_liquid,
+                            const real_type_1d_view_type& epercent_total,
+                            real_type& jphase, real_type& jhyst_leg) {
+
+      jphase    = mosaic.jliquid;
+      jhyst_leg = mosaic.jhyst_up; // upper curve
+
+      // Partition all electrolytes into liquid phase
+      for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je) {
+          electrolyte_solid(je) = 0.0;
+          epercent_solid(je) = 0.0;
+          electrolyte_liquid(je) = electrolyte_total(je);
+          epercent_liquid(je) = epercent_total(je);
+      }
+
+      // Except these electrolytes, which always remain in the solid phase
+      electrolyte_solid(mosaic.jcaco3) = electrolyte_total(mosaic.jcaco3);
+      electrolyte_solid(mosaic.jcaso4) = electrolyte_total(mosaic.jcaso4);
+      epercent_solid(mosaic.jcaco3) = epercent_total(mosaic.jcaco3);
+      epercent_solid(mosaic.jcaso4) = epercent_total(mosaic.jcaso4);
+      electrolyte_liquid(mosaic.jcaco3) = 0.0;
+      electrolyte_liquid(mosaic.jcaso4) = 0.0;
+      epercent_liquid(mosaic.jcaco3) = 0.0;
+      epercent_liquid(mosaic.jcaso4) = 0.0;
+
+      // Partition all the aer species into solid and liquid phases
+      // Solid phase
+      aer_solid(mosaic.iso4_a) = electrolyte_solid(mosaic.jcaso4);
+      aer_solid(mosaic.ino3_a) = 0.0;
+      aer_solid(mosaic.icl_a) = 0.0;
+      aer_solid(mosaic.inh4_a) = 0.0;
+      aer_solid(mosaic.ioc_a) = aer_total(mosaic.ioc_a);
+      aer_solid(mosaic.imsa_a) = 0.0;
+      aer_solid(mosaic.ico3_a) = aer_total(mosaic.ico3_a);
+      aer_solid(mosaic.ina_a) = 0.0;
+      aer_solid(mosaic.ica_a) = electrolyte_solid(mosaic.jcaco3) + electrolyte_solid(mosaic.jcaso4);
+      aer_solid(mosaic.ibc_a) = aer_total(mosaic.ibc_a);
+      aer_solid(mosaic.ioin_a) = aer_total(mosaic.ioin_a);
+      aer_solid(mosaic.iaro1_a) = aer_total(mosaic.iaro1_a);
+      aer_solid(mosaic.iaro2_a) = aer_total(mosaic.iaro2_a);
+      aer_solid(mosaic.ialk1_a) = aer_total(mosaic.ialk1_a);
+      aer_solid(mosaic.iole1_a) = aer_total(mosaic.iole1_a);
+      aer_solid(mosaic.iapi1_a) = aer_total(mosaic.iapi1_a);
+      aer_solid(mosaic.iapi2_a) = aer_total(mosaic.iapi2_a);
+      aer_solid(mosaic.ilim1_a) = aer_total(mosaic.ilim1_a);
+      aer_solid(mosaic.ilim2_a) = aer_total(mosaic.ilim2_a);
+
+      // Liquid phase
+      aer_liquid(mosaic.iso4_a) = max(0.0, aer_total(mosaic.iso4_a) - aer_solid(mosaic.iso4_a));
+      aer_liquid(mosaic.ino3_a) = aer_total(mosaic.ino3_a);
+      aer_liquid(mosaic.icl_a) = aer_total(mosaic.icl_a);
+      aer_liquid(mosaic.inh4_a) = aer_total(mosaic.inh4_a);
+      aer_liquid(mosaic.ioc_a) = 0.0;
+      aer_liquid(mosaic.imsa_a) = aer_total(mosaic.imsa_a);
+      aer_liquid(mosaic.ico3_a) = 0.0;
+      aer_liquid(mosaic.ina_a) = aer_total(mosaic.ina_a);
+      aer_liquid(mosaic.ica_a) = max(0.0, aer_total(mosaic.ica_a) - aer_solid(mosaic.ica_a));
+      aer_liquid(mosaic.ibc_a) = 0.0;
+      aer_liquid(mosaic.ioin_a) = 0.0;
+      aer_liquid(mosaic.iaro1_a) = 0.0;
+      aer_liquid(mosaic.iaro2_a) = 0.0;
+      aer_liquid(mosaic.ialk1_a) = 0.0;
+      aer_liquid(mosaic.iole1_a) = 0.0;
+      aer_liquid(mosaic.iapi1_a) = 0.0;
+      aer_liquid(mosaic.iapi2_a) = 0.0;
+      aer_liquid(mosaic.ilim1_a) = 0.0;
+      aer_liquid(mosaic.ilim2_a) = 0.0;
+  } // adjust_liquid_aerosol
 
   KOKKOS_INLINE_FUNCTION static
   void adjust_solid_aerosol(const MosaicModelData<DeviceType>& mosaic,

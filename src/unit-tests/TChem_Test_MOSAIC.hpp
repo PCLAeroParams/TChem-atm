@@ -3,11 +3,6 @@
 
 #include "TChem.hpp"
 #include "TChem_Impl_MOSAIC.hpp"
-using ordinal_type = TChem::ordinal_type;
-using real_type = TChem::real_type;
-using real_type_1d_view = TChem::real_type_1d_view;
-using real_type_2d_view = TChem::real_type_2d_view;
-using real_type_2d_view_host = TChem::real_type_2d_view_host;
 
 namespace TChem {
 namespace Test {

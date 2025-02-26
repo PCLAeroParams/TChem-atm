@@ -14,6 +14,9 @@ void usage() {
   std::cerr << "mosaic_driver <input.yaml>" << std::endl;
   exit(0);
 }
+
+void adjust_liquid_aerosol(Ensemble *ensemble);
+
 void adjust_solid_aerosol(Ensemble *ensemble);
 
 void do_full_deliquescence(Ensemble *ensemble);
@@ -41,7 +44,9 @@ int main(int argc, char **argv) {
   // Dispatch to the requested function.
   auto func_name = settings.get("function");
   try {
-    if (func_name == "adjust_solid_aerosol") {
+    if (func_name == "adjust_liquid_aerosol") {
+      adjust_liquid_aerosol(ensemble);
+    } else if (func_name == "adjust_solid_aerosol") {
       adjust_solid_aerosol(ensemble);
     } else if (func_name == "do_full_deliquescence") {
       do_full_deliquescence(ensemble);

@@ -1956,6 +1956,71 @@ struct MOSAIC{
     }
   } // adjust_solid_aerosol
 
+  KOKKOS_INLINE_FUNCTION static void
+  do_full_deliquescence(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& electrolyte_solid,
+                        const real_type_1d_view_type& electrolyte_liquid,
+                        const real_type_1d_view_type& electrolyte_total,
+                        const real_type_1d_view_type& aer_solid,
+                        const real_type_1d_view_type& aer_liquid,
+                        const real_type_1d_view_type& aer_total) {
+
+    // Partition all electrolytes to the liquid phase
+    for (ordinal_type js = 0; js < mosaic.nelectrolyte; js++) {
+        electrolyte_solid(js) = 0.0;
+        electrolyte_liquid(js) = electrolyte_total(js);
+    }
+
+    // Except these electrolytes, which always remain in the solid phase
+    electrolyte_solid(mosaic.jcaco3) = electrolyte_total(mosaic.jcaco3);
+    electrolyte_solid(mosaic.jcaso4) = electrolyte_total(mosaic.jcaso4);
+    electrolyte_liquid(mosaic.jcaco3) = 0.0;
+    electrolyte_liquid(mosaic.jcaso4) = 0.0;
+
+    // Partition all the generic aer species into solid and liquid phases
+    // Solid phase 
+    aer_solid(mosaic.iso4_a) = electrolyte_solid(mosaic.jcaso4);
+    aer_solid(mosaic.ino3_a) = 0.0;
+    aer_solid(mosaic.icl_a) = 0.0;
+    aer_solid(mosaic.inh4_a) = 0.0;
+    aer_solid(mosaic.ioc_a) = aer_total(mosaic.ioc_a);
+    aer_solid(mosaic.imsa_a) = 0.0;
+    aer_solid(mosaic.ico3_a) = aer_total(mosaic.ico3_a);
+    aer_solid(mosaic.ina_a) = 0.0;
+    aer_solid(mosaic.ica_a) = electrolyte_solid(mosaic.jcaco3) + electrolyte_solid(mosaic.jcaso4);
+    aer_solid(mosaic.ibc_a) = aer_total(mosaic.ibc_a);
+    aer_solid(mosaic.ioin_a) = aer_total(mosaic.ioin_a);
+    aer_solid(mosaic.iaro1_a) = aer_total(mosaic.iaro1_a);
+    aer_solid(mosaic.iaro2_a) = aer_total(mosaic.iaro2_a);
+    aer_solid(mosaic.ialk1_a) = aer_total(mosaic.ialk1_a);
+    aer_solid(mosaic.iole1_a) = aer_total(mosaic.iole1_a);
+    aer_solid(mosaic.iapi1_a) = aer_total(mosaic.iapi1_a);
+    aer_solid(mosaic.iapi2_a) = aer_total(mosaic.iapi2_a);
+    aer_solid(mosaic.ilim1_a) = aer_total(mosaic.ilim1_a);
+    aer_solid(mosaic.ilim2_a) = aer_total(mosaic.ilim2_a);
+
+    // Liquid phase
+    aer_liquid(mosaic.iso4_a) = aer_total(mosaic.iso4_a) - electrolyte_solid(mosaic.jcaso4);
+    aer_liquid(mosaic.ino3_a) = aer_total(mosaic.ino3_a);
+    aer_liquid(mosaic.icl_a) = aer_total(mosaic.icl_a);
+    aer_liquid(mosaic.inh4_a) = aer_total(mosaic.inh4_a);
+    aer_liquid(mosaic.ioc_a) = 0.0;
+    aer_liquid(mosaic.imsa_a) = aer_total(mosaic.imsa_a);
+    aer_liquid(mosaic.ico3_a) = 0.0;
+    aer_liquid(mosaic.ina_a) = aer_total(mosaic.ina_a);
+    aer_liquid(mosaic.ica_a) = electrolyte_total(mosaic.jcano3) + electrolyte_total(mosaic.jcacl2);
+    aer_liquid(mosaic.ibc_a) = 0.0;
+    aer_liquid(mosaic.ioin_a) = 0.0;
+    aer_liquid(mosaic.iaro1_a) = 0.0;
+    aer_liquid(mosaic.iaro2_a) = 0.0;
+    aer_liquid(mosaic.ialk1_a) = 0.0;
+    aer_liquid(mosaic.iole1_a) = 0.0;
+    aer_liquid(mosaic.iapi1_a) = 0.0;
+    aer_liquid(mosaic.iapi2_a) = 0.0;
+    aer_liquid(mosaic.ilim1_a) = 0.0;
+    aer_liquid(mosaic.ilim2_a) = 0.0;
+  } // do_full_deliquescence
+
 };
 
 } // namespace Impl

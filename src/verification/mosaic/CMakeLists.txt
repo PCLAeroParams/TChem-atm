@@ -3,13 +3,14 @@ SET(MOSAIC_VALIDATION_DIR ${TCHEM_VERIFICATION_DIR}/mosaic)
 SET(DRIVER_NAME "mosaic_driver")
 add_executable(${DRIVER_NAME}.x
                ${DRIVER_NAME}.cpp
-               adjust_solid_aerosol.cpp)
+               adjust_solid_aerosol.cpp
+               do_full_deliquescence.cpp)
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 
 
 # list of test to run
-SET(TEST_LIST adjust_solid_aerosol_input_ts_0)
-SET(TEST_BASELINE adjust_solid_aerosol_output_ts_0)
+SET(TEST_LIST adjust_solid_aerosol_input_ts_0 do_full_deliquescence_input_ts_0)
+SET(TEST_BASELINE adjust_solid_aerosol_output_ts_0 do_full_deliquescence_output_ts_0)
 
 SET(DEFAULT_TOL 1e-9)
 set(ERROR_THRESHOLDS

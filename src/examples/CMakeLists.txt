@@ -9,7 +9,6 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_ReactionRates.cpp
   TChem_NetProductionRates.cpp
   TChem_RateofProgress.cpp
-  TChem_AerosolChemistry.cpp
   #TChem_AtmosphericChemistryE3SM_CVODE.cpp
   #TChem_AerosolChemistry_CVODE.cpp
   TChem_AerosolChemistry.cpp

@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   int nBatch(1), team_size(-1), vector_size(-1);
   bool verbose(true);
   bool use_cloned_samples(false);
-  int number_of_particles(-1);
+  int number_of_particles(-1), max_num_time_iterations(-1);
   real_type rtol_time(1e-4), atol_time(1e-12);
   real_type tbeg(0), tend(1);
   real_type dtmin(1e-8);
@@ -144,7 +144,9 @@ int main(int argc, char *argv[]) {
   opts.set_option<int>("solver_type", "solver type. ", &solver_type);
   opts.set_option<bool>(
       "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles);
-
+  opts.set_option<int>("max-time-iterations",
+                       "Maximum number of time iterations",
+                       &max_num_time_iterations);
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
     return 0; // print help return
@@ -213,9 +215,9 @@ int main(int argc, char *argv[]) {
 
     printf("amd parsing ...\n");
     TChem::AerosolModelData amd(aeroFile, kmd);
-    // if(number_of_particles > 0) {
-    //   amd.setNumberofParticles(number_of_particles);
-    // }
+    if(number_of_particles > 0) {
+       amd.setNumberofParticles(number_of_particles);
+    }
     const auto amcd = TChem::create_AerosolModelConstData<device_type>(amd);
 
     const ordinal_type total_n_species =kmcd.nSpec + amcd.nSpec * amcd.nParticles;
@@ -454,7 +456,9 @@ int main(int argc, char *argv[]) {
     const sunrealtype dTout = SUN_RCONST(dtmin);
 
     // Number of output times
-    const int Nt = static_cast<int>(ceil(Tf / dTout));
+    const int Nt_p = static_cast<int>(ceil(Tf / dTout));
+
+    const int Nt =  max_num_time_iterations > 0 ? max_num_time_iterations: Nt_p;
 
     // Current time and first output time
     sunrealtype t    = T0;

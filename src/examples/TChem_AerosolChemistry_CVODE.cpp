@@ -243,10 +243,10 @@ int main(int argc, char *argv[]) {
     fprintf(fout_times, " \"Aerosol Chemistry\": \n {\n");
 
     {
-      const auto exec_space_instance = TChem::exec_space();
+      const auto exec_space_instance = TChem::host_exec_space();
 
       using policy_type =
-          typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+          typename TChem::UseThisTeamPolicy<TChem::host_exec_space>::type;
 
       /// team policy
       policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());

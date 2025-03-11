@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
         TChem::Test::cloneView(photo_rates);
       } // n_photo_rates
 
-      external_sources = real_type_2d_view("external_sources", nBatch, n_active_vars);
+      external_sources = real_type_2d_view_host("external_sources", nBatch, n_active_vars);
       if (count_ext_forcing >  0) {
         auto external_sources_scenario_host_at_0 = Kokkos::subview(external_sources_scenario_host, 0, Kokkos::ALL);
         auto external_sources_host_at_0 = Kokkos::subview(external_sources, 0, Kokkos::ALL);
@@ -266,10 +266,10 @@ int main(int argc, char *argv[]) {
     fprintf(fout_times, " \"Atmospheric Chemistry E3SM\": \n {\n");
 
     {
-      const auto exec_space_instance = TChem::exec_space();
+      const auto exec_space_instance = TChem::host_exec_space();
 
       using policy_type =
-          typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+          typename TChem::UseThisTeamPolicy<TChem::host_exec_space>::type;
 
       /// team policy
       policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());

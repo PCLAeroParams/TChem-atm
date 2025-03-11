@@ -469,13 +469,6 @@ int main(int argc, char *argv[]) {
     sundials::kokkos::CopyFromDevice(y);
     Kokkos::fence();
 
-    // std::cout << "At t = " << t << std::endl;
-    // for (int j = 0; j < udata.nbatches; j ++)
-    // {
-    //   std::cout << "  batch " << j << ": y = " << y2d_h(j, 0) << " "
-    //             << y2d_h(j, 1) << " " << y2d_h(j, 2) << std::endl;
-    // }
-    // fprintf(fout, "\n");
     const auto density_host =
     Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , temperature);
     const auto temperature_host =

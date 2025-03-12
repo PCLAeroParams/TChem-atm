@@ -3,13 +3,15 @@
 #include <verification.hpp>
 #include "skywalker.hpp"
 
+using real_type = TChem::real_type;
+using value_type = real_type;
 using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
 using real_type_1d_view = TChem::real_type_1d_view;
 using ordinal_type = TChem::ordinal_type;
 using namespace skywalker;
 using namespace TChem;
 
-void adjust_solid_aerosol(Ensemble *ensemble) {
+void adjust_liquid_aerosol(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
     // Assuming the input arrays are 1D and of the same length
 
@@ -74,9 +76,9 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     // Prepare variables for output
 
     // Reals or int that are defined outside of the parallel_for region are passed as const.
-    real_type_1d_view outputs_adjust_solid_aerosol("outputs_adjust_solid_aerosol", 3);
+    real_type_1d_view outputs_adjust_liquid_aerosol("outputs_adjust_liquid_aerosol", 2);
 
-    std::string profile_name ="Verification_test_adjust_solid_aerosol";
+    std::string profile_name ="Verification_test_adjust_liquid_aerosol";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
     const auto exec_space_instance = TChem::exec_space();
@@ -89,28 +91,25 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-      Real& water_a = outputs_adjust_solid_aerosol(0);
-      Real& jphase = outputs_adjust_solid_aerosol(1);
-      Real& jhyst_leg = outputs_adjust_solid_aerosol(2);
+      Real& jphase = outputs_adjust_liquid_aerosol(0);
+      Real& jhyst_leg = outputs_adjust_liquid_aerosol(1);
 
     // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::adjust_solid_aerosol(
+    TChem::Impl::MOSAIC<real_type, device_type>::adjust_liquid_aerosol(
       mmd,
       aer_solid, aer_liquid, aer_total,
       electrolyte_solid, electrolyte_liquid, electrolyte_total,
       epercent_solid, epercent_liquid, epercent_total,
-      water_a, jphase, jhyst_leg);
+      jphase, jhyst_leg);
     });
 
-    const auto outputs_adjust_solid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_adjust_solid_aerosol);
+    const auto outputs_adjust_liquid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_adjust_liquid_aerosol);
 
-    Real water_a = outputs_adjust_solid_aerosol_h(0);
-    Real jphase = outputs_adjust_solid_aerosol_h(1);
-    Real jhyst_leg = outputs_adjust_solid_aerosol_h(2);
+    Real jphase = outputs_adjust_liquid_aerosol_h(0);
+    Real jhyst_leg = outputs_adjust_liquid_aerosol_h(1);
 
 
     // Assuming the outputs are scalar and can be directly set in the ensemble
-    output.set("water_a", water_a);
     output.set("jphase", jphase);
     output.set("jhyst_leg", jhyst_leg);
 

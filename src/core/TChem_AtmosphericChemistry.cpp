@@ -539,9 +539,9 @@ TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(const std::string&
         if (nBatch_photo_reation == nBatch)
         {
           // std::cout << photo_rate_values << "\n";
-          for (int ibacth = 0; ibacth < nBatch; ++ibacth)
+          for (int ibatch = 0; ibatch < nBatch; ++ibatch)
           {
-            photo_rates_host(ibacth, ireac) = photo_rate_values[ibacth].as<real_type>();
+            photo_rates_host(ibatch, ireac) = photo_rate_values[ibatch].as<real_type>();
           }
         } else {
           printf("Error number of values in photo reaction is different than number of conditions");
@@ -610,9 +610,9 @@ if (root["external_forcing"]){
 
       if (nBatch_ext_forcing == nBatch)
       {
-        for (int ibacth = 0; ibacth < nBatch; ++ibacth)
+        for (int ibatch = 0; ibatch < nBatch; ++ibatch)
         {
-            external_forcing_host(ibacth, sp_idx) = ext_forcing_values[ibacth].as<real_type>();
+            external_forcing_host(ibatch, sp_idx) = ext_forcing_values[ibatch].as<real_type>();
         }
         } else {
           printf("Error number of values in external forcing is different than number of conditions");

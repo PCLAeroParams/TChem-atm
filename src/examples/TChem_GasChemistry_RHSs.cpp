@@ -203,10 +203,10 @@ int main(int argc, char *argv[]) {
         const real_type pressure = sv_at_i.Pressure();
         const real_type_1d_view_type Ys = sv_at_i.MassFractions();
         const ordinal_type n_active_gas_species = kmcd.nSpec - kmcd.nConstSpec;
-        const auto activeYs = real_type_1d_view_type(Ys.data(),
-                              n_active_gas_species );
-        const auto constYs  = real_type_1d_view_type(Ys.data(),
-                            +n_active_gas_species,  kmcd.nSpec );
+        const real_type_1d_view_type activeYs = Kokkos::subview(Ys,
+          range_type(0, n_active_gas_species));
+        const real_type_1d_view_type constYs = Kokkos::subview(Ys,
+          range_type(n_active_gas_species, kmcd.nSpec));
 
         real_type_1d_view_type vals(wptr, m);
         wptr += m;
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
         for (ordinal_type i=0;i<n_active_gas_species;++i){
           vals(i) = activeYs(i);
         }
-       
+
         problem.computeNumericalJacobian(member,vals,jacobian_at_i);
       });
       Kokkos::Profiling::popRegion();

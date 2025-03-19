@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 
     printf("stateVecDim %d \n", stateVecDim);
 
- // read scenario condition from yaml file
+    // read scenario condition from yaml file
     real_type_2d_view_host_type state_scenario_host;
     ordinal_type nbatch_files=1;
     printf("conditions parsing ...\n");
@@ -177,8 +177,6 @@ int main(int argc, char *argv[]) {
 
     using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
-    // fprintf(fout_times, " Computation type, total time [sec], time per sample [sec/sample]\n ");
-
     policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());
 
     if (team_size > 0 && vector_size > 0) {
@@ -231,10 +229,10 @@ int main(int argc, char *argv[]) {
         const real_type pressure = sv_at_i.Pressure();
         const real_type_1d_view_type Ys = sv_at_i.MassFractions();
         const ordinal_type n_active_gas_species = kmcd.nSpec - kmcd.nConstSpec;
-        const auto activeYs = real_type_1d_view_type(Ys.data(),
-                              n_active_gas_species );
-        const auto constYs  = real_type_1d_view_type(Ys.data(),
-                            +n_active_gas_species,  kmcd.nSpec );
+        const real_type_1d_view_type activeYs = Kokkos::subview(Ys,
+          range_type(0, n_active_gas_species));
+        const real_type_1d_view_type constYs = Kokkos::subview(Ys,
+          range_type(n_active_gas_species, kmcd.nSpec));
         const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(kmcd.nSpec, total_n_species));
 
         real_type_1d_view_type vals(wptr, m);

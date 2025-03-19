@@ -252,10 +252,10 @@ int main(int argc, char *argv[]) {
         /// initialize problem
         // problem._fac = fac_at_i;
         problem._work = pw;
-        problem._temperature= temperature;
-        problem._pressure =pressure;
-        problem._const_concentration= constYs;
-        problem._number_conc =number_conc_at_i;
+        problem._temperature = temperature;
+        problem._pressure = pressure;
+        problem._const_concentration = constYs;
+        problem._number_conc = number_conc_at_i;
         // active gas species
         for (ordinal_type i=0;i<n_active_gas_species;++i){
           vals(i) = activeYs(i);

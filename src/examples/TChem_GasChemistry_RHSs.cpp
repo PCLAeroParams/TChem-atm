@@ -97,15 +97,6 @@ int main(int argc, char *argv[]) {
     TChem::KineticModelData kmd(chemFile);
     const auto kmcd = TChem::createNCAR_KineticModelConstData<device_type>(kmd);
 
-    /*
-    printf("amd parsing ...\n");
-    TChem::AerosolModelData amd(aeroFile, kmd);
-    if(number_of_particles > 0) {
-      amd.setNumberofParticles(number_of_particles);
-    }
-    const auto amcd = TChem::create_AerosolModelConstData<device_type>(amd);
-    */
-
     const ordinal_type total_n_species =kmcd.nSpec; //+ amcd.nSpec * amcd.nParticles;
     const ordinal_type number_of_equations = problem_type::getNumberOfTimeODEs(kmcd);
     const ordinal_type stateVecDim =
@@ -116,8 +107,6 @@ int main(int argc, char *argv[]) {
     printf("Number of Gas Species %d \n", kmcd.nSpec);
     printf("Number of Gas Reactions %d \n", kmcd.nReac);
 
-    //printf("Number of Aerosol Species %d \n", amcd.nSpec);
-    //printf("Number of Aerosol Particles %d \n", amcd.nParticles);
 
     printf("stateVecDim %d \n", stateVecDim);
 
@@ -132,15 +121,6 @@ int main(int argc, char *argv[]) {
     //real_type_2d_view_host_type num_concentration_host;
     real_type_2d_view_host_type state_host;
 
-    // scenario particles
-    /*
-    amd.scenarioConditionParticles(input_file_particles,
-                                   nbatch_files,
-                                   num_concentration_host,
-                                   state_scenario_host);
-    */
-
-    //real_type_2d_view_type num_concentration;
     real_type_2d_view_type state;
 
     if (nbatch_files == 1 && use_cloned_samples && nBatch > 1) {
@@ -156,14 +136,6 @@ int main(int argc, char *argv[]) {
       TChem::Test::cloneView(state);
       //make sure to copy state to host view.
       Kokkos::deep_copy(state_host, state);
-      //scenario particles
-      /*
-      auto num_concentration_host_at_0 = Kokkos::subview(num_concentration_host, 0, Kokkos::ALL);
-      num_concentration = real_type_2d_view_type("num_concentration", nBatch, amd.nParticles_);
-      auto num_concentration_at_0 = Kokkos::subview(num_concentration, 0, Kokkos::ALL);
-      Kokkos::deep_copy(num_concentration_at_0, num_concentration_host_at_0);
-      TChem::Test::cloneView(num_concentration);
-      */
 
     } else {
       nBatch = nbatch_files;
@@ -171,11 +143,6 @@ int main(int argc, char *argv[]) {
       Kokkos::deep_copy(state, state_scenario_host);
       state_host = state_scenario_host;
 
-      // scenario particles
-      /*
-      num_concentration = real_type_2d_view_type("num_concentration", nBatch, amd.nParticles_);
-      Kokkos::deep_copy(num_concentration, num_concentration_host);
-      */
     }
     // output
     real_type_2d_view_type rhs("rhs", nBatch, number_of_equations);
@@ -226,8 +193,6 @@ int main(int argc, char *argv[]) {
         const real_type_1d_view_type state_at_i =
         Kokkos::subview(state, i, Kokkos::ALL());
 
-        //const real_type_1d_view_type number_conc_at_i =
-        //Kokkos::subview(num_concentration, i, Kokkos::ALL());
         TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                        per_team_extent);
         auto wptr = work.data();
@@ -242,7 +207,6 @@ int main(int argc, char *argv[]) {
                               n_active_gas_species );
         const auto constYs  = real_type_1d_view_type(Ys.data(),
                             +n_active_gas_species,  kmcd.nSpec );
-        //const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(kmcd.nSpec, total_n_species));
 
         real_type_1d_view_type vals(wptr, m);
         wptr += m;
@@ -254,26 +218,18 @@ int main(int argc, char *argv[]) {
         wptr +=problem_workspace_size;
         problem_type problem;
         problem._kmcd = kmcd;
-        //problem._amcd = amcd;
 
         /// initialize problem
         // problem._fac = fac_at_i;
         problem._work = pw;
-        problem._temperature= temperature;
-        problem._pressure =pressure;
-        problem._const_concentration= constYs;
-        //problem._number_conc =number_conc_at_i;
+        problem._temperature = temperature;
+        problem._pressure = pressure;
+        problem._const_concentration = constYs;
         // active gas species
         for (ordinal_type i=0;i<n_active_gas_species;++i){
           vals(i) = activeYs(i);
         }
 
-        /*
-        for (ordinal_type i=n_active_gas_species;i<total_n_species- kmcd.nConstSpec;++i)
-        {
-          vals(i) = partYs(i-n_active_gas_species);
-        }
-        */
 
         problem.computeFunction(member,vals,rhs_at_i);
       });
@@ -310,10 +266,6 @@ int main(int argc, char *argv[]) {
         const real_type_1d_view_type fac_at_i =
         Kokkos::subview(fac, i, Kokkos::ALL());
 
-        /*
-        const real_type_1d_view_type number_conc_at_i =
-        Kokkos::subview(num_concentration, i, Kokkos::ALL());
-        */
 
         TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                        per_team_extent);
@@ -329,7 +281,6 @@ int main(int argc, char *argv[]) {
                               n_active_gas_species );
         const auto constYs  = real_type_1d_view_type(Ys.data(),
                             +n_active_gas_species,  kmcd.nSpec );
-        //const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(kmcd.nSpec, total_n_species));
 
         real_type_1d_view_type vals(wptr, m);
         wptr += m;
@@ -341,7 +292,6 @@ int main(int argc, char *argv[]) {
         wptr +=problem_workspace_size;
         problem_type problem;
         problem._kmcd = kmcd;
-        //problem._amcd = amcd;
 
         /// initialize problem
         problem._fac = fac_at_i;
@@ -349,18 +299,10 @@ int main(int argc, char *argv[]) {
         problem._temperature= temperature;
         problem._pressure =pressure;
         problem._const_concentration= constYs;
-        //problem._number_conc =number_conc_at_i;
         // active gas species
         for (ordinal_type i=0;i<n_active_gas_species;++i){
           vals(i) = activeYs(i);
         }
-        
-        /*
-        for (ordinal_type i=n_active_gas_species;i<total_n_species- kmcd.nConstSpec;++i)
-        {
-          vals(i) = partYs(i-n_active_gas_species);
-        }
-        */
        
         problem.computeNumericalJacobian(member,vals,jacobian_at_i);
       });

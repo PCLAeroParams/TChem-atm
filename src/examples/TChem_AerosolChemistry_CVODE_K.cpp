@@ -21,18 +21,6 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 */
 #include "TChem.hpp"
 #include "TChem_CommandLineParser.hpp"
-#include "TChem_Impl_AerosolChemistry.hpp"
-#include "TChem_Impl_Aerosol_RHS.hpp"
-
-#include <cstdio>
-#include <cvode/cvode.h>
-#include <memory>
-#include <nvector/nvector_kokkos.hpp>
-#include <sundials/sundials_core.hpp>
-#include <sunlinsol/sunlinsol_kokkosdense.hpp>
-#include <sunlinsol/sunlinsol_spgmr.h>
-#include <sunmatrix/sunmatrix_kokkosdense.hpp>
-#include <vector>
 
 using ordinal_type = TChem::ordinal_type;
 using real_type = TChem::real_type;
@@ -73,25 +61,6 @@ static int check_ptr(const void* ptr, const std::string funcname)
   return 1;
 }
 
-struct UserData
-{
-  int nbatches  = 100; // number of chemical networks
-  int batchSize = 3;   // size of each network
-  policy_type policy;
-  real_type_2d_view_type num_concentration;
-  real_type_1d_view_type temperature;
-  real_type_1d_view_type pressure;
-  real_type_2d_view_type const_tracers;
-  real_type_2d_view_type fac;
-  TChem::KineticModelNCAR_ConstData<device_type> kmcd;
-  TChem::AerosolModel_ConstData<device_type> amcd;
-};
-
-// User-supplied functions called by CVODE
-static int f(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data);
-
-static int Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J,
-               void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
 
 int main(int argc, char *argv[]) {
@@ -304,7 +273,7 @@ int main(int argc, char *argv[]) {
     using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
     const ordinal_type level = 1;
     // Create UserData
-    UserData udata;
+    TChem::UserData udata;
 
     udata.nbatches = nBatch;
     udata.num_concentration = num_concentration;
@@ -394,7 +363,7 @@ int main(int argc, char *argv[]) {
 
 
     // Initialize the integrator and set the ODE right-hand side function
-    int retval = CVodeInit(cvode_mem, f, T0, y);
+    int retval = CVodeInit(cvode_mem, TChem::AerosolChemistry_CVODE_K::f, T0, y);
     if (check_flag(retval, "CVodeInit")) { return 1; }
 
 
@@ -425,7 +394,7 @@ int main(int argc, char *argv[]) {
       if (check_flag(retval, "CVodeSetLinearSolver")) { return 1; }
 
       // Set the user-supplied Jacobian function
-      retval = CVodeSetJacFn(cvode_mem, Jac);
+      retval = CVodeSetJacFn(cvode_mem, TChem::AerosolChemistry_CVODE_K::Jac);
       if (check_flag(retval, "CVodeSetJacFn")) { return 1; }
       fac = real_type_2d_view_type("fac", nBatch, number_of_equations);
       udata.fac=fac;
@@ -558,135 +527,4 @@ int main(int argc, char *argv[]) {
   Kokkos::finalize();
 
   return 0;
-}
-// Right hand side function dy/dt = f(t,y)
-int f(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
-{
-  auto udata = static_cast<UserData*>(user_data);
-
-  const auto nbatches  = udata->nbatches;
-  const auto policy = udata->policy;
-  const auto kmcd = udata->kmcd;
-  const auto amcd = udata->amcd;
-  const auto batchSize = udata->batchSize;
-  const auto num_concentration = udata->num_concentration;
-  const auto temperature= udata->temperature;
-  const auto pressure= udata->pressure;
-  const auto const_tracers= udata->const_tracers;
-
-  real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
-  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
-  real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(ydot), nbatches, batchSize);
-
-  const ordinal_type level = 1;
-  // const ordinal_type number_of_equations = batchSize;
-  const ordinal_type per_team_extent
-         = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
-  const std::string profile_name = "TChem::AerosolChemistry::RHS_evaluation";
-  Kokkos::Profiling::pushRegion(profile_name);
-  Kokkos::parallel_for
-  (profile_name,
-       policy,
-       KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-
-        const ordinal_type i = member.league_rank();
-        const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);
-        const real_type_1d_view_type rhs_at_i =
-        Kokkos::subview(rhs, i, Kokkos::ALL());
-        const real_type_1d_view_type vals_at_i =
-        Kokkos::subview(vals, i, Kokkos::ALL());
-        const real_type_1d_view_type number_conc_at_i =
-        Kokkos::subview(num_concentration, i, Kokkos::ALL());
-        TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
-                                       per_team_extent);
-        const real_type_1d_view_type constYs  = Kokkos::subview(const_tracers, i, Kokkos::ALL());
-        auto wptr = work.data();
-        auto pw = real_type_1d_view_type(wptr, per_team_extent);
-        wptr +=per_team_extent;
-        TChem::Impl::Aerosol_RHS<real_type, device_type>
-        ::team_invoke(member,
-        temperature(i), pressure(i), number_conc_at_i, vals_at_i, constYs,
-        rhs_at_i, pw, kmcd, amcd);
-      });
-
-
- return 0;
-}
-
-// Jacobian of f(t,y)
-int Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void* user_data
-, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-{
-  auto udata = static_cast<UserData*>(user_data);
-
-  const auto nbatches  = udata->nbatches;
-  const auto policy = udata->policy;
-  const auto kmcd = udata->kmcd;
-  const auto amcd = udata->amcd;
-  const auto num_concentration = udata->num_concentration;
-  const auto temperature= udata->temperature;
-  const auto pressure= udata->pressure;
-  const auto const_tracers= udata->const_tracers;
-  const auto batchSize = udata->batchSize;
-  const auto fac= udata->fac;
-  auto J_data = sundials::kokkos::GetDenseMat<MatType>(J)->View();
-
-  real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
-  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
-
-  const ordinal_type level = 1;
-  const ordinal_type number_of_equations = problem_type::getNumberOfTimeODEs(kmcd, amcd);
-  const ordinal_type per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
-    + number_of_equations;
-  const std::string profile_name = "TChem::AerosolChemistry::Jacobian_evaluation";
-  Kokkos::Profiling::pushRegion(profile_name);
-  Kokkos::parallel_for
-  (profile_name,
-       policy,
-       KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-
-        const ordinal_type i = member.league_rank();
-
-        const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);
-        const real_type_1d_view_type vals_at_i =
-        Kokkos::subview(vals, i, Kokkos::ALL());
-
-        const real_type_1d_view_type fac_at_i =
-        Kokkos::subview(fac, i, Kokkos::ALL());
-
-        const real_type_2d_view_type jacobian_at_i =
-        Kokkos::subview(J_data, i, Kokkos::ALL(), Kokkos::ALL());
-
-                const real_type_1d_view_type number_conc_at_i =
-        Kokkos::subview(num_concentration, i, Kokkos::ALL());
-
-        TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
-                                       per_team_extent);
-
-        auto wptr = work.data();
-
-        const real_type_1d_view_type constYs  = Kokkos::subview(const_tracers, i, Kokkos::ALL());
-
-        const ordinal_type problem_workspace_size = problem_type::getWorkSpaceSize(kmcd,amcd);
-        auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
-        wptr +=problem_workspace_size;
-        problem_type problem;
-        problem._kmcd = kmcd;
-        problem._amcd = amcd;
-        /// initialize problem
-        problem._fac = fac_at_i;
-        problem._work = pw;
-        problem._temperature= temperature(i);
-        problem._pressure =pressure(i);
-        problem._const_concentration= constYs;
-        problem._number_conc =number_conc_at_i;
-        problem.computeNumericalJacobian(member,vals_at_i,jacobian_at_i);
-        // for (int k=0;k<m;++k)
-        //   for (int j=0;j<m;++j)
-        //    J_data(i, k, j) = jacobian_at_i(k,j);
-      });
-
-
-  return 0;
-
 }

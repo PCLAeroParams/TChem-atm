@@ -37,6 +37,8 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem_RateofProgress.hpp"
 #include "TChem_NetProductionRates.hpp"
 #include "TChem_Linv3StratosphereSolver.hpp"
+#include "TChem_AerosolChemistry_CVODE_RHS_Jacobian.hpp"
+
 
 
 

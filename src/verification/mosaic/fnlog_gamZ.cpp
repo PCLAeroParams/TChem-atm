@@ -13,10 +13,6 @@ using namespace TChem;
 
 void fnlog_gamZ(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
-    
-    // const auto jA = 18;
-    // const auto jE = 1;
-    // const auto aH2O = 0.86918676121422112;
 
     const auto jA_arr = input.get_array("jA");
     const auto jE_arr = input.get_array("jE");

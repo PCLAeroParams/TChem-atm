@@ -2001,7 +2001,7 @@ struct MOSAIC{
                             const real_type_1d_view_type& epercent_solid,
                             const real_type_1d_view_type& epercent_liquid,
                             const real_type_1d_view_type& epercent_total,
-                            real_type& water_a, real_type&jphase, real_type&jhyst_leg) {
+                            real_type& water_a, real_type& jphase, real_type& jhyst_leg) {
 
     jphase = mosaic.jsolid;
     jhyst_leg = mosaic.jhyst_lo;
@@ -2033,14 +2033,14 @@ struct MOSAIC{
     }
   } // adjust_solid_aerosol
 
-  KOKKOS_INLINE_FUNCTION static void
-  do_full_deliquescence(const MosaicModelData<DeviceType>& mosaic,
-                        const real_type_1d_view_type& electrolyte_solid,
-                        const real_type_1d_view_type& electrolyte_liquid,
-                        const real_type_1d_view_type& electrolyte_total,
-                        const real_type_1d_view_type& aer_solid,
-                        const real_type_1d_view_type& aer_liquid,
-                        const real_type_1d_view_type& aer_total) {
+  KOKKOS_INLINE_FUNCTION static
+  void do_full_deliquescence(const MosaicModelData<DeviceType>& mosaic,
+                             const real_type_1d_view_type& electrolyte_solid,
+                             const real_type_1d_view_type& electrolyte_liquid,
+                             const real_type_1d_view_type& electrolyte_total,
+                             const real_type_1d_view_type& aer_solid,
+                             const real_type_1d_view_type& aer_liquid,
+                             const real_type_1d_view_type& aer_total) {
 
     // Partition all electrolytes to the liquid phase
     for (ordinal_type js = 0; js < mosaic.nelectrolyte; js++) {
@@ -2097,6 +2097,26 @@ struct MOSAIC{
     aer_liquid(mosaic.ilim1_a) = 0.0;
     aer_liquid(mosaic.ilim2_a) = 0.0;
   } // do_full_deliquescence
+
+  KOKKOS_INLINE_FUNCTION static
+  void fnlog_gamZ(const MosaicModelData<DeviceType>& mosaic,
+                  const ordinal_type& jA,
+                  const ordinal_type& jE,
+                  const real_type& aH2O,
+                  real_type& log_gamZ) {
+
+    // FIXME: aH2O should not be local; make sure updated with RH
+    real_type aw;
+
+    aw = max(aH2O, mosaic.aw_min.h_view(jE));
+
+    log_gamZ =  mosaic.b_mtem.h_view(0,jA,jE) + aw *
+               (mosaic.b_mtem.h_view(1,jA,jE) + aw *
+               (mosaic.b_mtem.h_view(2,jA,jE) + aw *
+               (mosaic.b_mtem.h_view(3,jA,jE) + aw *
+               (mosaic.b_mtem.h_view(4,jA,jE) + aw *
+                mosaic.b_mtem.h_view(5,jA,jE) ))));
+  } // fnlog_gamZ
 
 };
 

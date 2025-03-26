@@ -152,16 +152,16 @@ int main(int argc, char *argv[]) {
     // read scenario condition from yaml file
    // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
-    ordinal_type nbacth_files=0;
+    ordinal_type nbatch_files=0;
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbatch_files);
 
     // read photolysis reaction values
     // we assume photolysis reaction  are computed by another tool.
     real_type_2d_view_host photo_rates_scenario_host;
     ordinal_type n_photo_rates = 0;
     TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(inputFile,
-             nbacth_files,
+             nbatch_files,
              // output
              photo_rates_scenario_host,
              n_photo_rates
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
     printf("Number of species %d \n", kmcd.nSpec);
     printf("Number of const species %d \n", kmcd.nConstSpec);
     // Note: We allocate external_sources_scenario_host
-    real_type_2d_view_host external_sources_scenario_host("external_sources_host",nbacth_files,n_active_vars);
+    real_type_2d_view_host external_sources_scenario_host("external_sources_host",nbatch_files,n_active_vars);
     TChem::AtmChemistry::setScenarioConditionsExternalForcing(inputFile,
              speciesNamesHost,
              // output
@@ -184,8 +184,8 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host photo_rates;
     real_type_2d_view_host external_sources;
 
-    if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
-      // only clone samples if nbacth_files is 1
+    if (nbatch_files == 1 && use_cloned_samples && nBatch > 1) {
+      // only clone samples if nbatch_files is 1
       printf("-------------------------------------------------------\n");
       printf("--------------------Warning----------------------------\n");
       printf("Using cloned samples ... only for numerical experiments\n");
@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
         TChem::Test::cloneView(photo_rates);
       } // n_photo_rates
 
-      external_sources = real_type_2d_view("external_sources", nBatch, n_active_vars);
+      external_sources = real_type_2d_view_host("external_sources", nBatch, n_active_vars);
       if (count_ext_forcing >  0) {
         auto external_sources_scenario_host_at_0 = Kokkos::subview(external_sources_scenario_host, 0, Kokkos::ALL);
         auto external_sources_host_at_0 = Kokkos::subview(external_sources, 0, Kokkos::ALL);
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]) {
       }
 
     } else {
-      nBatch = nbacth_files;
+      nBatch = nbatch_files;
       state = state_scenario_host;
 
       if (n_photo_rates > 0 )
@@ -266,10 +266,10 @@ int main(int argc, char *argv[]) {
     fprintf(fout_times, " \"Atmospheric Chemistry E3SM\": \n {\n");
 
     {
-      const auto exec_space_instance = TChem::exec_space();
+      const auto exec_space_instance = TChem::host_exec_space();
 
       using policy_type =
-          typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+          typename TChem::UseThisTeamPolicy<TChem::host_exec_space>::type;
 
       /// team policy
       policy_type policy(exec_space_instance, nBatch, Kokkos::AUTO());

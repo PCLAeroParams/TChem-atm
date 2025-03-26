@@ -47,7 +47,7 @@ namespace TChem
           const AerosolModel_ConstData<DeviceType>& amcd,
           const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type,DeviceType>,DeviceType>& cvodes) {
     Kokkos::Profiling::pushRegion(profile_name);
-#if defined(TINES_ENABLE_TPL_SUNDIALS)
+#if defined(TINES_ENABLE_TPL_SUNDIALS) && !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     using policy_type = PolicyType;
 
     using real_type_0d_view_type = Tines::value_type_0d_view<real_type, DeviceType>;
@@ -230,7 +230,7 @@ namespace TChem
            const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd,
            const AerosolModel_ConstData<interf_host_device_type>& amcd,
            const Tines::value_type_1d_view<Tines::TimeIntegratorCVODE<real_type, host_device_type>, host_device_type>& cvodes) {
-#if defined(TINES_ENABLE_TPL_SUNDIALS)
+#if defined(TINES_ENABLE_TPL_SUNDIALS) && !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     const std::string profile_name = "TChem::AerosolChemistry::runHostBatch::kmcd array";
     // Note: we do not support SACADO and CVODE. Thus, CVODE uses a numerical Jacobian.
     using value_type = real_type;

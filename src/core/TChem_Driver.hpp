@@ -61,6 +61,7 @@ public:
 
    // Integrate a single time step
    void doTimestep(const double del_t);
+   void doTimestep_sparse(const double del_t);
 
    // Time integration information
    real_type _atol_newton; // Absolute tolerance used in Newton solver

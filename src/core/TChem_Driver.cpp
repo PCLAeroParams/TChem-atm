@@ -309,7 +309,8 @@ ordinal_type TChem::Driver::getNumberConcentrationVectorSize() const{
 
 /* Integrate a time step */
 void TChem_doTimestep(const double &del_t){
-  g_tchem->doTimestep(del_t);
+  //g_tchem->doTimestep(del_t);
+  g_tchem->doTimestep_sparse(del_t);
 }
 
 /* Integrate a time step */
@@ -420,4 +421,199 @@ void TChem::Driver::doTimestep(const double del_t){
 void TChem::Driver::getStateVectorHost(real_type_2d_const_view_host &view) {
   TCHEM_CHECK_ERROR(_state.span() == 0, "State vector should be constructed");
   view = real_type_2d_const_view_host(&_state(0,0), _state.extent(0), _state.extent(1));
-} 
+}
+
+/* Integrate a time step */
+void TChem::Driver::doTimestep_sparse(const double del_t){
+
+  using VecType   = sundials::kokkos::Vector<TChem::exec_space>;
+  using MatType   = sundials::kokkos::DenseMatrix<TChem::exec_space>;
+  using LSType    = sundials::kokkos::DenseLinearSolver<TChem::exec_space>;
+  using SizeType  = VecType::size_type;
+
+  const auto exec_space_instance = TChem::exec_space();
+  using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
+  using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+  using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
+  using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+
+  policy_type policy(exec_space_instance, _nBatch, Kokkos::AUTO());
+
+  if (_team_size > 0 && _vector_size > 0) {
+      policy = policy_type(exec_space_instance,  _nBatch, _team_size, _vector_size);
+  } else if (_team_size > 0 && _vector_size < 0) {
+      policy = policy_type(exec_space_instance, _nBatch,  _team_size);
+  }
+
+  auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host, _amcd_host);
+
+  // Create UserData
+  TChem::UserData udata;
+
+  udata.nbatches = _nBatch;
+  udata.num_concentration = _number_concentration;
+  udata.batchSize=number_of_equations;
+  udata.kmcd=_kmcd_host;
+  udata.amcd=_amcd_host;
+
+  // Create the SUNDIALS context
+  sundials::Context sunctx;
+  using real_type_1d_view_type = Tines::value_type_1d_view<real_type, device_type>;
+  using real_type_2d_view_type = Tines::value_type_2d_view<real_type, device_type>;
+  using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type, host_device_type>;
+
+  // Create vector with the initial condition
+  const sunrealtype T0 = SUN_RCONST(0.0);
+
+  SizeType length{static_cast<SizeType>(_nBatch * number_of_equations)};
+  VecType y{length, sunctx};
+  real_type_2d_view_type y2d((y.View()).data(), _nBatch, number_of_equations);
+
+  const ordinal_type n_active_gas_species = _kmcd_host.nSpec - _kmcd_host.nConstSpec;
+  real_type_2d_view_type const_tracers("const_tracers", _nBatch, _kmcd_host.nConstSpec);
+
+  real_type_1d_view_type temperature("temperature", _nBatch);
+  real_type_1d_view_type pressure("pressure", _nBatch);
+  using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
+  const ordinal_type level = 1;
+
+   Kokkos::parallel_for(
+      "fill_y", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
+      KOKKOS_LAMBDA(const SizeType i) {
+        const real_type_1d_view_type state_at_i =
+               Kokkos::subview(_state, i, Kokkos::ALL());
+        const ordinal_type total_n_species = _kmcd_host.nSpec + _amcd_host.nParticles*_amcd_host.nSpec;
+        TChem::Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
+        temperature(i) = sv_at_i.Temperature();
+        pressure(i) = sv_at_i.Pressure();
+        const real_type_1d_view_type Ys = sv_at_i.MassFractions();
+
+        const auto activeYs = Kokkos::subview(Ys, range_type(0, n_active_gas_species));
+        const auto constYs  = Kokkos::subview(Ys, range_type(n_active_gas_species, _kmcd_host.nSpec));
+        const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(_kmcd_host.nSpec, total_n_species));
+
+        for (ordinal_type j=0;j<n_active_gas_species;++j){
+          y2d(i, j) = activeYs(j);
+        }
+
+        for (ordinal_type j=n_active_gas_species;j<total_n_species- _kmcd_host.nConstSpec;++j)
+        {
+          y2d(i, j) = partYs(j-n_active_gas_species);
+        }
+
+        for (ordinal_type j=0;j<_kmcd_host.nConstSpec;++j){
+          const_tracers(i, j) = constYs(j);
+        }
+
+     });
+
+/*  int i = 0;
+  for (ordinal_type j=0;j<n_active_gas_species;++j){
+    printf("%d %e :\n", j, y2d(i, j));
+  }
+*/
+    udata.temperature = temperature;
+    udata.pressure = pressure;
+    udata.const_tracers = const_tracers;
+
+    // Create vector of absolute tolerances
+    VecType abstol{length, sunctx};
+    N_VConst(SUN_RCONST(_atol_time), abstol);
+
+    // Create CVODE using Backward Differentiation Formula methods
+    void* cvode_mem = CVodeCreate(CV_BDF, sunctx);
+//    if (check_ptr(cvode_mem, "CVodeCreate")) { return 1; }
+
+
+    // Initialize the integrator and set the ODE right-hand side function
+    int retval = CVodeInit(cvode_mem, TChem::AerosolChemistry_CVODE_K::f, T0, y);
+//    if (check_flag(retval, "CVodeInit")) { return 1; }
+
+
+    // Attach the user data structure
+    retval = CVodeSetUserData(cvode_mem, &udata);
+//    if (check_flag(retval, "CVodeSetUserData")) { return 1; }
+
+    // Specify the scalar relative tolerance and vector absolute tolerances
+    retval = CVodeSVtolerances(cvode_mem, SUN_RCONST(_rtol_time), abstol);
+//    if (check_flag(retval, "CVodeSVtolerances")) { return 1; }
+
+     // Create the matrix and linear solver objects
+    std::unique_ptr<sundials::ConvertibleTo<SUNMatrix>> A;
+    std::unique_ptr<sundials::ConvertibleTo<SUNLinearSolver>> LS;
+
+    ordinal_type per_team_extent=0;
+
+    // Create matrix-free GMRES linear solver
+    LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
+        SUNLinSol_SPGMR(y, SUN_PREC_NONE, 0, sunctx));
+
+    // Attach the linear solver to CVODE
+    retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
+//    if (check_flag(retval, "CVodeSetLinearSolver")) { return 1; }
+    per_team_extent
+         = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(_kmcd_host, _amcd_host);
+
+    const ordinal_type per_team_scratch =
+      TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
+      policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
+    udata.policy = policy;
+
+    // Final time and time between outputs
+
+    const sunrealtype Tf    = SUN_RCONST(del_t);
+    const sunrealtype dTout = SUN_RCONST(del_t); //_dtmin);
+
+    // Number of output times
+    const int Nt_p = static_cast<int>(ceil(Tf / dTout));
+
+    const int Nt =  _max_num_time_iterations > 0 ? _max_num_time_iterations: Nt_p;
+
+    // Current time and first output time
+    sunrealtype t    = T0;
+    sunrealtype tout = T0 + dTout;
+
+    // Initial output
+    real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
+    sundials::kokkos::CopyFromDevice(y);
+    Kokkos::fence();
+
+//    const auto density_host =
+//    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , density);
+    const auto temperature_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , temperature);
+    const auto pressure_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), pressure);
+    const auto const_tracers_host =
+    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),const_tracers);
+
+  // Time stepping
+    int iout = 0;
+    for (iout = 0; iout < Nt; iout++)
+    {
+      // Advance in time
+      retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
+      exec_space_instance.fence();
+//      if (check_flag(retval, "CVode")) { break; }
+
+      // // Output solution from some batches
+      sundials::kokkos::CopyFromDevice(y);
+      Kokkos::fence();
+
+      tout += dTout;
+      tout = (tout > Tf) ? Tf : tout;
+    }
+
+  // Copy results back
+  int i = 0;
+  auto stateVecDim = TChem_getLengthOfStateVector();
+  real_type_2d_view state("StateVector Devices", _nBatch, stateVecDim);
+  for (ordinal_type j=0;j<n_active_gas_species;++j){
+    _state(i,j+3) = y2d_h(i, j);
+  }
+  const ordinal_type total_n_species = _kmcd_host.nSpec + _amcd_host.nParticles*_amcd_host.nSpec;
+  for (ordinal_type j=n_active_gas_species;j<total_n_species - _kmcd_host.nConstSpec;++j)
+  {
+    _state(i,j+3+_kmcd_host.nConstSpec) = y2d_h(i,j);
+  }  
+}

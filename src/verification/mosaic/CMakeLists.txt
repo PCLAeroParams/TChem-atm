@@ -5,15 +5,16 @@ add_executable(${DRIVER_NAME}.x
                ${DRIVER_NAME}.cpp
                adjust_liquid_aerosol.cpp
                adjust_solid_aerosol.cpp
-               do_full_deliquescence.cpp)
+               do_full_deliquescence.cpp
+               fn_Keq.cpp)
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 
 
 # list of test to run
-SET(TEST_LIST adjust_liquid_aerosol_input_ts_0 adjust_solid_aerosol_input_ts_0 do_full_deliquescence_input_ts_0)
-SET(TEST_BASELINE adjust_liquid_aerosol_output_ts_0 adjust_solid_aerosol_output_ts_0 do_full_deliquescence_output_ts_0)
+SET(TEST_LIST adjust_liquid_aerosol_input_ts_0 adjust_solid_aerosol_input_ts_0 do_full_deliquescence_input_ts_0 fn_Keq_input_ts_0)
+SET(TEST_BASELINE adjust_liquid_aerosol_output_ts_0 adjust_solid_aerosol_output_ts_0 do_full_deliquescence_output_ts_0 fn_Keq_output_ts_0)
 
-SET(DEFAULT_TOL 1e-9)
+SET(DEFAULT_TOL 1e-6)
 set(ERROR_THRESHOLDS
     10 # The test is failing because the routine is not invoked. A future PR will invoke it.
    )

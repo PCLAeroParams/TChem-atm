@@ -21,6 +21,8 @@ void adjust_solid_aerosol(Ensemble *ensemble);
 
 void do_full_deliquescence(Ensemble *ensemble);
 
+void fn_Keq(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -50,7 +52,9 @@ int main(int argc, char **argv) {
       adjust_solid_aerosol(ensemble);
     } else if (func_name == "do_full_deliquescence") {
       do_full_deliquescence(ensemble);
-    } else {
+    } else if (func_name == "fn_Keq") {
+      fn_Keq(ensemble);
+    }else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;
       exit(1);

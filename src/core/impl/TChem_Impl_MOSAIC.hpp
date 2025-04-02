@@ -2098,6 +2098,15 @@ struct MOSAIC{
     aer_liquid(mosaic.ilim2_a) = 0.0;
   } // do_full_deliquescence
 
+  KOKKOS_INLINE_FUNCTION static
+  void fn_Po(const real_type& Po_298,
+              const real_type& DH,
+              const real_type& T,
+              real_type& Po) {
+
+    Po = Po_298*ats<real_type>::exp(-(DH/8.314e-3)*(1.0/T - 3.354016435e-3));
+  } // fn_Po
+
 };
 
 } // namespace Impl

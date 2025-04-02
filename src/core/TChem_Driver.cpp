@@ -309,14 +309,13 @@ ordinal_type TChem::Driver::getNumberConcentrationVectorSize() const{
 
 /* Integrate a time step */
 void TChem_doTimestep(const double &del_t){
-  //g_tchem->doTimestep(del_t);
+//  g_tchem->doTimestep(del_t);
   g_tchem->doTimestep_sparse(del_t);
 }
 
 /* Integrate a time step */
 void TChem::Driver::doTimestep(const double del_t){
-
-  const auto exec_space_instance = TChem::exec_space();
+  const auto exec_space_instance = TChem::host_exec_space();
   using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
   using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
   using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;

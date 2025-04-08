@@ -14,6 +14,16 @@ using device_type = typename Tines::UseThisDevice<exec_space>::type;
 
 static TChem::Driver *g_tchem = nullptr;
 
+static int check_flag(const int flag, const std::string funcname)
+{
+  if (flag < 0)
+  {
+    std::cerr << "ERROR: " << funcname << " returned " << flag << std::endl;
+    return 1;
+  }
+  return 0;
+}
+
 /* Initialize the model given input YAML files */
 void initialize(const char* chemFile, const char* aeroFile, const char* numericsFile,
   const ordinal_type nBatch){
@@ -154,7 +164,6 @@ void TChem::Driver::createAerosolModelConstData() {
 
 void TChem::Driver::createStateVector(ordinal_type nBatch) {
   const ordinal_type len = TChem::Impl::getStateVectorSize(_kmcd_host.nSpec + _amcd_host.nSpec * _amcd_host.nParticles);
-  printf("Length %d %d %d \n", len, _amcd_host.nSpec, _amcd_host.nParticles);
   _state = real_type_2d_view_host("state dev", nBatch, len);
 }
 
@@ -239,7 +248,6 @@ real_type TChem_getAerosolSpeciesDensity(int *index) {
 }
 
 real_type TChem::Driver::getAerosolSpeciesDensity(int *index) {
-   printf("Species index %d \n", *index);
    return (_amcd_host.aerosol_density(*index));
 }
 
@@ -250,7 +258,6 @@ real_type TChem_getAerosolSpeciesMW(int *index) {
 }
 
 real_type TChem::Driver::getAerosolSpeciesMW(int *index) {
-   printf("Species index %d \n", *index);
    return (_amcd_host.molecular_weights(*index));
 }
 
@@ -261,7 +268,6 @@ real_type TChem_getAerosolSpeciesKappa(int *index) {
 }
 
 real_type TChem::Driver::getAerosolSpeciesKappa(int *index) {
-   printf("Species index %d \n", *index);
    return (_amcd_host.aerosol_kappa(*index));
 }
 
@@ -549,6 +555,7 @@ void TChem::Driver::doTimestep_sparse(const double del_t){
 
     // Attach the linear solver to CVODE
     retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
+
 //    if (check_flag(retval, "CVodeSetLinearSolver")) { return 1; }
     per_team_extent
          = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(_kmcd_host, _amcd_host);
@@ -573,10 +580,10 @@ void TChem::Driver::doTimestep_sparse(const double del_t){
     sunrealtype tout = T0 + dTout;
 
     // Initial output
+    //
     real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
     sundials::kokkos::CopyFromDevice(y);
     Kokkos::fence();
-
 //    const auto density_host =
 //    Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace() , density);
     const auto temperature_host =
@@ -593,7 +600,7 @@ void TChem::Driver::doTimestep_sparse(const double del_t){
       // Advance in time
       retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
       exec_space_instance.fence();
-//      if (check_flag(retval, "CVode")) { break; }
+      if (check_flag(retval, "CVode")) { break; }
 
       // // Output solution from some batches
       sundials::kokkos::CopyFromDevice(y);
@@ -614,5 +621,32 @@ void TChem::Driver::doTimestep_sparse(const double del_t){
   for (ordinal_type j=n_active_gas_species;j<total_n_species - _kmcd_host.nConstSpec;++j)
   {
     _state(i,j+3+_kmcd_host.nConstSpec) = y2d_h(i,j);
-  }  
+  }
+
+    long int nst, nfe, nsetups, nje, nni, ncfn, netf;
+
+    retval = CVodeGetNumSteps(cvode_mem, &nst);
+    check_flag(retval, "CVodeGetNumSteps");
+    retval = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+    check_flag(retval, "CVodeGetNumRhsEvals");
+    retval = CVodeGetNumLinSolvSetups(cvode_mem, &nsetups);
+    check_flag(retval, "CVodeGetNumLinSolvSetups");
+    retval = CVodeGetNumErrTestFails(cvode_mem, &netf);
+    check_flag(retval, "CVodeGetNumErrTestFails");
+    retval = CVodeGetNumNonlinSolvIters(cvode_mem, &nni);
+    check_flag(retval, "CVodeGetNumNonlinSolvIters");
+    retval = CVodeGetNumNonlinSolvConvFails(cvode_mem, &ncfn);
+    check_flag(retval, "CVodeGetNumNonlinSolvConvFails");
+    retval = CVodeGetNumJacEvals(cvode_mem, &nje);
+    check_flag(retval, "CVodeGetNumJacEvals");
+
+    std::cout << "\nFinal Statistics:\n"
+              << "  Steps            = " << nst << "\n"
+              << "  RHS evals        = " << nfe << "\n"
+              << "  LS setups        = " << nsetups << "\n"
+              << "  Jac evals        = " << nje << "\n"
+              << "  NLS iters        = " << nni << "\n"
+              << "  NLS fails        = " << ncfn << "\n"
+              << "  Error test fails = " << netf << "\n";
+
 }

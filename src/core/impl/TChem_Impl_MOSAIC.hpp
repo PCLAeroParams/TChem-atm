@@ -2108,14 +2108,17 @@ struct MOSAIC{
     // FIXME: aH2O should not be local; make sure updated with RH
     real_type aw;
 
-    aw = max(aH2O, mosaic.aw_min.h_view(jE));
+    auto b_mtem = mosaic.b_mtem.template view<DeviceType>();
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
 
-    log_gamZ =  mosaic.b_mtem.h_view(0,jA,jE) + aw *
-               (mosaic.b_mtem.h_view(1,jA,jE) + aw *
-               (mosaic.b_mtem.h_view(2,jA,jE) + aw *
-               (mosaic.b_mtem.h_view(3,jA,jE) + aw *
-               (mosaic.b_mtem.h_view(4,jA,jE) + aw *
-                mosaic.b_mtem.h_view(5,jA,jE) ))));
+    aw = max(aH2O, aw_min(jE));
+
+    log_gamZ =  b_mtem(0,jA,jE) + aw *
+               (b_mtem(1,jA,jE) + aw *
+               (b_mtem(2,jA,jE) + aw *
+               (b_mtem(3,jA,jE) + aw *
+               (b_mtem(4,jA,jE) + aw *
+                b_mtem(5,jA,jE) ))));
   } // fnlog_gamZ
 
 };

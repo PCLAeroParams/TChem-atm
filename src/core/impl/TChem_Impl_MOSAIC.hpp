@@ -2105,8 +2105,7 @@ struct MOSAIC{
               const real_type& T,
               real_type& Keq) {
 
-    real_type tt;
-    tt = 298.15/T;
+    real_type tt = 298.15/T;
 
     Keq = Keq_298*ats<real_type>::exp(a*(tt - 1.0) + b*(1.0 + ats<real_type>::log(tt) - tt));
   } // fn_Keq

@@ -6,7 +6,10 @@ add_executable(${DRIVER_NAME}.x
                adjust_liquid_aerosol.cpp
                adjust_solid_aerosol.cpp
                do_full_deliquescence.cpp
+               calculate_XT.cpp
+               fnlog_gamZ.cpp
                fn_Keq.cpp)
+
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 
 
@@ -15,12 +18,17 @@ SET(TEST_LIST
     adjust_liquid_aerosol_input_ts_0
     adjust_solid_aerosol_input_ts_0
     do_full_deliquescence_input_ts_0
+    calculate_XT_input_ts_0
+    fnlog_gamZ_input_ts_0
     fn_Keq_input_ts_0
 )
+
 SET(TEST_BASELINE
     adjust_liquid_aerosol_output_ts_0
     adjust_solid_aerosol_output_ts_0
     do_full_deliquescence_output_ts_0
+    calculate_XT_output_ts_0
+    fnlog_gamZ_output_ts_0
     fn_Keq_output_ts_0
 )
 
@@ -29,8 +37,10 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # adjust_liquid_aerosol_output_ts_0
     ${DEFAULT_TOL} # adjust_solid_aerosol_output_ts_0
     ${DEFAULT_TOL} # do_full_deliquescence_output_ts_0
+    ${DEFAULT_TOL} # calculate_XT_output_ts_0
+    1e-6           # fnlog_gamZ_output_ts_0
     1e-6           # fn_Keq_output_ts_0
-   )
+)
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)
   # add a test to run the skywalker driver

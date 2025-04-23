@@ -2098,6 +2098,21 @@ struct MOSAIC{
     aer_liquid(mosaic.ilim2_a) = 0.0;
   } // do_full_deliquescence
 
+  KOKKOS_INLINE_FUNCTION static
+  void calculate_XT(const MosaicModelData<DeviceType>& mosaic,
+                    const real_type_1d_view_type& aer,
+                    real_type &XT) {
+
+  //aer nmol/m^3
+    if ((aer(mosaic.iso4_a) + aer(mosaic.imsa_a)) > 0.0) {
+        XT = (aer(mosaic.inh4_a) + aer(mosaic.ina_a) +
+             2.0 * aer(mosaic.ica_a)) /
+            (aer(mosaic.iso4_a) + 0.5 * aer(mosaic.imsa_a));
+    } else {
+        XT = -1.0;
+    }
+  }// calculate_XT
+
 };
 
 } // namespace Impl

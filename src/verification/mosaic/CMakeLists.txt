@@ -44,7 +44,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # calculate_XT_output_ts_0
     1e-6           # fnlog_gamZ_output_ts_0
     1e-6           # fn_Keq_output_ts_0
-    ${DEFAULT_TOL} # fn_Po_output_ts_0
+    1e-8           # fn_Po_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

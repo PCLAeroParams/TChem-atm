@@ -6,7 +6,7 @@ add_executable(${DRIVER_NAME}.x
                adjust_liquid_aerosol.cpp
                adjust_solid_aerosol.cpp
                do_full_deliquescence.cpp
-               fnlog_gamZ.cpp)
+               fnlog_gamZ.cpp
                calculate_XT.cpp)
 
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})

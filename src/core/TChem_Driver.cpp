@@ -542,6 +542,8 @@ void TChem::Driver::doTimestep_sparse(const double del_t){
     int retval = CVodeInit(cvode_mem, TChem::AerosolChemistry_CVODE_K::f, T0, y);
 //    if (check_flag(retval, "CVodeInit")) { return 1; }
 
+    retval = CVodeSetMaxNumSteps(cvode_mem, _max_num_time_iterations);
+    retval = CVodeSetMinStep(cvode_mem, _dtmin);
     // Attach the user data structure
     retval = CVodeSetUserData(cvode_mem, &udata);
 //    if (check_flag(retval, "CVodeSetUserData")) { return 1; }
@@ -610,8 +612,8 @@ void TChem::Driver::doTimestep_sparse(const double del_t){
       if (check_flag(retval, "CVode")) { break; }
 
       // // Output solution from some batches
-//      sundials::kokkos::CopyFromDevice(y);
-//      Kokkos::fence();
+      sundials::kokkos::CopyFromDevice(y);
+      Kokkos::fence();
 
       tout += dTout;
       tout = (tout > Tf) ? Tf : tout;

@@ -2,7 +2,6 @@
 #include "TChem_Impl_MOSAIC.hpp"
 #include <verification.hpp>
 #include "skywalker.hpp"
-#define KOKKOS_DEBUG
 
 using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
 using real_type_1d_view = TChem::real_type_1d_view;

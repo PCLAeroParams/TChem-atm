@@ -2104,7 +2104,8 @@ struct MOSAIC{
               const real_type& T,
               real_type& Po) {
 
-    Po = Po_298*ats<real_type>::exp(-(DH/8.314e-3)*(1.0/T - 3.354016435e-3));
+    // Van't Hoff Equation
+    Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
   } // fn_Po
 
 };

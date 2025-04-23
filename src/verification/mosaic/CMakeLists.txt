@@ -6,8 +6,8 @@ add_executable(${DRIVER_NAME}.x
                adjust_liquid_aerosol.cpp
                adjust_solid_aerosol.cpp
                do_full_deliquescence.cpp
-               fnlog_gamZ.cpp
-               calculate_XT.cpp)
+               calculate_XT.cpp
+               fnlog_gamZ.cpp)
 
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 
@@ -17,16 +17,16 @@ SET(TEST_LIST
     adjust_liquid_aerosol_input_ts_0
     adjust_solid_aerosol_input_ts_0
     do_full_deliquescence_input_ts_0
-    fnlog_gamZ_input_ts_0
     calculate_XT_input_ts_0
+    fnlog_gamZ_input_ts_0
 )
 
 SET(TEST_BASELINE
     adjust_liquid_aerosol_output_ts_0
     adjust_solid_aerosol_output_ts_0
     do_full_deliquescence_output_ts_0
-    fnlog_gamZ_output_ts_0
     calculate_XT_output_ts_0
+    fnlog_gamZ_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-9)

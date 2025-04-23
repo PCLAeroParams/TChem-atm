@@ -2098,6 +2098,7 @@ struct MOSAIC{
     aer_liquid(mosaic.ilim2_a) = 0.0;
   } // do_full_deliquescence
 
+  KOKKOS_INLINE_FUNCTION static
   void calculate_XT(const MosaicModelData<DeviceType>& mosaic,
                     const real_type_1d_view_type& aer,
                     real_type &XT) {

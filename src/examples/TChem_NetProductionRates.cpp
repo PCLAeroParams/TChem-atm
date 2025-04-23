@@ -82,9 +82,9 @@ int main(int argc, char *argv[]) {
 
     // read scenario condition from yaml file
     real_type_2d_view_host state_scenario_host;
-    ordinal_type nbacth_files=0;
+    ordinal_type nbatch_files=0;
     TChem::AtmChemistry::setScenarioConditions(inputFile,
-     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbacth_files);
+     speciesNamesHost, kmcd.nSpec, stateVecDim, state_scenario_host, nbatch_files);
 
 
     // read photolysis reaction values
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
     real_type_2d_view_host photo_rates_scenario_host;
     ordinal_type n_photo_rates = 0;
     TChem::AtmChemistry::setScenarioConditionsPhotolysisReactions(inputFile,
-             nbacth_files,
+             nbatch_files,
              // output
              photo_rates_scenario_host,
              n_photo_rates
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
     printf("Number of species %d \n", kmcd.nSpec);
     printf("Number of const species %d \n", kmcd.nConstSpec);
     // Note: We allocate external_sources_scenario_host
-    real_type_2d_view_host external_sources_scenario_host("external_sources_host",nbacth_files,n_active_vars);
+    real_type_2d_view_host external_sources_scenario_host("external_sources_host",nbatch_files,n_active_vars);
     TChem::AtmChemistry::setScenarioConditionsExternalForcing(inputFile,
              speciesNamesHost,
              // output
@@ -116,8 +116,8 @@ int main(int argc, char *argv[]) {
     real_type_2d_view photo_rates;
     real_type_2d_view external_sources;
 
-    if (nbacth_files == 1 && use_cloned_samples && nBatch > 1) {
-      // only clone samples if nbacth_files is 1
+    if (nbatch_files == 1 && use_cloned_samples && nBatch > 1) {
+      // only clone samples if nbatch_files is 1
       printf("-------------------------------------------------------\n");
       printf("--------------------Warning----------------------------\n");
       printf("Using cloned samples ... only for numerical experiments\n");
@@ -155,13 +155,13 @@ int main(int argc, char *argv[]) {
       }
 
     } else {
-      nBatch = nbacth_files;
+      nBatch = nbatch_files;
       state = real_type_2d_view("StateVector Devices", nBatch, stateVecDim);
       Kokkos::deep_copy(state, state_scenario_host);
 
       if (n_photo_rates > 0 )
       {
-        nBatch = nbacth_files;
+        nBatch = nbatch_files;
         photo_rates = real_type_2d_view("StateVector Devices", nBatch, n_photo_rates);
         Kokkos::deep_copy(photo_rates, photo_rates_scenario_host);
 

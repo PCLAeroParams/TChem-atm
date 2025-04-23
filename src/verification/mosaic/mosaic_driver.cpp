@@ -21,6 +21,8 @@ void adjust_solid_aerosol(Ensemble *ensemble);
 
 void do_full_deliquescence(Ensemble *ensemble);
 
+void calculate_XT(Ensemble *ensemble);
+
 void fnlog_gamZ(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
@@ -52,6 +54,8 @@ int main(int argc, char **argv) {
       adjust_solid_aerosol(ensemble);
     } else if (func_name == "do_full_deliquescence") {
       do_full_deliquescence(ensemble);
+    } else if (func_name == "calculate_XT") {
+      calculate_XT(ensemble);
     } else if (func_name == "fnlog_gamZ") {
       fnlog_gamZ(ensemble);
     } else {

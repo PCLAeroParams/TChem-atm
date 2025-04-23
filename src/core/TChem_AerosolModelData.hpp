@@ -37,7 +37,7 @@ namespace TChem {
   ordinal_type nSpec_gas_;
   ordinal_type nConstSpec_gas_;
   // number of particles
-  ordinal_type nParticles_;
+  ordinal_type nParticles_{-1};
   // aerosol molecular weights and density
   real_type_1d_dual_view molecular_weights_, aerosol_density_;
   simpol_phase_transfer_type_1d_dual_view simpol_params_;
@@ -64,6 +64,8 @@ namespace TChem {
   void initFile(const std::string &mechfile,
                 std::ostream& echofile);
   ordinal_type initChem(YAML::Node& doc, std::ostream& echofile);
+  void setNumberofParticles(const ordinal_type number_of_particles);
+
   void setGasParameters(const KineticModelData& kmd);
   void scenarioConditionParticles(const std::string &mechfile,
                                   const ordinal_type nBatch,

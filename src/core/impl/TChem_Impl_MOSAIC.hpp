@@ -2106,12 +2106,11 @@ struct MOSAIC{
                   real_type& log_gamZ) {
 
     // FIXME: aH2O should not be local; make sure updated with RH
-    real_type aw;
 
     auto b_mtem = mosaic.b_mtem.template view<DeviceType>();
     auto aw_min = mosaic.aw_min.template view<DeviceType>();
 
-    aw = max(aH2O, aw_min(jE));
+    const real_type aw = max(aH2O, aw_min(jE));
 
     log_gamZ =  b_mtem(0,jA,jE) + aw *
                (b_mtem(1,jA,jE) + aw *

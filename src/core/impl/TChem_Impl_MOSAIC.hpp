@@ -2135,6 +2135,18 @@ struct MOSAIC{
                 b_mtem(5,jA,jE) ))));
   } // fnlog_gamZ
 
+  KOKKOS_INLINE_FUNCTION static
+  void fn_Keq(const real_type& Keq_298,
+              const real_type& a,
+              const real_type& b,
+              const real_type& T,
+              real_type& Keq) {
+
+    real_type tt = 298.15/T;
+
+    Keq = Keq_298*ats<real_type>::exp(a*(tt - 1.0) + b*(1.0 + ats<real_type>::log(tt) - tt));
+  } // fn_Keq
+
 };
 
 } // namespace Impl

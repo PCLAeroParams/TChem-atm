@@ -25,6 +25,8 @@ void calculate_XT(Ensemble *ensemble);
 
 void fnlog_gamZ(Ensemble *ensemble);
 
+void fn_Keq(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -58,6 +60,8 @@ int main(int argc, char **argv) {
       calculate_XT(ensemble);
     } else if (func_name == "fnlog_gamZ") {
       fnlog_gamZ(ensemble);
+    } else if (func_name == "fn_Keq") {
+      fn_Keq(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

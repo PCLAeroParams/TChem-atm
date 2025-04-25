@@ -25,6 +25,11 @@ HIP="OFF"
 #Note that both CUDA and HIP cannot be enabled simultaneously.
 OPENMP="ON"
 
+# Note: that we are getting a runtime error if OpenMP is ON while HIP is also ON.
+if [ "${HIP}" = "ON" ]; then
+  OPENMP="OFF"
+fi
+
 # Path to TChem repository.
 # Where we git clone TChem-atm. Hint: look for the external folder.
 TCHEM_REPOSITORY_PATH=/path/to/tchem/
@@ -142,7 +147,7 @@ git clone https://github.com/LLNL/sundials.git ${SUNDIALS_REPOSITORY_PATH}
 }
 
 build_install_sundials(){
-echo "Building gtest:"
+echo "Building Sundials:"
 mkdir ${SUNDIALS_BUILD_PATH}
 mkdir ${SUNDIALS_INSTALL_PATH}
 cd ${SUNDIALS_BUILD_PATH}

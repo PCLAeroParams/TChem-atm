@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
   int num_time_iterations_per_interval(1e1), max_num_time_iterations(1e3),
       max_num_newton_iterations(100), jacobian_interval(1);
   real_type atol_time(1e-12);
-  int nBatch(1), team_size(-1), vector_size(-1);
+  int nBatch(1), team_size(-1), vector_size(-1), int number_of_particles(-1);
   std::string outputFileTimes("wall_times.json");
   bool verbose(true);
   std::string chemFile("chem.yaml");
@@ -113,6 +113,8 @@ int main(int argc, char *argv[]) {
   opts.set_option<int>("batch_size", " number of batches or samples, e.g. 10  ", &nBatch);
   opts.set_option<int>("vector_thread_size", "vector thread size ",
                        &vector_size);
+  opts.set_option<int>("number_of_particles", "Set the number of particles; this will overwrite the value from the input file. ", &number_of_particles);
+
   opts.set_option<real_type>("atol-time", "Absolute tolerance used for adaptive time stepping", &atol_time);
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
@@ -149,6 +151,9 @@ int main(int argc, char *argv[]) {
 
     printf("amd parsing ...\n");
     TChem::AerosolModelData amd(aeroFile, kmd);
+    if(number_of_particles > 0) {
+      amd.setNumberofParticles(number_of_particles);
+    }
     const auto amcd = TChem::create_AerosolModelConstData<host_device_type>(amd);
 
     const ordinal_type total_n_species =kmcd.nSpec + amcd.nSpec * amcd.nParticles;

@@ -2147,6 +2147,16 @@ struct MOSAIC{
     Keq = Keq_298*ats<real_type>::exp(a*(tt - 1.0) + b*(1.0 + ats<real_type>::log(tt) - tt));
   } // fn_Keq
 
+  KOKKOS_INLINE_FUNCTION static
+  void fn_Po(const real_type& Po_298,
+              const real_type& DH,
+              const real_type& T,
+              real_type& Po) {
+
+    // Van't Hoff Equation
+    Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
+  } // fn_Po
+
 };
 
 } // namespace Impl

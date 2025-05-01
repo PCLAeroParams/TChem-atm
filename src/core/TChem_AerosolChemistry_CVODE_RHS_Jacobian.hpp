@@ -45,6 +45,7 @@ struct UserData
 
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
+  using real_type_3d_view_type = Tines::value_type_3d_view<real_type,device_type>;
   using policy_type = typename UseThisTeamPolicy<exec_space>::type;
 
   int nbatches  = 100; // number of chemical networks
@@ -55,6 +56,10 @@ struct UserData
   real_type_1d_view_type pressure;
   real_type_2d_view_type const_tracers;
   real_type_2d_view_type fac;
+#if defined(TCHEM_ATM_ENABLE_GPU)
+  real_type_3d_view_type JacRL;
+#endif
+
   TChem::KineticModelNCAR_ConstData<device_type> kmcd;
   TChem::AerosolModel_ConstData<device_type> amcd;
 };

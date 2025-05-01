@@ -94,6 +94,9 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
   const auto const_tracers= udata->const_tracers;
   const auto batchSize = udata->batchSize;
   const auto fac= udata->fac;
+#if defined(TCHEM_ATM_ENABLE_GPU)
+  const auto JacRL= udata->JacRL;
+#endif
   auto J_data = sundials::kokkos::GetDenseMat<MatType>(J)->View();
 
   real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
@@ -120,9 +123,13 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
         Kokkos::subview(fac, i, Kokkos::ALL());
 
         const real_type_2d_view_type jacobian_at_i =
+#if defined(TCHEM_ATM_ENABLE_GPU)
+        Kokkos::subview(JacRL, i, Kokkos::ALL(), Kokkos::ALL());
+#else
         Kokkos::subview(J_data, i, Kokkos::ALL(), Kokkos::ALL());
+#endif
 
-                const real_type_1d_view_type number_conc_at_i =
+        const real_type_1d_view_type number_conc_at_i =
         Kokkos::subview(num_concentration, i, Kokkos::ALL());
 
         TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
@@ -146,9 +153,13 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
         problem._const_concentration= constYs;
         problem._number_conc =number_conc_at_i;
         problem.computeNumericalJacobian(member,vals_at_i,jacobian_at_i);
-        // for (int k=0;k<m;++k)
-        //   for (int j=0;j<m;++j)
-        //    J_data(i, k, j) = jacobian_at_i(k,j);
+#if defined(TCHEM_ATM_ENABLE_GPU)
+        //NOTE: Sundials uses a left layout on the device, while we are using a right layout.
+        // This incompatible layouts is producing a runtime error.
+        for (int k=0;k<batchSize;++k)
+          for (int j=0;j<batchSize;++j)
+           J_data(i, k, j) = jacobian_at_i(k,j);
+#endif
       });
 
 

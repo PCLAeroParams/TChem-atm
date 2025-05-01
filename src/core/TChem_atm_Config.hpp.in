@@ -22,4 +22,8 @@
 #define TCHEM_ATM_ENABLE_TPL_YAML_CPP
 #endif
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#define TCHEM_ATM_ENABLE_GPU
+#endif
+
 #endif

@@ -400,6 +400,10 @@ int main(int argc, char *argv[]) {
       udata.fac=fac;
       per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
         + number_of_equations;
+#if defined(TCHEM_ATM_ENABLE_GPU)
+    real_type_3d_view_type JacRL("JacRL", nBatch, number_of_equations, number_of_equations);
+    udata.JacRL=JacRL;
+#endif
     }
     else
     {

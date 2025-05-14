@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
       // only set team size
-       policy = policy_type(exec_space_instance, nBatch,  team_size);
+       policy = policy_type(exec_space_instance, nBatch,  team_size, Kokkos::AUTO());
     }
 
     using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
@@ -456,6 +456,10 @@ int main(int argc, char *argv[]) {
      density_host, pressure_host, temperature_host,
      const_tracers_host, y2d_h, n_active_gas_species, fout);
     }
+
+    // TChem::TChemAerosolChemistryRHS rhs_tchem(rhs, vals, num_concentration,
+    //   const_tracers, temperature, pressure, kmcd, amcd);
+
     // Loop over output times
     Kokkos::Timer timer;
     int iout = 0;
@@ -483,21 +487,22 @@ int main(int argc, char *argv[]) {
         n_active_gas_species, fout);
       }
     }
-    ordinal_type_type_1d_view_type k_team_size("k_team_size",1);
-    Kokkos::parallel_for("test", policy,
-      KOKKOS_LAMBDA(const typename policy_type::member_type& member)
-      {
-       if (member.league_rank() == 0) {  // Only print from the first team to avoid clutter
-        k_team_size(0)= member.team_size();
-        // printf("exterior Team size: %d \n", k_team_size(0));
-       }
-   });
-    // auto member = policymember;
-    // printf("exterior Team size: %d \n", policy.get_team_size());
-    fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iout);
-    auto k_team_size_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), k_team_size);
-    fprintf(fout_times, "%s: %d, \n", "\"k_team_size\"", k_team_size_host(0));
 
+   fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iout);
+   fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
+   fprintf(fout_times, "} \n "); // reaction rates
+
+   fprintf(fout_times, ", \n ");
+   fprintf(fout_times, " \"Kokkos Settings\": \n  {\n");
+   fprintf(fout_times, "%s: %d, \n", "\"team_size\"", team_size);
+   fprintf(fout_times, "%s: %d, \n", "\"vector_size\"", vector_size);
+   fprintf(fout_times, "%s: %d, \n", "\"vector_length_max\"", policy.vector_length_max());
+   fprintf(fout_times, "%s: %d, \n", "\"impl_vector_length\"", policy.impl_vector_length());
+   fprintf(fout_times, "%s: %d, \n", "\"team_size_recommended_rhs\"", udata.team_size_recommended_rhs);
+   fprintf(fout_times, "%s: %d, \n", "\"team_size_recommended_jac\"", udata.team_size_recommended_jac);
+   fprintf(fout_times, "%s: %d, \n", "\"team_size_max_rhs\"", udata.team_size_max_rhs);
+   fprintf(fout_times, "%s: %d \n", "\"team_size_max_jac\"", udata.team_size_max_jac);
+   fprintf(fout_times, "} \n "); // reaction rates
         // Print some final statistics
     long int nst, nfe, nsetups, nje, nni, ncfn, netf;
 
@@ -516,6 +521,17 @@ int main(int argc, char *argv[]) {
     retval = CVodeGetNumJacEvals(cvode_mem, &nje);
     check_flag(retval, "CVodeGetNumJacEvals");
 
+   fprintf(fout_times, ", \n ");
+   fprintf(fout_times, " \"Sundials Final Statistics\": \n  {\n");
+   fprintf(fout_times, "%s: %d, \n", "\"steps\"", nst);
+   fprintf(fout_times, "%s: %d, \n", "\"RHS_evals\"", nfe);
+   fprintf(fout_times, "%s: %d, \n", "\"LS_setups\"", nsetups);
+   fprintf(fout_times, "%s: %d, \n", "\"Jac_evals\"", nje);
+   fprintf(fout_times, "%s: %d, \n", "\"NLS_iters\"", nni);
+   fprintf(fout_times, "%s: %d, \n", "\"NLS_fails\"", ncfn);
+   fprintf(fout_times, "%s: %d \n", "\"Error_test_fails\"", netf);
+   fprintf(fout_times, "} \n "); // reaction rates
+
     std::cout << "\nFinal Statistics:\n"
               << "  Steps            = " << nst << "\n"
               << "  RHS evals        = " << nfe << "\n"
@@ -527,8 +543,7 @@ int main(int argc, char *argv[]) {
 
     // Free objects
     CVodeFree(&cvode_mem);
-    fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
-    fprintf(fout_times, "} \n "); // reaction rates
+
 
     // fprintf(fout_times, "}\n ");// end index time
     // fclose(fout_times);

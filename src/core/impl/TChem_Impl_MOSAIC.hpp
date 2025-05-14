@@ -2171,14 +2171,14 @@ struct MOSAIC{
 
     if (aw < 0.97) {
 
-      real_type xm = a_zsr(1,je) +
+      real_type xm = a_zsr(0,je) +
+                 aw*(a_zsr(1,je) +
                  aw*(a_zsr(2,je) +
                  aw*(a_zsr(3,je) +
                  aw*(a_zsr(4,je) +
-                 aw*(a_zsr(5,je) +
-                 aw* a_zsr(6,je) ))));
+                 aw* a_zsr(5,je) ))));
 
-        molality = 55.509*xm/(1. - xm);
+        molality = 55.509*xm/(1.0 - xm);
     } else {
       auto b_zsr = mosaic.b_zsr.template view<DeviceType>();
       molality = -b_zsr(je)*ats<real_type>::log(aw);

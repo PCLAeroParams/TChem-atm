@@ -192,13 +192,13 @@ struct MosaicModelData {
         auto mw_c_host = mw_c.view_host();
         auto mw_a_host = mw_a.view_host();
 
-        a_zsr_host(0, jnh4hso4) =   1.30894;
-        a_zsr_host(1, jnh4hso4) =  -7.09922;
-        a_zsr_host(2, jnh4hso4) =  20.62831;
-        a_zsr_host(3, jnh4hso4) = -32.19965;
-        a_zsr_host(4, jnh4hso4) =  25.17026;
-        a_zsr_host(5, jnh4hso4) =  -7.81632;
-        aw_min_host(jnh4hso4)   =       0.1;
+        a_zsr_host(0, jnh4so4) =   1.30894;
+        a_zsr_host(1, jnh4so4) =  -7.09922;
+        a_zsr_host(2, jnh4so4) =  20.62831;
+        a_zsr_host(3, jnh4so4) = -32.19965;
+        a_zsr_host(4, jnh4so4) =  25.17026;
+        a_zsr_host(5, jnh4so4) =  -7.81632;
+        aw_min_host(jnh4so4)   =       0.1;
 
         a_zsr_host(0, jlvcite)  =   1.10725;
         a_zsr_host(1, jlvcite)  =  -5.17978;
@@ -2156,6 +2156,34 @@ struct MOSAIC{
     // Van't Hoff Equation
     Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
   } // fn_Po
+
+  KOKKOS_INLINE_FUNCTION static
+  void bin_molality(const MosaicModelData<DeviceType>& mosaic,
+                    const ordinal_type& je,
+                    const real_type& aH2O_a,
+                    real_type& molality) {
+
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    real_type aw = max(aH2O_a, aw_min(je));
+    aw = min(aw, 0.999999);
+
+    if (aw < 0.97) {
+
+      real_type xm = a_zsr(0,je) +
+                 aw*(a_zsr(1,je) +
+                 aw*(a_zsr(2,je) +
+                 aw*(a_zsr(3,je) +
+                 aw*(a_zsr(4,je) +
+                 aw* a_zsr(5,je) ))));
+
+        molality = 55.509*xm/(1.0 - xm);
+    } else {
+      auto b_zsr = mosaic.b_zsr.template view<DeviceType>();
+      molality = -b_zsr(je)*ats<real_type>::log(aw);
+    }
+  } // bin_molality
 
 };
 

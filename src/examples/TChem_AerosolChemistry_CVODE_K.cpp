@@ -36,6 +36,7 @@ using real_type_2d_view_type = Tines::value_type_2d_view<real_type, device_type>
 using real_type_3d_view_type = Tines::value_type_3d_view<real_type, device_type>;
 using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type, host_device_type>;
 using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type, host_device_type>;
+using ordinal_type_type_1d_view_type = Tines::value_type_1d_view<ordinal_type, device_type>;
 
 using VecType   = sundials::kokkos::Vector<TChem::exec_space>;
 using MatType   = sundials::kokkos::DenseMatrix<TChem::exec_space>;
@@ -482,7 +483,20 @@ int main(int argc, char *argv[]) {
         n_active_gas_species, fout);
       }
     }
+    ordinal_type_type_1d_view_type k_team_size("k_team_size",1);
+    Kokkos::parallel_for("test", policy,
+      KOKKOS_LAMBDA(const typename policy_type::member_type& member)
+      {
+       if (member.league_rank() == 0) {  // Only print from the first team to avoid clutter
+        k_team_size(0)= member.team_size();
+        // printf("exterior Team size: %d \n", k_team_size(0));
+       }
+   });
+    // auto member = policymember;
+    // printf("exterior Team size: %d \n", policy.get_team_size());
     fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iout);
+    auto k_team_size_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), k_team_size);
+    fprintf(fout_times, "%s: %d, \n", "\"k_team_size\"", k_team_size_host(0));
 
         // Print some final statistics
     long int nst, nfe, nsetups, nje, nni, ncfn, netf;

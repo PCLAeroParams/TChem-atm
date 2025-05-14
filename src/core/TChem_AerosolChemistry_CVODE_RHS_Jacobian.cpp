@@ -73,6 +73,7 @@ int AerosolChemistry_CVODE_K::f(sunrealtype t, N_Vector y, N_Vector ydot, void* 
         temperature(i), pressure(i), number_conc_at_i, vals_at_i, constYs,
         rhs_at_i, pw, kmcd, amcd);
       });
+  Kokkos::Profiling::popRegion();
 
 
  return 0;
@@ -160,8 +161,8 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
           for (int j=0;j<batchSize;++j)
            J_data(i, k, j) = jacobian_at_i(k,j);
 #endif
-      });
-
+        });
+       Kokkos::Profiling::popRegion();
 
   return 0;
 

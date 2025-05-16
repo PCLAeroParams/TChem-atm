@@ -452,7 +452,7 @@ int main(int argc, char *argv[]) {
     const auto const_tracers_host =
     Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),const_tracers);
     if (write_time_profiles) {
-    writeState(-1, tout, dTout,
+    writeState(-1, tbeg, dTout,
      density_host, pressure_host, temperature_host,
      const_tracers_host, y2d_h, n_active_gas_species, fout);
     }
@@ -463,7 +463,7 @@ int main(int argc, char *argv[]) {
     // Loop over output times
     Kokkos::Timer timer;
     int iout = 0;
-    for (iout = 0; iout < Nt; iout++)
+    for (iout = 0; iout < Nt && tout <= tend * 0.9999; iout++)
     {
       // Advance in time
       timer.reset();
@@ -478,14 +478,14 @@ int main(int argc, char *argv[]) {
       sundials::kokkos::CopyFromDevice(y);
       Kokkos::fence();
 
-      tout += dTout;
-      tout = (tout > Tf) ? Tf : tout;
       if (write_time_profiles) {
       writeState(iout, tout, dTout,
        density_host, pressure_host, temperature_host,
        const_tracers_host, y2d_h,
         n_active_gas_species, fout);
       }
+      tout += dTout;
+      tout = (tout > Tf) ? Tf : tout;
     }
 
    fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iout);

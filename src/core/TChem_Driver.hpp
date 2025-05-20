@@ -58,10 +58,8 @@ public:
    real_type getAerosolSpeciesMW(int *index);
    real_type getAerosolSpeciesKappa(int *index);
 
-
    // Integrate a single time step
    void doTimestep(const double del_t);
-   void doTimestep_sparse(const double del_t);
 
    // Time integration information
    real_type _atol_newton; // Absolute tolerance used in Newton solver
@@ -81,20 +79,20 @@ public:
    void freeAll();
    void freeGasKineticModel();
    void freeAerosolModel();
-
-   // Diagnostics
-
 };
-}
+} // namespace TChem 
 
 extern "C" void initialize(const char* gasFile, const char* aeroFile,
-                           const char* numericsFile, const TChem::ordinal_type nBatch);
+                           const char* numericsFile,
+                           const TChem::ordinal_type nBatch);
 extern "C" void finalize();
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
 extern "C" int TChem_getLengthOfStateVector();
-extern "C" void TChem_getStateVector(TChem::real_type *array, const TChem::ordinal_type iBatch);
-extern "C" void TChem_setStateVector(TChem::real_type *array, const TChem::ordinal_type iBatch);
+extern "C" void TChem_getStateVector(TChem::real_type *array,
+                                     const TChem::ordinal_type iBatch);
+extern "C" void TChem_setStateVector(TChem::real_type *array,
+                                     const TChem::ordinal_type iBatch);
 extern "C" int TChem_getSpeciesName(int* index, char* result,
                                     const std::string::size_type buffer_size);
 extern "C" void TChem_doTimestep(const double &del_t);
@@ -102,10 +100,12 @@ extern "C" int TChem_getStateVectorSize();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
 extern "C" int TChem_getNumberConcentrationVectorSize();
 extern "C" TChem::ordinal_type TChem_getNumberOfAeroSpecies();
-extern "C" int TChem_getAerosolSpeciesName(int* index, char* result,
-                                           const std::string::size_type buffer_size);
+extern "C" int
+TChem_getAerosolSpeciesName(int* index, char* result,
+                            const std::string::size_type buffer_size);
 extern "C" double TChem_getAerosolSpeciesDensity(int* index);
 extern "C" double TChem_getAerosolSpeciesMW(int* index);
 extern "C" double TChem_getAerosolSpeciesKappa(int* index);
-extern "C" void TChem_setNumberConcentrationVector(TChem::real_type *array,
-                                                   const TChem::ordinal_type iBatch);
+extern "C" void
+TChem_setNumberConcentrationVector(TChem::real_type *array,
+                                   const TChem::ordinal_type iBatch);

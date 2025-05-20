@@ -25,38 +25,38 @@ static int check_flag(const int flag, const std::string funcname)
 }
 
 void print_cvode_statistics(void* cvode_mem) {
-    long int nst, nfe, nsetups, nje, nni, ncfn, netf;
-    int retval;
+  long int nst, nfe, nsetups, nje, nni, ncfn, netf;
+  int retval;
 
-    retval = CVodeGetNumSteps(cvode_mem, &nst);
-    check_flag(retval, "CVodeGetNumSteps");
+  retval = CVodeGetNumSteps(cvode_mem, &nst);
+  check_flag(retval, "CVodeGetNumSteps");
 
-    retval = CVodeGetNumRhsEvals(cvode_mem, &nfe);
-    check_flag(retval, "CVodeGetNumRhsEvals");
+  retval = CVodeGetNumRhsEvals(cvode_mem, &nfe);
+  check_flag(retval, "CVodeGetNumRhsEvals");
 
-    retval = CVodeGetNumLinSolvSetups(cvode_mem, &nsetups);
-    check_flag(retval, "CVodeGetNumLinSolvSetups");
+  retval = CVodeGetNumLinSolvSetups(cvode_mem, &nsetups);
+  check_flag(retval, "CVodeGetNumLinSolvSetups");
 
-    retval = CVodeGetNumErrTestFails(cvode_mem, &netf);
-    check_flag(retval, "CVodeGetNumErrTestFails");
+  retval = CVodeGetNumErrTestFails(cvode_mem, &netf);
+  check_flag(retval, "CVodeGetNumErrTestFails");
 
-    retval = CVodeGetNumNonlinSolvIters(cvode_mem, &nni);
-    check_flag(retval, "CVodeGetNumNonlinSolvIters");
+  retval = CVodeGetNumNonlinSolvIters(cvode_mem, &nni);
+  check_flag(retval, "CVodeGetNumNonlinSolvIters");
 
-    retval = CVodeGetNumNonlinSolvConvFails(cvode_mem, &ncfn);
-    check_flag(retval, "CVodeGetNumNonlinSolvConvFails");
+  retval = CVodeGetNumNonlinSolvConvFails(cvode_mem, &ncfn);
+  check_flag(retval, "CVodeGetNumNonlinSolvConvFails");
 
-    retval = CVodeGetNumJacEvals(cvode_mem, &nje);
-    check_flag(retval, "CVodeGetNumJacEvals");
+  retval = CVodeGetNumJacEvals(cvode_mem, &nje);
+  check_flag(retval, "CVodeGetNumJacEvals");
 
-    std::cout << "\nFinal Statistics:\n"
-              << "  Steps            = " << nst << "\n"
-              << "  RHS evals        = " << nfe << "\n"
-              << "  LS setups        = " << nsetups << "\n"
-              << "  Jac evals        = " << nje << "\n"
-              << "  NLS iters        = " << nni << "\n"
-              << "  NLS fails        = " << ncfn << "\n"
-              << "  Error test fails = " << netf << "\n";
+  std::cout << "\nFinal Statistics:\n"
+            << "  Steps            = " << nst << "\n"
+            << "  RHS evals        = " << nfe << "\n"
+            << "  LS setups        = " << nsetups << "\n"
+            << "  Jac evals        = " << nje << "\n"
+            << "  NLS iters        = " << nni << "\n"
+            << "  NLS fails        = " << ncfn << "\n"
+            << "  Error test fails = " << netf << "\n";
 }
 
 /* Initialize the model given input YAML files */
@@ -119,35 +119,35 @@ void TChem::Driver::setBatchSize(const ordinal_type nBatch) {
 /* Read in the solver settings */
 void TChem::Driver::createNumerics(const std::string &numerics_file) {
 
-   YAML::Node root = YAML::LoadFile(numerics_file);
+  YAML::Node root = YAML::LoadFile(numerics_file);
 
-   auto atol_newton = root["solver_info"]["atol_newton"];
-   auto rtol_newton =  root["solver_info"]["rtol_newton"];
-   auto dtmin = root["solver_info"]["dtmin"];
-   auto atol_time = root["solver_info"]["atol_time"];
-   auto rtol_time = root["solver_info"]["rtol_time"];
-   auto max_num_newton_iterations = root["solver_info"]["max_newton_iterations"];
-   auto max_num_time_iterations = root["solver_info"]["max_num_time_iterations"];
-   auto num_time_iterations_per_interval = root["solver_info"]["num_time_iterations_per_interval"];
-   auto jacobian_interval = root["solver_info"]["jacobian_interval"];
+  auto atol_newton = root["solver_info"]["atol_newton"];
+  auto rtol_newton =  root["solver_info"]["rtol_newton"];
+  auto dtmin = root["solver_info"]["dtmin"];
+  auto atol_time = root["solver_info"]["atol_time"];
+  auto rtol_time = root["solver_info"]["rtol_time"];
+  auto max_num_newton_iterations = root["solver_info"]["max_newton_iterations"];
+  auto max_num_time_iterations = root["solver_info"]["max_num_time_iterations"];
+  auto num_time_iterations_per_interval = root["solver_info"]["num_time_iterations_per_interval"];
+  auto jacobian_interval = root["solver_info"]["jacobian_interval"];
 
-   auto team_size = root["solver_info"]["team_size"];
-   auto vector_size = root["solver_info"]["vector_size"];
+  auto team_size = root["solver_info"]["team_size"];
+  auto vector_size = root["solver_info"]["vector_size"];
 
 
-   _atol_newton = atol_newton.as<real_type>(1e-10);
-   _rtol_newton = rtol_newton.as<real_type>(1e-6);
-   _dtmin = dtmin.as<real_type>(1e-8);
-   _atol_time = atol_time.as<real_type>(1e-12);
-   _rtol_time = rtol_time.as<real_type>(1e-4);
-   _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
-   _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
-   _num_time_iterations_per_interval = num_time_iterations_per_interval.as<ordinal_type>(1e1);
-   _jacobian_interval = jacobian_interval.as<ordinal_type>(1);
+  _atol_newton = atol_newton.as<real_type>(1e-10);
+  _rtol_newton = rtol_newton.as<real_type>(1e-6);
+  _dtmin = dtmin.as<real_type>(1e-8);
+  _atol_time = atol_time.as<real_type>(1e-12);
+  _rtol_time = rtol_time.as<real_type>(1e-4);
+  _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
+  _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
+  _num_time_iterations_per_interval = num_time_iterations_per_interval.as<ordinal_type>(1e1);
+  _jacobian_interval = jacobian_interval.as<ordinal_type>(1);
 
-   // If team_size and vector_size are not specified, default to -1
-   _team_size = team_size.as<ordinal_type>(-1);
-   _vector_size = vector_size.as<ordinal_type>(-1);
+  // If team_size and vector_size are not specified, default to -1
+  _team_size = team_size.as<ordinal_type>(-1);
+  _vector_size = vector_size.as<ordinal_type>(-1);
 
 }
 
@@ -262,47 +262,47 @@ std::string TChem::Driver::getSpeciesName(int *index){
 
 /* Return number of species */
 ordinal_type TChem_getNumberOfSpecies(){
-   ordinal_type nSpec = g_tchem->getNumberOfSpecies();
-   return nSpec;
+  ordinal_type nSpec = g_tchem->getNumberOfSpecies();
+  return nSpec;
 }
 
 ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd_host.nSpec;}
 
 ordinal_type TChem_getNumberOfAeroSpecies(){
-   ordinal_type nSpec = g_tchem->getNumberOfAeroSpecies();
-   return nSpec;
+  ordinal_type nSpec = g_tchem->getNumberOfAeroSpecies();
+  return nSpec;
 }
 
 ordinal_type TChem::Driver::getNumberOfAeroSpecies() { return _amcd_host.nSpec;}
 
 /* Get the density of the aerosol species at a given index */
 real_type TChem_getAerosolSpeciesDensity(int *index) {
-   auto density = g_tchem->getAerosolSpeciesDensity(index);
-   return density;
+  auto density = g_tchem->getAerosolSpeciesDensity(index);
+  return density;
 }
 
 real_type TChem::Driver::getAerosolSpeciesDensity(int *index) {
-   return (_amcd_host.aerosol_density(*index));
+  return (_amcd_host.aerosol_density(*index));
 }
 
 /* Get the molecular weight of the aerosol species at a given index */
 real_type TChem_getAerosolSpeciesMW(int *index) {
-   auto mw = g_tchem->getAerosolSpeciesMW(index);
-   return mw;
+  auto mw = g_tchem->getAerosolSpeciesMW(index);
+  return mw;
 }
 
 real_type TChem::Driver::getAerosolSpeciesMW(int *index) {
-   return (_amcd_host.molecular_weights(*index));
+  return (_amcd_host.molecular_weights(*index));
 }
 
 /* Get the hygroscopicity parameter kappa of the aerosol species at a given index */
 real_type TChem_getAerosolSpeciesKappa(int *index) {
-   auto kappa = g_tchem->getAerosolSpeciesKappa(index);
-   return kappa;
+  auto kappa = g_tchem->getAerosolSpeciesKappa(index);
+  return kappa;
 }
 
 real_type TChem::Driver::getAerosolSpeciesKappa(int *index) {
-   return (_amcd_host.aerosol_kappa(*index));
+  return (_amcd_host.aerosol_kappa(*index));
 }
 
 /* Return species name */
@@ -368,9 +368,12 @@ void TChem::Driver::doTimestep(const double del_t){
 
   const auto exec_space_instance = TChem::exec_space();
   using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
-  using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
-  using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
-  using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
+  using interf_host_device_type =
+      typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+  using problem_type = 
+      TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
+  using policy_type =
+      typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
   policy_type policy(exec_space_instance, _nBatch, Kokkos::AUTO());
 
@@ -382,20 +385,24 @@ void TChem::Driver::doTimestep(const double del_t){
 
   auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host, _amcd_host);
 
-  using real_type_1d_view_type = Tines::value_type_1d_view<real_type, device_type>;
-  using real_type_2d_view_type = Tines::value_type_2d_view<real_type, device_type>;
-  using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type, host_device_type>;
+  using real_type_1d_view_type =
+      Tines::value_type_1d_view<real_type, device_type>;
+  using real_type_2d_view_type =
+      Tines::value_type_2d_view<real_type, device_type>;
+  using real_type_2d_view_host_type =
+      Tines::value_type_2d_view<real_type, host_device_type>;
 
   // Create UserData
   TChem::UserData udata;
 
   udata.nbatches = _nBatch;
-  real_type_2d_view number_conc("NumberConcentration", _nBatch, _amcd_host.nParticles);
+  real_type_2d_view number_conc("NumberConcentration", _nBatch,
+      _amcd_host.nParticles);
   Kokkos::deep_copy(number_conc, _number_concentration);
   udata.num_concentration = number_conc;
-  udata.batchSize=number_of_equations;
-  udata.kmcd=_kmcd_device;
-  udata.amcd=_amcd_device;
+  udata.batchSize = number_of_equations;
+  udata.kmcd = _kmcd_device;
+  udata.amcd = _amcd_device;
 
   // Create the SUNDIALS context
   sundials::Context sunctx;
@@ -418,119 +425,113 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_2d_view state("StateVector Devices", _nBatch, stateVecDim);
   Kokkos::deep_copy(state, _state);
 
-   Kokkos::parallel_for(
-      "fill_y", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
-      KOKKOS_LAMBDA(const SizeType i) {
-        const real_type_1d_view_type state_at_i =
-               Kokkos::subview(state, i, Kokkos::ALL());
-        const ordinal_type total_n_species = _kmcd_device.nSpec + _amcd_device.nParticles*_amcd_device.nSpec;
-        TChem::Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
-        temperature(i) = sv_at_i.Temperature();
-        pressure(i) = sv_at_i.Pressure();
-        const real_type_1d_view_type Ys = sv_at_i.MassFractions();
+  Kokkos::parallel_for(
+    "fill_y", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
+    KOKKOS_LAMBDA(const SizeType i) {
+      const real_type_1d_view_type state_at_i =
+             Kokkos::subview(state, i, Kokkos::ALL());
+      const ordinal_type total_n_species = _kmcd_device.nSpec + _amcd_device.nParticles*_amcd_device.nSpec;
+      TChem::Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
+      temperature(i) = sv_at_i.Temperature();
+      pressure(i) = sv_at_i.Pressure();
+      const real_type_1d_view_type Ys = sv_at_i.MassFractions();
 
-        const auto activeYs = Kokkos::subview(Ys, range_type(0, n_active_gas_species));
-        const auto constYs  = Kokkos::subview(Ys, range_type(n_active_gas_species, _kmcd_device.nSpec));
-        const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(_kmcd_device.nSpec, total_n_species));
+      const auto activeYs = Kokkos::subview(Ys, range_type(0, n_active_gas_species));
+      const auto constYs  = Kokkos::subview(Ys, range_type(n_active_gas_species, _kmcd_device.nSpec));
+      const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(_kmcd_device.nSpec, total_n_species));
 
-        for (ordinal_type j=0;j<n_active_gas_species;++j){
-          y2d(i, j) = activeYs(j);
-        }
+      for (ordinal_type j=0;j<n_active_gas_species;++j){
+        y2d(i, j) = activeYs(j);
+      }
 
-        for (ordinal_type j=n_active_gas_species;j<total_n_species- _kmcd_device.nConstSpec;++j)
-        {
-          y2d(i, j) = partYs(j-n_active_gas_species);
-        }
+      for (ordinal_type j=n_active_gas_species;j<total_n_species- _kmcd_device.nConstSpec;++j)
+      {
+        y2d(i, j) = partYs(j-n_active_gas_species);
+      }
 
-        for (ordinal_type j=0;j<_kmcd_device.nConstSpec;++j){
-          const_tracers(i, j) = constYs(j);
-        }
+      for (ordinal_type j=0;j<_kmcd_device.nConstSpec;++j){
+        const_tracers(i, j) = constYs(j);
+      }
+  });
 
-     });
+  udata.temperature = temperature;
+  udata.pressure = pressure;
+  udata.const_tracers = const_tracers;
 
-    udata.temperature = temperature;
-    udata.pressure = pressure;
-    udata.const_tracers = const_tracers;
-
-    // Create vector of absolute tolerances
-    VecType abstol{length, sunctx};
-    N_VConst(SUN_RCONST(_atol_time), abstol);
+  // Create vector of absolute tolerances
+  VecType abstol{length, sunctx};
+  N_VConst(SUN_RCONST(_atol_time), abstol);
 
     // Create CVODE using Backward Differentiation Formula methods
-    void* cvode_mem = CVodeCreate(CV_BDF, sunctx);
+  void* cvode_mem = CVodeCreate(CV_BDF, sunctx);
 //    if (check_ptr(cvode_mem, "CVodeCreate")) { return 1; }
 
 
-    // Initialize the integrator and set the ODE right-hand side function
-    int retval = CVodeInit(cvode_mem, TChem::AerosolChemistry_CVODE_K::f, T0, y);
-//    if (check_flag(retval, "CVodeInit")) { return 1; }
+  // Initialize the integrator and set the ODE right-hand side function
+  int retval = CVodeInit(cvode_mem, TChem::AerosolChemistry_CVODE_K::f, T0, y);
 
-    retval = CVodeSetMaxNumSteps(cvode_mem, _max_num_time_iterations);
-    retval = CVodeSetMinStep(cvode_mem, _dtmin);
-    // Attach the user data structure
-    retval = CVodeSetUserData(cvode_mem, &udata);
-//    if (check_flag(retval, "CVodeSetUserData")) { return 1; }
+  retval = CVodeSetMaxNumSteps(cvode_mem, _max_num_time_iterations);
+  retval = CVodeSetMinStep(cvode_mem, _dtmin);
+  // Attach the user data structure
+  retval = CVodeSetUserData(cvode_mem, &udata);
 
-    // Specify the scalar relative tolerance and vector absolute tolerances
-    retval = CVodeSVtolerances(cvode_mem, SUN_RCONST(_rtol_time), abstol);
-//    if (check_flag(retval, "CVodeSVtolerances")) { return 1; }
+  // Specify the scalar relative tolerance and vector absolute tolerances
+  retval = CVodeSVtolerances(cvode_mem, SUN_RCONST(_rtol_time), abstol);
 
-     // Create the matrix and linear solver objects
-    std::unique_ptr<sundials::ConvertibleTo<SUNMatrix>> A;
-    std::unique_ptr<sundials::ConvertibleTo<SUNLinearSolver>> LS;
+   // Create the matrix and linear solver objects
+  std::unique_ptr<sundials::ConvertibleTo<SUNMatrix>> A;
+  std::unique_ptr<sundials::ConvertibleTo<SUNLinearSolver>> LS;
 
-    ordinal_type per_team_extent=0;
+  ordinal_type per_team_extent=0;
 
-    // Create matrix-free GMRES linear solver
-    LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
-        SUNLinSol_SPGMR(y, SUN_PREC_NONE, 0, sunctx));
+  // Create matrix-free GMRES linear solver
+  LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
+      SUNLinSol_SPGMR(y, SUN_PREC_NONE, 0, sunctx));
 
-    // Attach the linear solver to CVODE
-    retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
+  // Attach the linear solver to CVODE
+  retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
 
-//    if (check_flag(retval, "CVodeSetLinearSolver")) { return 1; }
-    per_team_extent
-         = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(_kmcd_device, _amcd_device);
+  per_team_extent
+       = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(_kmcd_device, _amcd_device);
 
-    const ordinal_type per_team_scratch =
-      TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
-      policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
-    udata.policy = policy;
+  const ordinal_type per_team_scratch =
+    TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
+    policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
+  udata.policy = policy;
 
-    // Final time and time between outputs
-    const sunrealtype Tf    = SUN_RCONST(del_t);
-    const sunrealtype dTout = SUN_RCONST(del_t);
+  // Final time and time between outputs
+  const sunrealtype Tf    = SUN_RCONST(del_t);
+  const sunrealtype dTout = SUN_RCONST(del_t);
 
-    // Number of output times
-    const int Nt_p = static_cast<int>(ceil(Tf / dTout));
+  // Number of output times
+  const int Nt_p = static_cast<int>(ceil(Tf / dTout));
 
-    const int Nt = _max_num_time_iterations > 0 ? _max_num_time_iterations: Nt_p;
+  const int Nt = _max_num_time_iterations > 0 ? _max_num_time_iterations: Nt_p;
 
-    // Current time and first output time
-    sunrealtype t    = T0;
-    sunrealtype tout = T0 + dTout;
+  // Current time and first output time
+  sunrealtype t    = T0;
+  sunrealtype tout = T0 + dTout;
 
-    // Initial output
-    real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
+  // Initial output
+  real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
+  sundials::kokkos::CopyFromDevice(y);
+  Kokkos::fence();
+
+  // Time stepping
+  int iout = 0;
+  for (iout = 0; iout < Nt; iout++)
+  {
+      // Advance in time
+    retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
+    exec_space_instance.fence();
+    if (check_flag(retval, "CVode")) { break; }
+
     sundials::kokkos::CopyFromDevice(y);
     Kokkos::fence();
 
-  // Time stepping
-    int iout = 0;
-    for (iout = 0; iout < Nt; iout++)
-    {
-      // Advance in time
-      retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
-      exec_space_instance.fence();
-      if (check_flag(retval, "CVode")) { break; }
-
-      // // Output solution from some batches
-      sundials::kokkos::CopyFromDevice(y);
-      Kokkos::fence();
-
-      tout += dTout;
-      tout = (tout > Tf) ? Tf : tout;
-    }
+    tout += dTout;
+    tout = (tout > Tf) ? Tf : tout;
+  }
 
   // Copy results back
   int i = 0;
@@ -538,14 +539,12 @@ void TChem::Driver::doTimestep(const double del_t){
     _state(i,j+3) = y2d_h(i, j);
   }
   const ordinal_type total_n_species = _kmcd_host.nSpec + _amcd_host.nParticles*_amcd_host.nSpec;
-  for (ordinal_type j=n_active_gas_species;j<total_n_species - _kmcd_host.nConstSpec;++j)
-  {
+  for (ordinal_type j=n_active_gas_species;j<total_n_species - _kmcd_host.nConstSpec;++j){
     _state(i,j+3+_kmcd_host.nConstSpec) = y2d_h(i,j);
   }
 
+  print_cvode_statistics(cvode_mem);
 
-   print_cvode_statistics(cvode_mem);
-
-   CVodeFree(&cvode_mem);
+  CVodeFree(&cvode_mem);
 
 }

@@ -29,6 +29,12 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 
 namespace TChem {
 
+struct TeamConfOutput
+{
+   ordinal_type team_size_recommended{-1};
+   ordinal_type team_size_max{-1};
+};
+
 struct AerosolChemistry
 {
   using host_device_type = typename Tines::UseThisDevice<host_exec_space>::type;
@@ -70,6 +76,7 @@ struct AerosolChemistry
            const real_type_1d_view_host& t_out,
            const real_type_1d_view_host& dt_out,
            const real_type_2d_view_host& state_out,
+           TeamConfOutput& team_conf_output,
            /// const data from kinetic model
            const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd,
            const AerosolModel_ConstData<interf_host_device_type>& amcd
@@ -89,6 +96,7 @@ struct AerosolChemistry
            const real_type_1d_view& t_out,
            const real_type_1d_view& dt_out,
            const real_type_2d_view& state_out,
+           TeamConfOutput& team_conf_output,
            /// const data from kinetic model
            const KineticModelNCAR_ConstData<device_type>& kmcd,
            const AerosolModel_ConstData<device_type>& amcd

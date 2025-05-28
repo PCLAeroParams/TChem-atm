@@ -192,13 +192,13 @@ struct MosaicModelData {
         auto mw_c_host = mw_c.view_host();
         auto mw_a_host = mw_a.view_host();
 
-        a_zsr_host(0, jnh4hso4) =   1.30894;
-        a_zsr_host(1, jnh4hso4) =  -7.09922;
-        a_zsr_host(2, jnh4hso4) =  20.62831;
-        a_zsr_host(3, jnh4hso4) = -32.19965;
-        a_zsr_host(4, jnh4hso4) =  25.17026;
-        a_zsr_host(5, jnh4hso4) =  -7.81632;
-        aw_min_host(jnh4hso4)   =       0.1;
+        a_zsr_host(0, jnh4so4) =   1.30894;
+        a_zsr_host(1, jnh4so4) =  -7.09922;
+        a_zsr_host(2, jnh4so4) =  20.62831;
+        a_zsr_host(3, jnh4so4) = -32.19965;
+        a_zsr_host(4, jnh4so4) =  25.17026;
+        a_zsr_host(5, jnh4so4) =  -7.81632;
+        aw_min_host(jnh4so4)   =       0.1;
 
         a_zsr_host(0, jlvcite)  =   1.10725;
         a_zsr_host(1, jlvcite)  =  -5.17978;
@@ -2149,13 +2149,26 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void fn_Po(const real_type& Po_298,
-              const real_type& DH,
-              const real_type& T,
-              real_type& Po) {
+            const real_type& DH,
+            const real_type& T,
+            real_type& Po) {
 
     // Van't Hoff Equation
     Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
   } // fn_Po
+
+  KOKKOS_INLINE_FUNCTION static
+  void aerosol_water_up(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& electrolyte_total) {
+
+    real_type dum = 0.0;
+
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte + 4; ++je) {
+      dum = dum + 1.e-9*electrolyte_total(je)/bin_molality_60(je);
+    }
+
+    aerosol_water_up = dum;
+  } // aerosol_water_up
 
 };
 

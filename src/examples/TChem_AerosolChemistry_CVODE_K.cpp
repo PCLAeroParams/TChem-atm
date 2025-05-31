@@ -36,6 +36,7 @@ using real_type_2d_view_type = Tines::value_type_2d_view<real_type, device_type>
 using real_type_3d_view_type = Tines::value_type_3d_view<real_type, device_type>;
 using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type, host_device_type>;
 using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type, host_device_type>;
+using ordinal_type_type_1d_view_type = Tines::value_type_1d_view<ordinal_type, device_type>;
 
 using VecType   = sundials::kokkos::Vector<TChem::exec_space>;
 using MatType   = sundials::kokkos::DenseMatrix<TChem::exec_space>;
@@ -267,7 +268,7 @@ int main(int argc, char *argv[]) {
         policy = policy_type(exec_space_instance,  nBatch, team_size, vector_size);
     } else if (team_size > 0 && vector_size < 0) {
       // only set team size
-       policy = policy_type(exec_space_instance, nBatch,  team_size);
+       policy = policy_type(exec_space_instance, nBatch,  team_size, Kokkos::AUTO());
     }
 
     using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
@@ -400,6 +401,10 @@ int main(int argc, char *argv[]) {
       udata.fac=fac;
       per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
         + number_of_equations;
+#if defined(TCHEM_ATM_ENABLE_GPU)
+    real_type_3d_view_type JacRL("JacRL", nBatch, number_of_equations, number_of_equations);
+    udata.JacRL=JacRL;
+#endif
     }
     else
     {
@@ -447,14 +452,18 @@ int main(int argc, char *argv[]) {
     const auto const_tracers_host =
     Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(),const_tracers);
     if (write_time_profiles) {
-    writeState(-1, tout, dTout,
+    writeState(-1, tbeg, dTout,
      density_host, pressure_host, temperature_host,
      const_tracers_host, y2d_h, n_active_gas_species, fout);
     }
+
+    // TChem::TChemAerosolChemistryRHS rhs_tchem(rhs, vals, num_concentration,
+    //   const_tracers, temperature, pressure, kmcd, amcd);
+
     // Loop over output times
     Kokkos::Timer timer;
     int iout = 0;
-    for (iout = 0; iout < Nt; iout++)
+    for (iout = 0; iout < Nt && tout <= tend * 0.9999; iout++)
     {
       // Advance in time
       timer.reset();
@@ -469,17 +478,31 @@ int main(int argc, char *argv[]) {
       sundials::kokkos::CopyFromDevice(y);
       Kokkos::fence();
 
-      tout += dTout;
-      tout = (tout > Tf) ? Tf : tout;
       if (write_time_profiles) {
       writeState(iout, tout, dTout,
        density_host, pressure_host, temperature_host,
        const_tracers_host, y2d_h,
         n_active_gas_species, fout);
       }
+      tout += dTout;
+      tout = (tout > Tf) ? Tf : tout;
     }
-    fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iout);
 
+   fprintf(fout_times, "%s: %d, \n", "\"number_of_time_iters\"", iout);
+   fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
+   fprintf(fout_times, "} \n "); // reaction rates
+
+   fprintf(fout_times, ", \n ");
+   fprintf(fout_times, " \"Kokkos Settings\": \n  {\n");
+   fprintf(fout_times, "%s: %d, \n", "\"team_size\"", team_size);
+   fprintf(fout_times, "%s: %d, \n", "\"vector_size\"", vector_size);
+   fprintf(fout_times, "%s: %d, \n", "\"vector_length_max\"", policy.vector_length_max());
+   fprintf(fout_times, "%s: %d, \n", "\"impl_vector_length\"", policy.impl_vector_length());
+   fprintf(fout_times, "%s: %d, \n", "\"team_size_recommended_rhs\"", udata.team_size_recommended_rhs);
+   fprintf(fout_times, "%s: %d, \n", "\"team_size_recommended_jac\"", udata.team_size_recommended_jac);
+   fprintf(fout_times, "%s: %d, \n", "\"team_size_max_rhs\"", udata.team_size_max_rhs);
+   fprintf(fout_times, "%s: %d \n", "\"team_size_max_jac\"", udata.team_size_max_jac);
+   fprintf(fout_times, "} \n "); // reaction rates
         // Print some final statistics
     long int nst, nfe, nsetups, nje, nni, ncfn, netf;
 
@@ -498,6 +521,17 @@ int main(int argc, char *argv[]) {
     retval = CVodeGetNumJacEvals(cvode_mem, &nje);
     check_flag(retval, "CVodeGetNumJacEvals");
 
+   fprintf(fout_times, ", \n ");
+   fprintf(fout_times, " \"Sundials Final Statistics\": \n  {\n");
+   fprintf(fout_times, "%s: %d, \n", "\"steps\"", nst);
+   fprintf(fout_times, "%s: %d, \n", "\"RHS_evals\"", nfe);
+   fprintf(fout_times, "%s: %d, \n", "\"LS_setups\"", nsetups);
+   fprintf(fout_times, "%s: %d, \n", "\"Jac_evals\"", nje);
+   fprintf(fout_times, "%s: %d, \n", "\"NLS_iters\"", nni);
+   fprintf(fout_times, "%s: %d, \n", "\"NLS_fails\"", ncfn);
+   fprintf(fout_times, "%s: %d \n", "\"Error_test_fails\"", netf);
+   fprintf(fout_times, "} \n "); // reaction rates
+
     std::cout << "\nFinal Statistics:\n"
               << "  Steps            = " << nst << "\n"
               << "  RHS evals        = " << nfe << "\n"
@@ -509,8 +543,7 @@ int main(int argc, char *argv[]) {
 
     // Free objects
     CVodeFree(&cvode_mem);
-    fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
-    fprintf(fout_times, "} \n "); // reaction rates
+
 
     // fprintf(fout_times, "}\n ");// end index time
     // fclose(fout_times);

@@ -19,7 +19,9 @@ void static MOSAIC_Test() {
 
     const auto mmd = TChem::Impl::MosaicModelData<device_type>();
 
-    EXPECT_TRUE(mmd.b_mtem.h_view(0,mmd.jnh4so4,mmd.jnh4hso4) == -4.13219);
+    auto b_mtem = mmd.b_mtem.template view<device_type>();
+
+    EXPECT_TRUE(b_mtem(0,mmd.jnh4so4,mmd.jnh4hso4) == -4.13219);
 
 }
 

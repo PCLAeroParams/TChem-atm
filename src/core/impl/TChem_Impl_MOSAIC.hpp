@@ -2156,6 +2156,34 @@ struct MOSAIC{
     // Van't Hoff Equation
     Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
   } // fn_Po
+  
+  KOKKOS_INLINE_FUNCTION static
+  void molality_0(const MosaicModelData<DeviceType>& mosaic,
+                  const ordinal_type& je,
+                  real_type& aw,
+                  real_type& molality) {
+
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    aw = max(aw, aw_min(je));
+    aw = min(aw, 0.999999);
+
+    if (aw < 0.97) {
+
+      real_type xm = a_zsr(0,je) +
+                 aw*(a_zsr(1,je) +
+                 aw*(a_zsr(2,je) +
+                 aw*(a_zsr(3,je) +
+                 aw*(a_zsr(4,je) +
+                 aw* a_zsr(5,je) ))));
+
+        molality = 55.509*xm/(1.0 - xm);
+    } else {
+      auto b_zsr = mosaic.b_zsr.template view<DeviceType>();
+      molality = -b_zsr(je)*ats<real_type>::log(aw);
+    }
+  } // molality_0
 
   KOKKOS_INLINE_FUNCTION static
   void bin_molality(const MosaicModelData<DeviceType>& mosaic,

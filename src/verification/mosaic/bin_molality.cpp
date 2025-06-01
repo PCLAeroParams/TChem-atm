@@ -10,30 +10,26 @@ using ordinal_type = TChem::ordinal_type;
 using namespace skywalker;
 using namespace TChem;
 
-void fnlog_gamZ(Ensemble *ensemble) {
+void bin_molality(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
 
-    const auto jA_arr = input.get_array("jA");
-    const auto jE_arr = input.get_array("jE");
-    const auto aH2O_arr = input.get_array("aH2O");
+    const auto je_arr = input.get_array("je");
+    const auto aH2O_a_arr = input.get_array("aH2O_a");
 
-    real_type_1d_view jA("jA", 1);
-    verification::convert_1d_vector_to_1d_view_device(jA_arr, jA);
+    real_type_1d_view je("je", 1);
+    verification::convert_1d_vector_to_1d_view_device(je_arr, je);
 
-    real_type_1d_view jE("jE", 1);
-    verification::convert_1d_vector_to_1d_view_device(jE_arr, jE);
-
-    real_type_1d_view aH2O("aH20", 1);
-    verification::convert_1d_vector_to_1d_view_device(aH2O_arr, aH2O);
+    real_type_1d_view aH2O_a("aH2O_a", 1);
+    verification::convert_1d_vector_to_1d_view_device(aH2O_a_arr, aH2O_a);
 
     const auto mmd = TChem::Impl::MosaicModelData<device_type>();
 
     // Prepare variables for output
 
     // Reals or int that are defined outside of the parallel_for region are passed as const.
-    real_type_1d_view outputs_fnlog_gamZ("outputs_fnlog_gamZ", 1);
+    real_type_1d_view outputs_bin_molality("outputs_bin_molality", 1);
 
-    std::string profile_name ="Verification_test_fnlog_gamZ";
+    std::string profile_name ="Verification_test_bin_molality";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
     const auto exec_space_instance = TChem::exec_space();
@@ -46,23 +42,22 @@ void fnlog_gamZ(Ensemble *ensemble) {
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-      Real& log_gamZ = outputs_fnlog_gamZ(0);
+      Real& molality = outputs_bin_molality(0);
 
     // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::fnlog_gamZ(
+    TChem::Impl::MOSAIC<real_type, device_type>::bin_molality(
       mmd,
-      jA(0)-1,
-      jE(0)-1,
-      aH2O(0),
-      log_gamZ);
+      je(0)-1,
+      aH2O_a(0),
+      molality);
     });
 
-    const auto outputs_fnlog_gamZ_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_fnlog_gamZ);
+    const auto outputs_bin_molality_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_bin_molality);
 
-    Real log_gamZ = outputs_fnlog_gamZ_h(0);
+    Real molality = outputs_bin_molality_h(0);
 
     // Assuming the outputs are scalar and can be directly set in the ensemble
-    output.set("log_gamZ", log_gamZ);
+    output.set("molality", molality);
 
   });
 }

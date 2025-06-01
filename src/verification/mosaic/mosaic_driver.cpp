@@ -29,6 +29,10 @@ void fn_Keq(Ensemble *ensemble);
 
 void fn_Po(Ensemble *ensemble);
 
+void molality_0(Ensemble *ensemble);
+
+void bin_molality(Ensemble *ensemble);
+
 void bin_molality_60(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
@@ -68,6 +72,10 @@ int main(int argc, char **argv) {
       fn_Keq(ensemble);
     } else if (func_name == "fn_Po") {
       fn_Po(ensemble);
+    } else if (func_name == "molality_0") {
+      molality_0(ensemble);
+    } else if (func_name == "bin_molality") {
+      bin_molality(ensemble);
     } else if (func_name == "bin_molality_60") {
       bin_molality_60(ensemble);
     } else {

@@ -2220,7 +2220,7 @@ struct MOSAIC{
 
     auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
 
-    real_type aw = 0.6;
+    const real_type aw = 0.6;
 
     real_type xm = a_zsr(0,je) +
                aw*(a_zsr(1,je) +

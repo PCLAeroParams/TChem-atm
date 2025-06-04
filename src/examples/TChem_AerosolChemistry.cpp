@@ -248,10 +248,11 @@ int main(int argc, char *argv[]) {
     fprintf(fout_times, "{\n");
     fprintf(fout_times, " \"Aerosol Chemistry\": \n {\n");
 
-    {
-      const auto exec_space_instance = TChem::exec_space();
 
-      using policy_type =
+    TChem::TeamConfOutput team_conf_output;
+    const auto exec_space_instance = TChem::exec_space();
+
+    using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
 #if defined(TCHEM_EXAMPLE_KOKKOS_KERNELS_ODE)
@@ -272,7 +273,7 @@ int main(int argc, char *argv[]) {
       policy = policy_type(exec_space_instance, nBatch,  team_size);
     }
 #endif
-
+{
         ordinal_type number_of_equations(0);
 
         using problem_type =
@@ -370,6 +371,7 @@ int main(int argc, char *argv[]) {
         real_type tsum(0);
         Kokkos::Timer timer;
 
+
         for (; iter < max_num_time_iterations && tsum <= tend * 0.9999;
              ++iter) {
 
@@ -382,6 +384,7 @@ int main(int argc, char *argv[]) {
 #else
           TChem::AerosolChemistry::runDeviceBatch(
               policy, tol_newton, tol_time, fac, tadv, state, num_concentration, t, dt, state,
+              team_conf_output,
               kmcd, amcd);
 #endif
 
@@ -420,6 +423,17 @@ int main(int argc, char *argv[]) {
 
     fprintf(fout_times, "%s: %d \n", "\"number_of_samples\"", nBatch);
     fprintf(fout_times, "} \n "); // reaction rates
+
+    fprintf(fout_times, ", \n ");
+    fprintf(fout_times, " \"Kokkos Settings\": \n  {\n");
+    fprintf(fout_times, "%s: %d, \n", "\"team_size\"", team_size);
+    fprintf(fout_times, "%s: %d, \n", "\"vector_size\"", vector_size);
+    fprintf(fout_times, "%s: %d, \n", "\"vector_length_max\"", policy.vector_length_max());
+    fprintf(fout_times, "%s: %d, \n", "\"impl_vector_length\"", policy.impl_vector_length());
+    fprintf(fout_times, "%s: %d, \n", "\"team_size_recommended\"", team_conf_output.team_size_recommended);
+    fprintf(fout_times, "%s: %d \n", "\"team_size_max\"", team_conf_output.team_size_max);
+    fprintf(fout_times, "} \n "); // reaction rates
+
 
     if (write_time_profiles) {
       fclose(fout);

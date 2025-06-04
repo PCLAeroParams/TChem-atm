@@ -192,13 +192,13 @@ struct MosaicModelData {
         auto mw_c_host = mw_c.view_host();
         auto mw_a_host = mw_a.view_host();
 
-        a_zsr_host(0, jnh4hso4) =   1.30894;
-        a_zsr_host(1, jnh4hso4) =  -7.09922;
-        a_zsr_host(2, jnh4hso4) =  20.62831;
-        a_zsr_host(3, jnh4hso4) = -32.19965;
-        a_zsr_host(4, jnh4hso4) =  25.17026;
-        a_zsr_host(5, jnh4hso4) =  -7.81632;
-        aw_min_host(jnh4hso4)   =       0.1;
+        a_zsr_host(0, jnh4so4) =   1.30894;
+        a_zsr_host(1, jnh4so4) =  -7.09922;
+        a_zsr_host(2, jnh4so4) =  20.62831;
+        a_zsr_host(3, jnh4so4) = -32.19965;
+        a_zsr_host(4, jnh4so4) =  25.17026;
+        a_zsr_host(5, jnh4so4) =  -7.81632;
+        aw_min_host(jnh4so4)   =       0.1;
 
         a_zsr_host(0, jlvcite)  =   1.10725;
         a_zsr_host(1, jlvcite)  =  -5.17978;
@@ -2001,7 +2001,7 @@ struct MOSAIC{
                             const real_type_1d_view_type& epercent_solid,
                             const real_type_1d_view_type& epercent_liquid,
                             const real_type_1d_view_type& epercent_total,
-                            real_type& water_a, real_type&jphase, real_type&jhyst_leg) {
+                            real_type& water_a, real_type& jphase, real_type& jhyst_leg) {
 
     jphase = mosaic.jsolid;
     jhyst_leg = mosaic.jhyst_lo;
@@ -2033,14 +2033,14 @@ struct MOSAIC{
     }
   } // adjust_solid_aerosol
 
-  KOKKOS_INLINE_FUNCTION static void
-  do_full_deliquescence(const MosaicModelData<DeviceType>& mosaic,
-                        const real_type_1d_view_type& electrolyte_solid,
-                        const real_type_1d_view_type& electrolyte_liquid,
-                        const real_type_1d_view_type& electrolyte_total,
-                        const real_type_1d_view_type& aer_solid,
-                        const real_type_1d_view_type& aer_liquid,
-                        const real_type_1d_view_type& aer_total) {
+  KOKKOS_INLINE_FUNCTION static
+  void do_full_deliquescence(const MosaicModelData<DeviceType>& mosaic,
+                             const real_type_1d_view_type& electrolyte_solid,
+                             const real_type_1d_view_type& electrolyte_liquid,
+                             const real_type_1d_view_type& electrolyte_total,
+                             const real_type_1d_view_type& aer_solid,
+                             const real_type_1d_view_type& aer_liquid,
+                             const real_type_1d_view_type& aer_total) {
 
     // Partition all electrolytes to the liquid phase
     for (ordinal_type js = 0; js < mosaic.nelectrolyte; js++) {
@@ -2097,6 +2097,140 @@ struct MOSAIC{
     aer_liquid(mosaic.ilim1_a) = 0.0;
     aer_liquid(mosaic.ilim2_a) = 0.0;
   } // do_full_deliquescence
+
+  KOKKOS_INLINE_FUNCTION static
+  void calculate_XT(const MosaicModelData<DeviceType>& mosaic,
+                    const real_type_1d_view_type& aer,
+                    real_type &XT) {
+
+    //aer nmol/m^3
+    if ((aer(mosaic.iso4_a) + aer(mosaic.imsa_a)) > 0.0) {
+        XT = (aer(mosaic.inh4_a) + aer(mosaic.ina_a) +
+             2.0 * aer(mosaic.ica_a)) /
+            (aer(mosaic.iso4_a) + 0.5 * aer(mosaic.imsa_a));
+    } else {
+        XT = -1.0;
+    }
+  }// calculate_XT
+  
+  KOKKOS_INLINE_FUNCTION static
+  void fnlog_gamZ(const MosaicModelData<DeviceType>& mosaic,
+                  const ordinal_type& jA,
+                  const ordinal_type& jE,
+                  const real_type& aH2O,
+                  real_type& log_gamZ) {
+
+    // FIXME: aH2O should not be local; make sure updated with RH
+
+    auto b_mtem = mosaic.b_mtem.template view<DeviceType>();
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
+
+    const real_type aw = max(aH2O, aw_min(jE));
+
+    log_gamZ =  b_mtem(0,jA,jE) + aw *
+               (b_mtem(1,jA,jE) + aw *
+               (b_mtem(2,jA,jE) + aw *
+               (b_mtem(3,jA,jE) + aw *
+               (b_mtem(4,jA,jE) + aw *
+                b_mtem(5,jA,jE) ))));
+  } // fnlog_gamZ
+
+  KOKKOS_INLINE_FUNCTION static
+  void fn_Keq(const real_type& Keq_298,
+              const real_type& a,
+              const real_type& b,
+              const real_type& T,
+              real_type& Keq) {
+
+    real_type tt = 298.15/T;
+
+    Keq = Keq_298*ats<real_type>::exp(a*(tt - 1.0) + b*(1.0 + ats<real_type>::log(tt) - tt));
+  } // fn_Keq
+
+  KOKKOS_INLINE_FUNCTION static
+  void fn_Po(const real_type& Po_298,
+              const real_type& DH,
+              const real_type& T,
+              real_type& Po) {
+
+    // Van't Hoff Equation
+    Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
+  } // fn_Po
+  
+  KOKKOS_INLINE_FUNCTION static
+  void molality_0(const MosaicModelData<DeviceType>& mosaic,
+                  const ordinal_type& je,
+                  real_type& aw,
+                  real_type& molality) {
+
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    aw = max(aw, aw_min(je));
+    aw = min(aw, 0.999999);
+
+    if (aw < 0.97) {
+
+      real_type xm = a_zsr(0,je) +
+                 aw*(a_zsr(1,je) +
+                 aw*(a_zsr(2,je) +
+                 aw*(a_zsr(3,je) +
+                 aw*(a_zsr(4,je) +
+                 aw* a_zsr(5,je) ))));
+
+        molality = 55.509*xm/(1.0 - xm);
+    } else {
+      auto b_zsr = mosaic.b_zsr.template view<DeviceType>();
+      molality = -b_zsr(je)*ats<real_type>::log(aw);
+    }
+  } // molality_0
+
+  KOKKOS_INLINE_FUNCTION static
+  void bin_molality(const MosaicModelData<DeviceType>& mosaic,
+                    const ordinal_type& je,
+                    const real_type& aH2O_a,
+                    real_type& molality) {
+
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    real_type aw = max(aH2O_a, aw_min(je));
+    aw = min(aw, 0.999999);
+
+    if (aw < 0.97) {
+
+      real_type xm = a_zsr(0,je) +
+                 aw*(a_zsr(1,je) +
+                 aw*(a_zsr(2,je) +
+                 aw*(a_zsr(3,je) +
+                 aw*(a_zsr(4,je) +
+                 aw* a_zsr(5,je) ))));
+
+        molality = 55.509*xm/(1.0 - xm);
+    } else {
+      auto b_zsr = mosaic.b_zsr.template view<DeviceType>();
+      molality = -b_zsr(je)*ats<real_type>::log(aw);
+    }
+  } // bin_molality
+
+  KOKKOS_INLINE_FUNCTION static
+  void bin_molality_60(const MosaicModelData<DeviceType>& mosaic,
+                    const ordinal_type& je,
+                    real_type& molality) {
+
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    const real_type aw = 0.6;
+
+    real_type xm = a_zsr(0,je) +
+               aw*(a_zsr(1,je) +
+               aw*(a_zsr(2,je) +
+               aw*(a_zsr(3,je) +
+               aw*(a_zsr(4,je) +
+               aw* a_zsr(5,je) ))));
+
+      molality = 55.509*xm/(1.0 - xm);
+  } // bin_molality_60
 
 };
 

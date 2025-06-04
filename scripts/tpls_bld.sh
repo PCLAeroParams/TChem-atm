@@ -25,6 +25,11 @@ HIP="OFF"
 #Note that both CUDA and HIP cannot be enabled simultaneously.
 OPENMP="ON"
 
+# Note: that we are getting a runtime error if OpenMP is ON while HIP is also ON.
+if [ "${HIP}" = "ON" ]; then
+  OPENMP="OFF"
+fi
+
 # Path to TChem repository.
 # Where we git clone TChem-atm. Hint: look for the external folder.
 TCHEM_REPOSITORY_PATH=/path/to/tchem/
@@ -79,6 +84,9 @@ cmake \
     -D CMAKE_CXX_COMPILER="${KOKKOS_CXX_COMPILER}" \
     -D CMAKE_C_COMPILER="${MY_CC}" \
     -D CMAKE_BUILD_TYPE=RELEASE \
+    -D KokkosKernels_ENABLE_TPL_CUBLAS=OFF \
+    -D KokkosKernels_ENABLE_TPL_CUSOLVER=OFF \
+    -D KokkosKernels_ENABLE_TPL_CUSPARSE=OFF \
     -D KOKKOS_INSTALL_PATH="${KOKKOS_INSTALL_PATH}" \
     -D Kokkos_ROOT=$KOKKOS_INSTALL_PATH \
     ${KOKKOSKERNELS_REPOSITORY_PATH}
@@ -139,7 +147,7 @@ git clone https://github.com/LLNL/sundials.git ${SUNDIALS_REPOSITORY_PATH}
 }
 
 build_install_sundials(){
-echo "Building gtest:"
+echo "Building Sundials:"
 mkdir ${SUNDIALS_BUILD_PATH}
 mkdir ${SUNDIALS_INSTALL_PATH}
 cd ${SUNDIALS_BUILD_PATH}
@@ -147,6 +155,8 @@ cmake \
     -D CMAKE_INSTALL_PREFIX=${SUNDIALS_INSTALL_PATH} \
     -D CMAKE_CXX_COMPILER="${MY_CXX}"  \
     -D CMAKE_C_COMPILER="${MY_CC}" \
+    -D SUNDIALS_ENABLE_ERROR_CHECKS=OFF \
+    -D BUILD_SHARED_LIBS:BOOL=OFF \
     -D ENABLE_KOKKOS=ON \
     -D Kokkos_DIR=${KOKKOS_INSTALL_PATH} \
     -D ENABLE_KOKKOS_KERNELS=ON \

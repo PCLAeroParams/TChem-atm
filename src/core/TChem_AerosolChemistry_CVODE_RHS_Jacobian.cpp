@@ -39,7 +39,6 @@ int AerosolChemistry_CVODE_K::f(sunrealtype t, N_Vector y, N_Vector ydot, void* 
   const auto pressure= udata->pressure;
   const auto const_tracers= udata->const_tracers;
 
-  real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
   real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
   real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(ydot), nbatches, batchSize);
 
@@ -48,32 +47,18 @@ int AerosolChemistry_CVODE_K::f(sunrealtype t, N_Vector y, N_Vector ydot, void* 
   const ordinal_type per_team_extent
          = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
   const std::string profile_name = "TChem::AerosolChemistry::RHS_evaluation";
+
+  TChemAerosolChemistryRHS rhs_tchem(rhs, vals, num_concentration,
+     const_tracers, temperature, pressure, kmcd, amcd);
+
   Kokkos::Profiling::pushRegion(profile_name);
-  Kokkos::parallel_for
-  (profile_name,
-       policy,
-       KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+  Kokkos::parallel_for(profile_name, policy, rhs_tchem);
+  Kokkos::Profiling::popRegion();
 
-        const ordinal_type i = member.league_rank();
-        const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);
-        const real_type_1d_view_type rhs_at_i =
-        Kokkos::subview(rhs, i, Kokkos::ALL());
-        const real_type_1d_view_type vals_at_i =
-        Kokkos::subview(vals, i, Kokkos::ALL());
-        const real_type_1d_view_type number_conc_at_i =
-        Kokkos::subview(num_concentration, i, Kokkos::ALL());
-        TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
-                                       per_team_extent);
-        const real_type_1d_view_type constYs  = Kokkos::subview(const_tracers, i, Kokkos::ALL());
-        auto wptr = work.data();
-        auto pw = real_type_1d_view_type(wptr, per_team_extent);
-        wptr +=per_team_extent;
-        TChem::Impl::Aerosol_RHS<real_type, device_type>
-        ::team_invoke(member,
-        temperature(i), pressure(i), number_conc_at_i, vals_at_i, constYs,
-        rhs_at_i, pw, kmcd, amcd);
-      });
-
+  udata->team_size_recommended_rhs = policy.team_size_recommended(
+    rhs_tchem, Kokkos::ParallelForTag());
+  udata->team_size_max_rhs = policy.team_size_max(
+    rhs_tchem, Kokkos::ParallelForTag());
 
  return 0;
 }
@@ -94,6 +79,9 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
   const auto const_tracers= udata->const_tracers;
   const auto batchSize = udata->batchSize;
   const auto fac= udata->fac;
+#if defined(TCHEM_ATM_ENABLE_GPU)
+  const auto JacRL= udata->JacRL;
+#endif
   auto J_data = sundials::kokkos::GetDenseMat<MatType>(J)->View();
 
   real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
@@ -104,53 +92,64 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
   const ordinal_type per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
     + number_of_equations;
   const std::string profile_name = "TChem::AerosolChemistry::Jacobian_evaluation";
+  auto jac_lambda =        KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+
+    const ordinal_type i = member.league_rank();
+
+    const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);
+    const real_type_1d_view_type vals_at_i =
+    Kokkos::subview(vals, i, Kokkos::ALL());
+
+    const real_type_1d_view_type fac_at_i =
+    Kokkos::subview(fac, i, Kokkos::ALL());
+
+    const real_type_2d_view_type jacobian_at_i =
+#if defined(TCHEM_ATM_ENABLE_GPU)
+    Kokkos::subview(JacRL, i, Kokkos::ALL(), Kokkos::ALL());
+#else
+    Kokkos::subview(J_data, i, Kokkos::ALL(), Kokkos::ALL());
+#endif
+
+    const real_type_1d_view_type number_conc_at_i =
+    Kokkos::subview(num_concentration, i, Kokkos::ALL());
+
+    TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
+                                   per_team_extent);
+
+    auto wptr = work.data();
+
+    const real_type_1d_view_type constYs  = Kokkos::subview(const_tracers, i, Kokkos::ALL());
+
+    const ordinal_type problem_workspace_size = problem_type::getWorkSpaceSize(kmcd,amcd);
+    auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
+    wptr +=problem_workspace_size;
+    problem_type problem;
+    problem._kmcd = kmcd;
+    problem._amcd = amcd;
+    /// initialize problem
+    problem._fac = fac_at_i;
+    problem._work = pw;
+    problem._temperature= temperature(i);
+    problem._pressure =pressure(i);
+    problem._const_concentration= constYs;
+    problem._number_conc =number_conc_at_i;
+    problem.computeNumericalJacobian(member,vals_at_i,jacobian_at_i);
+#if defined(TCHEM_ATM_ENABLE_GPU)
+    //NOTE: Sundials uses a left layout on the device, while we are using a right layout.
+    // This incompatible layouts is producing a runtime error.
+    for (int k=0;k<batchSize;++k)
+      for (int j=0;j<batchSize;++j)
+       J_data(i, k, j) = jacobian_at_i(k,j);
+#endif
+    };
   Kokkos::Profiling::pushRegion(profile_name);
-  Kokkos::parallel_for
-  (profile_name,
-       policy,
-       KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+  Kokkos::parallel_for(profile_name, policy, jac_lambda);
+  Kokkos::Profiling::popRegion();
 
-        const ordinal_type i = member.league_rank();
-
-        const ordinal_type m = problem_type::getNumberOfTimeODEs(kmcd,amcd);
-        const real_type_1d_view_type vals_at_i =
-        Kokkos::subview(vals, i, Kokkos::ALL());
-
-        const real_type_1d_view_type fac_at_i =
-        Kokkos::subview(fac, i, Kokkos::ALL());
-
-        const real_type_2d_view_type jacobian_at_i =
-        Kokkos::subview(J_data, i, Kokkos::ALL(), Kokkos::ALL());
-
-                const real_type_1d_view_type number_conc_at_i =
-        Kokkos::subview(num_concentration, i, Kokkos::ALL());
-
-        TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
-                                       per_team_extent);
-
-        auto wptr = work.data();
-
-        const real_type_1d_view_type constYs  = Kokkos::subview(const_tracers, i, Kokkos::ALL());
-
-        const ordinal_type problem_workspace_size = problem_type::getWorkSpaceSize(kmcd,amcd);
-        auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
-        wptr +=problem_workspace_size;
-        problem_type problem;
-        problem._kmcd = kmcd;
-        problem._amcd = amcd;
-        /// initialize problem
-        problem._fac = fac_at_i;
-        problem._work = pw;
-        problem._temperature= temperature(i);
-        problem._pressure =pressure(i);
-        problem._const_concentration= constYs;
-        problem._number_conc =number_conc_at_i;
-        problem.computeNumericalJacobian(member,vals_at_i,jacobian_at_i);
-        // for (int k=0;k<m;++k)
-        //   for (int j=0;j<m;++j)
-        //    J_data(i, k, j) = jacobian_at_i(k,j);
-      });
-
+  udata->team_size_recommended_jac = policy.team_size_recommended(
+    jac_lambda, Kokkos::ParallelForTag());
+  udata->team_size_max_jac = policy.team_size_max(
+    jac_lambda, Kokkos::ParallelForTag());
 
   return 0;
 

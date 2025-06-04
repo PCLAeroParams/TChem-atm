@@ -34,18 +34,20 @@ int main() {
    }
 
    state[50] = 0.06;
+   state[51] = 1e-06;
    state[36] = 0.001;
+   state[81] = 1e8;
 
    int i_spec;
    i_spec = 3 + TChem_getNumberOfSpecies();
    for (int i = 0; i < len; i++){
      num_conc[i] = 10000.0;
-     state[i_spec] = 1e-9;
+     state[i_spec] = 1e-08;
      i_spec = i_spec + 5;
    }
  
    TChem_setStateVector(state, 0);
-
+   TChem_setNumberConcentrationVector(num_conc, 0);
    memcpy(original, state, TChem_getLengthOfStateVector() * sizeof(double));
 
    FILE *aero_prop_file = fopen("species_props.txt", "w");
@@ -55,7 +57,8 @@ int main() {
       density = TChem_getAerosolSpeciesDensity(&i);
       mw = TChem_getAerosolSpeciesMW(&i);
       kappa = TChem_getAerosolSpeciesKappa(&i);
-      fprintf(aero_prop_file, "%d %f %f %f\n", i, density, mw, kappa);
+      TChem_getAerosolSpeciesName(&i, SpecName, 100);
+      fprintf(aero_prop_file, "%s %f %f %f\n", SpecName, density, mw, kappa);
    }
 
    double del_t = 30.0;

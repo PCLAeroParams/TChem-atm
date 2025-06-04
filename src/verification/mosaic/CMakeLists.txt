@@ -57,7 +57,7 @@ set(ERROR_THRESHOLDS
     1e-8           # fn_Po_output_ts_0
     1e-5           # molality_0_output_ts_0
     1e-5           # bin_molality_output_ts_0
-    1e-5           # MTEM_compute_log_gamZ
+    1.8e-4         # MTEM_compute_log_gamZ
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

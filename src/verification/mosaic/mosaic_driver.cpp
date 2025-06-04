@@ -33,6 +33,8 @@ void molality_0(Ensemble *ensemble);
 
 void bin_molality(Ensemble *ensemble);
 
+void bin_molality_60(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -74,6 +76,8 @@ int main(int argc, char **argv) {
       molality_0(ensemble);
     } else if (func_name == "bin_molality") {
       bin_molality(ensemble);
+    } else if (func_name == "bin_molality_60") {
+      bin_molality_60(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

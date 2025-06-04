@@ -2213,6 +2213,25 @@ struct MOSAIC{
     }
   } // bin_molality
 
+  KOKKOS_INLINE_FUNCTION static
+  void bin_molality_60(const MosaicModelData<DeviceType>& mosaic,
+                    const ordinal_type& je,
+                    real_type& molality) {
+
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    const real_type aw = 0.6;
+
+    real_type xm = a_zsr(0,je) +
+               aw*(a_zsr(1,je) +
+               aw*(a_zsr(2,je) +
+               aw*(a_zsr(3,je) +
+               aw*(a_zsr(4,je) +
+               aw* a_zsr(5,je) ))));
+
+      molality = 55.509*xm/(1.0 - xm);
+  } // bin_molality_60
+
 };
 
 } // namespace Impl

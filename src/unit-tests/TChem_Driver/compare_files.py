@@ -1,3 +1,4 @@
+import numpy as np
 
 def compare_files(file1_path, file2_path):
     with open(file1_path, 'r') as file1, open(file2_path, 'r') as file2:
@@ -16,12 +17,27 @@ def compare_files(file1_path, file2_path):
 
     if differences:
         print("Differences found:")
+
     for line_num, l1, l2 in differences:
         print(f"Line {line_num}:\n  File1: {l1}\n  File2: {l2}")
-    else:
-        print("The files are identical.")
+
+    return not differences
+
+def compare_values(file1_path, file2_path):
+
+    data = np.genfromtxt(file1_path, dtype=str)
+    test = (data[:]).astype(float)
+
+    data = np.genfromtxt(file2_path, dtype=str)
+    ref = (data[:]).astype(float)
+
+    return np.all(np.isclose(test, ref))
 
 # Example usage
-compare_files('species_names.txt', 'references/species_names_ref.txt')
-compare_files('species_props.txt', 'references/species_props_ref.txt')
-compare_files('output.txt', 'references/output_ref.txt')
+pass_test= np.full(3, True)
+pass_test[0] = compare_files('species_names.txt', 'references/species_names_ref.txt')
+pass_test[1] = compare_files('species_props.txt', 'references/species_props_ref.txt')
+pass_test[2] = compare_values('output.txt', 'references/output_ref.txt')
+
+assert(np.all(pass_test))
+

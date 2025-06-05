@@ -27,7 +27,9 @@ SET(EXE_NAME ./TChem_Driver.x)
 SET(INPUT_PATH ./)
 
 # Set the validation script path
-SET(VALIDATION_SCRIPT ../scripts/compare_files.py)
+FILE(COPY compare_files.py
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+SET(VALIDATION_SCRIPT ./compare_files.py)
 
 # Add a test to execute the example code
 ADD_TEST(run_${TEST_NAME} ${EXE_NAME})

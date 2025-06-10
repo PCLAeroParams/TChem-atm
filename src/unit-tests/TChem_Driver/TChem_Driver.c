@@ -14,11 +14,10 @@ int main() {
              );
 
    len = TChem_getLengthOfStateVector();
-   double *state = (double *)malloc(len * sizeof(double));
-   double *original = (double *)malloc(len * sizeof(double));
+   double *state = (double *)calloc(len, sizeof(double));
 
    len = TChem_getNumberConcentrationVectorSize();
-   double *num_conc = (double *)malloc(len * sizeof(double));
+   double *num_conc = (double *)calloc(len, sizeof(double));
 
    state[0] = 0.0;
    state[1] = 81060;
@@ -30,7 +29,6 @@ int main() {
    for (int i = 0; i < TChem_getNumberOfSpecies(); i++){
     TChem_getSpeciesName(&i, SpecName, 100);
     fprintf(file, "%s\n", SpecName);
-    state[i + 3] = 0.0;
    }
 
    state[50] = 0.06;
@@ -48,7 +46,6 @@ int main() {
  
    TChem_setStateVector(state, 0);
    TChem_setNumberConcentrationVector(num_conc, 0);
-   memcpy(original, state, TChem_getLengthOfStateVector() * sizeof(double));
 
    FILE *aero_prop_file = fopen("species_props.txt", "w");
 

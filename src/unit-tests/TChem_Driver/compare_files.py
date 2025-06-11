@@ -19,7 +19,7 @@ def compare_files(file1_path, file2_path):
         print("Differences found:")
         for line_num, l1, l2 in differences:
             print(f"Line {line_num}:\n  File1: {l1}\n  File2: {l2}")
-       return False
+        return False
 
     return True
 

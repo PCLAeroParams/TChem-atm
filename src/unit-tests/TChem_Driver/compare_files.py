@@ -12,16 +12,16 @@ def compare_files(file1_path, file2_path):
         line1 = file1_lines[i].strip() if i < len(file1_lines) else "<no line>"
         line2 = file2_lines[i].strip() if i < len(file2_lines) else "<no line>"
 
-    if line1 != line2:
-        differences.append((i + 1, line1, line2))
+        if line1 != line2:
+            differences.append((i + 1, line1, line2))
 
     if differences:
         print("Differences found:")
+        for line_num, l1, l2 in differences:
+            print(f"Line {line_num}:\n  File1: {l1}\n  File2: {l2}")
+       return False
 
-    for line_num, l1, l2 in differences:
-        print(f"Line {line_num}:\n  File1: {l1}\n  File2: {l2}")
-
-    return not differences
+    return True
 
 def compare_values(file1_path, file2_path):
 
@@ -33,10 +33,9 @@ def compare_values(file1_path, file2_path):
 
     return np.all(np.isclose(test, ref))
 
-# Example usage
 pass_test= np.full(3, True)
-pass_test[0] = compare_files('species_names.txt', 'references/species_names_ref.txt')
-pass_test[1] = compare_files('species_props.txt', 'references/species_props_ref.txt')
+pass_test[0] = compare_files('gas_species_names.txt', 'references/gas_species_names_ref.txt')
+pass_test[1] = compare_files('aero_species_props.txt', 'references/aero_species_props_ref.txt')
 pass_test[2] = compare_values('output.txt', 'references/output_ref.txt')
 
 assert(np.all(pass_test))

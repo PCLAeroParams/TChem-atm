@@ -23,7 +23,7 @@ int main() {
    state[1] = 81060;
    state[2] = 270.5;
 
-   FILE *file = fopen("species_names.txt", "w");
+   FILE *file = fopen("gas_species_names.txt", "w");
 
    char SpecName[100]; 
    for (int i = 0; i < TChem_getNumberOfSpecies(); i++){
@@ -47,7 +47,7 @@ int main() {
    TChem_setStateVector(state, 0);
    TChem_setNumberConcentrationVector(num_conc, 0);
 
-   FILE *aero_prop_file = fopen("species_props.txt", "w");
+   FILE *aero_prop_file = fopen("aero_species_props.txt", "w");
 
    double density, mw, kappa;
    for (int i = 0; i< TChem_getNumberOfAeroSpecies(); i++){

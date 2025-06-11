@@ -2129,7 +2129,7 @@ struct MOSAIC{
 
     const real_type aw = max(aH2O, aw_min(jE));
 
-    log_gamZ_ =  b_mtem(0,jA,jE) + aw *
+    log_gamZ_ = b_mtem(0,jA,jE) + aw *
                (b_mtem(1,jA,jE) + aw *
                (b_mtem(2,jA,jE) + aw *
                (b_mtem(3,jA,jE) + aw *

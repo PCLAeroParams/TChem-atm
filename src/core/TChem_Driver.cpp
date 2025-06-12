@@ -139,8 +139,6 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   auto rtol_time = root["solver_info"]["rtol_time"];
   auto max_num_newton_iterations = root["solver_info"]["max_newton_iterations"];
   auto max_num_time_iterations = root["solver_info"]["max_num_time_iterations"];
-  auto num_time_iterations_per_interval = root["solver_info"]["num_time_iterations_per_interval"];
-  auto jacobian_interval = root["solver_info"]["jacobian_interval"];
 
   auto team_size = root["solver_info"]["team_size"];
   auto vector_size = root["solver_info"]["vector_size"];
@@ -152,8 +150,6 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   _rtol_time = rtol_time.as<real_type>(1e-4);
   _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
   _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
-  _num_time_iterations_per_interval = num_time_iterations_per_interval.as<ordinal_type>(1e1);
-  _jacobian_interval = jacobian_interval.as<ordinal_type>(1);
 
   // If team_size and vector_size are not specified, default to -1
   _team_size = team_size.as<ordinal_type>(-1);
@@ -313,8 +309,7 @@ std::string TChem::Driver::getSpeciesName(int *index){
  * Return number of gas species in the mechanism.
  */
 ordinal_type TChem_getNumberOfSpecies(){
-  ordinal_type nSpec = g_tchem->getNumberOfSpecies();
-  return nSpec;
+  return g_tchem->getNumberOfSpecies();
 }
 
 ordinal_type TChem::Driver::getNumberOfSpecies() { return _kmcd_host.nSpec;}
@@ -487,14 +482,14 @@ void TChem::Driver::doTimestep(const double del_t){
   const ordinal_type level = 1;
 
   auto stateVecDim = TChem_getLengthOfStateVector();
-  real_type_2d_view state("StateVector Devices", _nBatch, stateVecDim);
-  Kokkos::deep_copy(state, _state);
+  real_type_2d_view state_device("StateVector Devices", _nBatch, stateVecDim);
+  Kokkos::deep_copy(state_device, _state);
 
   Kokkos::parallel_for(
     "fill_y", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
     KOKKOS_LAMBDA(const SizeType i) {
       const real_type_1d_view_type state_at_i =
-             Kokkos::subview(state, i, Kokkos::ALL());
+             Kokkos::subview(state_device, i, Kokkos::ALL());
       const ordinal_type total_n_species = _kmcd_device.nSpec + _amcd_device.nParticles*_amcd_device.nSpec;
       TChem::Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
       temperature(i) = sv_at_i.Temperature();

@@ -2,16 +2,12 @@
 #include <stdio.h>
 #include <TChem_Driver.hpp>
 
-int main() {
+int main(int argc, char* argv[]) {
   printf("TChem driver initialized successfully.\n");
 
    int len;
    int nBatch = 1;
-   initialize("config_gas.yaml",
-              "config_aero.yaml",
-              "config_solver.yaml",
-              nBatch 
-             );
+   initialize(argv[1], argv[2], argv[3], nBatch);
 
    len = TChem_getLengthOfStateVector();
    double *state = (double *)calloc(len, sizeof(double));

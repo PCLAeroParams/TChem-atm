@@ -471,7 +471,8 @@ void TChem::Driver::doTimestep(const double del_t){
 
   // Create the SUNDIALS context
   sundials::Context sunctx;
-  // Create vector with the initial condition
+
+  // Set the initial time to be zero.
   const sunrealtype T0 = SUN_RCONST(0.0);
 
   SizeType length{static_cast<SizeType>(_nBatch * number_of_equations)};

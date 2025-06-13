@@ -131,17 +131,20 @@ void TChem::Driver::setBatchSize(const ordinal_type nBatch) {
 void TChem::Driver::createNumerics(const std::string &numerics_file) {
 
   YAML::Node root = YAML::LoadFile(numerics_file);
+  YAML::Node solver_info = root["solver_info"];
 
-  auto atol_newton = root["solver_info"]["atol_newton"];
-  auto rtol_newton =  root["solver_info"]["rtol_newton"];
-  auto dtmin = root["solver_info"]["dtmin"];
-  auto atol_time = root["solver_info"]["atol_time"];
-  auto rtol_time = root["solver_info"]["rtol_time"];
-  auto max_num_newton_iterations = root["solver_info"]["max_newton_iterations"];
-  auto max_num_time_iterations = root["solver_info"]["max_num_time_iterations"];
+  auto atol_newton = solver_info["atol_newton"];
+  auto rtol_newton =  solver_info["rtol_newton"];
+  auto dtmin = solver_info["dtmin"];
+  auto atol_time = solver_info["atol_time"];
+  auto rtol_time = solver_info["rtol_time"];
+  auto max_num_newton_iterations = solver_info["max_newton_iterations"];
+  auto max_num_time_iterations = solver_info["max_num_time_iterations"];
 
-  auto team_size = root["solver_info"]["team_size"];
-  auto vector_size = root["solver_info"]["vector_size"];
+  auto team_size = solver_info["team_size"];
+  auto vector_size = solver_info["vector_size"];
+
+  auto verbose = solver_info["verbose"];
 
   _atol_newton = atol_newton.as<real_type>(1e-10);
   _rtol_newton = rtol_newton.as<real_type>(1e-6);
@@ -154,6 +157,8 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   // If team_size and vector_size are not specified, default to -1
   _team_size = team_size.as<ordinal_type>(-1);
   _vector_size = vector_size.as<ordinal_type>(-1);
+
+  _verbose = verbose.as<bool>(false);
 
 }
 
@@ -601,7 +606,9 @@ void TChem::Driver::doTimestep(const double del_t){
     _state(i,j+3+_kmcd_host.nConstSpec) = y2d_h(i,j);
   }
 
-  print_cvode_statistics(cvode_mem);
+  if (_verbose) {
+    print_cvode_statistics(cvode_mem);
+  };
 
   CVodeFree(&cvode_mem);
 

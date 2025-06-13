@@ -69,6 +69,7 @@ public:
    real_type _rtol_time; // Relative tolerance used for adaptive time stepping
    ordinal_type _max_num_newton_iterations; // Maximum number of Newton iterations
    ordinal_type _max_num_time_iterations; // Maximum number of time iterations
+   bool _verbose; // Enable verbose solver information
 
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);

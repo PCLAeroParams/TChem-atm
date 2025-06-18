@@ -38,8 +38,8 @@ namespace TChem {
   ordinal_type nConstSpec_gas_;
   // number of particles
   ordinal_type nParticles_{-1};
-  // aerosol molecular weights and density
-  real_type_1d_dual_view molecular_weights_, aerosol_density_;
+  // aerosol molecular weights, density and kappa
+  real_type_1d_dual_view molecular_weights_, aerosol_density_, aerosol_kappa_;
   simpol_phase_transfer_type_1d_dual_view simpol_params_;
   ordinal_type nSimpol_tran_;
 
@@ -93,6 +93,7 @@ namespace TChem {
 
     amcd_real_type_1d_view molecular_weights;
     amcd_real_type_1d_view aerosol_density;
+    amcd_real_type_1d_view aerosol_kappa;
 
    };
 
@@ -106,6 +107,7 @@ namespace TChem {
     data.nSimpol_tran=amd.nSimpol_tran_;
     data.molecular_weights = amd.molecular_weights_.template view<SpT>();
     data.aerosol_density = amd.aerosol_density_.template view<SpT>();
+    data.aerosol_kappa = amd.aerosol_kappa_.template view<SpT>();
     data.simpol_params = amd.simpol_params_.template view<SpT>();
   return data;
   }

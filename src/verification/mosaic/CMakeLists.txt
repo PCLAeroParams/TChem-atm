@@ -12,8 +12,13 @@ add_executable(${DRIVER_NAME}.x
                fn_Po.cpp
                molality_0.cpp
                bin_molality.cpp
+<<<<<<< MTEM_compute_log_gamZ
                MTEM_compute_log_gamZ.cpp
  )
+=======
+               bin_molality_60.cpp
+)
+>>>>>>> main
 
 
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
@@ -30,7 +35,11 @@ SET(TEST_LIST
      fn_Po_input_ts_0
      molality_0_input_ts_0
      bin_molality_input_ts_0
+<<<<<<< MTEM_compute_log_gamZ
      MTEM_compute_log_gamZ_input_ts_0
+=======
+     bin_molality_60_input_ts_0
+>>>>>>> main
 )
 
 SET(TEST_BASELINE
@@ -43,7 +52,11 @@ SET(TEST_BASELINE
     fn_Po_output_ts_0
     molality_0_output_ts_0
     bin_molality_output_ts_0
+<<<<<<< MTEM_compute_log_gamZ
     MTEM_compute_log_gamZ_output_ts_0
+=======
+    bin_molality_60_output_ts_0
+>>>>>>> main
 )
 
 SET(DEFAULT_TOL 1e-9)
@@ -57,7 +70,11 @@ set(ERROR_THRESHOLDS
     1e-8           # fn_Po_output_ts_0
     1e-5           # molality_0_output_ts_0
     1e-5           # bin_molality_output_ts_0
+<<<<<<< MTEM_compute_log_gamZ
     1.8e-4         # MTEM_compute_log_gamZ
+=======
+    1e-6           # bin_molality_60_output_ts_0
+>>>>>>> main
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

@@ -134,7 +134,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   YAML::Node solver_info = root["solver_info"];
 
   auto atol_newton = solver_info["atol_newton"];
-  auto rtol_newton =  solver_info["rtol_newton"];
+  auto rtol_newton = solver_info["rtol_newton"];
   auto dtmin = solver_info["dtmin"];
   auto atol_time = solver_info["atol_time"];
   auto rtol_time = solver_info["rtol_time"];
@@ -491,31 +491,37 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_2d_view state_device("StateVector Devices", _nBatch, stateVecDim);
   Kokkos::deep_copy(state_device, _state);
 
+
+  const ordinal_type n_gas_spec = _kmcd_device.nSpec;
+  const ordinal_type n_gas_spec_constant = _kmcd_device.nConstSpec;
+  const ordinal_type total_n_species = _kmcd_device.nSpec  +
+      _amcd_device.nParticles * _amcd_device.nSpec;
+
   Kokkos::parallel_for(
     "fill_y", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
     KOKKOS_LAMBDA(const SizeType i) {
       const real_type_1d_view_type state_at_i =
-             Kokkos::subview(state_device, i, Kokkos::ALL());
-      const ordinal_type total_n_species = _kmcd_device.nSpec + _amcd_device.nParticles*_amcd_device.nSpec;
+            Kokkos::subview(state_device, i, Kokkos::ALL());
       TChem::Impl::StateVector<real_type_1d_view_type> sv_at_i(total_n_species, state_at_i);
       temperature(i) = sv_at_i.Temperature();
       pressure(i) = sv_at_i.Pressure();
       const real_type_1d_view_type Ys = sv_at_i.MassFractions();
 
       const auto activeYs = Kokkos::subview(Ys, range_type(0, n_active_gas_species));
-      const auto constYs  = Kokkos::subview(Ys, range_type(n_active_gas_species, _kmcd_device.nSpec));
-      const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(_kmcd_device.nSpec, total_n_species));
+      const auto constYs  = Kokkos::subview(Ys, range_type(n_active_gas_species, n_gas_spec));
+      const real_type_1d_view_type partYs = Kokkos::subview(Ys,
+            range_type(n_gas_spec, total_n_species));
 
-      for (ordinal_type j=0;j<n_active_gas_species;++j){
+      for (ordinal_type j = 0; j < n_active_gas_species; ++j){
         y2d(i, j) = activeYs(j);
       }
 
-      for (ordinal_type j=n_active_gas_species;j<total_n_species- _kmcd_device.nConstSpec;++j)
+      for (ordinal_type j = n_active_gas_species; j < total_n_species - n_gas_spec_constant; ++j)
       {
         y2d(i, j) = partYs(j-n_active_gas_species);
       }
 
-      for (ordinal_type j=0;j<_kmcd_device.nConstSpec;++j){
+      for (ordinal_type j = 0; j < n_gas_spec_constant; ++j){
         const_tracers(i, j) = constYs(j);
       }
   });
@@ -528,7 +534,7 @@ void TChem::Driver::doTimestep(const double del_t){
   VecType abstol{length, sunctx};
   N_VConst(SUN_RCONST(_atol_time), abstol);
 
-    // Create CVODE using Backward Differentiation Formula methods
+  // Create CVODE using Backward Differentiation Formula methods
   void* cvode_mem = CVodeCreate(CV_BDF, sunctx);
 
   // Initialize the integrator and set the ODE right-hand side function
@@ -546,7 +552,7 @@ void TChem::Driver::doTimestep(const double del_t){
   std::unique_ptr<sundials::ConvertibleTo<SUNMatrix>> A;
   std::unique_ptr<sundials::ConvertibleTo<SUNLinearSolver>> LS;
 
-  ordinal_type per_team_extent=0;
+  ordinal_type per_team_extent = 0;
 
   // Create matrix-free GMRES linear solver
   LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
@@ -560,7 +566,7 @@ void TChem::Driver::doTimestep(const double del_t){
 
   const ordinal_type per_team_scratch =
     TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
-    policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
+  policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
   udata.policy = policy;
 
   // Final time and time between outputs
@@ -578,14 +584,12 @@ void TChem::Driver::doTimestep(const double del_t){
 
   // Initial output
   real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
-  sundials::kokkos::CopyFromDevice(y);
-  Kokkos::fence();
 
   // Time stepping
   int iout = 0;
   for (iout = 0; iout < Nt; iout++)
   {
-      // Advance in time
+    // Advance in time
     retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
     exec_space_instance.fence();
     if (check_flag(retval, "CVode")) { break; }
@@ -599,11 +603,11 @@ void TChem::Driver::doTimestep(const double del_t){
 
   // Copy results back
   int i = 0;
-  for (ordinal_type j=0;j<n_active_gas_species;++j){
+  for (ordinal_type j = 0; j < n_active_gas_species; ++j){
     _state(i,j+3) = y2d_h(i, j);
   }
-  const ordinal_type total_n_species = _kmcd_host.nSpec + _amcd_host.nParticles*_amcd_host.nSpec;
-  for (ordinal_type j=n_active_gas_species;j<total_n_species - _kmcd_host.nConstSpec;++j){
+
+  for (ordinal_type j = n_active_gas_species; j < total_n_species - _kmcd_host.nConstSpec; ++j){
     _state(i,j+3+_kmcd_host.nConstSpec) = y2d_h(i,j);
   }
 

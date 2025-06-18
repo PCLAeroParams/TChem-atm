@@ -6,3 +6,4 @@ solver_info:
   rtol_newton: 1e-4
   max_newton_iterations: 100
   max_time_iterations: 200000
+  verbose: true

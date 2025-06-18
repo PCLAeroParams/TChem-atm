@@ -2220,11 +2220,10 @@ struct MOSAIC{
                              const real_type& aH2O,
                              real_type_2d_view_type log_gamZ) {
 
-    ordinal_type jA;
     real_type log_gamZ_ = 0.0;
 
   // sulfate-poor species
-    jA = mosaic.jhno3;
+    ordinal_type jA = mosaic.jhno3;
     fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
     log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
     fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);

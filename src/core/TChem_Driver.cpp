@@ -16,8 +16,7 @@ static TChem::Driver *g_tchem = nullptr;
 
 static int check_flag(const int flag, const std::string funcname)
 {
-  if (flag < 0)
-  {
+  if (flag < 0) {
     std::cerr << "ERROR: " << funcname << " returned " << flag << std::endl;
     return 1;
   }
@@ -443,9 +442,9 @@ void TChem::Driver::doTimestep(const double del_t){
   policy_type policy(exec_space_instance, _nBatch, Kokkos::AUTO());
 
   if (_team_size > 0 && _vector_size > 0) {
-      policy = policy_type(exec_space_instance,  _nBatch, _team_size, _vector_size);
+    policy = policy_type(exec_space_instance,  _nBatch, _team_size, _vector_size);
   } else if (_team_size > 0 && _vector_size < 0) {
-      policy = policy_type(exec_space_instance, _nBatch,  _team_size);
+    policy = policy_type(exec_space_instance, _nBatch, _team_size);
   }
 
   auto number_of_equations = problem_type::getNumberOfTimeODEs(_kmcd_host, _amcd_host);
@@ -491,7 +490,6 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_2d_view state_device("StateVector Devices", _nBatch, stateVecDim);
   Kokkos::deep_copy(state_device, _state);
 
-
   const ordinal_type n_gas_spec = _kmcd_device.nSpec;
   const ordinal_type n_gas_spec_constant = _kmcd_device.nConstSpec;
   const ordinal_type total_n_species = _kmcd_device.nSpec  +
@@ -518,7 +516,7 @@ void TChem::Driver::doTimestep(const double del_t){
 
       for (ordinal_type j = n_active_gas_species; j < total_n_species - n_gas_spec_constant; ++j)
       {
-        y2d(i, j) = partYs(j-n_active_gas_species);
+        y2d(i, j) = partYs(j - n_active_gas_species);
       }
 
       for (ordinal_type j = 0; j < n_gas_spec_constant; ++j){
@@ -576,7 +574,7 @@ void TChem::Driver::doTimestep(const double del_t){
   // Number of output times
   const int Nt_p = static_cast<int>(ceil(Tf / dTout));
 
-  const int Nt = _max_num_time_iterations > 0 ? _max_num_time_iterations: Nt_p;
+  const int Nt = _max_num_time_iterations > 0 ? _max_num_time_iterations : Nt_p;
 
   // Current time and first output time
   sunrealtype t    = T0;
@@ -604,11 +602,11 @@ void TChem::Driver::doTimestep(const double del_t){
   // Copy results back
   int i = 0;
   for (ordinal_type j = 0; j < n_active_gas_species; ++j){
-    _state(i,j+3) = y2d_h(i, j);
+    _state(i, j + 3) = y2d_h(i, j);
   }
 
   for (ordinal_type j = n_active_gas_species; j < total_n_species - _kmcd_host.nConstSpec; ++j){
-    _state(i,j+3+_kmcd_host.nConstSpec) = y2d_h(i,j);
+    _state(i, j + 3 + _kmcd_host.nConstSpec) = y2d_h(i, j);
   }
 
   if (_verbose) {

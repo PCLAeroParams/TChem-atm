@@ -13,7 +13,9 @@ add_executable(${DRIVER_NAME}.x
                molality_0.cpp
                bin_molality.cpp
                bin_molality_60.cpp
-)
+               MTEM_compute_log_gamZ.cpp
+ )
+
 
 
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
@@ -31,6 +33,7 @@ SET(TEST_LIST
      molality_0_input_ts_0
      bin_molality_input_ts_0
      bin_molality_60_input_ts_0
+     MTEM_compute_log_gamZ_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -44,6 +47,7 @@ SET(TEST_BASELINE
     molality_0_output_ts_0
     bin_molality_output_ts_0
     bin_molality_60_output_ts_0
+    MTEM_compute_log_gamZ_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-9)
@@ -58,6 +62,7 @@ set(ERROR_THRESHOLDS
     1e-5           # molality_0_output_ts_0
     1e-5           # bin_molality_output_ts_0
     1e-6           # bin_molality_60_output_ts_0
+    1.8e-4         # MTEM_compute_log_gamZ
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

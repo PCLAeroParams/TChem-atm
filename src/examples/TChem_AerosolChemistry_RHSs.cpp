@@ -203,6 +203,7 @@ int main(int argc, char *argv[]) {
     FILE *fout_times = fopen(outputFileTimes.c_str(), "w");
 
     if (do_rhs){
+      printf("..evaluating RHS\n");
       fprintf(fout_times, "{\n");
       fprintf(fout_times, " \"Aerosol RHSs\": \n {\n");
       const ordinal_type level = 1;
@@ -279,10 +280,18 @@ int main(int argc, char *argv[]) {
       fprintf(fout_times, "%s: %20.14e, \n","\"wall_time\"", t_device_batch);
       fprintf(fout_times, "%s: %20.14e, \n","\"wall_time_per_sample\"", t_device_batch / real_type(nBatch));
       fprintf(fout_times, "%s: %d \n","\"number_of_samples\"", nBatch);
-      fprintf(fout_times, "}, \n ");// reaction rates
+
+      if (do_jac){
+          fprintf(fout_times, "}, \n ");// reaction rates
+      } 
+      else {
+          fprintf(fout_times, "} \n ");// reaction rates
+      }
+      
     }
 
     if (do_jac){
+      printf("..evaluating Jacobian\n");
       const ordinal_type level = 1;
       fprintf(fout_times, " \"Aerosol Numerical Jacobian\": \n {\n");
       const std::string profile_name = "TChem::AerosolChemistry::NumericalJacobian_evaluation";

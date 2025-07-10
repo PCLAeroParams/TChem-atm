@@ -176,9 +176,13 @@ int main(int argc, char *argv[]) {
       Kokkos::deep_copy(num_concentration, num_concentration_host);
     }
     // output
-    real_type_2d_view_type rhs("rhs", nBatch, number_of_equations);
     real_type_2d_view_type fac("fac", nBatch, number_of_equations);
-    real_type_3d_view_type jacobian("jacobian", nBatch, number_of_equations, number_of_equations);
+    if (do_rhs){
+      real_type_2d_view_type rhs("rhs", nBatch, number_of_equations);
+    }
+    if (do_jac){
+      real_type_3d_view_type jacobian("jacobian", nBatch, number_of_equations, number_of_equations);
+    }
 
     using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 

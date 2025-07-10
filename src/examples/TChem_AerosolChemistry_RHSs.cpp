@@ -37,6 +37,8 @@ int main(int argc, char *argv[]) {
   bool verbose(true);
   bool use_cloned_samples(false);
   int number_of_particles(-1);
+  bool do_jac(true);
+  bool do_rhs(true);
 
   /// parse command line arguments
   TChem::CommandLineParser opts("This example computes the net production rates with a given state vector");
@@ -57,6 +59,9 @@ int main(int argc, char *argv[]) {
   opts.set_option<int>("batch_size", " number of batches or samples, e.g. 10  ", &nBatch);
   opts.set_option<bool>(
       "use_cloned_samples", "If true, one state vector will be cloned.", &use_cloned_samples);
+  opts.set_option<bool>("do_jac", "Evaluate Jacobian matrix", &do_jac);
+  opts.set_option<bool>("do_rhs", "Evaluate RHS", &do_rhs);
+  
 
   const bool r_parse = opts.parse(argc, argv);
   if (r_parse)
@@ -196,7 +201,8 @@ int main(int argc, char *argv[]) {
 
     Kokkos::Timer timer;
     FILE *fout_times = fopen(outputFileTimes.c_str(), "w");
-    {
+
+    if (do_rhs){
       fprintf(fout_times, "{\n");
       fprintf(fout_times, " \"Aerosol RHSs\": \n {\n");
       const ordinal_type level = 1;
@@ -276,7 +282,7 @@ int main(int argc, char *argv[]) {
       fprintf(fout_times, "}, \n ");// reaction rates
     }
 
-    {
+    if (do_jac){
       const ordinal_type level = 1;
       fprintf(fout_times, " \"Aerosol Numerical Jacobian\": \n {\n");
       const std::string profile_name = "TChem::AerosolChemistry::NumericalJacobian_evaluation";
@@ -355,10 +361,11 @@ int main(int argc, char *argv[]) {
       fprintf(fout_times, "%s: %d \n","\"number_of_samples\"", nBatch);
       fprintf(fout_times, "} \n ");// reaction rates
     }
-    if (verbose) {
 
+    if (verbose & do_rhs) {
 
-     if (use_cloned_samples) {
+     
+     if (use_cloned_samples) { 
        auto rhs_at_0 = Kokkos::subview(rhs, 0, Kokkos::ALL());
        auto rhs_host_at_0 = Kokkos::create_mirror_view(rhs_at_0);
        Kokkos::deep_copy(rhs_host_at_0, rhs_at_0);

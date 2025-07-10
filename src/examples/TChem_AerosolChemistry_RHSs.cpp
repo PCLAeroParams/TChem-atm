@@ -177,12 +177,7 @@ int main(int argc, char *argv[]) {
     }
     // output
     real_type_2d_view_type fac("fac", nBatch, number_of_equations);
-    if (do_rhs){
-      real_type_2d_view_type rhs("rhs", nBatch, number_of_equations);
-    }
-    if (do_jac){
-      real_type_3d_view_type jacobian("jacobian", nBatch, number_of_equations, number_of_equations);
-    }
+    real_type_2d_view_type rhs("rhs", nBatch, number_of_equations);
 
     using policy_type = typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
@@ -296,6 +291,7 @@ int main(int argc, char *argv[]) {
 
     if (do_jac){
       printf("..evaluating Jacobian\n");
+      real_type_3d_view_type jacobian("jacobian", nBatch, number_of_equations, number_of_equations);
       const ordinal_type level = 1;
       fprintf(fout_times, " \"Aerosol Numerical Jacobian\": \n {\n");
       const std::string profile_name = "TChem::AerosolChemistry::NumericalJacobian_evaluation";

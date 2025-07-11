@@ -14,6 +14,7 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_AerosolChemistry.cpp
   TChem_AerosolChemistry_RHSs.cpp
   TChem_GasChemistry_RHSs.cpp
+  TChem_ArrowSolver.cpp
 )
 
 IF(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS)

@@ -10,7 +10,7 @@
 #SBATCH --gpu-bind=closest
 #SBATCH --account=bdoi-dtai-gh
 #SBATCH -t 02:00:00
-#SBATCH --output=output.txt
+#SBATCH --output=output.out
 
 echo -e "job $SLURM_JOBID is starting on `hostname`\n\n"
 

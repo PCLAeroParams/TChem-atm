@@ -10,6 +10,7 @@
 #SBATCH --gpu-bind=closest
 #SBATCH --account=bdoi-dtai-gh
 #SBATCH -t 02:00:00
+#SBATCH --output=output.txt
 
 echo -e "job $SLURM_JOBID is starting on `hostname`\n\n"
 
@@ -21,4 +22,4 @@ exec=$TCHEM_DEVICE_INSTALL_PATH/examples/TChem_ArrowSolver.x
 
 run_this="$exec"
 
-eval $run_this &> output.txt
+eval $run_this

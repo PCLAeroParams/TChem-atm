@@ -9,3 +9,7 @@ export scenario_n_inputs="--chemfile=$chemfile \
                           --max-time-iterations=10000 \
                           --tend=10 \
                           --inputfile_particles=$inputfile_particles"
+
+# Profiling
+#--max-time-iterations=5 \
+#--tend=0.101 \

@@ -30,6 +30,11 @@ trbdf_params(){
 
 }
 
+# Profiling
+#min_dt='0.02'
+#atol_t='1e-8'
+#rtol_time='1e-4'
+
 sundials_gmres_params(){
 min_dt='1'
 atol_t='1e-16'

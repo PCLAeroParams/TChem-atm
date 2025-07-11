@@ -465,9 +465,15 @@ int main(int argc, char *argv[]) {
     int iout = 0;
     for (iout = 0; iout < Nt && tout <= tend * 0.9999; iout++)
     {
+      std::string region_name = "CVODE iteration " + std::to_string(iout);
+
       // Advance in time
       timer.reset();
+      
+      Kokkos::Profiling::pushRegion(region_name);
       retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
+      Kokkos::Profiling::popRegion();
+      
       exec_space_instance.fence();
       const real_type t_device_batch = timer.seconds();
       fprintf(fout_times, "\"%s%d\": %20.14e, \n", "wall_time_iter_", iout,

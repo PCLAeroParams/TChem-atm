@@ -39,3 +39,7 @@ done
 # Profile roofline statistics with Nsight Compute
 # add this after OpenMP arguments but before the executable
 # ncu --nvtx --target-processes all --set roofline --export ncu_profile_roofline.ncu-rep
+
+# Profile timeline with Nsight Systems
+# add this after OpenMP arguments but before the executable
+# nsys profile --trace=nvtx,cuda -o nsys_profile_nvtx.nsys-rep

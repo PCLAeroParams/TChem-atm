@@ -200,10 +200,10 @@ int main(int argc, char *argv[]) {
 
     Kokkos::Timer timer;
     FILE *fout_times = fopen(outputFileTimes.c_str(), "w");
+    fprintf(fout_times, "{\n");
 
     if (do_rhs){
       printf("..evaluating RHS\n");
-      fprintf(fout_times, "{\n");
       fprintf(fout_times, " \"Aerosol RHSs\": \n {\n");
       const ordinal_type level = 1;
       const std::string profile_name = "TChem::AerosolChemistry::RHS_evaluation";

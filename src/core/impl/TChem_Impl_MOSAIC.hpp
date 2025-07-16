@@ -397,12 +397,12 @@ struct MosaicModelData {
 
         ///////////////////////////////////////
         // (NH4)2SO4 in (NH4)2SO4
-        b_mtem_host(0,jnh4so4,jnh4hso4) =   -2.94685;
-        b_mtem_host(1,jnh4so4,jnh4hso4) =   17.3328;
-        b_mtem_host(2,jnh4so4,jnh4hso4) =  -64.8441;
-        b_mtem_host(3,jnh4so4,jnh4hso4) =  122.7070;
-        b_mtem_host(4,jnh4so4,jnh4hso4) = -114.4373;
-        b_mtem_host(5,jnh4so4,jnh4hso4) =   41.6811;
+        b_mtem_host(0,jnh4so4,jnh4so4) =   -2.94685;
+        b_mtem_host(1,jnh4so4,jnh4so4) =   17.3328;
+        b_mtem_host(2,jnh4so4,jnh4so4) =  -64.8441;
+        b_mtem_host(3,jnh4so4,jnh4so4) =  122.7070;
+        b_mtem_host(4,jnh4so4,jnh4so4) = -114.4373;
+        b_mtem_host(5,jnh4so4,jnh4so4) =   41.6811;
 
         // (NH4)2SO4 in NH4NO3
         b_mtem_host(0,jnh4so4,jnh4no3) = -2.7503;
@@ -1905,7 +1905,9 @@ struct MOSAIC{
   using real_type = scalar_type;
 
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
+  using value_type_2d_view_type = Tines::value_type_2d_view<value_type,device_type>;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
+  using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
 
   KOKKOS_INLINE_FUNCTION static ordinal_type getWorkSpaceSize() {
     ordinal_type workspace_size=0;
@@ -1914,16 +1916,16 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void adjust_liquid_aerosol(const MosaicModelData<DeviceType>& mosaic,
-                            const real_type_1d_view_type& aer_solid,
-                            const real_type_1d_view_type& aer_liquid,
-                            const real_type_1d_view_type& aer_total,
-                            const real_type_1d_view_type& electrolyte_solid,
-                            const real_type_1d_view_type& electrolyte_liquid,
-                            const real_type_1d_view_type& electrolyte_total,
-                            const real_type_1d_view_type& epercent_solid,
-                            const real_type_1d_view_type& epercent_liquid,
-                            const real_type_1d_view_type& epercent_total,
-                            real_type& jphase, real_type& jhyst_leg) {
+                             const real_type_1d_view_type& aer_solid,
+                             const real_type_1d_view_type& aer_liquid,
+                             const real_type_1d_view_type& aer_total,
+                             const real_type_1d_view_type& electrolyte_solid,
+                             const real_type_1d_view_type& electrolyte_liquid,
+                             const real_type_1d_view_type& electrolyte_total,
+                             const real_type_1d_view_type& epercent_solid,
+                             const real_type_1d_view_type& epercent_liquid,
+                             const real_type_1d_view_type& epercent_total,
+                             real_type& jphase, real_type& jhyst_leg) {
 
       jphase    = mosaic.jliquid;
       jhyst_leg = mosaic.jhyst_up; // upper curve
@@ -2118,7 +2120,7 @@ struct MOSAIC{
                   const ordinal_type& jA,
                   const ordinal_type& jE,
                   const real_type& aH2O,
-                  real_type& log_gamZ) {
+                  real_type& log_gamZ_) {
 
     // FIXME: aH2O should not be local; make sure updated with RH
 
@@ -2127,7 +2129,7 @@ struct MOSAIC{
 
     const real_type aw = max(aH2O, aw_min(jE));
 
-    log_gamZ =  b_mtem(0,jA,jE) + aw *
+    log_gamZ_ = b_mtem(0,jA,jE) + aw *
                (b_mtem(1,jA,jE) + aw *
                (b_mtem(2,jA,jE) + aw *
                (b_mtem(3,jA,jE) + aw *
@@ -2156,6 +2158,471 @@ struct MOSAIC{
     // Van't Hoff Equation
     Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
   } // fn_Po
+  
+  KOKKOS_INLINE_FUNCTION static
+  void molality_0(const MosaicModelData<DeviceType>& mosaic,
+                  const ordinal_type& je,
+                  real_type& aw,
+                  real_type& molality) {
+
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    aw = max(aw, aw_min(je));
+    aw = min(aw, 0.999999);
+
+    if (aw < 0.97) {
+
+      real_type xm = a_zsr(0,je) +
+                 aw*(a_zsr(1,je) +
+                 aw*(a_zsr(2,je) +
+                 aw*(a_zsr(3,je) +
+                 aw*(a_zsr(4,je) +
+                 aw* a_zsr(5,je) ))));
+
+        molality = 55.509*xm/(1.0 - xm);
+    } else {
+      auto b_zsr = mosaic.b_zsr.template view<DeviceType>();
+      molality = -b_zsr(je)*ats<real_type>::log(aw);
+    }
+  } // molality_0
+
+  KOKKOS_INLINE_FUNCTION static
+  void bin_molality(const MosaicModelData<DeviceType>& mosaic,
+                    const ordinal_type& je,
+                    const real_type& aH2O_a,
+                    real_type& molality) {
+
+    auto aw_min = mosaic.aw_min.template view<DeviceType>();
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+
+    real_type aw = max(aH2O_a, aw_min(je));
+    aw = min(aw, 0.999999);
+
+    if (aw < 0.97) {
+
+      real_type xm = a_zsr(0,je) +
+                 aw*(a_zsr(1,je) +
+                 aw*(a_zsr(2,je) +
+                 aw*(a_zsr(3,je) +
+                 aw*(a_zsr(4,je) +
+                 aw* a_zsr(5,je) ))));
+
+        molality = 55.509*xm/(1.0 - xm);
+    } else {
+      auto b_zsr = mosaic.b_zsr.template view<DeviceType>();
+      molality = -b_zsr(je)*ats<real_type>::log(aw);
+    }
+  } // bin_molality
+
+  KOKKOS_INLINE_FUNCTION static
+  void bin_molality_60(const MosaicModelData<DeviceType>& mosaic,
+                    const ordinal_type& je,
+                    real_type& molality) {
+  
+    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
+  
+    const real_type aw = 0.6;
+  
+    real_type xm = a_zsr(0,je) +
+               aw*(a_zsr(1,je) +
+               aw*(a_zsr(2,je) +
+               aw*(a_zsr(3,je) +
+               aw*(a_zsr(4,je) +
+               aw* a_zsr(5,je) ))));
+
+    molality = 55.509*xm/(1.0 - xm);
+  } // bin_molality_60
+
+  KOKKOS_INLINE_FUNCTION static
+  void MTEM_compute_log_gamZ(const MosaicModelData<DeviceType>& mosaic,
+                             const real_type& aH2O,
+                             real_type_2d_view_type log_gamZ) {
+
+    real_type log_gamZ_ = 0.0;
+
+  // sulfate-poor species
+    ordinal_type jA = mosaic.jhno3;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+
+    jA = mosaic.jhcl;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+
+    jA = mosaic.jnh4so4;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+
+    jA = mosaic.jnh4no3;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jnh4cl;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jna2so4;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+
+    jA = mosaic.jnano3;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jnacl;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jcano3;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jcacl2;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4no3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4no3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4cl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4cl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnacl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnacl) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcano3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcano3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jcacl2, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jcacl2) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+  // sulfate-rich species
+    jA = mosaic.jh2so4;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jhhso4;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jnh4hso4;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jlvcite;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jnahso4;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+
+    jA = mosaic.jna3hso4;
+    fnlog_gamZ(mosaic, jA, mosaic.jh2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jh2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jlvcite, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jlvcite) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnh4so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnh4so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jnahso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jnahso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna3hso4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna3hso4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jna2so4, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jna2so4) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhno3, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhno3) = log_gamZ_;
+    fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
+    log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
+  } // MTEM_compute_log_gamZ
 
   KOKKOS_INLINE_FUNCTION static
   void aerosol_water_up(const MosaicModelData<DeviceType>& mosaic,

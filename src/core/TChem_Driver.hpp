@@ -1,5 +1,6 @@
 #include <TChem_KineticModelData.hpp>
 #include <TChem_KineticModelNCAR_ConstData.hpp>
+#include <TChem_AerosolModelData.hpp>
 #include <TChem_Util.hpp>
 
 namespace TChem {
@@ -11,7 +12,7 @@ public:
    using device_type = typename Tines::UseThisDevice<exec_space>::type;
 
    // Input files
-   std::string _chem_file, _therm_file;
+   std::string _chem_file, _aero_file;
 
    ordinal_type _team_size;
    ordinal_type _vector_size;
@@ -20,12 +21,15 @@ public:
    ordinal_type _nBatch;
    void setBatchSize(ordinal_type nBatch);
    real_type_2d_view_host _state;
+   real_type_2d_view_host _number_concentration;
    void createStateVector(ordinal_type nBatch);
    ordinal_type getLengthOfStateVector() const;
    auto getStateVectorSize();
    auto getStateVector(const ordinal_type iBatch);
    void setStateVector(double *array, const ordinal_type iBatch);
    void getStateVectorHost(real_type_2d_const_view_host &view);
+   ordinal_type getNumberConcentrationVectorSize() const;
+   void setNumberConcentrationVector(double *array, const ordinal_type iBatch);
 
    // Gas variables
    TChem::KineticModelData _kmd;
@@ -34,12 +38,25 @@ public:
    void createGasKineticModel(const std::string &chem_file);
    void createGasKineticModelConstData();
 
-   // Aerosols
-
    // Return number of gas species
    ordinal_type getNumberOfSpecies();
    // Return gas species name
    std::string getSpeciesName(int *index);
+
+   // Aerosol variables
+   TChem::AerosolModelData _amd;
+   TChem::AerosolModel_ConstData<host_device_type> _amcd_host;
+   TChem::AerosolModel_ConstData<device_type> _amcd_device;
+   void createAerosolModel(const std::string &aero_file);
+   void createAerosolModelConstData();
+   void createNumberConcentrationVector(const ordinal_type iBatch);
+   // Return number of aerosol species
+   ordinal_type getNumberOfAeroSpecies();
+   // Return aerosol species information
+   std::string getAerosolSpeciesName(int *index); 
+   real_type getAerosolSpeciesDensity(int *index);
+   real_type getAerosolSpeciesMW(int *index);
+   real_type getAerosolSpeciesKappa(int *index);
 
    // Integrate a single time step
    void doTimestep(const double del_t);
@@ -52,8 +69,7 @@ public:
    real_type _rtol_time; // Relative tolerance used for adaptive time stepping
    ordinal_type _max_num_newton_iterations; // Maximum number of Newton iterations
    ordinal_type _max_num_time_iterations; // Maximum number of time iterations
-   ordinal_type _num_time_iterations_per_interval; // 
-   ordinal_type _jacobian_interval; // Interval for evaluating Jacobians
+   bool _verbose; // Enable verbose solver information
 
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);
@@ -61,22 +77,34 @@ public:
    // Clean up
    void freeAll();
    void freeGasKineticModel();
-
-   // Diagnostics
-
+   void freeAerosolModel();
 };
-}
+} // namespace TChem 
 
 extern "C" void initialize(const char* gasFile, const char* aeroFile,
-                           const char* numericsFile, const TChem::ordinal_type nBatch);
+                           const char* numericsFile,
+                           const TChem::ordinal_type nBatch);
 extern "C" void finalize();
 extern "C" TChem::ordinal_type TChem_getNumberOfSpecies();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
 extern "C" int TChem_getLengthOfStateVector();
-extern "C" void TChem_getStateVector(TChem::real_type *array, const TChem::ordinal_type iBatch);
-extern "C" void TChem_setStateVector(TChem::real_type *array, const TChem::ordinal_type iBatch);
+extern "C" void TChem_getStateVector(TChem::real_type *array,
+                                     const TChem::ordinal_type iBatch);
+extern "C" void TChem_setStateVector(TChem::real_type *array,
+                                     const TChem::ordinal_type iBatch);
 extern "C" int TChem_getSpeciesName(int* index, char* result,
                                     const std::string::size_type buffer_size);
 extern "C" void TChem_doTimestep(const double &del_t);
 extern "C" int TChem_getStateVectorSize();
 extern "C" void TChem_getAllStateVectorHost(TChem::real_type *view);
+extern "C" int TChem_getNumberConcentrationVectorSize();
+extern "C" TChem::ordinal_type TChem_getNumberOfAeroSpecies();
+extern "C" int
+TChem_getAerosolSpeciesName(int* index, char* result,
+                            const std::string::size_type buffer_size);
+extern "C" double TChem_getAerosolSpeciesDensity(int* index);
+extern "C" double TChem_getAerosolSpeciesMW(int* index);
+extern "C" double TChem_getAerosolSpeciesKappa(int* index);
+extern "C" void
+TChem_setNumberConcentrationVector(TChem::real_type *array,
+                                   const TChem::ordinal_type iBatch);

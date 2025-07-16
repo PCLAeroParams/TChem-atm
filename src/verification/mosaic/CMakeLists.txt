@@ -14,6 +14,7 @@ add_executable(${DRIVER_NAME}.x
                bin_molality.cpp
                bin_molality_60.cpp
                MTEM_compute_log_gamZ.cpp
+               aerosol_water_up.cpp
  )
 
 

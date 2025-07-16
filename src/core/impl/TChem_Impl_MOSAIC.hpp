@@ -2626,15 +2626,17 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void aerosol_water_up(const MosaicModelData<DeviceType>& mosaic,
-                        const real_type_1d_view_type& electrolyte_total) {
+                        const real_type_1d_view_type& electrolyte_total,
+                        real_type& aerosol_water) {
 
     real_type dum = 0.0;
+    real_type molality = 0.0;
 
-    for (ordinal_type je = 0; je < mosaic.nelectrolyte + 4; ++je) {
-      dum = dum + 1.e-9*electrolyte_total(je)/bin_molality_60(je);
+    for (ordinal_type je = 0; je < mosaic.nsalt + 4; je++) {
+      dum = dum + 1.e-9*electrolyte_total(je)/bin_molality_60(mosaic, je, molality);
     }
 
-    aerosol_water_up = dum;
+    aerosol_water = dum;
   } // aerosol_water_up
 
 };

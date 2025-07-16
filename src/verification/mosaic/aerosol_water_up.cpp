@@ -33,6 +33,8 @@ void aerosol_water_up(Ensemble *ensemble) {
         verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[1], electrolyte_liquid);
         verification::convert_1d_vector_to_1d_view_device(electrolyte_db_2d[2], electrolyte_total);
 
+        real_type_1d_view outputs_aerosol_water_up("outputs_aerosol_water_up", 1);
+
         std::string profile_name ="Verification_test_aerosol_water_up";
         using policy_type =
             typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
@@ -44,19 +46,18 @@ void aerosol_water_up(Ensemble *ensemble) {
         profile_name,
         policy,
         KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-            TChem::Impl::MOSAIC<real_type, device_type>::aerosol_water_up(
-            mmd,
-            electrolyte_total);
+          Real& aerosol_water = outputs_aerosol_water_up(0);
+            
+        TChem::Impl::MOSAIC<real_type, device_type>::aerosol_water_up(
+          mmd,
+          electrolyte_total,
+          aerosol_water);
         });
 
-        verification::convert_1d_view_device_to_1d_vector(electrolyte_solid, electrolyte_db_2d[0]);
-        verification::convert_1d_view_device_to_1d_vector(electrolyte_liquid, electrolyte_db_2d[1]);
-        verification::convert_1d_view_device_to_1d_vector(electrolyte_total, electrolyte_db_2d[2]);
+        const auto outputs_aerosol_water_up_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_aerosol_water_up);
 
-        std::vector<real_type> electrolyte_flattened;
-        for (const auto& row : electrolyte_db_2d) {
-            electrolyte_flattened.insert(electrolyte_flattened.end(), row.begin(), row.end());
-        }
-        output.set("electrolyte", electrolyte_flattened);
+        Real aerosol_water = outputs_aerosol_water_up_h(0);
+        
+        output.set("aerosol_water", aerosol_water);
     });
 }

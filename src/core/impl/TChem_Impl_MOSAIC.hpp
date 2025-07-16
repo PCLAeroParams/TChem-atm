@@ -2633,7 +2633,7 @@ struct MOSAIC{
     real_type molality = 0.0;
 
     for (ordinal_type je = 0; je < mosaic.nsalt + 4; je++) {
-      bin_molality_60(mosaic, je, molality)
+      bin_molality_60(mosaic, je, molality);
       dum = dum + 1.e-9*electrolyte_total(je)/molality;
     }
 

@@ -16,7 +16,6 @@ void aerosol_water_up(Ensemble *ensemble) {
 
         const ordinal_type n = 3;
         const auto nsize_electrolyte = static_cast<ordinal_type>(electrolyte_db.size())/n;
-        const auto nsize_aero = static_cast<ordinal_type>(aer_db.size())/n;
 
         const auto mmd = TChem::Impl::MosaicModelData<device_type>();
 

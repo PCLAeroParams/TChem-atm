@@ -13,3 +13,7 @@ export scenario_n_inputs="--chemfile=$chemfile \
 # Profiling
 #--max-time-iterations=5 \
 #--tend=0.101 \
+
+# Normal Timings 
+#--max-time-iterations=10000 \
+#--tend=10 \

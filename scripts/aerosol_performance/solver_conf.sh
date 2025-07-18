@@ -35,6 +35,11 @@ trbdf_params(){
 #atol_t='1e-8'
 #rtol_time='1e-4'
 
+# Normal Timings
+#min_dt='1'
+#atol_t='1e-16'
+#rtol_time='1e-8'
+
 sundials_gmres_params(){
 min_dt='1'
 atol_t='1e-16'

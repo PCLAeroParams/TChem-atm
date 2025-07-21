@@ -1,5 +1,8 @@
 
-# Uncomment to use the Kokkos tools NVTX connector when profiling
+# ---------------------------------------------------------------------------------
+# Kokkos tools:
+
+# NVTX connector for profiling
 #export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_INSTALL_DIR}/lib64/libkp_nvtx_connector.so
 
 # MemoryEvents - tracks timeline of alloc and dealloc events and mem usage

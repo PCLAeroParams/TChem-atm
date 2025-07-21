@@ -1,0 +1,253 @@
+# Memory Events
+# Time     Ptr                  Size        MemSpace      Op         Name
+0.020026        0xbc34f80              8             Host Allocate   DualView::modified_flags
+0.020057   0xfffcd9f9a000           1600             Cuda Allocate   KMD::sNames
+0.020143        0xbc32ec0           1600             Host Allocate   KMD::sNames_mirror
+0.020242        0xbda4780              8             Host Allocate   DualView::modified_flags
+0.020251   0xfffcd9f9a800            768             Cuda Allocate   KMD::isRev
+0.020271        0xbc33600            768             Host Allocate   KMD::isRev_mirror
+0.020274        0xbda57c0              8             Host Allocate   DualView::modified_flags
+0.020278   0xfffcd9f9ac00            768             Cuda Allocate   KMD::reacNrp
+0.020292        0xbf0bf00            768             Host Allocate   KMD::reacNrp_mirror
+0.020294        0xbda60c0              8             Host Allocate   DualView::modified_flags
+0.020297   0xfffcd9f9b000            768             Cuda Allocate   KMD::reacNrp
+0.020311        0xbf0d4c0            768             Host Allocate   KMD::reacNrp_mirror
+0.020312        0xbf0d8c0              8             Host Allocate   DualView::modified_flags
+0.020315   0xfffcd9f9b400            768             Cuda Allocate   KMD::reacNrp
+0.020328        0xbf0df80            768             Host Allocate   KMD::reacNrp_mirror
+0.020329        0xbf0e400              8             Host Allocate   DualView::modified_flags
+0.020333   0xfffcd9f9b800            768             Cuda Allocate   KMD::convExponent
+0.020352        0xbf0c400            768             Host Allocate   KMD::convExponent_mirror
+0.021356        0xbf241c0              8             Host Allocate   DualView::modified_flags
+0.021373   0xfffcd9f9bc00          15280             Cuda Allocate   KMD::reacNrp
+0.021404        0xbf24940          15280             Host Allocate   KMD::reacNrp_mirror
+0.021409        0xbf28700              8             Host Allocate   DualView::modified_flags
+0.021414   0xfffcd9f9fa00          30560             Cuda Allocate   KMD::reacNrp
+0.021441        0xbf28f00          30560             Host Allocate   KMD::reacNrp_mirror
+0.021466        0xbf30a40              8             Host Allocate   DualView::modified_flags
+0.021473   0xfffcd9fa7200           8256             Cuda Allocate   KMD::auxParamReacArhenFor
+0.021492        0xbf31340           8256             Host Allocate   KMD::auxParamReacArhenFor_mirror
+0.021494        0xbf33500              8             Host Allocate   DualView::modified_flags
+0.021499   0xfffcd9fa9400            168             Cuda Allocate   KMD::coefCMAQ_H2O2ReacFor
+0.021513        0xbf33d40            168             Host Allocate   KMD::coefCMAQ_H2O2ReacFor_mirror
+0.021517        0xbf34040              8             Host Allocate   DualView::modified_flags
+0.021520   0xfffcd9fa9600             64             Cuda Allocate   KMD::reacPfal
+0.021534        0xbf34780             64             Host Allocate   KMD::reacPfal_mirror
+0.021537        0xbf0ec00              8             Host Allocate   DualView::modified_flags
+0.021540   0xfffcd9fa9800           1024             Cuda Allocate   KMD::reacPpar
+0.021553        0xbf0f440           1024             Host Allocate   KMD::reacPpar_mirror
+0.029733        0xbf15b40              8             Host Allocate   DualView::modified_flags
+0.029753   0xfffcd9fa9e00            320             Cuda Allocate   AMD::simpol_params_
+0.029777        0xbf1fc40            320             Host Allocate   AMD::simpol_params__mirror
+0.029794        0xbf20b40              8             Host Allocate   DualView::modified_flags
+0.029800   0xfffcd9faa000             40             Cuda Allocate   AMD::molecular_weights
+0.029816        0xbf21340             40             Host Allocate   AMD::molecular_weights_mirror
+0.029818        0xbf215c0              8             Host Allocate   DualView::modified_flags
+0.029822   0xfffcd9faa200             40             Cuda Allocate   AMD::aerosol_density_
+0.029835        0xbf21e00             40             Host Allocate   AMD::aerosol_density__mirror
+0.029837        0xbf22040              8             Host Allocate   DualView::modified_flags
+0.029840   0xfffcd9faa400             40             Cuda Allocate   AMD::kappa
+0.029853        0xbf227c0             40             Host Allocate   AMD::kappa_mirror
+0.029955        0xbf076c0           1600             Host Allocate   KMD::sNames_mirror
+0.035891        0xbd0b680          40696             Host Allocate   StateVector host
+0.039660        0xbf16380           8000             Host Allocate   num_concentration
+0.039712   0xfffcd9faa600          40696             Cuda Allocate   StateVector Devices
+0.039763   0xfffcd9fb4600           8000             Cuda Allocate   num_concentration
+0.039797   0xfffcd9fb6600          40624             Cuda Allocate   Vector device view
+0.039816        0xbe85a00          40624             Host Allocate   Vector device view_mirror
+0.039823   0xfffcd9fc0600             48             Cuda Allocate   const_tracers
+0.039840   0xfffcd9fc0800              8             Cuda Allocate   temperature
+0.039855   0xfffcd9fc0a00              8             Cuda Allocate   pressure
+0.042415   0xfffcd9fc0c00          40624             Cuda Allocate   Vector device view
+0.042716        0xbff4800          40624             Host Allocate   Vector device view_mirror
+0.042749   0xfffcd9fcac00          40624             Cuda Allocate   Vector device view
+0.042771        0xbffe7c0          40624             Host Allocate   Vector device view_mirror
+0.042776   0xfffcd9fd4c00          40624             Cuda Allocate   Vector device view
+0.042804        0xc008780          40624             Host Allocate   Vector device view_mirror
+0.042808   0xfffcd9fdec00          40624             Cuda Allocate   Vector device view
+0.042829        0xc01b740          40624             Host Allocate   Vector device view_mirror
+0.042834   0xfffcd9fe8c00          40624             Cuda Allocate   Vector device view
+0.042849        0xc025700          40624             Host Allocate   Vector device view_mirror
+0.042853   0xfffcd9ff2c00          40624             Cuda Allocate   Vector device view
+0.042871        0xc02f6c0          40624             Host Allocate   Vector device view_mirror
+0.047132   0xfffcda200000          40624             Cuda Allocate   Vector device view
+0.047161        0xc039680          40624             Host Allocate   Vector device view_mirror
+0.047170   0xfffcda20a000          40624             Cuda Allocate   Vector device view
+0.047186        0xc043640          40624             Host Allocate   Vector device view_mirror
+0.047189   0xfffcda214000          40624             Cuda Allocate   Vector device view
+0.047209        0xc04d600          40624             Host Allocate   Vector device view_mirror
+0.047214   0xfffcda21e000          40624             Cuda Allocate   Vector device view
+0.047233        0xc0575c0          40624             Host Allocate   Vector device view_mirror
+0.047238   0xfffcda228000          40624             Cuda Allocate   Vector device view
+0.047253        0xc061580          40624             Host Allocate   Vector device view_mirror
+0.047257   0xfffcda232000          40624             Cuda Allocate   Vector device view
+0.047275        0xc06bdc0          40624             Host Allocate   Vector device view_mirror
+0.047279   0xfffcda23c000          40624             Cuda Allocate   Vector device view
+0.047298        0xc0766c0          40624             Host Allocate   Vector device view_mirror
+0.047303   0xfffcda246000          40624             Cuda Allocate   Vector device view
+0.047318        0xc080fc0          40624             Host Allocate   Vector device view_mirror
+0.047346   0xfffcda250000          40624             Cuda Allocate   Vector device view
+0.047365        0xc08c180          40624             Host Allocate   Vector device view_mirror
+0.047404   0xfffcda25a000          40624             Cuda Allocate   Vector device view
+0.047422        0xc099140          40624             Host Allocate   Vector device view_mirror
+0.049004      0x32d000000      206288672             Cuda Allocate   sunmat_view
+0.049097   0xfffcda264000          40624             Cuda Allocate   Vector device view
+0.049116        0xc0a4a80          40624             Host Allocate   Vector device view_mirror
+0.049122   0xfffcda26e000          40624             Cuda Allocate   Vector device view
+0.049143        0xc0af380          40624             Host Allocate   Vector device view_mirror
+0.049148   0xfffcda278000          40624             Cuda Allocate   fac
+0.050966   0xfffc80000000      206288672             Cuda Allocate   JacRL
+0.051083        0xc0baa40              8             Host Allocate   temperature
+0.051095        0xc0bac40              8             Host Allocate   temperature
+0.051105        0xc0bae00              8             Host Allocate   pressure
+0.051115        0xc0bb000             48             Host Allocate   const_tracers
+0.051135 PushRegion CVODE iteration 0 {
+0.053380   0xfffc8c600000      206288672             Cuda Allocate   sunmat_view
+0.053480 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+0.053679   0xfffcda282000         125608             Cuda Allocate   Kokkos::CudaSpace::TeamScratchMemory
+0.053888 } PopRegion 
+0.053970 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+0.054145 } PopRegion 
+0.054186 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+0.054356 } PopRegion 
+0.054411 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+0.054580 } PopRegion 
+0.058485 PushRegion TChem::AerosolChemistry::Jacobian_evaluation {
+3.211418 } PopRegion 
+166.335374 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+166.335548 } PopRegion 
+329.458437 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+329.458604 } PopRegion 
+492.583772 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+492.583947 } PopRegion 
+492.671575 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+492.671716 } PopRegion 
+492.759301 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+492.759439 } PopRegion 
+492.847061 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+492.847209 } PopRegion 
+655.975404 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+655.975581 } PopRegion 
+819.101578 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+819.101757 } PopRegion 
+819.189382 } PopRegion 
+819.189445 PushRegion CVODE iteration 1 {
+819.189520 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+819.189660 } PopRegion 
+982.318211 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+982.318372 } PopRegion 
+982.419474 } PopRegion 
+982.419529 PushRegion CVODE iteration 2 {
+982.419594 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+982.419735 } PopRegion 
+982.507223 } PopRegion 
+982.507246 PushRegion CVODE iteration 3 {
+982.507299 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+982.507438 } PopRegion 
+982.594941 } PopRegion 
+982.594957 PushRegion CVODE iteration 4 {
+982.595014 PushRegion TChem::AerosolChemistry::RHS_evaluation {
+982.595151 } PopRegion 
+1145.720396 } PopRegion 
+1145.720479        0xbffe7c0         -40624             Host DeAllocate Vector device view_mirror
+1145.720498   0xfffcd9fcac00         -40624             Cuda DeAllocate Vector device view
+1145.720529        0xc008780         -40624             Host DeAllocate Vector device view_mirror
+1145.720530   0xfffcd9fd4c00         -40624             Cuda DeAllocate Vector device view
+1145.720537        0xc01b740         -40624             Host DeAllocate Vector device view_mirror
+1145.720538   0xfffcd9fdec00         -40624             Cuda DeAllocate Vector device view
+1145.720543        0xc025700         -40624             Host DeAllocate Vector device view_mirror
+1145.720544   0xfffcd9fe8c00         -40624             Cuda DeAllocate Vector device view
+1145.720548        0xc02f6c0         -40624             Host DeAllocate Vector device view_mirror
+1145.720549   0xfffcd9ff2c00         -40624             Cuda DeAllocate Vector device view
+1145.720553        0xc039680         -40624             Host DeAllocate Vector device view_mirror
+1145.720554   0xfffcda200000         -40624             Cuda DeAllocate Vector device view
+1145.720561        0xc043640         -40624             Host DeAllocate Vector device view_mirror
+1145.720567   0xfffcda20a000         -40624             Cuda DeAllocate Vector device view
+1145.720572        0xc04d600         -40624             Host DeAllocate Vector device view_mirror
+1145.720573   0xfffcda214000         -40624             Cuda DeAllocate Vector device view
+1145.720579        0xc0575c0         -40624             Host DeAllocate Vector device view_mirror
+1145.720580   0xfffcda21e000         -40624             Cuda DeAllocate Vector device view
+1145.720584        0xc061580         -40624             Host DeAllocate Vector device view_mirror
+1145.720585   0xfffcda228000         -40624             Cuda DeAllocate Vector device view
+1145.720589        0xc06bdc0         -40624             Host DeAllocate Vector device view_mirror
+1145.720590   0xfffcda232000         -40624             Cuda DeAllocate Vector device view
+1145.720593        0xc0766c0         -40624             Host DeAllocate Vector device view_mirror
+1145.720605   0xfffcda23c000         -40624             Cuda DeAllocate Vector device view
+1145.720608        0xc080fc0         -40624             Host DeAllocate Vector device view_mirror
+1145.720609   0xfffcda246000         -40624             Cuda DeAllocate Vector device view
+1145.720613        0xc099140         -40624             Host DeAllocate Vector device view_mirror
+1145.720615   0xfffcda25a000         -40624             Cuda DeAllocate Vector device view
+1145.720619        0xc08c180         -40624             Host DeAllocate Vector device view_mirror
+1145.720620   0xfffcda250000         -40624             Cuda DeAllocate Vector device view
+1145.720632        0xc0a4a80         -40624             Host DeAllocate Vector device view_mirror
+1145.720633   0xfffcda264000         -40624             Cuda DeAllocate Vector device view
+1145.720636        0xc0af380         -40624             Host DeAllocate Vector device view_mirror
+1145.720637   0xfffcda26e000         -40624             Cuda DeAllocate Vector device view
+1145.720642   0xfffc8c600000     -206288672             Cuda DeAllocate sunmat_view
+1145.722360        0xc0bb000            -48             Host DeAllocate const_tracers
+1145.722364        0xc0bae00             -8             Host DeAllocate pressure
+1145.722366        0xc0bac40             -8             Host DeAllocate temperature
+1145.722368        0xc0baa40             -8             Host DeAllocate temperature
+1145.722371      0x32d000000     -206288672             Cuda DeAllocate sunmat_view
+1145.722689        0xbff4800         -40624             Host DeAllocate Vector device view_mirror
+1145.722691   0xfffcd9fc0c00         -40624             Cuda DeAllocate Vector device view
+1145.722708        0xbe85a00         -40624             Host DeAllocate Vector device view_mirror
+1145.722710   0xfffcd9fb6600         -40624             Cuda DeAllocate Vector device view
+1145.722717   0xfffc80000000     -206288672             Cuda DeAllocate JacRL
+1145.722994   0xfffcd9fc0600            -48             Cuda DeAllocate const_tracers
+1145.723001   0xfffcd9fc0a00             -8             Cuda DeAllocate pressure
+1145.723005   0xfffcd9fc0800             -8             Cuda DeAllocate temperature
+1145.723008   0xfffcda278000         -40624             Cuda DeAllocate fac
+1145.723012   0xfffcd9faa600         -40696             Cuda DeAllocate StateVector Devices
+1145.723016   0xfffcd9fb4600          -8000             Cuda DeAllocate num_concentration
+1145.723020        0xbf16380          -8000             Host DeAllocate num_concentration
+1145.723023        0xbd0b680         -40696             Host DeAllocate StateVector host
+1145.723026        0xbf076c0          -1600             Host DeAllocate KMD::sNames_mirror
+1145.723048        0xbf1fc40           -320             Host DeAllocate AMD::simpol_params__mirror
+1145.723052   0xfffcd9fa9e00           -320             Cuda DeAllocate AMD::simpol_params_
+1145.723058        0xbf15b40             -8             Host DeAllocate DualView::modified_flags
+1145.723060        0xbf227c0            -40             Host DeAllocate AMD::kappa_mirror
+1145.723061   0xfffcd9faa400            -40             Cuda DeAllocate AMD::kappa
+1145.723065        0xbf22040             -8             Host DeAllocate DualView::modified_flags
+1145.723066        0xbf21e00            -40             Host DeAllocate AMD::aerosol_density__mirror
+1145.723067   0xfffcd9faa200            -40             Cuda DeAllocate AMD::aerosol_density_
+1145.723070        0xbf215c0             -8             Host DeAllocate DualView::modified_flags
+1145.723072        0xbf21340            -40             Host DeAllocate AMD::molecular_weights_mirror
+1145.723073   0xfffcd9faa000            -40             Cuda DeAllocate AMD::molecular_weights
+1145.723076        0xbf20b40             -8             Host DeAllocate DualView::modified_flags
+1145.723086        0xbf0c400           -768             Host DeAllocate KMD::convExponent_mirror
+1145.723088   0xfffcd9f9b800           -768             Cuda DeAllocate KMD::convExponent
+1145.723092        0xbf0e400             -8             Host DeAllocate DualView::modified_flags
+1145.723095        0xbf33d40           -168             Host DeAllocate KMD::coefCMAQ_H2O2ReacFor_mirror
+1145.723097   0xfffcd9fa9400           -168             Cuda DeAllocate KMD::coefCMAQ_H2O2ReacFor
+1145.723101        0xbf33500             -8             Host DeAllocate DualView::modified_flags
+1145.723104        0xbf31340          -8256             Host DeAllocate KMD::auxParamReacArhenFor_mirror
+1145.723105   0xfffcd9fa7200          -8256             Cuda DeAllocate KMD::auxParamReacArhenFor
+1145.723109        0xbf30a40             -8             Host DeAllocate DualView::modified_flags
+1145.723111        0xbc32ec0          -1600             Host DeAllocate KMD::sNames_mirror
+1145.723112   0xfffcd9f9a000          -1600             Cuda DeAllocate KMD::sNames
+1145.723116        0xbc34f80             -8             Host DeAllocate DualView::modified_flags
+1145.723118        0xbf0df80           -768             Host DeAllocate KMD::reacNrp_mirror
+1145.723118   0xfffcd9f9b400           -768             Cuda DeAllocate KMD::reacNrp
+1145.723122        0xbf0d8c0             -8             Host DeAllocate DualView::modified_flags
+1145.723124        0xbf0d4c0           -768             Host DeAllocate KMD::reacNrp_mirror
+1145.723124   0xfffcd9f9b000           -768             Cuda DeAllocate KMD::reacNrp
+1145.723128        0xbda60c0             -8             Host DeAllocate DualView::modified_flags
+1145.723129        0xbf0bf00           -768             Host DeAllocate KMD::reacNrp_mirror
+1145.723130   0xfffcd9f9ac00           -768             Cuda DeAllocate KMD::reacNrp
+1145.723133        0xbda57c0             -8             Host DeAllocate DualView::modified_flags
+1145.723135        0xbc33600           -768             Host DeAllocate KMD::isRev_mirror
+1145.723136   0xfffcd9f9a800           -768             Cuda DeAllocate KMD::isRev
+1145.723140        0xbda4780             -8             Host DeAllocate DualView::modified_flags
+1145.723141        0xbf34780            -64             Host DeAllocate KMD::reacPfal_mirror
+1145.723142   0xfffcd9fa9600            -64             Cuda DeAllocate KMD::reacPfal
+1145.723146        0xbf34040             -8             Host DeAllocate DualView::modified_flags
+1145.723147        0xbf0f440          -1024             Host DeAllocate KMD::reacPpar_mirror
+1145.723148   0xfffcd9fa9800          -1024             Cuda DeAllocate KMD::reacPpar
+1145.723152        0xbf0ec00             -8             Host DeAllocate DualView::modified_flags
+1145.723153        0xbf28f00         -30560             Host DeAllocate KMD::reacNrp_mirror
+1145.723154   0xfffcd9f9fa00         -30560             Cuda DeAllocate KMD::reacNrp
+1145.723157        0xbf28700             -8             Host DeAllocate DualView::modified_flags
+1145.723159        0xbf24940         -15280             Host DeAllocate KMD::reacNrp_mirror
+1145.723160   0xfffcd9f9bc00         -15280             Cuda DeAllocate KMD::reacNrp
+1145.723163        0xbf241c0             -8             Host DeAllocate DualView::modified_flags

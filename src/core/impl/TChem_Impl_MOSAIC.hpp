@@ -2255,6 +2255,7 @@ struct MosaicModelData {
         Keq_a_ll.modify_host();
         Keq_b_ll.modify_host();
         b_mtem.modify_host();
+        d_mdrh.modify_host();
         mw_aer_mac.modify_host();
         dens_aer_mac.modify_host();
         mw_electrolyte.modify_host();
@@ -2270,6 +2271,7 @@ struct MosaicModelData {
         Keq_a_ll.sync_device();
         Keq_b_ll.sync_device();
         b_mtem.sync_device();
+        d_mdrh.sync_device();
         mw_aer_mac.sync_device();
         dens_aer_mac.sync_device();
         mw_electrolyte.sync_device();
@@ -2538,13 +2540,30 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void fn_Po(const real_type& Po_298,
-              const real_type& DH,
-              const real_type& T,
-              real_type& Po) {
+             const real_type& DH,
+             const real_type& T,
+             real_type& Po) {
 
     // Van't Hoff Equation
     Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
   } // fn_Po
+
+  KOKKOS_INLINE_FUNCTION static
+  void drh_mutual(const MosaicModelData<DeviceType>& mosaic,
+                  const ordinal_type& j_index,
+                  const real_type& T_K,
+                  real_type& drh_mutual) {
+
+    if (j_index == 7 || j_index == 8 || (j_index >= 34 && j_index <= 51)) {
+      drh_mutual = 10.0; // CaNO3 or CaCl2 containing mixtures
+    } else {
+      auto d_mdrh = mosaic.d_mdrh.template view<DeviceType>();
+      drh_mutual = d_mdrh(j_index,0) + T_K *
+                  (d_mdrh(j_index,1) + T_K *
+                  (d_mdrh(j_index,2) + T_K *
+                   d_mdrh(j_index,3) )) + 1.0;
+    }
+  } // drh_mutual
   
   KOKKOS_INLINE_FUNCTION static
   void molality_0(const MosaicModelData<DeviceType>& mosaic,

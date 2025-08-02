@@ -1924,18 +1924,16 @@ struct MOSAIC{
                           real_type& jaerosolstate,
                           real_type& num_a) {
 
-    real_type drymass, aer_H;
-
     mass_dry_a = 0.0;
 
-    aer_H = (2.0*aer_total(mosaic.iso4_a)  + 
-                 aer_total(mosaic.ino3_a)  +
-                 aer_total(mosaic.icl_a)   +
-                 aer_total(mosaic.imsa_a)  +
-             2.0*aer_total(mosaic.ico3_a)) - 
-            (2.0*aer_total(mosaic.ica_a)   +
-                 aer_total(mosaic.ina_a)   +
-                 aer_total(mosaic.inh4_a));
+    real_type aer_H = (2.0*aer_total(mosaic.iso4_a)  + 
+                           aer_total(mosaic.ino3_a)  +
+                           aer_total(mosaic.icl_a)   +
+                           aer_total(mosaic.imsa_a)  +
+                       2.0*aer_total(mosaic.ico3_a)) - 
+                      (2.0*aer_total(mosaic.ica_a)   +
+                           aer_total(mosaic.ina_a)   +
+                           aer_total(mosaic.inh4_a));
     aer_H = max(aer_H, 0.0);
 
     auto mw_aer_mac = mosaic.mw_aer_mac.template view<DeviceType>();
@@ -1944,7 +1942,7 @@ struct MOSAIC{
     }
     mass_dry_a = mass_dry_a + aer_H;
 
-    drymass = mass_dry_a; // ng/m^3(air)
+    const real_type drymass = mass_dry_a; // ng/m^3(air)
     mass_dry_a = mass_dry_a*1.0e-15; // g/cc(air)
 
     if (drymass < mosaic.mass_cutoff) {

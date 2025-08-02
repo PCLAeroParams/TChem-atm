@@ -173,7 +173,7 @@ struct MosaicModelData {
         Keq_a_ll = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::Keq_a_ll"), nrxn_aer_ll);
         Keq_b_ll = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::Keq_b_ll"), nrxn_aer_ll);
         b_mtem = real_type_3d_dual_view(do_not_init_tag("MosaicModelData::b_mtem"), 6, nelectrolyte, nelectrolyte);
-        d_mdrh = real_type_2d_dual_view(do_not_init_tag("MosaicModelData::d_mdrh"), 4, 63);
+        d_mdrh = real_type_2d_dual_view(do_not_init_tag("MosaicModelData::d_mdrh"), 63, 4);
         mw_aer_mac = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_aer_mac"), naer);
         dens_aer_mac = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::dens_aer_mac"), naer);
         mw_electrolyte = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_electrolyte"), nelectrolyte);
@@ -2541,11 +2541,11 @@ struct MOSAIC{
   KOKKOS_INLINE_FUNCTION static
   void fn_Po(const real_type& Po_298,
              const real_type& DH,
-             const real_type& T,
+             const real_type& T_K,
              real_type& Po) {
 
     // Van't Hoff Equation
-    Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
+    Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T_K - (1/298.15)));
   } // fn_Po
 
   KOKKOS_INLINE_FUNCTION static

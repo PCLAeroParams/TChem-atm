@@ -15,7 +15,7 @@ void fn_Po(Ensemble *ensemble) {
 
     const auto Po_298_arr = input.get_array("Po_298");
     const auto DH_arr = input.get_array("DH");
-    const auto T_arr = input.get_array("T");
+    const auto T_K_arr = input.get_array("T_K");
 
     real_type_1d_view Po_298("Po_298", 1);
     verification::convert_1d_vector_to_1d_view_device(Po_298_arr, Po_298);
@@ -23,8 +23,8 @@ void fn_Po(Ensemble *ensemble) {
     real_type_1d_view DH("DH", 1);
     verification::convert_1d_vector_to_1d_view_device(DH_arr, DH);
 
-    real_type_1d_view T("T", 1);
-    verification::convert_1d_vector_to_1d_view_device(T_arr, T);
+    real_type_1d_view T_K("T_K", 1);
+    verification::convert_1d_vector_to_1d_view_device(T_K_arr, T_K);
 
     // Reals or int that are defined outside of the parallel_for region are passed as const.
     real_type_1d_view outputs_fn_Po("outputs_fn_Po", 1);
@@ -47,7 +47,7 @@ void fn_Po(Ensemble *ensemble) {
     TChem::Impl::MOSAIC<real_type, device_type>::fn_Po(
       Po_298(0),
       DH(0),
-      T(0),
+      T_K(0),
       Po);
     });
 

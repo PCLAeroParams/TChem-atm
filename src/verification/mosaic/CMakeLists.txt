@@ -9,13 +9,13 @@ add_executable(${DRIVER_NAME}.x
                calculate_XT.cpp
                fnlog_gamZ.cpp
                fn_Keq.cpp
+               drh_mutual.cpp
                fn_Po.cpp
                molality_0.cpp
                bin_molality.cpp
                bin_molality_60.cpp
                MTEM_compute_log_gamZ.cpp
  )
-
 
 
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
@@ -29,6 +29,7 @@ SET(TEST_LIST
      calculate_XT_input_ts_0
      fnlog_gamZ_input_ts_0
      fn_Keq_input_ts_0
+     drh_mutual_input_ts_0
      fn_Po_input_ts_0
      molality_0_input_ts_0
      bin_molality_input_ts_0
@@ -43,6 +44,7 @@ SET(TEST_BASELINE
     calculate_XT_output_ts_0
     fnlog_gamZ_output_ts_0
     fn_Keq_output_ts_0
+    drh_mutual_output_ts_0
     fn_Po_output_ts_0
     molality_0_output_ts_0
     bin_molality_output_ts_0
@@ -58,6 +60,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # calculate_XT_output_ts_0
     1e-6           # fnlog_gamZ_output_ts_0
     1e-6           # fn_Keq_output_ts_0
+    1e-6           # drh_mutual_output_ts_0
     1e-8           # fn_Po_output_ts_0
     1e-5           # molality_0_output_ts_0
     1e-5           # bin_molality_output_ts_0

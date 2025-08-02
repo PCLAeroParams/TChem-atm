@@ -2630,11 +2630,12 @@ struct MOSAIC{
                         real_type& aerosol_water) {
 
     real_type dum = 0.0;
-    real_type molality = 0.0;
 
+    // TODO: change this for loop to a parallel_reduce
     for (ordinal_type je = 0; je < mosaic.nsalt + 4; je++) {
+      real_type molality = 0.0;
       bin_molality_60(mosaic, je, molality);
-      dum = dum + 1.e-9*electrolyte_total(je)/molality;
+      dum += 1.e-9*electrolyte_total(je)/molality;
     }
 
     aerosol_water = dum;

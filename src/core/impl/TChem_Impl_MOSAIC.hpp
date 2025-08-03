@@ -2138,6 +2138,16 @@ struct MOSAIC{
   } // fnlog_gamZ
 
   KOKKOS_INLINE_FUNCTION static
+  void fuchs_sutugin(const real_type& rkn,
+                     const real_type& a,
+                     real_type& fuchs_sut) {
+
+    real_type rnum  = 0.75*a*(1. + rkn);
+    real_type denom = ats<real_type>::pow(rkn, 2.0) + rkn + 0.283*rkn*a + 0.75*a;
+    fuchs_sut = rnum/denom;
+  } // fuchs_sutugin
+
+  KOKKOS_INLINE_FUNCTION static
   void fn_Keq(const real_type& Keq_298,
               const real_type& a,
               const real_type& b,

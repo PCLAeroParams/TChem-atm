@@ -192,8 +192,16 @@ int main(int argc, char *argv[]) {
 
     using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
     const ordinal_type level = 1;
-    const ordinal_type per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
+    ordinal_type per_team_extent=0.0;
+    if (do_jac){
+      per_team_extent = problem_type::getWorkSpaceSize(kmcd,amcd)
     + number_of_equations;
+    }  
+
+    if (do_rhs){
+      per_team_extent
+         = Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd) + number_of_equations;;
+    }
     const ordinal_type per_team_scratch =
     TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
     policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
@@ -240,26 +248,15 @@ int main(int argc, char *argv[]) {
         const real_type_1d_view_type constYs = Kokkos::subview(Ys,
           range_type(n_active_gas_species, kmcd.nSpec));
         const real_type_1d_view_type partYs = Kokkos::subview(Ys, range_type(kmcd.nSpec, total_n_species));
-
         real_type_1d_view_type vals(wptr, m);
         wptr += m;
 
         /// problem workspace
         /// problem setup
-        const ordinal_type problem_workspace_size = problem_type::getWorkSpaceSize(kmcd,amcd);
+        const ordinal_type problem_workspace_size
+         = Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
         auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
         wptr +=problem_workspace_size;
-        problem_type problem;
-        problem._kmcd = kmcd;
-        problem._amcd = amcd;
-
-        /// initialize problem
-        // problem._fac = fac_at_i;
-        problem._work = pw;
-        problem._temperature = temperature;
-        problem._pressure = pressure;
-        problem._const_concentration = constYs;
-        problem._number_conc = number_conc_at_i;
         // active gas species
         for (ordinal_type i=0;i<n_active_gas_species;++i){
           vals(i) = activeYs(i);
@@ -270,7 +267,10 @@ int main(int argc, char *argv[]) {
           vals(i) = partYs(i-n_active_gas_species);
         }
 
-        problem.computeFunction(member,vals,rhs_at_i);
+        Impl::Aerosol_RHS<real_type, device_type>
+        ::team_invoke(member, temperature, pressure,
+                      number_conc_at_i, vals,
+                      constYs,  rhs_at_i, pw, kmcd, amcd);
       });
 
       Kokkos::Profiling::popRegion();

@@ -29,6 +29,8 @@ void fnlog_gamZ(Ensemble *ensemble);
 
 void fn_Keq(Ensemble *ensemble);
 
+void drh_mutual(Ensemble *ensemble);
+
 void fn_Po(Ensemble *ensemble);
 
 void molality_0(Ensemble *ensemble);
@@ -78,6 +80,8 @@ int main(int argc, char **argv) {
       fnlog_gamZ(ensemble);
     } else if (func_name == "fn_Keq") {
       fn_Keq(ensemble);
+    } else if (func_name == "drh_mutual") {
+      drh_mutual(ensemble);
     } else if (func_name == "fn_Po") {
       fn_Po(ensemble);
     } else if (func_name == "molality_0") {

@@ -10,26 +10,24 @@ using ordinal_type = TChem::ordinal_type;
 using namespace skywalker;
 using namespace TChem;
 
-void fn_Po(Ensemble *ensemble) {
+void drh_mutual(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
 
-    const auto Po_298_arr = input.get_array("Po_298");
-    const auto DH_arr = input.get_array("DH");
+    const auto j_index_arr = input.get_array("j_index");
     const auto T_K_arr = input.get_array("T_K");
 
-    real_type_1d_view Po_298("Po_298", 1);
-    verification::convert_1d_vector_to_1d_view_device(Po_298_arr, Po_298);
-
-    real_type_1d_view DH("DH", 1);
-    verification::convert_1d_vector_to_1d_view_device(DH_arr, DH);
+    real_type_1d_view j_index("j_index", 1);
+    verification::convert_1d_vector_to_1d_view_device(j_index_arr, j_index);
 
     real_type_1d_view T_K("T_K", 1);
     verification::convert_1d_vector_to_1d_view_device(T_K_arr, T_K);
 
     // Reals or int that are defined outside of the parallel_for region are passed as const.
-    real_type_1d_view outputs_fn_Po("outputs_fn_Po", 1);
+    real_type_1d_view outputs_drh_mutual("outputs_drh_mutual", 1);
 
-    std::string profile_name ="Verification_test_fn_Po";
+    const auto mmd = TChem::Impl::MosaicModelData<device_type>();
+
+    std::string profile_name ="Verification_test_drh_mutual";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
     const auto exec_space_instance = TChem::exec_space();
@@ -41,21 +39,21 @@ void fn_Po(Ensemble *ensemble) {
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-      Real& Po = outputs_fn_Po(0);
+      Real& drh_mutual = outputs_drh_mutual(0);
 
     // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::fn_Po(
-      Po_298(0),
-      DH(0),
+    TChem::Impl::MOSAIC<real_type, device_type>::drh_mutual(
+      mmd,
+      j_index(0)-1,
       T_K(0),
-      Po);
+      drh_mutual);
     });
 
-    const auto outputs_fn_Po_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_fn_Po);
+    const auto outputs_drh_mutual_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_drh_mutual);
 
-    Real Po = outputs_fn_Po_h(0);
+    Real drh_mutual = outputs_drh_mutual_h(0);
 
-    output.set("Po", Po);
+    output.set("drh_mutual", drh_mutual);
 
   });
 }

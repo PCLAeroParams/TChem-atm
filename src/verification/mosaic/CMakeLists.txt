@@ -3,6 +3,7 @@ SET(MOSAIC_VALIDATION_DIR ${TCHEM_VERIFICATION_DIR}/mosaic)
 SET(DRIVER_NAME "mosaic_driver")
 add_executable(${DRIVER_NAME}.x
                ${DRIVER_NAME}.cpp
+               check_aerosol_mass.cpp
                adjust_liquid_aerosol.cpp
                adjust_solid_aerosol.cpp
                do_full_deliquescence.cpp
@@ -15,6 +16,7 @@ add_executable(${DRIVER_NAME}.x
                bin_molality.cpp
                bin_molality_60.cpp
                MTEM_compute_log_gamZ.cpp
+               aerosol_water_up.cpp
  )
 
 
@@ -23,6 +25,7 @@ TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 
 # list of test to run
 SET(TEST_LIST
+     check_aerosol_mass_input_ts_0
      adjust_liquid_aerosol_input_ts_0
      adjust_solid_aerosol_input_ts_0
      do_full_deliquescence_input_ts_0
@@ -35,9 +38,11 @@ SET(TEST_LIST
      bin_molality_input_ts_0
      bin_molality_60_input_ts_0
      MTEM_compute_log_gamZ_input_ts_0
+     aerosol_water_up_input_ts_0
 )
 
 SET(TEST_BASELINE
+    check_aerosol_mass_output_ts_0
     adjust_liquid_aerosol_output_ts_0
     adjust_solid_aerosol_output_ts_0
     do_full_deliquescence_output_ts_0
@@ -50,10 +55,12 @@ SET(TEST_BASELINE
     bin_molality_output_ts_0
     bin_molality_60_output_ts_0
     MTEM_compute_log_gamZ_output_ts_0
+    aerosol_water_up_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-9)
 set(ERROR_THRESHOLDS
+    ${DEFAULT_TOL} # check_aerosol_mass_output_ts_0
     ${DEFAULT_TOL} # adjust_liquid_aerosol_output_ts_0
     ${DEFAULT_TOL} # adjust_solid_aerosol_output_ts_0
     ${DEFAULT_TOL} # do_full_deliquescence_output_ts_0
@@ -66,6 +73,7 @@ set(ERROR_THRESHOLDS
     1e-5           # bin_molality_output_ts_0
     1e-6           # bin_molality_60_output_ts_0
     1.8e-4         # MTEM_compute_log_gamZ
+    ${DEFAULT_TOL} # aerosol_water_up_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

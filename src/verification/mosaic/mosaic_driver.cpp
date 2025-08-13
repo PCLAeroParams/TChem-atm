@@ -15,6 +15,8 @@ void usage() {
   exit(0);
 }
 
+void check_aerosol_mass(Ensemble *ensemble);
+
 void adjust_liquid_aerosol(Ensemble *ensemble);
 
 void adjust_solid_aerosol(Ensemble *ensemble);
@@ -39,6 +41,8 @@ void bin_molality_60(Ensemble *ensemble);
 
 void MTEM_compute_log_gamZ(Ensemble *ensemble);
 
+void aerosol_water_up(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -62,7 +66,9 @@ int main(int argc, char **argv) {
   // Dispatch to the requested function.
   auto func_name = settings.get("function");
   try {
-    if (func_name == "adjust_liquid_aerosol") {
+    if (func_name == "check_aerosol_mass") {
+      check_aerosol_mass(ensemble);
+    } else if (func_name == "adjust_liquid_aerosol") {
       adjust_liquid_aerosol(ensemble);
     } else if (func_name == "adjust_solid_aerosol") {
       adjust_solid_aerosol(ensemble);
@@ -86,6 +92,8 @@ int main(int argc, char **argv) {
       bin_molality_60(ensemble);
     } else if (func_name == "MTEM_compute_log_gamZ") {
       MTEM_compute_log_gamZ(ensemble);
+    } else if (func_name == "aerosol_water_up") {
+      aerosol_water_up(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

@@ -2151,9 +2151,9 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void fn_Po(const real_type& Po_298,
-              const real_type& DH,
-              const real_type& T,
-              real_type& Po) {
+            const real_type& DH,
+            const real_type& T,
+            real_type& Po) {
 
     // Van't Hoff Equation
     Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
@@ -2623,6 +2623,23 @@ struct MOSAIC{
     fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
     log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
   } // MTEM_compute_log_gamZ
+
+  KOKKOS_INLINE_FUNCTION static
+  void aerosol_water_up(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& electrolyte_total,
+                        real_type& aerosol_water) {
+
+    real_type dum = 0.0;
+
+    // TODO: change this for loop to a parallel_reduce
+    for (ordinal_type je = 0; je < mosaic.nsalt + 4; je++) {
+      real_type molality = 0.0;
+      bin_molality_60(mosaic, je, molality);
+      dum += 1.e-9*electrolyte_total(je)/molality;
+    }
+
+    aerosol_water = dum;
+  } // aerosol_water_up
 
 };
 

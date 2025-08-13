@@ -2567,6 +2567,14 @@ struct MOSAIC{
   } // fnlog_gamZ
 
   KOKKOS_INLINE_FUNCTION static
+  void mean_molecular_speed(const real_type& T_K,
+                            const real_type& MW,
+                            real_type& mean_molec_speed) {
+
+    mean_molec_speed = 1.455e4 * ats<real_type>::sqrt(T_K/MW);
+  } // mean_molecular_speed
+
+  KOKKOS_INLINE_FUNCTION static
   void fn_Keq(const real_type& Keq_298,
               const real_type& a,
               const real_type& b,

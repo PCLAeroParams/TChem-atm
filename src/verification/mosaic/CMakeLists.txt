@@ -9,6 +9,7 @@ add_executable(${DRIVER_NAME}.x
                do_full_deliquescence.cpp
                calculate_XT.cpp
                fnlog_gamZ.cpp
+               mean_molecular_speed.cpp
                fn_Keq.cpp
                drh_mutual.cpp
                fn_Po.cpp
@@ -31,6 +32,7 @@ SET(TEST_LIST
      do_full_deliquescence_input_ts_0
      calculate_XT_input_ts_0
      fnlog_gamZ_input_ts_0
+     mean_molecular_speed_input_ts_0
      fn_Keq_input_ts_0
      drh_mutual_input_ts_0
      fn_Po_input_ts_0
@@ -48,6 +50,7 @@ SET(TEST_BASELINE
     do_full_deliquescence_output_ts_0
     calculate_XT_output_ts_0
     fnlog_gamZ_output_ts_0
+    mean_molecular_speed_output_ts_0
     fn_Keq_output_ts_0
     drh_mutual_output_ts_0
     fn_Po_output_ts_0
@@ -66,6 +69,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # do_full_deliquescence_output_ts_0
     ${DEFAULT_TOL} # calculate_XT_output_ts_0
     1e-6           # fnlog_gamZ_output_ts_0
+    ${DEFAULT_TOL} # mean_molecular_speed_output_ts_0
     1e-6           # fn_Keq_output_ts_0
     1e-6           # drh_mutual_output_ts_0
     1e-8           # fn_Po_output_ts_0

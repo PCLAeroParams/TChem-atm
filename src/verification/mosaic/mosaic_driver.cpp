@@ -27,6 +27,8 @@ void calculate_XT(Ensemble *ensemble);
 
 void fnlog_gamZ(Ensemble *ensemble);
 
+void mean_molecular_speed(Ensemble *ensemble);
+
 void fn_Keq(Ensemble *ensemble);
 
 void drh_mutual(Ensemble *ensemble);
@@ -78,6 +80,8 @@ int main(int argc, char **argv) {
       calculate_XT(ensemble);
     } else if (func_name == "fnlog_gamZ") {
       fnlog_gamZ(ensemble);
+    } else if (func_name == "mean_molecular_speed") {
+      mean_molecular_speed(ensemble);
     } else if (func_name == "fn_Keq") {
       fn_Keq(ensemble);
     } else if (func_name == "drh_mutual") {

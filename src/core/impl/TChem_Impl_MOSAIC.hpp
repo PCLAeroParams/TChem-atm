@@ -2329,22 +2329,22 @@ struct MOSAIC{
     return workspace_size;
   }
 
-  KOKKOS_IMPL_INLINE_FUNCTION static
+  KOKKOS_INLINE_FUNCTION static
   void update_thermodynamic_constants(const MosaicModelData<DeviceType>& mosaic,
                                       const real_type& T_K,
                                       real_type& aH2O,
                                       const real_type_2d_view_type& log_gamZ,
-                                      real_type_1d_view_type& Keq_gl,
-                                      real_type_1d_view_type& Keq_ll,
+                                      const real_type_1d_view_type& Keq_gl,
+                                      const real_type_1d_view_type& Keq_ll,
                                       real_type& Kp_nh3,
                                       real_type& Kp_nh4no3,
                                       real_type& Kp_nh4cl,
-                                      real_type_1d_view_type& Keq_sg,
-                                      real_type_1d_view_type& Keq_sl,
-                                      real_type_1d_view_type& Po_soa,
-                                      real_type_1d_view_type& sat_soa,
+                                      const real_type_1d_view_type& Keq_sg,
+                                      const real_type_1d_view_type& Keq_sl,
+                                      const real_type_1d_view_type& Po_soa,
+                                      const real_type_1d_view_type& sat_soa,
                                       real_type& sigma_water,
-                                      real_type_1d_view_type& MDRH_T,
+                                      const real_type_1d_view_type& MDRH_T,
                                       real_type& Kp_nh4no3_0,
                                       real_type& Kp_nh4cl_0) {
 
@@ -2429,12 +2429,12 @@ struct MOSAIC{
 
     real_type sat_factor = 0.5; // = 1.0 for original SORGAM parameters
     for (ordinal_type iv = 0; iv < mosaic.ngas_volatile; iv++) {
-      sat_soa(iv) = sat_factor * 1.e9*Po_soa(iv)/(RUNIV*T_K); // [nmol/m^3(air)]
+      sat_soa(iv) = sat_factor * 1.0e9*Po_soa(iv)/(RUNIV*T_K); // [nmol/m^3(air)]
     }
 
     // water surface tension
     real_type term = (647.15 - T_K)/647.15;
-    sigma_water = ats<real_type>::pow(0.2358*term, 1.256) * (1. - 0.625*term); // surface tension of pure water in N/m
+    sigma_water = 0.2358 * ats<real_type>::pow(term, 1.256) * (1.0 - 0.625*term); // surface tension of pure water in N/m
 
     // MDRH(T)
     real_type drh = 0.0;
@@ -2443,7 +2443,7 @@ struct MOSAIC{
       MDRH_T(j_index) = drh;
     }
 
-    MTEM_compute_log_gamZ(mosaic, aH2O, T_K, log_gamZ);
+    MTEM_compute_log_gamZ(mosaic, aH2O, log_gamZ);
 
   // 6/25/2008 - start
     const real_type gam_nh4no3_0 = ats<real_type>::pow(10.0, log_gamZ(mosaic.jnh4no3, mosaic.jnh4no3));
@@ -2455,8 +2455,8 @@ struct MOSAIC{
     molality_0(mosaic, mosaic.jnh4cl, aH2O, molality);
     const real_type m_nh4cl_0    = molality;
 
-    Kp_nh4no3_0  = Kp_nh4no3*ats<real_type>::pow(m_nh4no3_0*gam_nh4no3_0, 2.0);
-    Kp_nh4cl_0   = Kp_nh4cl*ats<real_type>::pow(m_nh4cl_0*gam_nh4cl_0, 2.0);
+    Kp_nh4no3_0  = Kp_nh4no3*ats<real_type>::pow((m_nh4no3_0*gam_nh4no3_0), 2.0);
+    Kp_nh4cl_0   = Kp_nh4cl*ats<real_type>::pow((m_nh4cl_0*gam_nh4cl_0), 2.0);
   // 6/25/2008 - end
   } // update_thermodynamic_constants
 
@@ -2757,7 +2757,7 @@ struct MOSAIC{
                   const real_type& T_K,
                   real_type& drh_mutual) {
 
-    if (j_index == 7 || j_index == 8 || (j_index >= 34 && j_index <= 51)) {
+    if (j_index == 6 || j_index == 7 || (j_index >= 33 && j_index <= 50)) {
       drh_mutual = 10.0; // CaNO3 or CaCl2 containing mixtures
     } else {
       auto d_mdrh = mosaic.d_mdrh.template view<DeviceType>();

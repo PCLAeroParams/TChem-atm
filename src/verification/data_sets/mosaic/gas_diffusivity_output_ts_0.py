@@ -10,10 +10,10 @@ class Object(object):
 settings = Object()
 # Input is stored here.
 input = Object()
-input.Po_298=[[  0.57000000000000003E-004],]
-input.DH=[[  0.15600000000000000E+003],]
 input.T_K=[[  0.29142360000000002E+003],]
-input.Po=[[  0.29005922138061241E-316],]
+input.P=[[  0.98692326671601283E+000],]
+input.MW=[[  0.98000000000000000E+002],]
+input.Vm=[[  0.42880001068115234E+002],]
 # Output data is stored here.
 output = Object()
-output.Po=[[  0.13336165682111354E-004],]
+output.gas_diffusivity=[[  0.11449280832155644E+000],]

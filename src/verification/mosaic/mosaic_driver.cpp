@@ -15,6 +15,8 @@ void usage() {
   exit(0);
 }
 
+void check_aerosol_mass(Ensemble *ensemble);
+
 void adjust_liquid_aerosol(Ensemble *ensemble);
 
 void adjust_solid_aerosol(Ensemble *ensemble);
@@ -27,7 +29,13 @@ void fnlog_gamZ(Ensemble *ensemble);
 
 void fuchs_sutugin(Ensemble *ensemble);
 
+void gas_diffusivity(Ensemble *ensemble);
+
+void mean_molecular_speed(Ensemble *ensemble);
+
 void fn_Keq(Ensemble *ensemble);
+
+void drh_mutual(Ensemble *ensemble);
 
 void fn_Po(Ensemble *ensemble);
 
@@ -38,6 +46,8 @@ void bin_molality(Ensemble *ensemble);
 void bin_molality_60(Ensemble *ensemble);
 
 void MTEM_compute_log_gamZ(Ensemble *ensemble);
+
+void aerosol_water_up(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -62,7 +72,9 @@ int main(int argc, char **argv) {
   // Dispatch to the requested function.
   auto func_name = settings.get("function");
   try {
-    if (func_name == "adjust_liquid_aerosol") {
+    if (func_name == "check_aerosol_mass") {
+      check_aerosol_mass(ensemble);
+    } else if (func_name == "adjust_liquid_aerosol") {
       adjust_liquid_aerosol(ensemble);
     } else if (func_name == "adjust_solid_aerosol") {
       adjust_solid_aerosol(ensemble);
@@ -74,8 +86,14 @@ int main(int argc, char **argv) {
       fnlog_gamZ(ensemble);
     } else if (func_name == "fuchs_sutugin") {
       fuchs_sutugin(ensemble);
+    } else if (func_name == "gas_diffusivity") {
+      gas_diffusivity(ensemble);
+    } else if (func_name == "mean_molecular_speed") {
+      mean_molecular_speed(ensemble);
     } else if (func_name == "fn_Keq") {
       fn_Keq(ensemble);
+    } else if (func_name == "drh_mutual") {
+      drh_mutual(ensemble);
     } else if (func_name == "fn_Po") {
       fn_Po(ensemble);
     } else if (func_name == "molality_0") {
@@ -86,6 +104,8 @@ int main(int argc, char **argv) {
       bin_molality_60(ensemble);
     } else if (func_name == "MTEM_compute_log_gamZ") {
       MTEM_compute_log_gamZ(ensemble);
+    } else if (func_name == "aerosol_water_up") {
+      aerosol_water_up(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

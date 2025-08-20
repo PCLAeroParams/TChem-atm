@@ -10,10 +10,8 @@ class Object(object):
 settings = Object()
 # Input is stored here.
 input = Object()
-input.Po_298=[[  0.57000000000000003E-004],]
-input.DH=[[  0.15600000000000000E+003],]
+input.j_index=[[         1],]
 input.T_K=[[  0.29142360000000002E+003],]
-input.Po=[[  0.29005922138061241E-316],]
 # Output data is stored here.
 output = Object()
-output.Po=[[  0.13336165682111354E-004],]
+output.drh_mutual=[[  0.80202077162854152E+002],]

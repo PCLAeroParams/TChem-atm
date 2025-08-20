@@ -107,6 +107,8 @@ struct MosaicModelData {
     const ordinal_type jhyst_up = 1;
     const ordinal_type jhyst_lo = 0;
 
+    const real_type mass_cutoff = 0.0;
+
     // polynomial coefficients for binary molality (used in ZSR)
        // for aw < 0.97
     real_type_2d_dual_view a_zsr;  // ("a_zsr", 6, nelectrolyte);
@@ -142,6 +144,10 @@ struct MosaicModelData {
     // parameters for MTEM mixing rule (Zaveri, Easter, and Wexler, 2005)
     real_type_3d_dual_view b_mtem; // ("b_mtem_", 6, nelectrolyte, nelectrolyte);
 
+    // Coefficients for %MDRH(T) = d1 + d2*T + d3*T^2 + d4*T^3    (T in Kelvin)
+    // valid Temperature Range: 240 - 320 K
+    real_type_2d_dual_view d_mdrh; // ("d_mdrh_", 4, 63);
+
     // molecular weights for aerosol species
     real_type_1d_dual_view mw_aer_mac; // ("mw_aer_mac_", naer)
 
@@ -169,6 +175,7 @@ struct MosaicModelData {
         Keq_a_ll = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::Keq_a_ll"), nrxn_aer_ll);
         Keq_b_ll = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::Keq_b_ll"), nrxn_aer_ll);
         b_mtem = real_type_3d_dual_view(do_not_init_tag("MosaicModelData::b_mtem"), 6, nelectrolyte, nelectrolyte);
+        d_mdrh = real_type_2d_dual_view(do_not_init_tag("MosaicModelData::d_mdrh"), 63, 4);
         mw_aer_mac = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_aer_mac"), naer);
         dens_aer_mac = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::dens_aer_mac"), naer);
         mw_electrolyte = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_electrolyte"), nelectrolyte);
@@ -184,6 +191,7 @@ struct MosaicModelData {
         auto Keq_a_ll_host = Keq_a_ll.view_host();
         auto Keq_b_ll_host = Keq_b_ll.view_host();
         auto b_mtem_host = b_mtem.view_host();
+        auto d_mdrh_host = d_mdrh.view_host();
         auto mw_aer_mac_host = mw_aer_mac.view_host();
         auto dens_aer_mac_host = dens_aer_mac.view_host();
         auto mw_electrolyte_host = mw_electrolyte.view_host();
@@ -1770,11 +1778,392 @@ struct MosaicModelData {
 
         /////////////////////////////////////
 
+        // MDRH coefficients
+        // SULFATE-POOR SYSTEMS
+        // AC
+        d_mdrh_host(0,0) = -58.00268351;
+        d_mdrh_host(0,1) = 2.031077573;
+        d_mdrh_host(0,2) = -0.008281218;
+        d_mdrh_host(0,3) = 1.00447E-05;
+
+        // AN
+        d_mdrh_host(1,0) = 1039.137773;
+        d_mdrh_host(1,1) = -11.47847095;
+        d_mdrh_host(1,2) = 0.047702786;
+        d_mdrh_host(1,3) = -6.77675E-05;
+
+        // AS
+        d_mdrh_host(2,0) = 115.8366357;
+        d_mdrh_host(2,1) = 0.491881663;
+        d_mdrh_host(2,2) = -0.00422807;
+        d_mdrh_host(2,3) = 7.29274E-06;
+
+        // SC
+        d_mdrh_host(3,0) = 253.2424151;
+        d_mdrh_host(3,1) = -1.429957864;
+        d_mdrh_host(3,2) = 0.003727554;
+        d_mdrh_host(3,3) = -3.13037E-06;
+
+        // SN
+        d_mdrh_host(4,0) = -372.4306506;
+        d_mdrh_host(4,1) = 5.3955633;
+        d_mdrh_host(4,2) = -0.019804438;
+        d_mdrh_host(4,3) = 2.25662E-05;
+
+        // SS
+        d_mdrh_host(5,0) = 286.1271416;
+        d_mdrh_host(5,1) = -1.670787758;
+        d_mdrh_host(5,2) = 0.004431373;
+        d_mdrh_host(5,3) = -3.57757E-06;
+
+        // CC
+        d_mdrh_host(6,0) = -1124.07059;
+        d_mdrh_host(6,1) = 14.26364209;
+        d_mdrh_host(6,2) = -0.054816822;
+        d_mdrh_host(6,3) = 6.70107E-05;
+
+        // CN
+        d_mdrh_host(7,0) = 1855.413934;
+        d_mdrh_host(7,1) = -20.29219473;
+        d_mdrh_host(7,2) = 0.07807482;
+        d_mdrh_host(7,3) = -1.017887858e-4;
+
+        // AN + AC
+        d_mdrh_host(8,0) = 1761.176886;
+        d_mdrh_host(8,1) = -19.29811062;
+        d_mdrh_host(8,2) = 0.075676987;
+        d_mdrh_host(8,3) = -1.0116959e-4;
+
+        // AS + AC
+        d_mdrh_host(9,0) = 122.1074303;
+        d_mdrh_host(9,1) = 0.429692122;
+        d_mdrh_host(9,2) = -0.003928277;
+        d_mdrh_host(9,3) = 6.43275E-06;
+
+        // AS + AN
+        d_mdrh_host(10,0) = 2424.634678;
+        d_mdrh_host(10,1) = -26.54031307;
+        d_mdrh_host(10,2) = 0.101625387;
+        d_mdrh_host(10,3) = -1.31544547798e-4;
+
+        // AS + AN + AC
+        d_mdrh_host(11,0) = 2912.082599;
+        d_mdrh_host(11,1) = -31.8894185;
+        d_mdrh_host(11,2) = 0.121185849;
+        d_mdrh_host(11,3) = -1.556534623e-4;
+
+        // SC + AC
+        d_mdrh_host(12,0) = 172.2596493;
+        d_mdrh_host(12,1) = -0.511006195;
+        d_mdrh_host(12,2) = 4.27244597e-4;
+        d_mdrh_host(12,3) = 4.12797E-07;
+
+        // SN + AC
+        d_mdrh_host(13,0) = 1596.184935;
+        d_mdrh_host(13,1) = -16.37945565;
+        d_mdrh_host(13,2) = 0.060281218;
+        d_mdrh_host(13,3) = -7.6161E-05;
+
+        // SN + AN
+        d_mdrh_host(14,0) = 1916.072988;
+        d_mdrh_host(14,1) = -20.85594868;
+        d_mdrh_host(14,2) = 0.081140141;
+        d_mdrh_host(14,3) = -1.07954274796e-4;
+
+        // SN + AN + AC
+        d_mdrh_host(15,0) = 1467.165935;
+        d_mdrh_host(15,1) = -16.01166196;
+        d_mdrh_host(15,2) = 0.063505582;
+        d_mdrh_host(15,3) = -8.66722E-05;
+
+        // SN + SC
+        d_mdrh_host(16,0) = 158.447059;
+        d_mdrh_host(16,1) = -0.628167358;
+        d_mdrh_host(16,2) = 0.002014448;
+        d_mdrh_host(16,3) = -3.13037E-06;
+
+        // SN + SC + AC
+        d_mdrh_host(17,0) = 1115.892468;
+        d_mdrh_host(17,1) = -11.76936534;
+        d_mdrh_host(17,2) = 0.045577399;
+        d_mdrh_host(17,3) = -6.05779E-05;
+
+        // SS + AC
+        d_mdrh_host(18,0) = 269.5432407;
+        d_mdrh_host(18,1) = -1.319963885;
+        d_mdrh_host(18,2) = 0.002592363;
+        d_mdrh_host(18,3) = -1.44479E-06;
+
+        // SS + AN
+        d_mdrh_host(19,0) = 2841.334784;
+        d_mdrh_host(19,1) = -31.1889487;
+        d_mdrh_host(19,2) = 0.118809274;
+        d_mdrh_host(19,3) = -1.53007e-4;
+
+        // SS + AN + AC
+        d_mdrh_host(20,0) = 2199.36914;
+        d_mdrh_host(20,1) = -24.11926569;
+        d_mdrh_host(20,2) = 0.092932361;
+        d_mdrh_host(20,3) = -1.21774e-4;
+
+        // SS + AS
+        d_mdrh_host(21,0) = 395.0051604;
+        d_mdrh_host(21,1) = -2.521101657;
+        d_mdrh_host(21,2) = 0.006139319;
+        d_mdrh_host(21,3) = -4.43756E-06;
+
+        //SS + AS + AC
+        d_mdrh_host(22,0) = 386.5150675;
+        d_mdrh_host(22,1) = -2.4632138;
+        d_mdrh_host(22,2) = 0.006139319;
+        d_mdrh_host(22,3) = -4.98796E-06;
+
+        // SS + AS + AN
+        d_mdrh_host(23,0) = 3101.538491;
+        d_mdrh_host(23,1) = -34.19978105;
+        d_mdrh_host(23,2) = 0.130118605;
+        d_mdrh_host(23,3) = -1.66873e-4;
+
+        // SS + AS + AN + AC
+        d_mdrh_host(24,0) = 2307.579403;
+        d_mdrh_host(24,1) = -25.43136774;
+        d_mdrh_host(24,2) = 0.098064728;
+        d_mdrh_host(24,3) = -1.28301e-4;
+
+        // SS + SC
+        d_mdrh_host(25,0) = 291.8309602;
+        d_mdrh_host(25,1) = -1.828912974;
+        d_mdrh_host(25,2) = 0.005053148;
+        d_mdrh_host(25,3) = -4.57516E-06;
+
+        // SS + SC + AC
+        d_mdrh_host(26,0) = 188.3914345;
+        d_mdrh_host(26,1) = -0.631345031;
+        d_mdrh_host(26,2) = 0.000622807;
+        d_mdrh_host(26,3) = 4.47196E-07;
+
+        // SS + SN
+        d_mdrh_host(27,0) = -167.1252839;
+        d_mdrh_host(27,1) = 2.969828002;
+        d_mdrh_host(27,2) = -0.010637255;
+        d_mdrh_host(27,3) = 1.13175E-05;
+
+        // SS + SN + AC
+        d_mdrh_host(28,0) = 1516.782768;
+        d_mdrh_host(28,1) = -15.7922661;
+        d_mdrh_host(28,2) = 0.058942209;
+        d_mdrh_host(28,3) = -7.5301E-05;
+
+        // SS + SN + AN
+        d_mdrh_host(29,0) = 1739.963163;
+        d_mdrh_host(29,1) = -19.06576022;
+        d_mdrh_host(29,2) = 0.07454963;
+        d_mdrh_host(29,3) = -9.94302E-05;
+
+        // SS + SN + AN + AC
+        d_mdrh_host(30,0) = 2152.104877;
+        d_mdrh_host(30,1) = -23.74998008;
+        d_mdrh_host(30,2) = 0.092256654;
+        d_mdrh_host(30,3) = -1.21953e-4;
+
+        // SS + SN + SC
+        d_mdrh_host(31,0) = 221.9976265;
+        d_mdrh_host(31,1) = -1.311331272;
+        d_mdrh_host(31,2) = 0.004406089;
+        d_mdrh_host(31,3) = -5.88235E-06;
+
+        // SS + SN + SC + AC
+        d_mdrh_host(32,0) = 1205.645615;
+        d_mdrh_host(32,1) = -12.71353459;
+        d_mdrh_host(32,2) = 0.048803922;
+        d_mdrh_host(32,3) = -6.41899E-05;
+
+        // CC + AC
+        d_mdrh_host(33,0) = 506.6737879;
+        d_mdrh_host(33,1) = -3.723520818;
+        d_mdrh_host(33,2) = 0.010814242;
+        d_mdrh_host(33,3) = -1.21087E-05;
+
+        // CC + SC
+        d_mdrh_host(34,0) = -1123.523841;
+        d_mdrh_host(34,1) = 14.08345977;
+        d_mdrh_host(34,2) = -0.053687823;
+        d_mdrh_host(34,3) = 6.52219E-05;
+
+        // CC + SC + AC
+        d_mdrh_host(35,0) = -1159.98607;
+        d_mdrh_host(35,1) = 14.44309169;
+        d_mdrh_host(35,2) = -0.054841073;
+        d_mdrh_host(35,3) = 6.64259E-05;
+
+        // CN + AC
+        d_mdrh_host(36,0) = 756.0747916;
+        d_mdrh_host(36,1) = -8.546826257;
+        d_mdrh_host(36,2) = 0.035798677;
+        d_mdrh_host(36,3) = -5.06629E-05;
+
+        // CN + AN
+        d_mdrh_host(37,0) = 338.668191;
+        d_mdrh_host(37,1) = -2.971223403;
+        d_mdrh_host(37,2) = 0.012294866;
+        d_mdrh_host(37,3) = -1.87558E-05;
+
+        // CN + AN + AC
+        d_mdrh_host(38,0) = -53.18033508;
+        d_mdrh_host(38,1) = 0.663911748;
+        d_mdrh_host(38,2) = 9.16326e-4;
+        d_mdrh_host(38,3) = -6.70354E-06;
+
+        // CN + SC
+        d_mdrh_host(39,0) = 3623.831129;
+        d_mdrh_host(39,1) = -39.27226457;
+        d_mdrh_host(39,2) = 0.144559515;
+        d_mdrh_host(39,3) = -1.78159e-4;
+
+        // CN + SC + AC
+        d_mdrh_host(40,0) = 3436.656743;
+        d_mdrh_host(40,1) = -37.16192684;
+        d_mdrh_host(40,2) = 0.136641377;
+        d_mdrh_host(40,3) = -1.68262e-4;
+
+        // CN + SN
+        d_mdrh_host(41,0) = 768.608476;
+        d_mdrh_host(41,1) = -8.051517149;
+        d_mdrh_host(41,2) = 0.032342332;
+        d_mdrh_host(41,3) = -4.52224E-05;
+
+        // CN + SN + AC
+        d_mdrh_host(42,0) = 33.58027951;
+        d_mdrh_host(42,1) = -0.308772182;
+        d_mdrh_host(42,2) = 0.004713639;
+        d_mdrh_host(42,3) = -1.19658E-05;
+
+        // CN + SN + AN
+        d_mdrh_host(43,0) = 57.80183041;
+        d_mdrh_host(43,1) = 0.215264604;
+        d_mdrh_host(43,2) = 4.11406e-4;
+        d_mdrh_host(43,3) = -4.30702E-06;
+
+        // CN + SN + AN + AC
+        d_mdrh_host(44,0) = -234.368984;
+        d_mdrh_host(44,1) = 2.721045204;
+        d_mdrh_host(44,2) = -0.006688341;
+        d_mdrh_host(44,3) = 2.31729E-06;
+
+        // CN + SN + SC
+        d_mdrh_host(45,0) = 3879.080557;
+        d_mdrh_host(45,1) = -42.13562874;
+        d_mdrh_host(45,2) = 0.155235005;
+        d_mdrh_host(45,3) = -1.91387e-4;
+
+        // CN + SN + SC + AC
+        d_mdrh_host(46,0) = 3600.576985;
+        d_mdrh_host(46,1) = -39.0283489;
+        d_mdrh_host(46,2) = 0.143710316;
+        d_mdrh_host(46,3) = -1.77167e-4;
+
+        // CN + CC
+        d_mdrh_host(47,0) = -1009.729826;
+        d_mdrh_host(47,1) = 12.9145339;
+        d_mdrh_host(47,2) = -0.049811146;
+        d_mdrh_host(47,3) = 6.09563E-05;
+
+        // CN + CC + AC
+        d_mdrh_host(48,0) = -577.0919514;
+        d_mdrh_host(48,1) = 8.020324227;
+        d_mdrh_host(48,2) = -0.031469556;
+        d_mdrh_host(48,3) = 3.82181E-05;
+
+        // CN + CC + SC
+        d_mdrh_host(49,0) = -728.9983499;
+        d_mdrh_host(49,1) = 9.849458215;
+        d_mdrh_host(49,2) = -0.03879257;
+        d_mdrh_host(49,3) = 4.78844E-05;
+
+        // CN + CC + SC + AC
+        d_mdrh_host(50,0) = -803.7026845;
+        d_mdrh_host(50,1) = 10.61881494;
+        d_mdrh_host(50,2) = -0.041402993;
+        d_mdrh_host(50,3) = 5.08084E-05;
+
+        // SULFATE-RICH SYSTEMS
+        // AB
+        d_mdrh_host(51,0) = -493.6190458;
+        d_mdrh_host(51,1) = 6.747053851;
+        d_mdrh_host(51,2) = -0.026955267;
+        d_mdrh_host(51,3) = 3.45118E-05;
+
+        // LV
+        d_mdrh_host(52,0) = 53.37874093;
+        d_mdrh_host(52,1) = 1.01368249;
+        d_mdrh_host(52,2) = -0.005887513;
+        d_mdrh_host(52,3) = 8.94393E-06;
+
+        // SB
+        d_mdrh_host(53,0) = 206.619047;
+        d_mdrh_host(53,1) = -1.342735684;
+        d_mdrh_host(53,2) = 0.003197691;
+        d_mdrh_host(53,3) = -1.93603E-06;
+
+        // AB + LV
+        d_mdrh_host(54,0) = -493.6190458;
+        d_mdrh_host(54,1) = 6.747053851;
+        d_mdrh_host(54,2) = -0.026955267;
+        d_mdrh_host(54,3) = 3.45118E-05;
+
+        // AS + LV
+        d_mdrh_host(55,0) = 53.37874093;
+        d_mdrh_host(55,1) = 1.01368249;
+        d_mdrh_host(55,2) = -0.005887513;
+        d_mdrh_host(55,3) = 8.94393E-06;
+
+        // SS + SB
+        d_mdrh_host(56,0) = 206.619047;
+        d_mdrh_host(56,1) = -1.342735684;
+        d_mdrh_host(56,2) = 0.003197691;
+        d_mdrh_host(56,3) = -1.93603E-06;
+
+        // SS + LV
+        d_mdrh_host(57,0) = 41.7619047;
+        d_mdrh_host(57,1) = 1.303872053;
+        d_mdrh_host(57,2) = -0.007647908;
+        d_mdrh_host(57,3) = 1.17845E-05;
+
+        // SS + AS + LV
+        d_mdrh_host(58,0) = 41.7619047;
+        d_mdrh_host(58,1) = 1.303872053;
+        d_mdrh_host(58,2) = -0.007647908;
+        d_mdrh_host(58,3) = 1.17845E-05;
+
+        // SS + AB
+        d_mdrh_host(59,0) = -369.7142842;
+        d_mdrh_host(59,1) = 5.512878771;
+        d_mdrh_host(59,2) = -0.02301948;
+        d_mdrh_host(59,3) = 3.0303E-05;
+
+        // SS + LV + AB
+        d_mdrh_host(60,0) = -369.7142842;
+        d_mdrh_host(60,1) = 5.512878771;
+        d_mdrh_host(60,2) = -0.02301948;
+        d_mdrh_host(60,3) = 3.0303E-05;
+
+        // SB + AB
+        d_mdrh_host(61,0) = -162.8095232;
+        d_mdrh_host(61,1) = 2.399326592;
+        d_mdrh_host(61,2) = -0.009336219;
+        d_mdrh_host(61,3) = 1.17845E-05;
+
+        // SS + SB + AB
+        d_mdrh_host(62,0) = -735.4285689;
+        d_mdrh_host(62,1) = 8.885521857;
+        d_mdrh_host(62,2) = -0.033488456;
+        d_mdrh_host(62,3) = 4.12458E-05;
+
         // molecular weights for aerosol species
         mw_aer_mac_host(iso4_a) =  96.0;
         mw_aer_mac_host(ino3_a) =  62.0;
         mw_aer_mac_host(icl_a)  =  35.5;
-        mw_aer_mac_host(imsa_a) =  95.0;  // CH3SO3
+        mw_aer_mac_host(imsa_a) =  95.0;    // CH3SO3
         mw_aer_mac_host(ico3_a) =  60.0;
         mw_aer_mac_host(inh4_a) =  18.0;
         mw_aer_mac_host(ina_a)  =  23.0;
@@ -1868,6 +2257,7 @@ struct MosaicModelData {
         Keq_a_ll.modify_host();
         Keq_b_ll.modify_host();
         b_mtem.modify_host();
+        d_mdrh.modify_host();
         mw_aer_mac.modify_host();
         dens_aer_mac.modify_host();
         mw_electrolyte.modify_host();
@@ -1883,6 +2273,7 @@ struct MosaicModelData {
         Keq_a_ll.sync_device();
         Keq_b_ll.sync_device();
         b_mtem.sync_device();
+        d_mdrh.sync_device();
         mw_aer_mac.sync_device();
         dens_aer_mac.sync_device();
         mw_electrolyte.sync_device();
@@ -1915,6 +2306,44 @@ struct MOSAIC{
   }
 
   KOKKOS_INLINE_FUNCTION static
+  void check_aerosol_mass(const MosaicModelData<DeviceType>& mosaic,
+                          const real_type_1d_view_type& aer_total,
+                          real_type& mass_dry_a,
+                          real_type& jphase,
+                          real_type& jaerosolstate,
+                          real_type& num_a) {
+
+    mass_dry_a = 0.0;
+
+    real_type aer_H = (2.0*aer_total(mosaic.iso4_a)  + 
+                           aer_total(mosaic.ino3_a)  +
+                           aer_total(mosaic.icl_a)   +
+                           aer_total(mosaic.imsa_a)  +
+                       2.0*aer_total(mosaic.ico3_a)) - 
+                      (2.0*aer_total(mosaic.ica_a)   +
+                           aer_total(mosaic.ina_a)   +
+                           aer_total(mosaic.inh4_a));
+    aer_H = max(aer_H, 0.0);
+
+    auto mw_aer_mac = mosaic.mw_aer_mac.template view<DeviceType>();
+    for (ordinal_type iaer = 0; iaer < mosaic.naer; iaer++) {
+      mass_dry_a = mass_dry_a + aer_total(iaer)*mw_aer_mac(iaer); // ng/m^3(air)
+    }
+    mass_dry_a = mass_dry_a + aer_H;
+
+    const real_type drymass = mass_dry_a; // ng/m^3(air)
+    mass_dry_a = mass_dry_a*1.0e-15; // g/cc(air)
+
+    if (drymass < mosaic.mass_cutoff) {
+      jaerosolstate = mosaic.no_aerosol;
+      jphase = 0;
+      if (drymass == 0.0) {
+        num_a = 0.0;
+      }
+    }
+   } // check_aerosol_mass
+
+  KOKKOS_INLINE_FUNCTION static
   void adjust_liquid_aerosol(const MosaicModelData<DeviceType>& mosaic,
                              const real_type_1d_view_type& aer_solid,
                              const real_type_1d_view_type& aer_liquid,
@@ -1927,69 +2356,69 @@ struct MOSAIC{
                              const real_type_1d_view_type& epercent_total,
                              real_type& jphase, real_type& jhyst_leg) {
 
-      jphase    = mosaic.jliquid;
-      jhyst_leg = mosaic.jhyst_up; // upper curve
+    jphase    = mosaic.jliquid;
+    jhyst_leg = mosaic.jhyst_up; // upper curve
 
-      // Partition all electrolytes into liquid phase
-      for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je) {
-          electrolyte_solid(je) = 0.0;
-          epercent_solid(je) = 0.0;
-          electrolyte_liquid(je) = electrolyte_total(je);
-          epercent_liquid(je) = epercent_total(je);
-      }
+    // Partition all electrolytes into liquid phase
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je) {
+      electrolyte_solid(je) = 0.0;
+      epercent_solid(je) = 0.0;
+      electrolyte_liquid(je) = electrolyte_total(je);
+      epercent_liquid(je) = epercent_total(je);
+    }
 
-      // Except these electrolytes, which always remain in the solid phase
-      electrolyte_solid(mosaic.jcaco3) = electrolyte_total(mosaic.jcaco3);
-      electrolyte_solid(mosaic.jcaso4) = electrolyte_total(mosaic.jcaso4);
-      epercent_solid(mosaic.jcaco3) = epercent_total(mosaic.jcaco3);
-      epercent_solid(mosaic.jcaso4) = epercent_total(mosaic.jcaso4);
-      electrolyte_liquid(mosaic.jcaco3) = 0.0;
-      electrolyte_liquid(mosaic.jcaso4) = 0.0;
-      epercent_liquid(mosaic.jcaco3) = 0.0;
-      epercent_liquid(mosaic.jcaso4) = 0.0;
+    // Except these electrolytes, which always remain in the solid phase
+    electrolyte_solid(mosaic.jcaco3) = electrolyte_total(mosaic.jcaco3);
+    electrolyte_solid(mosaic.jcaso4) = electrolyte_total(mosaic.jcaso4);
+    epercent_solid(mosaic.jcaco3) = epercent_total(mosaic.jcaco3);
+    epercent_solid(mosaic.jcaso4) = epercent_total(mosaic.jcaso4);
+    electrolyte_liquid(mosaic.jcaco3) = 0.0;
+    electrolyte_liquid(mosaic.jcaso4) = 0.0;
+    epercent_liquid(mosaic.jcaco3) = 0.0;
+    epercent_liquid(mosaic.jcaso4) = 0.0;
 
-      // Partition all the aer species into solid and liquid phases
-      // Solid phase
-      aer_solid(mosaic.iso4_a) = electrolyte_solid(mosaic.jcaso4);
-      aer_solid(mosaic.ino3_a) = 0.0;
-      aer_solid(mosaic.icl_a) = 0.0;
-      aer_solid(mosaic.inh4_a) = 0.0;
-      aer_solid(mosaic.ioc_a) = aer_total(mosaic.ioc_a);
-      aer_solid(mosaic.imsa_a) = 0.0;
-      aer_solid(mosaic.ico3_a) = aer_total(mosaic.ico3_a);
-      aer_solid(mosaic.ina_a) = 0.0;
-      aer_solid(mosaic.ica_a) = electrolyte_solid(mosaic.jcaco3) + electrolyte_solid(mosaic.jcaso4);
-      aer_solid(mosaic.ibc_a) = aer_total(mosaic.ibc_a);
-      aer_solid(mosaic.ioin_a) = aer_total(mosaic.ioin_a);
-      aer_solid(mosaic.iaro1_a) = aer_total(mosaic.iaro1_a);
-      aer_solid(mosaic.iaro2_a) = aer_total(mosaic.iaro2_a);
-      aer_solid(mosaic.ialk1_a) = aer_total(mosaic.ialk1_a);
-      aer_solid(mosaic.iole1_a) = aer_total(mosaic.iole1_a);
-      aer_solid(mosaic.iapi1_a) = aer_total(mosaic.iapi1_a);
-      aer_solid(mosaic.iapi2_a) = aer_total(mosaic.iapi2_a);
-      aer_solid(mosaic.ilim1_a) = aer_total(mosaic.ilim1_a);
-      aer_solid(mosaic.ilim2_a) = aer_total(mosaic.ilim2_a);
+    // Partition all the aer species into solid and liquid phases
+    // Solid phase
+    aer_solid(mosaic.iso4_a) = electrolyte_solid(mosaic.jcaso4);
+    aer_solid(mosaic.ino3_a) = 0.0;
+    aer_solid(mosaic.icl_a) = 0.0;
+    aer_solid(mosaic.inh4_a) = 0.0;
+    aer_solid(mosaic.ioc_a) = aer_total(mosaic.ioc_a);
+    aer_solid(mosaic.imsa_a) = 0.0;
+    aer_solid(mosaic.ico3_a) = aer_total(mosaic.ico3_a);
+    aer_solid(mosaic.ina_a) = 0.0;
+    aer_solid(mosaic.ica_a) = electrolyte_solid(mosaic.jcaco3) + electrolyte_solid(mosaic.jcaso4);
+    aer_solid(mosaic.ibc_a) = aer_total(mosaic.ibc_a);
+    aer_solid(mosaic.ioin_a) = aer_total(mosaic.ioin_a);
+    aer_solid(mosaic.iaro1_a) = aer_total(mosaic.iaro1_a);
+    aer_solid(mosaic.iaro2_a) = aer_total(mosaic.iaro2_a);
+    aer_solid(mosaic.ialk1_a) = aer_total(mosaic.ialk1_a);
+    aer_solid(mosaic.iole1_a) = aer_total(mosaic.iole1_a);
+    aer_solid(mosaic.iapi1_a) = aer_total(mosaic.iapi1_a);
+    aer_solid(mosaic.iapi2_a) = aer_total(mosaic.iapi2_a);
+    aer_solid(mosaic.ilim1_a) = aer_total(mosaic.ilim1_a);
+    aer_solid(mosaic.ilim2_a) = aer_total(mosaic.ilim2_a);
 
-      // Liquid phase
-      aer_liquid(mosaic.iso4_a) = max(0.0, aer_total(mosaic.iso4_a) - aer_solid(mosaic.iso4_a));
-      aer_liquid(mosaic.ino3_a) = aer_total(mosaic.ino3_a);
-      aer_liquid(mosaic.icl_a) = aer_total(mosaic.icl_a);
-      aer_liquid(mosaic.inh4_a) = aer_total(mosaic.inh4_a);
-      aer_liquid(mosaic.ioc_a) = 0.0;
-      aer_liquid(mosaic.imsa_a) = aer_total(mosaic.imsa_a);
-      aer_liquid(mosaic.ico3_a) = 0.0;
-      aer_liquid(mosaic.ina_a) = aer_total(mosaic.ina_a);
-      aer_liquid(mosaic.ica_a) = max(0.0, aer_total(mosaic.ica_a) - aer_solid(mosaic.ica_a));
-      aer_liquid(mosaic.ibc_a) = 0.0;
-      aer_liquid(mosaic.ioin_a) = 0.0;
-      aer_liquid(mosaic.iaro1_a) = 0.0;
-      aer_liquid(mosaic.iaro2_a) = 0.0;
-      aer_liquid(mosaic.ialk1_a) = 0.0;
-      aer_liquid(mosaic.iole1_a) = 0.0;
-      aer_liquid(mosaic.iapi1_a) = 0.0;
-      aer_liquid(mosaic.iapi2_a) = 0.0;
-      aer_liquid(mosaic.ilim1_a) = 0.0;
-      aer_liquid(mosaic.ilim2_a) = 0.0;
+    // Liquid phase
+    aer_liquid(mosaic.iso4_a) = max(0.0, aer_total(mosaic.iso4_a) - aer_solid(mosaic.iso4_a));
+    aer_liquid(mosaic.ino3_a) = aer_total(mosaic.ino3_a);
+    aer_liquid(mosaic.icl_a) = aer_total(mosaic.icl_a);
+    aer_liquid(mosaic.inh4_a) = aer_total(mosaic.inh4_a);
+    aer_liquid(mosaic.ioc_a) = 0.0;
+    aer_liquid(mosaic.imsa_a) = aer_total(mosaic.imsa_a);
+    aer_liquid(mosaic.ico3_a) = 0.0;
+    aer_liquid(mosaic.ina_a) = aer_total(mosaic.ina_a);
+    aer_liquid(mosaic.ica_a) = max(0.0, aer_total(mosaic.ica_a) - aer_solid(mosaic.ica_a));
+    aer_liquid(mosaic.ibc_a) = 0.0;
+    aer_liquid(mosaic.ioin_a) = 0.0;
+    aer_liquid(mosaic.iaro1_a) = 0.0;
+    aer_liquid(mosaic.iaro2_a) = 0.0;
+    aer_liquid(mosaic.ialk1_a) = 0.0;
+    aer_liquid(mosaic.iole1_a) = 0.0;
+    aer_liquid(mosaic.iapi1_a) = 0.0;
+    aer_liquid(mosaic.iapi2_a) = 0.0;
+    aer_liquid(mosaic.ilim1_a) = 0.0;
+    aer_liquid(mosaic.ilim2_a) = 0.0;
   } // adjust_liquid_aerosol
 
   KOKKOS_INLINE_FUNCTION static
@@ -2148,6 +2577,14 @@ struct MOSAIC{
   } // gas_diffusivity
 
   KOKKOS_INLINE_FUNCTION static
+  void mean_molecular_speed(const real_type& T_K,
+                            const real_type& MW,
+                            real_type& mean_molec_speed) {
+
+    mean_molec_speed = 1.455e4 * ats<real_type>::sqrt(T_K/MW);
+  } // mean_molecular_speed
+
+  KOKKOS_INLINE_FUNCTION static
   void fn_Keq(const real_type& Keq_298,
               const real_type& a,
               const real_type& b,
@@ -2161,13 +2598,30 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void fn_Po(const real_type& Po_298,
-              const real_type& DH,
-              const real_type& T,
-              real_type& Po) {
+             const real_type& DH,
+             const real_type& T_K,
+             real_type& Po) {
 
     // Van't Hoff Equation
-    Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T - (1/298.15)));
+    Po = Po_298*ats<real_type>::exp(-(DH/(RUNIV/1000))*(1.0/T_K - (1/298.15)));
   } // fn_Po
+
+  KOKKOS_INLINE_FUNCTION static
+  void drh_mutual(const MosaicModelData<DeviceType>& mosaic,
+                  const ordinal_type& j_index,
+                  const real_type& T_K,
+                  real_type& drh_mutual) {
+
+    if (j_index == 7 || j_index == 8 || (j_index >= 34 && j_index <= 51)) {
+      drh_mutual = 10.0; // CaNO3 or CaCl2 containing mixtures
+    } else {
+      auto d_mdrh = mosaic.d_mdrh.template view<DeviceType>();
+      drh_mutual = d_mdrh(j_index,0) + T_K *
+                  (d_mdrh(j_index,1) + T_K *
+                  (d_mdrh(j_index,2) + T_K *
+                   d_mdrh(j_index,3) )) + 1.0;
+    }
+  } // drh_mutual
   
   KOKKOS_INLINE_FUNCTION static
   void molality_0(const MosaicModelData<DeviceType>& mosaic,
@@ -2633,6 +3087,23 @@ struct MOSAIC{
     fnlog_gamZ(mosaic, jA, mosaic.jhcl, aH2O, log_gamZ_);
     log_gamZ(jA,mosaic.jhcl) = log_gamZ_;
   } // MTEM_compute_log_gamZ
+
+  KOKKOS_INLINE_FUNCTION static
+  void aerosol_water_up(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& electrolyte_total,
+                        real_type& aerosol_water) {
+
+    real_type dum = 0.0;
+
+    // TODO: change this for loop to a parallel_reduce
+    for (ordinal_type je = 0; je < mosaic.nsalt + 4; je++) {
+      real_type molality = 0.0;
+      bin_molality_60(mosaic, je, molality);
+      dum += 1.e-9*electrolyte_total(je)/molality;
+    }
+
+    aerosol_water = dum;
+  } // aerosol_water_up
 
 };
 

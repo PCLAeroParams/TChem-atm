@@ -45,6 +45,8 @@ void MTEM_compute_log_gamZ(Ensemble *ensemble);
 
 void aerosol_water_up(Ensemble *ensemble);
 
+void aerosol_water(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -98,6 +100,8 @@ int main(int argc, char **argv) {
       MTEM_compute_log_gamZ(ensemble);
     } else if (func_name == "aerosol_water_up") {
       aerosol_water_up(ensemble);
+    } else if (func_name == "aerosol_water") {
+      aerosol_water(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

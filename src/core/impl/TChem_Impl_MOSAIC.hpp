@@ -2142,8 +2142,8 @@ struct MOSAIC{
                      const real_type& a,
                      real_type& fuchs_sut) {
 
-    real_type rnum  = 0.75*a*(1. + rkn);
-    real_type denom = ats<real_type>::pow(rkn, 2.0) + rkn + 0.283*rkn*a + 0.75*a;
+    const real_type rnum  = 0.75*a*(1. + rkn);
+    const real_type denom = ats<real_type>::pow(rkn, 2.0) + rkn + 0.283*rkn*a + 0.75*a;
     fuchs_sut = rnum/denom;
   } // fuchs_sutugin
 

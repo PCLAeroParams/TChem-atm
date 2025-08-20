@@ -80,9 +80,6 @@ void update_thermodynamic_constants(Ensemble *ensemble) {
     real_type_1d_view Kp_nh4cl_0("Kp_nh4cl_0", 1);
     verification::convert_1d_vector_to_1d_view_device(Kp_nh4cl_0_arr, Kp_nh4cl_0);
 
-    // Reals or int that are defined outside of the parallel_for region are passed as const.
-    real_type_1d_view outputs_update_thermodynamic_constants("outputs_update_thermodynamic_constants", 3);
-
     std::string profile_name ="Verification_test_update_thermodynamic_constants";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
@@ -91,7 +88,7 @@ void update_thermodynamic_constants(Ensemble *ensemble) {
     policy_type policy(exec_space_instance, 1, Kokkos::AUTO());
 
     // Check this routines on GPUs.
-     Kokkos::parallel_for(
+    Kokkos::parallel_for(
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
@@ -102,14 +99,6 @@ void update_thermodynamic_constants(Ensemble *ensemble) {
       sat_soa, sigma_water(0), MDRH_T,
       Kp_nh4no3_0(0), Kp_nh4cl_0(0));
     });
-
-    const auto outputs_update_thermodynamic_constants_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_update_thermodynamic_constants);
-
-    // Real Kp_nh3 = outputs_update_thermodynamic_constants_h(0);
-    // Real Kp_nh4no3 = outputs_update_thermodynamic_constants_h(1);
-    // Real Kp_nh4no3_0 = outputs_update_thermodynamic_constants_h(2);
-    // Real sigma_water = outputs_update_thermodynamic_constants_h(3);
-    // Real Kp_nh4cl_0 = outputs_update_thermodynamic_constants_h(4);
 
     verification::convert_1d_view_device_to_1d_vector(Keq_gl, Keq_gl_arr);
     verification::convert_1d_view_device_to_1d_vector(Keq_ll, Keq_ll_arr);

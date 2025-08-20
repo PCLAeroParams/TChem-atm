@@ -2567,6 +2567,16 @@ struct MOSAIC{
   } // fnlog_gamZ
 
   KOKKOS_INLINE_FUNCTION static
+  void gas_diffusivity(const real_type& T_K,
+                       const real_type& P,
+                       const real_type& MW,
+                       const real_type& Vm,
+                       real_type& gas_diff) { 
+    gas_diff = (1.0e-3 * ats<real_type>::pow(T_K, 1.75) * ats<real_type>::sqrt(1.0/MW + 0.035))/
+                    (P * ats<real_type>::pow(ats<real_type>::pow(Vm, 0.333333) + 2.7189, 2.0));
+  } // gas_diffusivity
+
+  KOKKOS_INLINE_FUNCTION static
   void mean_molecular_speed(const real_type& T_K,
                             const real_type& MW,
                             real_type& mean_molec_speed) {

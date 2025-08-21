@@ -2423,9 +2423,12 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void compute_activities(const MosaicModelData<DeviceType>& mosaic,
+                          const real_type_1d_view_type& molalities,
+                          const real_type_1d_view_type& xmol,
                           const real_type_1d_view_type& aer_liquid,
                           const real_type_1d_view_type& ma,
                           const real_type_1d_view_type& mc,
+                          const real_type_1d_view_type& Keq_ll,
                           const real_type_1d_view_type& electrolyte_solid,
                           const real_type_1d_view_type& electrolyte_liquid,
                           const real_type_1d_view_type& electrolyte_total,
@@ -2433,17 +2436,17 @@ struct MOSAIC{
                           const real_type_2d_view_type& log_gamZ,
                           const real_type_1d_view_type& gam,
                           const real_type_1d_view_type& activity,
-                          real_type& T_K) {
+                          real_type& jaerosolstate,
+                          real_type& jphase,
+                          real_type& jhyst_leg,
+                          real_type& aH2O_a) {
 
     // local variables
-    real_type_1d_view_type xmol("xmol", mosaic.nelectrolyte);
-    real_type a_c, Keq_ll, sum_elec, gam_ratio, water_a, mSULF, gam_ratio;
+    real_type a_c, sum_elec, gam_ratio, water_a, mSULF;
     ordinal_type jA;
-    // FIXME: these need to be set beforehand
-    ordinal_type jaerosolstate, jphase, jhyst_leg;
 
     // get aerosol water activity
-    aerosol_water(mosaic, electrolyte_liquid, water_a, jaerosolstate, jphase, jhyst_leg);
+    aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
 
     if (water_a == 0.0) {
       return;
@@ -2451,7 +2454,7 @@ struct MOSAIC{
 
     // get sulfate ratio to determine regime
     real_type XT = 0.0;
-    calcuate_XT(aer_liquid, mosaic, XT);
+    calculate_XT(mosaic, aer_liquid, XT);
 
     if (XT > 2.0 || XT < 0.0) {
       // SULFATE POOR: fully dissociated electrolytes
@@ -2466,7 +2469,7 @@ struct MOSAIC{
       // cation molalities (mol / kg water)
       mc(mosaic.jc_ca)  = 1.e-9 * aer_liquid(mosaic.ica_a)  / water_a;
       mc(mosaic.jc_nh4) = 1.e-9 * aer_liquid(mosaic.inh4_a) / water_a;
-      mc(mosaic.jc_na)  = 1.e-9 * aer_liquid(mosaic.na_a)   / water_a;
+      mc(mosaic.jc_na)  = 1.e-9 * aer_liquid(mosaic.ina_a)  / water_a;
       a_c               = (
                           (2. * ma(mosaic.ja_so4)  +
                                 ma(mosaic.ja_no3)  +
@@ -2475,12 +2478,8 @@ struct MOSAIC{
                           (2. * mc(mosaic.jc_ca)   +
                                 mc(mosaic.jc_nh4)  +
                                 mc(mosaic.jc_na))  );
-      // FIXME: consider adding update_thermodynamic_constants instead
-      // of computing equil. constants directly.
-      // Make sure temp. is handled
-      fn_Keq(mosaic.Keq_ll_298(2), mosaic.Keq_a_ll(2), mosiac.Keq_b_ll(2), T_K, Keq_ll);
       mc(mosaic.jc_h)   = 0.5 * ( (a_c) +
-                                  (ats<real_type>::sqrt(a_c*a_c + 4. * Keq_ll)) );
+                                  (ats<real_type>::sqrt(a_c*a_c + 4. * Keq_ll(2))) );
 
       if (mc(mosaic.jc_h) == 0.0) {
         mc(mosaic.jc_h) = 1.e-10;
@@ -2541,7 +2540,7 @@ struct MOSAIC{
       xmol(mosaic.jhno3)   = 2. * electrolyte_liquid(mosaic.jhno3)   / sum_elec;
       xmol(mosaic.jhcl)    = 2. * electrolyte_liquid(mosaic.jhcl)    / sum_elec;
 
-      jA = mosaic.nh4so4;
+      jA = mosaic.jnh4so4;
       if (xmol(jA) > 0.0) {
         log_gam(jA) = xmol(mosaic.jnh4no3) * log_gamZ(jA,mosaic.jnh4no3) +
                       xmol(mosaic.jnh4cl)  * log_gamZ(jA,mosaic.jnh4cl)  +
@@ -2556,7 +2555,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = ats<real_type>::pow(mc(mosaic.jc_nh4),2.) *
                       ma(mosaic.ja_so4) *
-                      ats<real_type>::pow(gam(jA,3.));
+                      ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jnh4no3;
@@ -2574,7 +2573,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_nh4) *
                       ma(mosaic.ja_no3) *
-                      ats<real_type>::pow(gam(jA,2.));
+                      ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jnh4cl;
@@ -2592,7 +2591,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_nh4) *
                       ma(mosaic.ja_cl) *
-                      ats<real_type>::pow(gam(jA,2.));
+                      ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jna2so4;
@@ -2610,7 +2609,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = ats<real_type>::pow(mc(mosaic.jc_na),2.) *
                       ma(mosaic.ja_so4) *
-                      ats<real_type>::pow(gam(jA,3.));
+                      ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jnano3;
@@ -2628,7 +2627,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_na) *
                       ma(mosaic.ja_no3) *
-                      ats<real_type>::pow(gam(jA,2.));
+                      ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jnacl;
@@ -2646,7 +2645,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_na) *
                       ma(mosaic.ja_cl) *
-                      ats<real_type>::pow(gam(jA,2.));
+                      ats<real_type>::pow(gam(jA),2.);
       }
 
   // Note: these are commented out in MOSAIC also.
@@ -2677,7 +2676,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_ca) *
                       ats<real_type>::pow(ma(mosaic.ja_no3),2.) *
-                      ats<real_type>::pow(gam(jA,3.));
+                      ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jcacl2;
@@ -2695,7 +2694,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_ca) *
                       ats<real_type>::pow(ma(mosaic.ja_cl),2.) *
-                      ats<real_type>::pow(gam(jA,3.));
+                      ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jhno3;
@@ -2713,7 +2712,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_h) *
                       ma(mosaic.ja_no3) *
-                      ats<real_type>::pow(gam(jA,2.));
+                      ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jhcl;
@@ -2731,7 +2730,7 @@ struct MOSAIC{
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_h) *
                       ma(mosaic.ja_cl) *
-                      ats<real_type>::pow(gam(jA,2.));
+                      ats<real_type>::pow(gam(jA),2.);
       }
 
       // FIXME: duplicated code to avoid goto statement
@@ -2774,7 +2773,7 @@ struct MOSAIC{
                  2. * electrolyte_liquid(mosaic.jhcl);
 
       if (sum_elec == 0.0) {
-        for (ordinal_type jA = 0; jA < mosaic.nelectrolyte; j++) {
+        for (ordinal_type jA = 0; jA < mosaic.nelectrolyte; jA++) {
           gam(jA) = 1.0;
         }
         // FIXME: duplicated code to avoid goto statement
@@ -2806,10 +2805,8 @@ struct MOSAIC{
 
         gam_ratio = ats<real_type>::pow(gam(mosaic.jnh4hso4),2.) /
                     ats<real_type>::pow(gam(mosaic.jhhso4),2.);
-        fn_Keq(mosaic.Keq_ll_298(0), mosaic.Keq_a_ll(0), mosaic.Keq_b_ll(0), T_K, dumK);
-        dumK = dumK * ats<real_type>::pow(gam(mosaic.jhhso4),2.) /
-                      ats<real_type>::pow(gam(mosaic.jh2so4),3.);
-
+        dumK = Keq_ll(0) * ats<real_type>::pow(gam(mosaic.jhhso4),2.) /
+                           ats<real_type>::pow(gam(mosaic.jh2so4),3.);
 
         c_bal = mc(mosaic.jc_nh4) + mc(mosaic.jc_na) + 2. * mc(mosaic.jc_ca) -
                 ma(mosaic.ja_no3) - ma(mosaic.ja_cl) - mSULF - ma(mosaic.ja_msa);
@@ -2818,26 +2815,28 @@ struct MOSAIC{
         bq = dumK + c_bal;
         cq = dumK * (c_bal -mSULF);
 
+        real_type xq;
       //--quadratic solution
         if (bq != 0.0) {
-          real_type xq = 4. * (1./bq) * (cq/bq);
+          xq = 4. * (1./bq) * (cq/bq);
 
         } else {
-          real_type xq = 1.e6;
+          xq = 1.e6;
         }
 
-        if(ats<real_type>abs(xq) < 1.e-6) {
+        real_type quad = 0.0;
+        if(ats<real_type>::abs(xq) < 1.e-6) {
           real_type dum = xq * (0.5 + xq*(0.125 + xq*0.0625));
-          real_type quad  = (-0.5*bq/aq)*dum;
+          quad  = (-0.5*bq/aq)*dum;
           if (quad < 0.0) {
             quad = -bq/aq - quad;
           }
         } else {
-          quad = 0.5 * (-bq + ats<real_type>sqrt(bq*bq - 4.*cq));
+          quad = 0.5 * (-bq + ats<real_type>::sqrt(bq*bq - 4.*cq));
         }
 
       //--end of quadratic solution
-        mc(mosaic.jc_h)    = ats<real_type>max(quad, 1.e-7);
+        mc(mosaic.jc_h)    = max(quad, 1.e-7);
         ma(mosaic.ja_so4)  = mSULF * dumK / (mc(mosaic.jc_h) + dumK);
         ma(mosaic.ja_hso4) = mSULF - ma(mosaic.ja_so4);
 
@@ -2852,7 +2851,7 @@ struct MOSAIC{
         activity(mosaic.jlvcite) = ats<real_type>::pow(mc(mosaic.jc_nh4),3.) *
                                   ma(mosaic.ja_hso4) *
                                   ma(mosaic.ja_so4) *
-                                  ats<real_type>::pow(gam(mosaic.lvcite),5.);
+                                  ats<real_type>::pow(gam(mosaic.jlvcite),5.);
 
         activity(mosaic.jnh4hso4) = mc(mosaic.jc_nh4) *
                                     ma(mosaic.ja_hso4) *
@@ -2954,7 +2953,7 @@ struct MOSAIC{
 
     // LETOVICITE
       jA = mosaic.jlvcite;
-      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosiac.jh2so4)   +
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
                     xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
                     xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
@@ -3025,7 +3024,7 @@ struct MOSAIC{
 
       // HNO3
       jA = mosaic.jhno3;
-      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosiac.jh2so4)   +
+      log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
                     xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
                     xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
@@ -3043,7 +3042,7 @@ struct MOSAIC{
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
                     xmol(mosaic.jlvcite)  * log_gamZ(jA,mosaic.jlvcite)  +
                     xmol(mosaic.jnh4so4)  * log_gamZ(jA,mosaic.jnh4so4)  +
-                    xmol(moasic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
+                    xmol(mosaic.jnahso4)  * log_gamZ(jA,mosaic.jnahso4)  +
                     xmol(mosaic.jna3hso4) * log_gamZ(jA,mosaic.jna3hso4) +
                     xmol(mosaic.jna2so4)  * log_gamZ(jA,mosaic.jna2so4)  +
                     xmol(mosaic.jhno3)    * log_gamZ(jA,mosaic.jhno3)    +
@@ -3079,9 +3078,8 @@ struct MOSAIC{
 
       gam_ratio = ats<real_type>::pow(gam(mosaic.jnh4hso4),2.) /
                   ats<real_type>::pow(gam(mosaic.jhhso4),2.);
-      fn_Keq(mosaic.Keq_ll_298(0), mosaic.Keq_a_ll(0), mosaic.Keq_b_ll(0), T_K, dumK);
-      dumK = dumK * ats<real_type>::pow(gam(mosaic.jhhso4),2.) /
-                    ats<real_type>::pow(gam(mosaic.jh2so4),3.);
+      dumK = Keq_ll(0) * ats<real_type>::pow(gam(mosaic.jhhso4),2.) /
+                         ats<real_type>::pow(gam(mosaic.jh2so4),3.);
 
 
       c_bal = mc(mosaic.jc_nh4) + mc(mosaic.jc_na) + 2. * mc(mosaic.jc_ca) -
@@ -3092,25 +3090,26 @@ struct MOSAIC{
       cq = dumK * (c_bal -mSULF);
 
       //--quadratic solution
+      real_type xq;
       if (bq != 0.0) {
-        real_type xq = 4. * (1./bq) * (cq/bq);
-
+        xq = 4. * (1./bq) * (cq/bq);
       } else {
-        real_type xq = 1.e6;
+        xq = 1.e6;
       }
 
-      if(ats<real_type>abs(xq) < 1.e-6) {
+      real_type quad = 0.0;
+      if(ats<real_type>::abs(xq) < 1.e-6) {
         real_type dum = xq * (0.5 + xq*(0.125 + xq*0.0625));
-        real_type quad  = (-0.5*bq/aq)*dum;
+        quad  = (-0.5*bq/aq)*dum;
         if (quad < 0.0) {
           quad = -bq/aq - quad;
         }
       } else {
-        quad = 0.5 * (-bq + ats<real_type>sqrt(bq*bq - 4.*cq));
+        quad = 0.5 * (-bq + ats<real_type>::sqrt(bq*bq - 4.*cq));
       }
 
       //--end of quadratic solution
-      mc(mosaic.jc_h)    = ats<real_type>max(quad, 1.e-7);
+      mc(mosaic.jc_h)    = max(quad, 1.e-7);
       ma(mosaic.ja_so4)  = mSULF * dumK / (mc(mosaic.jc_h) + dumK);
       ma(mosaic.ja_hso4) = mSULF - ma(mosaic.ja_so4);
 
@@ -3125,7 +3124,7 @@ struct MOSAIC{
       activity(mosaic.jlvcite) = ats<real_type>::pow(mc(mosaic.jc_nh4),3.) *
                                 ma(mosaic.ja_hso4) *
                                 ma(mosaic.ja_so4) *
-                                ats<real_type>::pow(gam(mosaic.lvcite),5.);
+                                ats<real_type>::pow(gam(mosaic.jlvcite),5.);
 
       activity(mosaic.jnh4hso4) = mc(mosaic.jc_nh4) *
                                   ma(mosaic.ja_hso4) *
@@ -3173,7 +3172,7 @@ struct MOSAIC{
       activity(mosaic.jcano3)  = 0.0;
       activity(mosaic.jcacl2)  = 0.0;
     }
-  }
+  } // compute_activities
 
 
   KOKKOS_INLINE_FUNCTION static

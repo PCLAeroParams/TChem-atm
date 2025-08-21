@@ -27,6 +27,8 @@ void calculate_XT(Ensemble *ensemble);
 
 void fnlog_gamZ(Ensemble *ensemble);
 
+void fuchs_sutugin(Ensemble *ensemble);
+
 void gas_diffusivity(Ensemble *ensemble);
 
 void mean_molecular_speed(Ensemble *ensemble);
@@ -82,6 +84,8 @@ int main(int argc, char **argv) {
       calculate_XT(ensemble);
     } else if (func_name == "fnlog_gamZ") {
       fnlog_gamZ(ensemble);
+    } else if (func_name == "fuchs_sutugin") {
+      fuchs_sutugin(ensemble);
     } else if (func_name == "gas_diffusivity") {
       gas_diffusivity(ensemble);
     } else if (func_name == "mean_molecular_speed") {

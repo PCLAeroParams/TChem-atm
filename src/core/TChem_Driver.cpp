@@ -1,7 +1,29 @@
+/* =====================================================================================
+TChem-atm version 2.0.0
+Copyright (2025) NTESS
+https://github.com/sandialabs/TChem-atm
+
+Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
+(NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+Government retains certain rights in this software.
+
+This file is part of TChem-atm. TChem-atm is open source software: you can redistribute
+it and/or modify it under the terms of BSD 2-Clause License
+(https://opensource.org/licenses/BSD-2-Clause). A copy of the licese is also
+provided under the main directory
+
+Questions? Contact Oscar Diaz-Ibarra at <odiazib@sandia.gov>, or
+           Cosmin Safta at <csafta@sandia.gov> or,
+           Nicole Riemer at <nriemer@illinois.edu> or,
+           Matthew West at <mwest@illinois.edu>
+
+Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
+=====================================================================================
+*/
 #include "TChem_Driver.hpp"
 #include "TChem.hpp"
 #include "TChem_KineticModelNCAR_ConstData.hpp"
-#include "TChem_CommandLineParser.hpp" 
+#include "TChem_CommandLineParser.hpp"
 
 using real_type = TChem::real_type;
 using ordinal_type = TChem::ordinal_type;
@@ -291,9 +313,9 @@ void TChem::Driver::setStateVector(double *array, const ordinal_type iBatch) {
 
 /**
  * Return species name at a given index.
- */ 
+ */
 int TChem_getSpeciesName(int * index, char* result, const std::string::size_type buffer_size){
-  std::string specName = g_tchem->getSpeciesName(index);  
+  std::string specName = g_tchem->getSpeciesName(index);
   specName.copy(result, buffer_size);
   result[specName.length()] = '\0';
   return specName.length();
@@ -390,7 +412,7 @@ std::string TChem::Driver::getAerosolSpeciesName(int *index){
 /**
  * Return length of the state vector.
  */
-int TChem_getLengthOfStateVector() { 
+int TChem_getLengthOfStateVector() {
   return g_tchem == nullptr ? -1 : g_tchem->getLengthOfStateVector();
 }
 
@@ -434,7 +456,7 @@ void TChem::Driver::doTimestep(const double del_t){
   using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
   using interf_host_device_type =
       typename Tines::UseThisDevice<TChem::host_exec_space>::type;
-  using problem_type = 
+  using problem_type =
       TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
   using policy_type =
       typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;

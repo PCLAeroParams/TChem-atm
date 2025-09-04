@@ -3137,6 +3137,35 @@ struct MOSAIC{
     aerosol_water = dum;
   } // aerosol_water_up
 
+  KOKKOS_INLINE_FUNCTION static
+  void aerosol_water(const MosaicModelData<DeviceType>& mosaic,
+                     const real_type_1d_view_type& electrolyte,
+                     const real_type& aH2O_a,
+                     const real_type_1d_view_type& molalities,
+                     real_type& jaerosolstate,
+                     real_type& jphase,
+                     real_type& jhyst_leg,
+                     real_type& aerosol_water) {
+
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
+      real_type molality = 0.0;
+      bin_molality(mosaic, je, aH2O_a, molality); // compute aH2O dependent binary molalities  EFFI
+      molalities(je) = molality;
+    }
+
+    real_type dum = 0.0;
+    for (ordinal_type je = 0; je < (mosaic.nsalt + 4); je++) { // include hno3 and hcl in water calculation
+      dum += electrolyte(je) / molalities(je);
+    }
+
+    aerosol_water = dum * 1.0e-9;
+    if (aerosol_water <= 0.0) {
+      jaerosolstate = mosaic.all_solid;
+      jphase = mosaic.jsolid;
+      jhyst_leg = mosaic.jhyst_lo;
+    }
+  }
+
 };
 
 } // namespace Impl

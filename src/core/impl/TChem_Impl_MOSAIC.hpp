@@ -1,3 +1,25 @@
+/* =====================================================================================
+TChem-atm version 2.0.0
+Copyright (2025) NTESS
+https://github.com/sandialabs/TChem-atm
+
+Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
+(NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+Government retains certain rights in this software.
+
+This file is part of TChem-atm. TChem-atm is open source software: you can redistribute
+it and/or modify it under the terms of BSD 2-Clause License
+(https://opensource.org/licenses/BSD-2-Clause). A copy of the licese is also
+provided under the main directory
+
+Questions? Contact Oscar Diaz-Ibarra at <odiazib@sandia.gov>, or
+           Cosmin Safta at <csafta@sandia.gov> or,
+           Nicole Riemer at <nriemer@illinois.edu> or,
+           Matthew West at <mwest@illinois.edu>
+
+Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
+=====================================================================================
+*/
 #ifndef __TCHEM_IMPL_MOSAIC_HPP__
 #define __TCHEM_IMPL_MOSAIC_HPP__
 
@@ -2315,11 +2337,11 @@ struct MOSAIC{
 
     mass_dry_a = 0.0;
 
-    real_type aer_H = (2.0*aer_total(mosaic.iso4_a)  + 
+    real_type aer_H = (2.0*aer_total(mosaic.iso4_a)  +
                            aer_total(mosaic.ino3_a)  +
                            aer_total(mosaic.icl_a)   +
                            aer_total(mosaic.imsa_a)  +
-                       2.0*aer_total(mosaic.ico3_a)) - 
+                       2.0*aer_total(mosaic.ico3_a)) -
                       (2.0*aer_total(mosaic.ica_a)   +
                            aer_total(mosaic.ina_a)   +
                            aer_total(mosaic.inh4_a));
@@ -2486,7 +2508,7 @@ struct MOSAIC{
     electrolyte_liquid(mosaic.jcaso4) = 0.0;
 
     // Partition all the generic aer species into solid and liquid phases
-    // Solid phase 
+    // Solid phase
     aer_solid(mosaic.iso4_a) = electrolyte_solid(mosaic.jcaso4);
     aer_solid(mosaic.ino3_a) = 0.0;
     aer_solid(mosaic.icl_a) = 0.0;
@@ -2543,7 +2565,7 @@ struct MOSAIC{
         XT = -1.0;
     }
   }// calculate_XT
-  
+
   KOKKOS_INLINE_FUNCTION static
   void fnlog_gamZ(const MosaicModelData<DeviceType>& mosaic,
                   const ordinal_type& jA,
@@ -2581,7 +2603,7 @@ struct MOSAIC{
                        const real_type& P,
                        const real_type& MW,
                        const real_type& Vm,
-                       real_type& gas_diff) { 
+                       real_type& gas_diff) {
     gas_diff = (1.0e-3 * ats<real_type>::pow(T_K, 1.75) * ats<real_type>::sqrt(1.0/MW + 0.035))/
                     (P * ats<real_type>::pow(ats<real_type>::pow(Vm, 0.333333) + 2.7189, 2.0));
   } // gas_diffusivity
@@ -2632,7 +2654,7 @@ struct MOSAIC{
                    d_mdrh(j_index,3) )) + 1.0;
     }
   } // drh_mutual
-  
+
   KOKKOS_INLINE_FUNCTION static
   void molality_0(const MosaicModelData<DeviceType>& mosaic,
                   const ordinal_type& je,
@@ -2693,11 +2715,11 @@ struct MOSAIC{
   void bin_molality_60(const MosaicModelData<DeviceType>& mosaic,
                     const ordinal_type& je,
                     real_type& molality) {
-  
+
     auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
-  
+
     const real_type aw = 0.6;
-  
+
     real_type xm = a_zsr(0,je) +
                aw*(a_zsr(1,je) +
                aw*(a_zsr(2,je) +

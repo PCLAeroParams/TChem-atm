@@ -32,47 +32,57 @@ using ordinal_type = TChem::ordinal_type;
 using namespace skywalker;
 using namespace TChem;
 
-void mean_molecular_speed(Ensemble *ensemble) {
+void gas_diffusivity(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
 
     const auto T_K_arr = input.get_array("T_K");
+    const auto P_arr = input.get_array("P");
     const auto MW_arr = input.get_array("MW");
+    const auto Vm_arr = input.get_array("Vm");
 
     real_type_1d_view T_K("T_K", 1);
     verification::convert_1d_vector_to_1d_view_device(T_K_arr, T_K);
 
+    real_type_1d_view P("P", 1);
+    verification::convert_1d_vector_to_1d_view_device(P_arr, P);
+
     real_type_1d_view MW("MW", 1);
     verification::convert_1d_vector_to_1d_view_device(MW_arr, MW);
 
-    // Reals or int that are defined outside of the parallel_for region are passed as const.
-    real_type_1d_view outputs_mean_molecular_speed("outputs_mean_molecular_speed", 1);
+    real_type_1d_view Vm("Vm", 1);
+    verification::convert_1d_vector_to_1d_view_device(Vm_arr, Vm);
 
-    std::string profile_name ="Verification_test_mean_molecular_speed";
+    // Reals or int that are defined outside of the parallel_for region are passed as const.
+    real_type_1d_view outputs_gas_diffusivity("outputs_gas_diffusivity", 1);
+
+    std::string profile_name ="Verification_test_gas_diffusivity";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
     const auto exec_space_instance = TChem::exec_space();
     const auto host_exec_space = TChem::host_exec_space();
     policy_type policy(exec_space_instance, 1, Kokkos::AUTO());
 
-    Kokkos::parallel_for(
+     Kokkos::parallel_for(
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-      Real& mean_molecular_speed = outputs_mean_molecular_speed(0);
+      Real& gas_diffusivity = outputs_gas_diffusivity(0);
 
     // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::mean_molecular_speed(
+    TChem::Impl::MOSAIC<real_type, device_type>::gas_diffusivity(
       T_K(0),
+      P(0),
       MW(0),
-      mean_molecular_speed);
+      Vm(0),
+      gas_diffusivity);
     });
 
-    const auto outputs_mean_molecular_speed_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_mean_molecular_speed);
+    const auto outputs_gas_diffusivity_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_gas_diffusivity);
 
-    Real mean_molecular_speed = outputs_mean_molecular_speed_h(0);
+    Real gas_diffusivity = outputs_gas_diffusivity_h(0);
 
-    output.set("mean_molecular_speed", mean_molecular_speed);
+    output.set("gas_diffusivity", gas_diffusivity);
 
   });
 }

@@ -64,24 +64,24 @@ SET(TEST_BASELINE
     aerosol_water_output_ts_0
 )
 
-SET(DEFAULT_TOL 1e-9)
+SET(DEFAULT_TOL 1e-8)
 set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # check_aerosol_mass_output_ts_0
     ${DEFAULT_TOL} # adjust_liquid_aerosol_output_ts_0
     ${DEFAULT_TOL} # adjust_solid_aerosol_output_ts_0
     ${DEFAULT_TOL} # do_full_deliquescence_output_ts_0
     ${DEFAULT_TOL} # calculate_XT_output_ts_0
-    1e-6           # fnlog_gamZ_output_ts_0
+    ${DEFAULT_TOL} # fnlog_gamZ_output_ts_0
     ${DEFAULT_TOL} # mean_molecular_speed_output_ts_0
-    1e-6           # fn_Keq_output_ts_0
-    1e-6           # drh_mutual_output_ts_0
-    1e-8           # fn_Po_output_ts_0
-    1e-5           # molality_0_output_ts_0
-    1e-5           # bin_molality_output_ts_0
-    1e-6           # bin_molality_60_output_ts_0
-    1.8e-4         # MTEM_compute_log_gamZ
+    ${DEFAULT_TOL} # fn_Keq_output_ts_0
+    ${DEFAULT_TOL} # drh_mutual_output_ts_0
+    ${DEFAULT_TOL} # fn_Po_output_ts_0
+    ${DEFAULT_TOL} # molality_0_output_ts_0
+    ${DEFAULT_TOL} # bin_molality_output_ts_0
+    ${DEFAULT_TOL} # bin_molality_60_output_ts_0
+    ${DEFAULT_TOL} # MTEM_compute_log_gamZ
     ${DEFAULT_TOL} # aerosol_water_up_output_ts_0
-    4.5e-5         # aerosol_water_output_ts_0
+    ${DEFAULT_TOL} # aerosol_water_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

@@ -12,7 +12,7 @@ settings = Object()
 input = Object()
 input.je=[[         1],]
 input.aH2O_a=[[  0.86918676121422112E+000],]
-input.molality=[[  0.25344302823602594E-316],]
+input.molality=[[  0.25383329068967594E-316],]
 # Output data is stored here.
 output = Object()
-output.molality=[[  0.39937951815127040E+001],]
+output.molality=[[  0.39938262305308316E+001],]

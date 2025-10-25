@@ -14,4 +14,4 @@ input.j_index=[[         1],]
 input.T_K=[[  0.29142360000000002E+003],]
 # Output data is stored here.
 output = Object()
-output.drh_mutual=[[  0.80202077162854152E+002],]
+output.drh_mutual=[[  0.80202061268387610E+002],]

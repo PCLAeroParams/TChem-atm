@@ -13,7 +13,7 @@ input = Object()
 input.jA=[[        18],]
 input.jE=[[         1],]
 input.aH2O=[[  0.86918676121422112E+000],]
-input.log_gamZ=[[  0.00000000000000000E+000],]
+input.log_gamZ=[[  0.16970466628670999E+000],]
 # Output data is stored here.
 output = Object()
-output.log_gamZ=[[ -0.72387479422660039E+000],]
+output.log_gamZ=[[ -0.72387466129594991E+000],]

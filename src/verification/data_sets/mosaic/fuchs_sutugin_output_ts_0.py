@@ -10,8 +10,8 @@ class Object(object):
 settings = Object()
 # Input is stored here.
 input = Object()
-input.rkn=[[  0.84212889079423601E+001],]
+input.rkn=[[  0.11485877229304073E+002],]
 input.a=[[  0.10000000149011612E+000],]
 # Output data is stored here.
 output = Object()
-output.fuchs_sutugin=[[  0.88709675466146273E-002],]
+output.fuchs_sutugin=[[  0.65115939063550166E-002],]

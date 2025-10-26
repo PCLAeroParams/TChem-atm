@@ -16,4 +16,4 @@ input.MW=[[  0.98000000000000000E+002],]
 input.Vm=[[  0.42880001068115234E+002],]
 # Output data is stored here.
 output = Object()
-output.gas_diffusivity=[[  0.11449280832155644E+000],]
+output.gas_diffusivity=[[  0.11449279446086782E+000],]

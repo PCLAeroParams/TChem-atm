@@ -78,7 +78,6 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # do_full_deliquescence_output_ts_0
     ${DEFAULT_TOL} # calculate_XT_output_ts_0
     ${DEFAULT_TOL} # fnlog_gamZ_output_ts_0
-    ${DEFAULT_TOL} # fnlog_gamZ_output_ts_0
     ${DEFAULT_TOL} # fuchs_sutugin_output_ts_0
     ${DEFAULT_TOL} # gas_diffusivity_output_ts_0
     ${DEFAULT_TOL} # mean_molecular_speed_output_ts_0

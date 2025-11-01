@@ -17,4 +17,4 @@ input.T=[[  0.29142360000000002E+003],]
 input.Keq=[[  0.10000000000000000E+002],]
 # Output data is stored here.
 output = Object()
-output.Keq=[[  0.79354086448815266E+002],]
+output.Keq=[[  0.79354109569559270E+002],]

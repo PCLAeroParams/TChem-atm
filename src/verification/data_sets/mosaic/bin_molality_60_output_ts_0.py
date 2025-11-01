@@ -14,4 +14,4 @@ input.je=[[         1],]
 input.molality=[[  0.00000000000000000E+000],]
 # Output data is stored here.
 output = Object()
-output.molality=[[  0.11753741728360607E+002],]
+output.molality=[[  0.11753752526395242E+002],]

@@ -30,10 +30,10 @@ void compute_activities(Ensemble *ensemble) {
     real_type_1d_view aer("aer", mmd.naer);
     verification::convert_1d_vector_to_1d_view_device(aer_arr, aer);
 
-    real_type_1d_view ma("ma", mmd.nelectrolyte);
+    real_type_1d_view ma("ma", ma_arr.size());
     verification::convert_1d_vector_to_1d_view_device(ma_arr, ma);
 
-    real_type_1d_view mc("mc", mmd.nelectrolyte);
+    real_type_1d_view mc("mc", mc_arr.size());
     verification::convert_1d_vector_to_1d_view_device(mc_arr, mc);
 
     real_type_1d_view Keq_ll("Keq_ll", mmd.nrxn_aer_ll);
@@ -122,10 +122,6 @@ void compute_activities(Ensemble *ensemble) {
 
     verification::convert_1d_view_device_to_1d_vector(jphase, jphase_arr);
     output.set("jphase", jphase_arr);
-
-    std::vector<real_type> molalities_arr(mmd.nelectrolyte);
-    verification::convert_1d_view_device_to_1d_vector(molalities, molalities_arr);
-    output.set("molalities", molalities_arr);
 
     std::vector<real_type> activity_arr(mmd.nelectrolyte);
     verification::convert_1d_view_device_to_1d_vector(activity, activity_arr);

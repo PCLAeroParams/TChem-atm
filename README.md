@@ -3,6 +3,7 @@
 [![Latest version](https://img.shields.io/github/v/release/PCLAeroParams/TChem-atm.svg?sort=semver)](https://github.com/PCLAeroParams/TChem-atm/releases)
 [![Github Actions Status](https://github.com/PCLAeroParams/TChem-atm/actions/workflows/auto_test.yaml/badge.svg?branch=main)](https://github.com/PCLAeroParams/TChem-atm/actions)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-121013?logo=github&logoColor=white)](https://PCLAeroParams.github.io/TChem-atm/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17058143.svg)](https://doi.org/10.5281/zenodo.17058143)
 [![License](https://img.shields.io/badge/License-BSD_2--Clause-green.svg)](https://github.com/PCLAeroParams/TChem-atm/blob/main/LICENSE)
 
 ## Installation 
@@ -11,6 +12,7 @@ The [installation](docs/installation.md) guide demonstrates how to obtain, build
 
 ## Citations
 * [TChem-atm ](https://www.osti.gov/biblio/2472634)
+
 ```bibtex
 @misc{osti_2472634,
 title = {TChem-atm v1.0, Version 1.0},
@@ -41,6 +43,7 @@ toolkit for complex kinetic mechanisms.](https://www.sciencedirect.com/science/a
 ```
 
 * ["Benchmarking TChem for Potential Incorporation into E3SM as a Replacement Chemical Kinetics Solver"](sand_report/QTI_tchemV1.pdf)
+
 ```bibtex
 @techreport{Diaz-Ibarra:2024:tchem,
   author      = {Diaz-Ibarra, Oscar and Schmidt, Michael J.  and Safta, Cosmin },

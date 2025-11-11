@@ -12,7 +12,9 @@ and/or modify it under the terms of BSD 2-Clause License
 (https://opensource.org/licenses/BSD-2-Clause). A copy of the licese is also
 provided under the main directory
 
-Questions? Contact Cosmin Safta at <csafta@sandia.gov>, or
+Questions? Contact Cosmin Safta at <csafta@sandia.gov> or,, or
+           Nicole Riemer at <nriemer@illinois.edu> or,
+           Matthew West at <mwest@illinois.edu>
            Kyungjoo Kim at <kyukim@sandia.gov>, or
            Oscar Diaz-Ibarra at <odiazib@sandia.gov>
 

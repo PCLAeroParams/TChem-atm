@@ -1,3 +1,25 @@
+/* =====================================================================================
+TChem-atm version 2.0.0
+Copyright (2025) NTESS
+https://github.com/sandialabs/TChem-atm
+
+Copyright 2025 National Technology & Engineering Solutions of Sandia, LLC
+(NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
+Government retains certain rights in this software.
+
+This file is part of TChem-atm. TChem-atm is open source software: you can redistribute
+it and/or modify it under the terms of BSD 2-Clause License
+(https://opensource.org/licenses/BSD-2-Clause). A copy of the licese is also
+provided under the main directory
+
+Questions? Contact Oscar Diaz-Ibarra at <odiazib@sandia.gov>, or
+           Cosmin Safta at <csafta@sandia.gov> or,
+           Nicole Riemer at <nriemer@illinois.edu> or,
+           Matthew West at <mwest@illinois.edu>
+
+Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
+=====================================================================================
+*/
 #include <iostream>
 #include <verification.hpp>
 
@@ -29,6 +51,10 @@ void calculate_XT(Ensemble *ensemble);
 
 void fnlog_gamZ(Ensemble *ensemble);
 
+void fuchs_sutugin(Ensemble *ensemble);
+
+void gas_diffusivity(Ensemble *ensemble);
+
 void mean_molecular_speed(Ensemble *ensemble);
 
 void fn_Keq(Ensemble *ensemble);
@@ -46,6 +72,8 @@ void bin_molality_60(Ensemble *ensemble);
 void MTEM_compute_log_gamZ(Ensemble *ensemble);
 
 void aerosol_water_up(Ensemble *ensemble);
+
+void aerosol_water(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -84,6 +112,10 @@ int main(int argc, char **argv) {
       calculate_XT(ensemble);
     } else if (func_name == "fnlog_gamZ") {
       fnlog_gamZ(ensemble);
+    } else if (func_name == "fuchs_sutugin") {
+      fuchs_sutugin(ensemble);
+    } else if (func_name == "gas_diffusivity") {
+      gas_diffusivity(ensemble);
     } else if (func_name == "mean_molecular_speed") {
       mean_molecular_speed(ensemble);
     } else if (func_name == "fn_Keq") {
@@ -102,6 +134,8 @@ int main(int argc, char **argv) {
       MTEM_compute_log_gamZ(ensemble);
     } else if (func_name == "aerosol_water_up") {
       aerosol_water_up(ensemble);
+    } else if (func_name == "aerosol_water") {
+      aerosol_water(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

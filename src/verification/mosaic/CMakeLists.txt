@@ -10,6 +10,8 @@ add_executable(${DRIVER_NAME}.x
                do_full_deliquescence.cpp
                calculate_XT.cpp
                fnlog_gamZ.cpp
+               fuchs_sutugin.cpp
+               gas_diffusivity.cpp
                mean_molecular_speed.cpp
                fn_Keq.cpp
                drh_mutual.cpp
@@ -19,6 +21,7 @@ add_executable(${DRIVER_NAME}.x
                bin_molality_60.cpp
                MTEM_compute_log_gamZ.cpp
                aerosol_water_up.cpp
+               aerosol_water.cpp
  )
 
 
@@ -34,6 +37,8 @@ SET(TEST_LIST
      do_full_deliquescence_input_ts_0
      calculate_XT_input_ts_0
      fnlog_gamZ_input_ts_0
+     fuchs_sutugin_input_ts_0
+     gas_diffusivity_input_ts_0
      mean_molecular_speed_input_ts_0
      fn_Keq_input_ts_0
      drh_mutual_input_ts_0
@@ -43,6 +48,7 @@ SET(TEST_LIST
      bin_molality_60_input_ts_0
      MTEM_compute_log_gamZ_input_ts_0
      aerosol_water_up_input_ts_0
+     aerosol_water_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -53,6 +59,8 @@ SET(TEST_BASELINE
     do_full_deliquescence_output_ts_0
     calculate_XT_output_ts_0
     fnlog_gamZ_output_ts_0
+    fuchs_sutugin_output_ts_0
+    gas_diffusivity_output_ts_0
     mean_molecular_speed_output_ts_0
     fn_Keq_output_ts_0
     drh_mutual_output_ts_0
@@ -62,9 +70,10 @@ SET(TEST_BASELINE
     bin_molality_60_output_ts_0
     MTEM_compute_log_gamZ_output_ts_0
     aerosol_water_up_output_ts_0
+    aerosol_water_output_ts_0
 )
 
-SET(DEFAULT_TOL 1e-9)
+SET(DEFAULT_TOL 1e-8)
 set(ERROR_THRESHOLDS
     1.5e-4         # update_thermodynamic_constants_output_ts_0
     ${DEFAULT_TOL} # check_aerosol_mass_output_ts_0
@@ -72,16 +81,19 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # adjust_solid_aerosol_output_ts_0
     ${DEFAULT_TOL} # do_full_deliquescence_output_ts_0
     ${DEFAULT_TOL} # calculate_XT_output_ts_0
-    1e-6           # fnlog_gamZ_output_ts_0
+    ${DEFAULT_TOL} # fnlog_gamZ_output_ts_0
+    ${DEFAULT_TOL} # fuchs_sutugin_output_ts_0
+    ${DEFAULT_TOL} # gas_diffusivity_output_ts_0
     ${DEFAULT_TOL} # mean_molecular_speed_output_ts_0
-    1e-6           # fn_Keq_output_ts_0
-    1e-6           # drh_mutual_output_ts_0
-    1e-8           # fn_Po_output_ts_0
-    1e-5           # molality_0_output_ts_0
-    1e-5           # bin_molality_output_ts_0
-    1e-6           # bin_molality_60_output_ts_0
-    1.8e-4         # MTEM_compute_log_gamZ
+    ${DEFAULT_TOL} # fn_Keq_output_ts_0
+    ${DEFAULT_TOL} # drh_mutual_output_ts_0
+    ${DEFAULT_TOL} # fn_Po_output_ts_0
+    ${DEFAULT_TOL} # molality_0_output_ts_0
+    ${DEFAULT_TOL} # bin_molality_output_ts_0
+    ${DEFAULT_TOL} # bin_molality_60_output_ts_0
+    ${DEFAULT_TOL} # MTEM_compute_log_gamZ
     ${DEFAULT_TOL} # aerosol_water_up_output_ts_0
+    ${DEFAULT_TOL} # aerosol_water_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

@@ -75,7 +75,7 @@ SET(TEST_BASELINE
 
 SET(DEFAULT_TOL 1e-8)
 set(ERROR_THRESHOLDS
-    1.5e-4         # update_thermodynamic_constants_output_ts_0
+    ${DEFAULT_TOL} # update_thermodynamic_constants_output_ts_0
     ${DEFAULT_TOL} # check_aerosol_mass_output_ts_0
     ${DEFAULT_TOL} # adjust_liquid_aerosol_output_ts_0
     ${DEFAULT_TOL} # adjust_solid_aerosol_output_ts_0

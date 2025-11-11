@@ -1,15 +1,23 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite it using the following metadata."
+title: "TChem-atm version 2.0.0"
 authors:
-  - family-names: Safta
-    given-names: Cosmin  
-  - family-names: Diaz-Ibarra
-    given-names: Oscar H. 
-  - family-names: Schmidt 
-    given-names: Michael 
-title: "TChem-atm"
-version: 1.0.0
+  - family-names: "Diaz-Ibarra"
+    given-names: "Oscar H."
+  - family-names: "Frederick"
+    given-names: "Samuel"
+  - family-names: "Curtis"
+    given-names: "Jeffrey"
+  - family-names: "D'Aquino"
+    given-names: "Zachary"
+  - family-names: "Safta"
+    given-names: "Cosmin"
+  - family-names: "West"
+    given-names: "Matthew"
+  - family-names: "Riemer"
+    given-names: "Nicole"
+version: "2.0.0"
 identifiers:
   - type: doi
-    value: https://doi.org/10.11578/dc.20240925.6
-date-released: 2024-06-07
+    value: https://doi.org/10.5281/zenodo.17058144
+date-released: 2025-09-01

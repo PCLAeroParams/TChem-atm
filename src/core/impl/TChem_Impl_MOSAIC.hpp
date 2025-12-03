@@ -2464,8 +2464,8 @@ struct MOSAIC{
                           real_type& aH2O_a) {
 
     // local variables
-    real_type a_c, sum_elec, gam_ratio, water_a, mSULF;
-    ordinal_type jA;
+    real_type a_c, sum_elec, gam_ratio, water_a, mSULF = 0.0;
+    ordinal_type jA = 0;
 
     // get aerosol water activity
     aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
@@ -2837,7 +2837,7 @@ struct MOSAIC{
         bq = dumK + c_bal;
         cq = dumK * (c_bal -mSULF);
 
-        real_type xq;
+        real_type xq = 0.0;
       //--quadratic solution
         if (bq != 0.0) {
           xq = 4. * (1./bq) * (cq/bq);
@@ -3017,6 +3017,7 @@ struct MOSAIC{
 
  // Na3H(SO4)2
       jA = mosaic.jna3hso4;
+ // Note: commented out in MOSAIC also.
  //      log_gam(jA) = xmol(jh2so4)  *log_gamZ(jA,jh2so4)  +
  //     &              xmol(jnh4hso4)*log_gamZ(jA,jnh4hso4)+
  //     &              xmol(jlvcite) *log_gamZ(jA,jlvcite) +
@@ -3112,7 +3113,7 @@ struct MOSAIC{
       cq = dumK * (c_bal -mSULF);
 
       //--quadratic solution
-      real_type xq;
+      real_type xq = 0.0;
       if (bq != 0.0) {
         xq = 4. * (1./bq) * (cq/bq);
       } else {
@@ -3168,7 +3169,7 @@ struct MOSAIC{
                                 ma(mosaic.ja_msa) *
                                 ats<real_type>::pow(gam(mosaic.jnamsa),2.);
 
-  // Note: these lines are also commented out in MOSAIC
+  // Note: these lines are also commented out in MOSAIC.
   //      activity(jna3hso4,ibin)= mc(jc_na,ibin)**3 * ma(ja_hso4,ibin) *
   //     &                         ma(ja_so4,ibin) * gam(jna3hso4,ibin)**5
 

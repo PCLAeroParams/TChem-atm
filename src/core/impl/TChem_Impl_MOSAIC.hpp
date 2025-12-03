@@ -2471,7 +2471,7 @@ struct MOSAIC{
     const real_type gam_nh4no3_0 = ats<real_type>::pow(10.0, log_gamZ(mosaic.jnh4no3, mosaic.jnh4no3));
     const real_type gam_nh4cl_0  = ats<real_type>::pow(10.0, log_gamZ(mosaic.jnh4cl, mosaic.jnh4cl));
 
-    real_type molality;
+    real_type molality = 0.0;
     molality_0(mosaic, mosaic.jnh4no3, aH2O, molality);
     const real_type m_nh4no3_0   = molality;
     molality_0(mosaic, mosaic.jnh4cl, aH2O, molality);

@@ -16,11 +16,9 @@ void form_caso4(Ensemble *ensemble) {
     const auto electrolyte_arr = input.get_array("electrolyte");
 
     const auto mmd = TChem::Impl::MosaicModelData<device_type>();
-    const auto nsize_electrolyte = mmd.nelectrolyte;
 
     real_type_1d_view store("store", mmd.naer);
     verification::convert_1d_vector_to_1d_view_device(store_arr, store);
-
 
     real_type_1d_view electrolyte("electrolyte", mmd.nelectrolyte);
     verification::convert_1d_vector_to_1d_view_device(electrolyte_arr, electrolyte);

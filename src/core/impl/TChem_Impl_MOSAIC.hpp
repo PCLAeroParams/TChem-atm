@@ -3166,6 +3166,20 @@ struct MOSAIC{
     }
   }
 
+  KOKKOS_INLINE_FUNCTION static
+  void form_cacl2(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jcacl2) = min(store(mosaic.ica_a), 0.5*store(mosaic.icl_a));
+
+    store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcacl2);
+    store(mosaic.icl_a)  = store(mosaic.icl_a)  - 2.*electrolyte(mosaic.jcacl2);
+
+    store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
+    store(mosaic.icl_a)  = max(0.0, store(mosaic.icl_a));
+  } // form_cacl2
+
 };
 
 } // namespace Impl

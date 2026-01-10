@@ -13,7 +13,7 @@ void form_caso4(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
 
     const auto store_arr = input.get_array("store");
-    auto electrolyte_arr = input.get_array("electrolyte");
+    const auto electrolyte_arr = input.get_array("electrolyte");
 
     const auto mmd = TChem::Impl::MosaicModelData<device_type>();
     const auto nsize_electrolyte = mmd.nelectrolyte;

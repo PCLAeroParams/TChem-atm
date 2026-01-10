@@ -3168,8 +3168,8 @@ struct MOSAIC{
 
   KOKKOS_INLINE_FUNCTION static
   void form_caso4(const MosaicModelData<DeviceType>& mosaic,
-             const real_type_1d_view_type& electrolyte,
-             const real_type_1d_view_type& store) {
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
 
   electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), store(mosaic.iso4_a));
 

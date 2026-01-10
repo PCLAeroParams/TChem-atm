@@ -13,10 +13,9 @@ void form_cacl2(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
 
     const auto store_arr = input.get_array("store");
-    auto electrolyte_arr = input.get_array("electrolyte");
+    const auto electrolyte_arr = input.get_array("electrolyte");
 
     const auto mmd = TChem::Impl::MosaicModelData<device_type>();
-    const auto nsize_electrolyte = mmd.nelectrolyte;
 
     real_type_1d_view store("store", mmd.naer);
     verification::convert_1d_vector_to_1d_view_device(store_arr, store);
@@ -24,7 +23,7 @@ void form_cacl2(Ensemble *ensemble) {
     real_type_1d_view electrolyte("electrolyte", mmd.nelectrolyte);
     verification::convert_1d_vector_to_1d_view_device(electrolyte_arr, electrolyte);
 
-    std::string profile_name ="Verification_test_form_caso4";
+    std::string profile_name ="Verification_test_form_cacl2";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
     const auto exec_space_instance = TChem::exec_space();

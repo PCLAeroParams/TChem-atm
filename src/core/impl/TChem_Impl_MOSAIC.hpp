@@ -2858,7 +2858,7 @@ struct MOSAIC{
         }
 
       //--end of quadratic solution
-        mc(mosaic.jc_h)    = max(quad, 1.e-7);
+        mc(mosaic.jc_h) = quad > 1.e-7 ? quad : 1.e-7;
         ma(mosaic.ja_so4)  = mSULF * dumK / (mc(mosaic.jc_h) + dumK);
         ma(mosaic.ja_hso4) = mSULF - ma(mosaic.ja_so4);
 
@@ -3132,7 +3132,7 @@ struct MOSAIC{
       }
 
       //--end of quadratic solution
-      mc(mosaic.jc_h)    = max(quad, 1.e-7);
+      mc(mosaic.jc_h) = quad > 1.e-7 ? quad : 1.e-7;
       ma(mosaic.ja_so4)  = mSULF * dumK / (mc(mosaic.jc_h) + dumK);
       ma(mosaic.ja_hso4) = mSULF - ma(mosaic.ja_so4);
 

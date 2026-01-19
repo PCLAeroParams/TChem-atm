@@ -37,6 +37,8 @@ void usage() {
   exit(0);
 }
 
+void update_thermodynamic_constants(Ensemble *ensemble);
+
 void check_aerosol_mass(Ensemble *ensemble);
 
 void adjust_liquid_aerosol(Ensemble *ensemble);
@@ -98,7 +100,9 @@ int main(int argc, char **argv) {
   // Dispatch to the requested function.
   auto func_name = settings.get("function");
   try {
-    if (func_name == "check_aerosol_mass") {
+    if (func_name == "update_thermodynamic_constants") {
+      update_thermodynamic_constants(ensemble);
+    } else if (func_name == "check_aerosol_mass") {
       check_aerosol_mass(ensemble);
     } else if (func_name == "adjust_liquid_aerosol") {
       adjust_liquid_aerosol(ensemble);

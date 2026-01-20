@@ -43,6 +43,8 @@ void check_aerosol_mass(Ensemble *ensemble);
 
 void adjust_liquid_aerosol(Ensemble *ensemble);
 
+void compute_activities(Ensemble *ensemble);
+
 void adjust_solid_aerosol(Ensemble *ensemble);
 
 void do_full_deliquescence(Ensemble *ensemble);
@@ -104,6 +106,8 @@ int main(int argc, char **argv) {
       check_aerosol_mass(ensemble);
     } else if (func_name == "adjust_liquid_aerosol") {
       adjust_liquid_aerosol(ensemble);
+    } else if (func_name == "compute_activities") {
+      compute_activities(ensemble);
     } else if (func_name == "adjust_solid_aerosol") {
       adjust_solid_aerosol(ensemble);
     } else if (func_name == "do_full_deliquescence") {

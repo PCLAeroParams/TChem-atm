@@ -60,7 +60,9 @@ jobs:
         build-args: |
           BUILD_TYPE=${{ matrix.build-type }}
           SACADO=${{ matrix.sacado-on }}
-        cache-from: type=local,src=/tmp/.buildx-cache
+          BUILDKIT_INLINE_CACHE=1
+        cache-from: |
+          type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
     - name: Move cache
@@ -69,7 +71,14 @@ jobs:
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
     - name: Testing TChem
-      run: docker run -t -v "$PWD:/shared" tchem:latest bash -c 'cd /tchem_build && ctest --output-on-failure && make coverage && mv coverage.info /shared'
+      run: |
+        if [ "${{ matrix.build-type }}" == "Debug" ] && [ "${{ matrix.sacado-on }}" == "OFF" ]; then
+          echo "Running tests with coverage generation..."
+          docker run -t -v "$PWD:/shared" tchem:latest bash -c 'cd /tchem_build && ctest --output-on-failure && make coverage && mv coverage.info /shared'
+        else
+          echo "Running tests without coverage (build-type=${{ matrix.build-type }}, sacado=${{ matrix.sacado-on }})..."
+          docker run -t -v "$PWD:/shared" tchem:latest bash -c 'cd /tchem_build && ctest --output-on-failure'
+        fi
 
     - name: Uploading coverage report to codecov.io
       if: ${{ (contains(matrix.os, 'ubuntu')) && (matrix.build-type == 'Debug') && (matrix.sacado-on == 'OFF') }}

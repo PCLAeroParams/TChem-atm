@@ -60,6 +60,7 @@ jobs:
         build-args: |
           BUILD_TYPE=${{ matrix.build-type }}
           SACADO=${{ matrix.sacado-on }}
+          COVERAGE=${{ matrix.build-type == 'Debug' && matrix.sacado-on == 'OFF' && 'ON' || 'OFF' }}
           BUILDKIT_INLINE_CACHE=1
         cache-from: |
           type=local,src=/tmp/.buildx-cache

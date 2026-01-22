@@ -25,6 +25,7 @@ jobs:
         #fp-precision: [double] # single is not working for tchem.
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
 
     # Environment variables
     env:

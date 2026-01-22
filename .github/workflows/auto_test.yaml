@@ -57,6 +57,7 @@ jobs:
         push: false
         load: true
         tags: tchem:latest
+        progress: plain
         build-args: |
           BUILD_TYPE=${{ matrix.build-type }}
           SACADO=${{ matrix.sacado-on }}

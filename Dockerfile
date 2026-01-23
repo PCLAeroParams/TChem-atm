@@ -145,7 +145,7 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DKOKKOSKERNELS_INSTALL_PATH=/install/kokkoskernels_install \
           -DGTEST_INSTALL_PATH=/install/gtest_install
 WORKDIR /tchem_build
-RUN make -j1 \
+RUN make -j2 \
     && make install
 
 WORKDIR /tchem_install

@@ -2,6 +2,7 @@ FROM ubuntu:22.04
 
 ARG BUILD_TYPE=RELEASE
 ARG SACADO=ON
+ARG PARALLEL_JOBS=2
 RUN echo "BUILD TYPE:" ${BUILD_TYPE}
 RUN echo "SACADO:" ${SACADO}
 
@@ -37,7 +38,7 @@ RUN cmake -S /tchem_dir/external/Tines/ext/kokkos -B /build/kokkos_build \
           -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF \
           -DKokkos_ENABLE_CUDA_LAMBDA=OFF
 WORKDIR /build/kokkos_build/
-RUN make -j \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 
 RUN cmake -S /tchem_dir/external/kokkos-kernels -B /build/kokkoskernels_build \
@@ -54,14 +55,14 @@ RUN cmake -S /tchem_dir/external/kokkos-kernels -B /build/kokkoskernels_build \
           -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
           -DKokkos_ROOT=/install/kokkos_install
 WORKDIR /build/kokkoskernels_build
-RUN make -j2 \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 
 RUN cmake -S /tchem_dir/external/Tines/ext/gtest -B /build/gtest_build \
           -DCMAKE_INSTALL_PREFIX="/install/gtest_install" \
           -DCMAKE_CXX_COMPILER=g++
 WORKDIR /build/gtest_build
-RUN make -j \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 
 RUN cmake -S /tchem_dir/external/Tines/ext/yaml -B /build//yaml_build \
@@ -72,7 +73,7 @@ RUN cmake -S /tchem_dir/external/Tines/ext/yaml -B /build//yaml_build \
           -DCMAKE_EXE_LINKER_FLAGS="" \
           -DCMAKE_BUILD_TYPE=RELEASE
 WORKDIR /build/yaml_build
-RUN make -j \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 
 RUN cmake -S /tchem_dir/external/Skywalker -B /build/skywalker_build \
@@ -83,7 +84,7 @@ RUN cmake -S /tchem_dir/external/Skywalker -B /build/skywalker_build \
           -DCMAKE_BUILD_TYPE=RELEASE
 WORKDIR /build/skywalker_build
 
-RUN make -j \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 RUN cmake -S /tchem_dir/external/Sundials -B /build/sundials_build \
           -DCMAKE_INSTALL_PREFIX="/install/sundials_install" \
@@ -99,7 +100,7 @@ RUN cmake -S /tchem_dir/external/Sundials -B /build/sundials_build \
           -DKokkosKernels_DIR=/install/kokkoskernels_install \
           -DCMAKE_BUILD_TYPE=RELEASE
 WORKDIR /build/sundials_build
-RUN make -j \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 
 RUN cmake -S /tchem_dir/external/Tines/src -B /build/tines_build \
@@ -119,7 +120,7 @@ RUN cmake -S /tchem_dir/external/Tines/src -B /build/tines_build \
           -DOPENBLAS_INSTALL_PATH=`/usr/lib64` \
           -DGTEST_INSTALL_PATH=/install/gtest_install
 WORKDIR /build/tines_build
-RUN make -j \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 
 
@@ -145,7 +146,7 @@ RUN cmake -S /tchem_dir/src -B /tchem_build \
           -DKOKKOSKERNELS_INSTALL_PATH=/install/kokkoskernels_install \
           -DGTEST_INSTALL_PATH=/install/gtest_install
 WORKDIR /tchem_build
-RUN make -j2 \
+RUN make -j${PARALLEL_JOBS} \
     && make install
 
 WORKDIR /tchem_install

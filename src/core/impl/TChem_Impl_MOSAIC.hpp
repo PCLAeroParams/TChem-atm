@@ -38,6 +38,9 @@ Journal of Geophysical Research: Atmospheres.
 namespace TChem {
 namespace Impl {
 
+using Kokkos::min;
+using Kokkos::max;
+
 template<typename DeviceType>
 struct MosaicModelData {
 

@@ -4084,13 +4084,13 @@ struct MOSAIC{
              const real_type_1d_view_type& electrolyte,
              const real_type_1d_view_type& store) {
 
-  electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), 0.5*store(mosaic.imsa_a));
+    electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), 0.5*store(mosaic.imsa_a));
 
-  store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcamsa2);
-  store(mosaic.imsa_a) = store(mosaic.imsa_a) - 2.*electrolyte(mosaic.jcamsa2);
+    store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcamsa2);
+    store(mosaic.imsa_a) = store(mosaic.imsa_a) - 2.*electrolyte(mosaic.jcamsa2);
 
-  store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
-  store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a));
+    store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
+    store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a));
   } // form_camsa2
 
   KOKKOS_INLINE_FUNCTION static
@@ -4098,14 +4098,28 @@ struct MOSAIC{
                   const real_type_1d_view_type& electrolyte,
                   const real_type_1d_view_type& store) {
 
-  electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), store(mosaic.iso4_a));
+    electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), store(mosaic.iso4_a));
 
-  store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcaso4);
-  store(mosaic.iso4_a) = store(mosaic.iso4_a) - electrolyte(mosaic.jcaso4);
+    store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcaso4);
+    store(mosaic.iso4_a) = store(mosaic.iso4_a) - electrolyte(mosaic.jcaso4);
 
-  store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
-  store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
+    store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
+    store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
   } // form_caso4
+
+  KOKKOS_INLINE_FUNCTION static
+  void form_nano3(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnano3) = min(store(mosaic.ina_a), store(mosaic.ino3_a));
+
+    store(mosaic.ina_a)  = store(mosaic.ina_a)  - electrolyte(mosaic.jnano3);
+    store(mosaic.ino3_a) = store(mosaic.ino3_a) - electrolyte(mosaic.jnano3);
+
+    store(mosaic.ina_a)  = max(0.0, store(mosaic.ina_a));
+    store(mosaic.ino3_a) = max(0.0, store(mosaic.ino3_a));
+  } // form_nano3
 
 };
 

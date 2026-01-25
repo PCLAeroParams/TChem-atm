@@ -75,6 +75,8 @@ void aerosol_water_up(Ensemble *ensemble);
 
 void aerosol_water(Ensemble *ensemble);
 
+void form_nahso4(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -136,6 +138,8 @@ int main(int argc, char **argv) {
       aerosol_water_up(ensemble);
     } else if (func_name == "aerosol_water") {
       aerosol_water(ensemble);
+    } else if (func_name == "form_nahso4") {
+      form_nahso4(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

@@ -77,6 +77,8 @@ void aerosol_water_up(Ensemble *ensemble);
 
 void aerosol_water(Ensemble *ensemble);
 
+void form_cano3(Ensemble *ensemble);
+
 void form_camsa2(Ensemble *ensemble);
 
 void form_caso4(Ensemble *ensemble);
@@ -144,6 +146,8 @@ int main(int argc, char **argv) {
       aerosol_water_up(ensemble);
     } else if (func_name == "aerosol_water") {
       aerosol_water(ensemble);
+    } else if (func_name == "form_cano3") {
+      form_cano3(ensemble);
     } else if (func_name == "form_camsa2") {
       form_camsa2(ensemble);
     } else if (func_name == "form_caso4") {

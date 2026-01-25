@@ -38,6 +38,9 @@ Journal of Geophysical Research: Atmospheres.
 namespace TChem {
 namespace Impl {
 
+using Kokkos::min;
+using Kokkos::max;
+
 template<typename DeviceType>
 struct MosaicModelData {
 
@@ -4076,19 +4079,47 @@ struct MOSAIC{
     }
   }
 
-    KOKKOS_INLINE_FUNCTION static
-    void form_cano3(const MosaicModelData<DeviceType>& mosaic,
-                    const real_type_1d_view_type& electrolyte,
-                    const real_type_1d_view_type& store) {
+  KOKKOS_INLINE_FUNCTION static
+  void form_cano3(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
 
-      electrolyte(mosaic.jcano3) = min(store(mosaic.ica_a), 0.5*store(mosaic.ino3_a));
+    electrolyte(mosaic.jcano3) = min(store(mosaic.ica_a), 0.5*store(mosaic.ino3_a));
 
-      store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcano3);
-      store(mosaic.ino3_a) = store(mosaic.ino3_a) - 2.*electrolyte(mosaic.jcano3);
+    store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcano3);
+    store(mosaic.ino3_a) = store(mosaic.ino3_a) - 2.*electrolyte(mosaic.jcano3);
 
-      store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
-      store(mosaic.ino3_a) = max(0.0, store(mosaic.ino3_a));
-    } // form_cano3
+    store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
+    store(mosaic.ino3_a) = max(0.0, store(mosaic.ino3_a));
+  } // form_cano3
+
+  KOKKOS_INLINE_FUNCTION static
+  void form_camsa2(const MosaicModelData<DeviceType>& mosaic,
+             const real_type_1d_view_type& electrolyte,
+             const real_type_1d_view_type& store) {
+
+  electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), 0.5*store(mosaic.imsa_a));
+
+  store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcamsa2);
+  store(mosaic.imsa_a) = store(mosaic.imsa_a) - 2.*electrolyte(mosaic.jcamsa2);
+
+  store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
+  store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a));
+  } // form_camsa2
+
+  KOKKOS_INLINE_FUNCTION static
+  void form_caso4(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+  electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), store(mosaic.iso4_a));
+
+  store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcaso4);
+  store(mosaic.iso4_a) = store(mosaic.iso4_a) - electrolyte(mosaic.jcaso4);
+
+  store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
+  store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
+  } // form_caso4
 
 };
 

@@ -4093,6 +4093,7 @@ struct MOSAIC{
   store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a));
   } // form_camsa2
 
+  KOKKOS_INLINE_FUNCTION static
   void form_caso4(const MosaicModelData<DeviceType>& mosaic,
                   const real_type_1d_view_type& electrolyte,
                   const real_type_1d_view_type& store) {

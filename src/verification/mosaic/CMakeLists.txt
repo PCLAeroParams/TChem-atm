@@ -23,6 +23,7 @@ add_executable(${DRIVER_NAME}.x
                MTEM_compute_log_gamZ.cpp
                aerosol_water_up.cpp
                aerosol_water.cpp
+               form_camsa2.cpp
                form_caso4.cpp
  )
 
@@ -52,6 +53,7 @@ SET(TEST_LIST
      MTEM_compute_log_gamZ_input_ts_0
      aerosol_water_up_input_ts_0
      aerosol_water_input_ts_0
+     form_camsa2_input_ts_0
      form_caso4_input_ts_0
 )
 
@@ -76,6 +78,7 @@ SET(TEST_BASELINE
     MTEM_compute_log_gamZ_output_ts_0
     aerosol_water_up_output_ts_0
     aerosol_water_output_ts_0
+    form_camsa2_output_ts_0
     form_caso4_output_ts_0
 )
 
@@ -101,6 +104,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # MTEM_compute_log_gamZ
     ${DEFAULT_TOL} # aerosol_water_up_output_ts_0
     ${DEFAULT_TOL} # aerosol_water_output_ts_0
+    ${DEFAULT_TOL} # form_camsa2_output_ts_0
     ${DEFAULT_TOL} # form_caso4_output_ts_0
 )
 

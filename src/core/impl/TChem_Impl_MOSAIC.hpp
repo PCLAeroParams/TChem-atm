@@ -38,6 +38,9 @@ Journal of Geophysical Research: Atmospheres.
 namespace TChem {
 namespace Impl {
 
+using Kokkos::min;
+using Kokkos::max;
+
 template<typename DeviceType>
 struct MosaicModelData {
 
@@ -4089,6 +4092,19 @@ struct MOSAIC{
   store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
   store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a));
   } // form_camsa2
+
+  void form_caso4(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+  electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), store(mosaic.iso4_a));
+
+  store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcaso4);
+  store(mosaic.iso4_a) = store(mosaic.iso4_a) - electrolyte(mosaic.jcaso4);
+
+  store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a));
+  store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
+  } // form_caso4
 
 };
 

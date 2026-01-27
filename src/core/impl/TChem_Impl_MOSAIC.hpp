@@ -4080,6 +4080,23 @@ struct MOSAIC{
   }
 
   KOKKOS_INLINE_FUNCTION static
+  void form_caco3(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type& jp,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& aer,
+                  const real_type_1d_view_type& store) {
+  
+    if (jp == mosaic.jtotal || jp == mosaic.jsolid) {
+      electrolyte(mosaic.jcaco3) = store(mosaic.ica_a);
+
+      aer(mosaic.ico3_a) = electrolyte(mosaic.jcaco3); // force co3 = caco3
+
+      store(mosaic.ica_a) = 0.0;
+      store(mosaic.ico3_a) = 0.0;
+    }
+  } // form_caco3
+
+  KOKKOS_INLINE_FUNCTION static
   void form_cacl2(const MosaicModelData<DeviceType>& mosaic,
                   const real_type_1d_view_type& electrolyte,
                   const real_type_1d_view_type& store) {

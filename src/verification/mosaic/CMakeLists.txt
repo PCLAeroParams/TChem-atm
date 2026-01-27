@@ -28,6 +28,7 @@ add_executable(${DRIVER_NAME}.x
                form_cano3.cpp
                form_camsa2.cpp
                form_caso4.cpp
+               form_nh4so4.cpp
  )
 
 
@@ -61,6 +62,7 @@ SET(TEST_LIST
      form_cano3_input_ts_0
      form_camsa2_input_ts_0
      form_caso4_input_ts_0
+     form_nh4so4_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -89,6 +91,7 @@ SET(TEST_BASELINE
     form_cano3_output_ts_0
     form_camsa2_output_ts_0
     form_caso4_output_ts_0
+    form_nh4so4_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -118,6 +121,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_cano3_output_ts_0
     ${DEFAULT_TOL} # form_camsa2_output_ts_0
     ${DEFAULT_TOL} # form_caso4_output_ts_0
+    ${DEFAULT_TOL} # form_nh4so4_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

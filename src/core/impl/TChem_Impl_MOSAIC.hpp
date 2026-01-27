@@ -4152,6 +4152,21 @@ struct MOSAIC{
     store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
   } // form_caso4
 
+    KOKKOS_INLINE_FUNCTION static
+    void form_nh4so4(const MosaicModelData<DeviceType>& mosaic,
+                     const real_type_1d_view_type& electrolyte,
+                     const real_type_1d_view_type& store) {
+
+      electrolyte(mosaic.jnh4so4) = min(0.5*store(mosaic.inh4_a), store(mosaic.iso4_a));
+
+      store(mosaic.inh4_a)  = store(mosaic.inh4_a)  - 2.*electrolyte(mosaic.jnh4so4);
+      store(mosaic.iso4_a) = store(mosaic.iso4_a) - electrolyte(mosaic.jnh4so4);
+
+      store(mosaic.inh4_a)  = max(0.0, store(mosaic.inh4_a));
+      store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
+    } // form_nh4so4
+
+
 };
 
 } // namespace Impl

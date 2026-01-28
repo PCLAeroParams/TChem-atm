@@ -49,6 +49,16 @@ jobs:
           ${{ runner.os }}-buildx-${{ matrix.build-type }}-${{ matrix.sacado-on }}-
           ${{ runner.os }}-buildx-
 
+    - name: Free up disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo docker image prune -af
+        sudo docker system prune -af --volumes
+        df -h
+
     - name: Building TChem (${{ matrix.build-type }}, ${{ matrix.sacado-on }} sacado)
       uses: docker/build-push-action@v5
       with:
@@ -60,6 +70,8 @@ jobs:
         build-args: |
           BUILD_TYPE=${{ matrix.build-type }}
           SACADO=${{ matrix.sacado-on }}
+          COVERAGE=${{ matrix.build-type == 'Debug' && matrix.sacado-on == 'OFF' && 'ON' || 'OFF' }}
+          PARALLEL_JOBS=${{ matrix.build-type == 'Release' && '2' || '4' }}
           BUILDKIT_INLINE_CACHE=1
         cache-from: |
           type=local,src=/tmp/.buildx-cache

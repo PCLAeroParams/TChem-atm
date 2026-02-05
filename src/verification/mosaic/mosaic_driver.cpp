@@ -77,6 +77,8 @@ void aerosol_water_up(Ensemble *ensemble);
 
 void aerosol_water(Ensemble *ensemble);
 
+void form_nahso4(Ensemble *ensemble);
+
 void form_na2so4(Ensemble *ensemble);
 
 void form_caco3(Ensemble *ensemble);
@@ -90,6 +92,8 @@ void form_camsa2(Ensemble *ensemble);
 void form_caso4(Ensemble *ensemble);
 
 void form_namsa(Ensemble *ensemble);
+
+void form_nano3(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -154,6 +158,8 @@ int main(int argc, char **argv) {
       aerosol_water_up(ensemble);
     } else if (func_name == "aerosol_water") {
       aerosol_water(ensemble);
+    } else if (func_name == "form_nahso4") {
+      form_nahso4(ensemble);
     } else if (func_name == "form_na2so4") {
       form_na2so4(ensemble);
     } else if (func_name == "form_caco3") {
@@ -168,6 +174,8 @@ int main(int argc, char **argv) {
       form_caso4(ensemble);
     } else if (func_name == "form_namsa") {
       form_namsa(ensemble);
+    } else if (func_name == "form_nano3") {
+      form_nano3(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

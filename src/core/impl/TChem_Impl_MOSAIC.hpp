@@ -4080,9 +4080,23 @@ struct MOSAIC{
   }
 
   KOKKOS_INLINE_FUNCTION static
+  void form_nahso4(const MosaicModelData<DeviceType>& mosaic,
+                   const real_type_1d_view_type& electrolyte,
+                   const real_type_1d_view_type& store) {
+
+  electrolyte(mosaic.jnahso4) = min(store(mosaic.ina_a), store(mosaic.iso4_a));
+
+  store(mosaic.ina_a)  = store(mosaic.ina_a)  - electrolyte(mosaic.jnahso4);
+  store(mosaic.iso4_a) = store(mosaic.iso4_a) - electrolyte(mosaic.jnahso4);
+
+  store(mosaic.ina_a)  = max(0.0, store(mosaic.ina_a));
+  store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
+  } // form_nahso4
+  
+  KOKKOS_INLINE_FUNCTION static
   void form_na2so4(const MosaicModelData<DeviceType>& mosaic,
-             const real_type_1d_view_type& electrolyte,
-             const real_type_1d_view_type& store) {
+                   const real_type_1d_view_type& electrolyte,
+                   const real_type_1d_view_type& store) {
 
     electrolyte(mosaic.jna2so4) = min(0.5*store(mosaic.ina_a), store(mosaic.iso4_a));
 
@@ -4180,6 +4194,73 @@ struct MOSAIC{
       store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
     } // form_nh4so4
 
+  KOKKOS_INLINE_FUNCTION static void
+  form_nacl(const MosaicModelData<DeviceType>& mosaic,
+            const real_type& jp,
+            const real_type_1d_view_type& electrolyte,
+            const real_type_1d_view_type& store,
+            const real_type_1d_view_type& aer_curr,
+            const real_type_1d_view_type& aer_solid,
+            const real_type_1d_view_type& aer_liquid,
+            const real_type_1d_view_type& aer_total,
+            const real_type_1d_view_type& gas,
+            const real_type_1d_view_type& total_species,
+            real_type& tot_cl_in) {
+    
+    electrolyte(mosaic.jnacl) = store(mosaic.ina_a);
+    
+    store(mosaic.ina_a) = 0.0;
+    store(mosaic.icl_a) = store(mosaic.icl_a) - electrolyte(mosaic.jnacl);
+    
+    if (store(mosaic.icl_a) < 0.0) { // cl deficit in aerosol. take some from gas
+      aer_curr(mosaic.icl_a) = aer_curr(mosaic.icl_a) - store(mosaic.icl_a);
+
+      if (jp != mosaic.jtotal) {
+        aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+      }
+      
+      gas(mosaic.ihcl_g) = gas(mosaic.ihcl_g) + store(mosaic.icl_a);
+      
+      if (gas(mosaic.ihcl_g) < 0.0) {
+        total_species(mosaic.ihcl_g) = total_species(mosaic.ihcl_g) - gas(mosaic.ihcl_g);
+        tot_cl_in = tot_cl_in - gas(mosaic.ihcl_g);
+      }
+      
+      gas(mosaic.ihcl_g) = max(0.0, gas(mosaic.ihcl_g));
+      
+      store(mosaic.icl_a) = 0.0;
+    }
+    
+    store(mosaic.icl_a) = max(0.0, store(mosaic.icl_a));
+  } //form_nacl
+  
+  KOKKOS_INLINE_FUNCTION static
+  void form_namsa(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnamsa) = min(store(mosaic.ina_a), store(mosaic.imsa_a));
+
+    store(mosaic.ina_a)  = store(mosaic.ina_a) - electrolyte(mosaic.jnamsa);
+    store(mosaic.imsa_a) = store(mosaic.imsa_a) - electrolyte(mosaic.jnamsa);
+
+    store(mosaic.ina_a)  = max(0.0, store(mosaic.ina_a));
+    store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a));
+  } // form_namsa
+  
+  KOKKOS_INLINE_FUNCTION static
+  void form_nano3(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnano3) = min(store(mosaic.ina_a), store(mosaic.ino3_a));
+
+    store(mosaic.ina_a)  = store(mosaic.ina_a)  - electrolyte(mosaic.jnano3);
+    store(mosaic.ino3_a) = store(mosaic.ino3_a) - electrolyte(mosaic.jnano3);
+
+    store(mosaic.ina_a)  = max(0.0, store(mosaic.ina_a));
+    store(mosaic.ino3_a) = max(0.0, store(mosaic.ino3_a));
+  } // form_nano3
 
 };
 

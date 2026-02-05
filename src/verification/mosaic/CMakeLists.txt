@@ -30,6 +30,7 @@ add_executable(${DRIVER_NAME}.x
                form_cano3.cpp
                form_camsa2.cpp
                form_caso4.cpp
+               form_nacl.cpp
                form_namsa.cpp
                form_nano3.cpp
  )
@@ -67,6 +68,7 @@ SET(TEST_LIST
      form_cano3_input_ts_0
      form_camsa2_input_ts_0
      form_caso4_input_ts_0
+     form_nacl_input_ts_0
      form_namsa_input_ts_0
      form_nano3_input_ts_0
 )
@@ -99,6 +101,7 @@ SET(TEST_BASELINE
     form_cano3_output_ts_0
     form_camsa2_output_ts_0
     form_caso4_output_ts_0
+    form_nacl_output_ts_0
     form_namsa_output_ts_0
     form_nano3_output_ts_0
 )
@@ -132,6 +135,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_cano3_output_ts_0
     ${DEFAULT_TOL} # form_camsa2_output_ts_0
     ${DEFAULT_TOL} # form_caso4_output_ts_0
+    ${DEFAULT_TOL} # form_nacl_output_ts_0
     ${DEFAULT_TOL} # form_namsa_output_ts_0
     ${DEFAULT_TOL} # form_nano3_output_ts_0
 )

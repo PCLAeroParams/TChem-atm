@@ -23,6 +23,7 @@ add_executable(${DRIVER_NAME}.x
                MTEM_compute_log_gamZ.cpp
                aerosol_water_up.cpp
                aerosol_water.cpp
+               form_nahso4.cpp
                form_na2so4.cpp
                form_caco3.cpp
                form_cacl2.cpp
@@ -30,6 +31,10 @@ add_executable(${DRIVER_NAME}.x
                form_camsa2.cpp
                form_caso4.cpp
                form_nh4msa.cpp
+               form_nh4so4.cpp
+               form_nacl.cpp
+               form_namsa.cpp
+               form_nano3.cpp
  )
 
 
@@ -58,6 +63,7 @@ SET(TEST_LIST
      MTEM_compute_log_gamZ_input_ts_0
      aerosol_water_up_input_ts_0
      aerosol_water_input_ts_0
+     form_nahso4_input_ts_0
      form_na2so4_input_ts_0
      form_caco3_input_ts_0
      form_cacl2_input_ts_0
@@ -65,6 +71,10 @@ SET(TEST_LIST
      form_camsa2_input_ts_0
      form_caso4_input_ts_0
      form_nh4msa_input_ts_0
+     form_nh4so4_input_ts_0
+     form_nacl_input_ts_0
+     form_namsa_input_ts_0
+     form_nano3_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -88,6 +98,7 @@ SET(TEST_BASELINE
     MTEM_compute_log_gamZ_output_ts_0
     aerosol_water_up_output_ts_0
     aerosol_water_output_ts_0
+    form_nahso4_output_ts_0
     form_na2so4_output_ts_0
     form_caco3_output_ts_0
     form_cacl2_output_ts_0
@@ -95,6 +106,10 @@ SET(TEST_BASELINE
     form_camsa2_output_ts_0
     form_caso4_output_ts_0
     form_nh4msa_output_ts_0
+    form_nh4so4_output_ts_0
+    form_nacl_output_ts_0
+    form_namsa_output_ts_0
+    form_nano3_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -119,6 +134,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # MTEM_compute_log_gamZ
     ${DEFAULT_TOL} # aerosol_water_up_output_ts_0
     ${DEFAULT_TOL} # aerosol_water_output_ts_0
+    ${DEFAULT_TOL} # form_nahso4_output_ts_0
     ${DEFAULT_TOL} # form_na2so4_output_ts_0
     ${DEFAULT_TOL} # form_caco3_output_ts_0
     ${DEFAULT_TOL} # form_cacl2_output_ts_0
@@ -126,6 +142,10 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_camsa2_output_ts_0
     ${DEFAULT_TOL} # form_caso4_output_ts_0
     ${DEFAULT_TOL} # form_nh4msa_output_ts_0
+    ${DEFAULT_TOL} # form_nh4so4_output_ts_0
+    ${DEFAULT_TOL} # form_nacl_output_ts_0
+    ${DEFAULT_TOL} # form_namsa_output_ts_0
+    ${DEFAULT_TOL} # form_nano3_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

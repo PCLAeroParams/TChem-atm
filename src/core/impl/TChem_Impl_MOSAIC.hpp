@@ -4181,6 +4181,20 @@ struct MOSAIC{
   } // form_caso4
 
   KOKKOS_INLINE_FUNCTION static
+  void form_namsa(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnamsa) = min(store(mosaic.ina_a), store(mosaic.imsa_a));
+
+    store(mosaic.ina_a)  = store(mosaic.ina_a) - electrolyte(mosaic.jnamsa);
+    store(mosaic.imsa_a) = store(mosaic.imsa_a) - electrolyte(mosaic.jnamsa);
+
+    store(mosaic.ina_a)  = max(0.0, store(mosaic.ina_a));
+    store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a));
+  } // form_namsa
+  
+  KOKKOS_INLINE_FUNCTION static
   void form_nano3(const MosaicModelData<DeviceType>& mosaic,
                   const real_type_1d_view_type& electrolyte,
                   const real_type_1d_view_type& store) {

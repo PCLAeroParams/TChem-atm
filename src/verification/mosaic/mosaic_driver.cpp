@@ -91,6 +91,8 @@ void form_camsa2(Ensemble *ensemble);
 
 void form_caso4(Ensemble *ensemble);
 
+void form_nh4so4(Ensemble *ensemble);
+
 void form_nacl(Ensemble *ensemble);
 
 void form_namsa(Ensemble *ensemble);
@@ -174,6 +176,8 @@ int main(int argc, char **argv) {
       form_camsa2(ensemble);
     } else if (func_name == "form_caso4") {
       form_caso4(ensemble);
+    } else if (func_name == "form_nh4so4") {
+      form_nh4so4(ensemble);
     } else if (func_name == "form_nacl") {
       form_nacl(ensemble);
     } else if (func_name == "form_namsa") {

@@ -689,37 +689,16 @@ void TChem::Driver::doTimestep(const double del_t){
   policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
   udata.policy = policy;
 
-  // Final time and time between outputs
-  const sunrealtype Tf    = SUN_RCONST(del_t);
-  const sunrealtype dTout = SUN_RCONST(del_t);
+  // Integrate from T0 to del_t in a single CVode call
+  sunrealtype t = T0;
+  retval = CVode(cvode_mem, SUN_RCONST(del_t), y, &t, CV_NORMAL);
+  exec_space_instance.fence();
+  check_flag(retval, "CVode");
 
-  // Number of output times
-  const int Nt_p = static_cast<int>(ceil(Tf / dTout));
+  sundials::kokkos::CopyFromDevice(y);
+  Kokkos::fence();
 
-  const int Nt = _max_num_time_iterations > 0 ? _max_num_time_iterations : Nt_p;
-
-  // Current time and first output time
-  sunrealtype t    = T0;
-  sunrealtype tout = T0 + dTout;
-
-  // Initial output
   real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
-
-  // Time stepping
-  int iout = 0;
-  for (iout = 0; iout < Nt; iout++)
-  {
-    // Advance in time
-    retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
-    exec_space_instance.fence();
-    if (check_flag(retval, "CVode")) { break; }
-
-    sundials::kokkos::CopyFromDevice(y);
-    Kokkos::fence();
-
-    tout += dTout;
-    tout = (tout > Tf) ? Tf : tout;
-  }
 
   // Copy results back
   int i = 0;

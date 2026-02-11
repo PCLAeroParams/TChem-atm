@@ -94,6 +94,10 @@ public:
    ordinal_type _krylov_dimension; // Max Krylov subspace dimension for GMRES solver
    bool _verbose; // Enable verbose solver information
 
+   // Number of particles to track in RHS evaluation (-1 = all)
+   ordinal_type _n_particles_track{-1};
+   void setNParticlesTrack(ordinal_type n);
+
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);
 
@@ -131,3 +135,4 @@ extern "C" double TChem_getAerosolSpeciesKappa(int* index);
 extern "C" void
 TChem_setNumberConcentrationVector(TChem::real_type *array,
                                    const TChem::ordinal_type iBatch);
+extern "C" void TChem_setNParticlesTrack(TChem::ordinal_type n);

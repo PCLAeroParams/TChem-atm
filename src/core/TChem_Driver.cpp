@@ -455,6 +455,17 @@ void TChem::Driver::getStateVectorHost(real_type_2d_const_view_host &view) {
   view = real_type_2d_const_view_host(&_state(0,0), _state.extent(0), _state.extent(1));
 }
 
+/**
+ * Set the number of particles to track in RHS evaluation.
+ */
+void TChem_setNParticlesTrack(ordinal_type n){
+  g_tchem->setNParticlesTrack(n);
+}
+
+void TChem::Driver::setNParticlesTrack(ordinal_type n) {
+  _n_particles_track = n;
+}
+
 /* Integrate a time step */
 void TChem::Driver::doTimestep(const double del_t){
 
@@ -492,6 +503,11 @@ void TChem::Driver::doTimestep(const double del_t){
   // Create UserData
   TChem::UserData udata;
 
+  // Number of particles to compute RHS for (must match tolerance setting)
+  // Use _n_particles_track if set, otherwise default to all particles
+  const ordinal_type n_particles_track =
+      _n_particles_track > 0 ? _n_particles_track : _amcd_host.nParticles;
+
   udata.nbatches = _nBatch;
   real_type_2d_view number_conc("NumberConcentration", _nBatch,
       _amcd_host.nParticles);
@@ -500,6 +516,7 @@ void TChem::Driver::doTimestep(const double del_t){
   udata.batchSize = number_of_equations;
   udata.kmcd = _kmcd_device;
   udata.amcd = _amcd_device;
+  udata.n_particles_track = n_particles_track;
 
   // Create the SUNDIALS context
   sundials::Context sunctx;

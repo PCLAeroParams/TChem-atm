@@ -28,6 +28,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 namespace TChem {
 struct Driver {
 public:
+   using real_type_1d_view_host = TChem::real_type_1d_view_host;
    using real_type_2d_view_host = TChem::real_type_2d_view_host;
    using host_exec_space = Kokkos::DefaultHostExecutionSpace;
    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
@@ -89,10 +90,15 @@ public:
    real_type _dtmin; // Minimum time step size (s).
    real_type _atol_time; // Absolute tolerance used for adaptive time stepping
    real_type _rtol_time; // Relative tolerance used for adaptive time stepping
+   real_type_1d_view_host _atol_time_vec; // Per-equation absolute tolerances
    ordinal_type _max_num_newton_iterations; // Maximum number of Newton iterations
    ordinal_type _max_num_time_iterations; // Maximum number of time iterations
    ordinal_type _krylov_dimension; // Max Krylov subspace dimension for GMRES solver
    bool _verbose; // Enable verbose solver information
+
+   // Per-equation tolerance control
+   ordinal_type getNumberOfEquations() const;
+   void setAbsoluteToleranceVector(double *array, ordinal_type len);
 
    // Number of particles to track in RHS evaluation (-1 = all)
    ordinal_type _n_particles_track{-1};
@@ -136,3 +142,6 @@ extern "C" void
 TChem_setNumberConcentrationVector(TChem::real_type *array,
                                    const TChem::ordinal_type iBatch);
 extern "C" void TChem_setNParticlesTrack(TChem::ordinal_type n);
+extern "C" TChem::ordinal_type TChem_getNumberOfEquations();
+extern "C" void TChem_setAbsoluteToleranceVector(double *array,
+                                                  TChem::ordinal_type len);

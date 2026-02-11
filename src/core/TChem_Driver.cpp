@@ -456,6 +456,37 @@ void TChem::Driver::getStateVectorHost(real_type_2d_const_view_host &view) {
 }
 
 /**
+ * Return the number of ODE equations per batch.
+ */
+ordinal_type TChem_getNumberOfEquations(){
+  return g_tchem == nullptr ? -1 : g_tchem->getNumberOfEquations();
+}
+
+ordinal_type TChem::Driver::getNumberOfEquations() const {
+  using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+  using problem_type =
+      TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
+  return problem_type::getNumberOfTimeODEs(_kmcd_host, _amcd_host);
+}
+
+/**
+ * Set per-equation absolute tolerances for the time integrator.
+ */
+void TChem_setAbsoluteToleranceVector(double *array, ordinal_type len){
+  g_tchem->setAbsoluteToleranceVector(array, len);
+}
+
+void TChem::Driver::setAbsoluteToleranceVector(double *array, ordinal_type len) {
+  if (_atol_time_vec.span() == 0 ||
+      static_cast<ordinal_type>(_atol_time_vec.extent(0)) != len) {
+    _atol_time_vec = real_type_1d_view_host("atol_time_vec", len);
+  }
+  for (ordinal_type k = 0; k < len; k++) {
+    _atol_time_vec(k) = array[k];
+  }
+}
+
+/**
  * Set the number of particles to track in RHS evaluation.
  */
 void TChem_setNParticlesTrack(ordinal_type n){
@@ -579,8 +610,38 @@ void TChem::Driver::doTimestep(const double del_t){
   udata.const_tracers = const_tracers;
 
   // Create vector of absolute tolerances
+  // Tolerances are set per-equation type:
+  //   Gas species:               atol_gas
+  //   Tracked aerosol particles: atol_aero (scale-appropriate for small masses)
+  //   Remaining aerosol particles: atol_ignore (effectively ignored)
   VecType abstol{length, sunctx};
-  N_VConst(SUN_RCONST(_atol_time), abstol);
+  {
+    const ordinal_type neq = number_of_equations;
+    const ordinal_type n_gas = n_active_gas_species;
+    const ordinal_type n_aero_spec = _amcd_host.nSpec;
+    const ordinal_type n_aero_tracked = n_particles_track * n_aero_spec;
+    const real_type atol_gas    = 1e-10;
+    const real_type atol_aero   = 1e-30;
+    const real_type atol_ignore = 1.0;
+    real_type_2d_view_type abstol2d((abstol.View()).data(), _nBatch, neq);
+    Kokkos::parallel_for(
+      "fill_abstol", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
+      KOKKOS_LAMBDA(const ordinal_type i) {
+        // Gas species
+        for (ordinal_type j = 0; j < n_gas; ++j) {
+          abstol2d(i, j) = atol_gas;
+        }
+        // Tracked aerosol particles (first n_particles_track particles)
+        for (ordinal_type j = n_gas; j < n_gas + n_aero_tracked; ++j) {
+          abstol2d(i, j) = atol_aero;
+        }
+        // Remaining aerosol particles (ignored)
+        for (ordinal_type j = n_gas + n_aero_tracked; j < neq; ++j) {
+          abstol2d(i, j) = atol_ignore;
+        }
+      });
+    Kokkos::fence();
+  }
 
   // Create CVODE using Backward Differentiation Formula methods
   void* cvode_mem = CVodeCreate(CV_BDF, sunctx);

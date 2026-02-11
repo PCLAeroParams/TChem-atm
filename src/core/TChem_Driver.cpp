@@ -175,6 +175,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   auto vector_size = solver_info["vector_size"];
 
   auto verbose = solver_info["verbose"];
+  auto krylov_dimension = solver_info["krylov_dimension"];
 
   _atol_newton = atol_newton.as<real_type>(1e-10);
   _rtol_newton = rtol_newton.as<real_type>(1e-6);
@@ -183,6 +184,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   _rtol_time = rtol_time.as<real_type>(1e-4);
   _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
   _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
+  _krylov_dimension = krylov_dimension.as<ordinal_type>(0);
 
   // If team_size and vector_size are not specified, default to -1
   _team_size = team_size.as<ordinal_type>(-1);
@@ -585,7 +587,7 @@ void TChem::Driver::doTimestep(const double del_t){
 
   // Create matrix-free GMRES linear solver
   LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
-      SUNLinSol_SPGMR(y, SUN_PREC_NONE, 0, sunctx));
+      SUNLinSol_SPGMR(y, SUN_PREC_NONE, _krylov_dimension, sunctx));
 
   // Attach the linear solver to CVODE
   retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);

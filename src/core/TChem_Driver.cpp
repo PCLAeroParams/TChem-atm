@@ -48,7 +48,7 @@ static int check_flag(const int flag, const std::string funcname)
  * Output statistics from CVODE solver.
  */
 void print_cvode_statistics(void* cvode_mem) {
-  long int nst, nfe, nsetups, nje, nni, ncfn, netf;
+  long int nst, nfe, nsetups, nje, nni, ncfn, netf, nfeLS, nli;
   int retval;
 
   retval = CVodeGetNumSteps(cvode_mem, &nst);
@@ -72,10 +72,19 @@ void print_cvode_statistics(void* cvode_mem) {
   retval = CVodeGetNumJacEvals(cvode_mem, &nje);
   check_flag(retval, "CVodeGetNumJacEvals");
 
+  retval = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+  check_flag(retval, "CVodeGetNumLinRhsEvals");
+
+  retval = CVodeGetNumLinIters(cvode_mem, &nli);
+  check_flag(retval, "CVodeGetNumLinIters");
+
   std::cout << "\nFinal Statistics:\n"
             << "  Steps            = " << nst << "\n"
             << "  RHS evals        = " << nfe << "\n"
+            << "  LS RHS evals     = " << nfeLS << "\n"
+            << "  Total RHS evals  = " << (nfe + nfeLS) << "\n"
             << "  LS setups        = " << nsetups << "\n"
+            << "  LS iters (GMRES) = " << nli << "\n"
             << "  Jac evals        = " << nje << "\n"
             << "  NLS iters        = " << nni << "\n"
             << "  NLS fails        = " << ncfn << "\n"

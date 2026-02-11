@@ -136,6 +136,7 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
   g_tchem->getLengthOfStateVector();
   g_tchem->createNumerics(numericsFile);
   g_tchem->createNumberConcentrationVector(nBatch);
+  g_tchem->createDeviceWorkViews();
 
 }
 
@@ -267,6 +268,18 @@ void TChem::Driver::createStateVector(ordinal_type nBatch) {
 void TChem::Driver::createNumberConcentrationVector(ordinal_type nBatch) {
   const ordinal_type len = _amcd_host.nParticles;
   _number_concentration = real_type_2d_view_host("number_concentration", nBatch, len);
+}
+
+/**
+ * Allocate persistent device work views used by doTimestep.
+ */
+void TChem::Driver::createDeviceWorkViews() {
+  const auto stateVecDim = getLengthOfStateVector();
+  _state_device = real_type_2d_view_device("state_device", _nBatch, stateVecDim);
+  _number_conc_device = real_type_2d_view_device("number_conc_device", _nBatch, _amcd_host.nParticles);
+  _const_tracers_device = real_type_2d_view_device("const_tracers_device", _nBatch, _kmcd_host.nConstSpec);
+  _temperature_device = real_type_1d_view_device("temperature_device", _nBatch);
+  _pressure_device = real_type_1d_view_device("pressure_device", _nBatch);
 }
 
 /**
@@ -540,10 +553,8 @@ void TChem::Driver::doTimestep(const double del_t){
       _n_particles_track > 0 ? _n_particles_track : _amcd_host.nParticles;
 
   udata.nbatches = _nBatch;
-  real_type_2d_view number_conc("NumberConcentration", _nBatch,
-      _amcd_host.nParticles);
-  Kokkos::deep_copy(number_conc, _number_concentration);
-  udata.num_concentration = number_conc;
+  Kokkos::deep_copy(_number_conc_device, _number_concentration);
+  udata.num_concentration = _number_conc_device;
   udata.batchSize = number_of_equations;
   udata.kmcd = _kmcd_device;
   udata.amcd = _amcd_device;
@@ -560,21 +571,21 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_2d_view_type y2d((y.View()).data(), _nBatch, number_of_equations);
 
   const ordinal_type n_active_gas_species = _kmcd_host.nSpec - _kmcd_host.nConstSpec;
-  real_type_2d_view_type const_tracers("const_tracers", _nBatch, _kmcd_host.nConstSpec);
-
-  real_type_1d_view_type temperature("temperature", _nBatch);
-  real_type_1d_view_type pressure("pressure", _nBatch);
   using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
   const ordinal_type level = 1;
 
-  auto stateVecDim = TChem_getLengthOfStateVector();
-  real_type_2d_view state_device("StateVector Devices", _nBatch, stateVecDim);
-  Kokkos::deep_copy(state_device, _state);
+  Kokkos::deep_copy(_state_device, _state);
 
   const ordinal_type n_gas_spec = _kmcd_device.nSpec;
   const ordinal_type n_gas_spec_constant = _kmcd_device.nConstSpec;
   const ordinal_type total_n_species = _kmcd_device.nSpec  +
       _amcd_device.nParticles * _amcd_device.nSpec;
+
+  // Local aliases for lambda capture (avoids capturing 'this' on GPU)
+  auto state_device = _state_device;
+  auto temperature = _temperature_device;
+  auto pressure = _pressure_device;
+  auto const_tracers = _const_tracers_device;
 
   Kokkos::parallel_for(
     "fill_y", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
@@ -605,9 +616,9 @@ void TChem::Driver::doTimestep(const double del_t){
       }
   });
 
-  udata.temperature = temperature;
-  udata.pressure = pressure;
-  udata.const_tracers = const_tracers;
+  udata.temperature = _temperature_device;
+  udata.pressure = _pressure_device;
+  udata.const_tracers = _const_tracers_device;
 
   // Create vector of absolute tolerances
   // Tolerances are set per-equation type:

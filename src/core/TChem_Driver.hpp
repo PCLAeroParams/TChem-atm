@@ -30,6 +30,8 @@ struct Driver {
 public:
    using real_type_1d_view_host = TChem::real_type_1d_view_host;
    using real_type_2d_view_host = TChem::real_type_2d_view_host;
+   using real_type_1d_view_device = TChem::real_type_1d_view;
+   using real_type_2d_view_device = TChem::real_type_2d_view;
    using host_exec_space = Kokkos::DefaultHostExecutionSpace;
    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
    using device_type = typename Tines::UseThisDevice<exec_space>::type;
@@ -80,6 +82,14 @@ public:
    real_type getAerosolSpeciesDensity(int *index);
    real_type getAerosolSpeciesMW(int *index);
    real_type getAerosolSpeciesKappa(int *index);
+
+   // Persistent device work views (allocated once, reused each timestep)
+   real_type_2d_view_device _state_device;
+   real_type_2d_view_device _number_conc_device;
+   real_type_2d_view_device _const_tracers_device;
+   real_type_1d_view_device _temperature_device;
+   real_type_1d_view_device _pressure_device;
+   void createDeviceWorkViews();
 
    // Integrate a single time step
    void doTimestep(const double del_t);

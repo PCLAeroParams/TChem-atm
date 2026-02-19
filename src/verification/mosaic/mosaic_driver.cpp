@@ -101,6 +101,8 @@ void form_namsa(Ensemble *ensemble);
 
 void form_nano3(Ensemble *ensemble);
 
+void form_h2so4(Ensemble *ensemble);
+
 void form_na2so4_nahso4(Ensemble *ensemble);
 
 void form_lvcite_nh4hso4(Ensemble *ensemble);
@@ -198,6 +200,8 @@ int main(int argc, char **argv) {
       form_namsa(ensemble);
     } else if (func_name == "form_nano3") {
       form_nano3(ensemble);
+    } else if (func_name == "form_h2so4") {
+      form_h2so4(ensemble);
     } else if (func_name == "form_na2so4_nahso4") {
       form_na2so4_nahso4(ensemble);
     } else if (func_name == "form_lvcite_nh4hso4") {

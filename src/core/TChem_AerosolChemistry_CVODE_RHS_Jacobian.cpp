@@ -49,8 +49,9 @@ int AerosolChemistry_CVODE_K::f(sunrealtype t, N_Vector y, N_Vector ydot, void* 
          = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
   const std::string profile_name = "TChem::AerosolChemistry::RHS_evaluation";
 
+  const auto n_particles_track = udata->n_particles_track;
   TChemAerosolChemistryRHS rhs_tchem(rhs, vals, num_concentration,
-     const_tracers, temperature, pressure, kmcd, amcd);
+     const_tracers, temperature, pressure, kmcd, amcd, n_particles_track);
 
   Kokkos::Profiling::pushRegion(profile_name);
   Kokkos::parallel_for(profile_name, policy, rhs_tchem);

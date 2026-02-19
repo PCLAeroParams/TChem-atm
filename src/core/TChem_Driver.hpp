@@ -28,7 +28,10 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 namespace TChem {
 struct Driver {
 public:
+   using real_type_1d_view_host = TChem::real_type_1d_view_host;
    using real_type_2d_view_host = TChem::real_type_2d_view_host;
+   using real_type_1d_view_device = TChem::real_type_1d_view;
+   using real_type_2d_view_device = TChem::real_type_2d_view;
    using host_exec_space = Kokkos::DefaultHostExecutionSpace;
    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
    using device_type = typename Tines::UseThisDevice<exec_space>::type;
@@ -80,6 +83,14 @@ public:
    real_type getAerosolSpeciesMW(int *index);
    real_type getAerosolSpeciesKappa(int *index);
 
+   // Persistent device work views (allocated once, reused each timestep)
+   real_type_2d_view_device _state_device;
+   real_type_2d_view_device _number_conc_device;
+   real_type_2d_view_device _const_tracers_device;
+   real_type_1d_view_device _temperature_device;
+   real_type_1d_view_device _pressure_device;
+   void createDeviceWorkViews();
+
    // Integrate a single time step
    void doTimestep(const double del_t);
 
@@ -89,9 +100,19 @@ public:
    real_type _dtmin; // Minimum time step size (s).
    real_type _atol_time; // Absolute tolerance used for adaptive time stepping
    real_type _rtol_time; // Relative tolerance used for adaptive time stepping
+   real_type_1d_view_host _atol_time_vec; // Per-equation absolute tolerances
    ordinal_type _max_num_newton_iterations; // Maximum number of Newton iterations
    ordinal_type _max_num_time_iterations; // Maximum number of time iterations
+   ordinal_type _krylov_dimension; // Max Krylov subspace dimension for GMRES solver
    bool _verbose; // Enable verbose solver information
+
+   // Per-equation tolerance control
+   ordinal_type getNumberOfEquations() const;
+   void setAbsoluteToleranceVector(double *array, ordinal_type len);
+
+   // Number of particles to track in RHS evaluation (-1 = all)
+   ordinal_type _n_particles_track{-1};
+   void setNParticlesTrack(ordinal_type n);
 
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);
@@ -130,3 +151,7 @@ extern "C" double TChem_getAerosolSpeciesKappa(int* index);
 extern "C" void
 TChem_setNumberConcentrationVector(TChem::real_type *array,
                                    const TChem::ordinal_type iBatch);
+extern "C" void TChem_setNParticlesTrack(TChem::ordinal_type n);
+extern "C" TChem::ordinal_type TChem_getNumberOfEquations();
+extern "C" void TChem_setAbsoluteToleranceVector(double *array,
+                                                  TChem::ordinal_type len);

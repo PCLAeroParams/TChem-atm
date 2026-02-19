@@ -103,6 +103,20 @@ void form_nano3(Ensemble *ensemble);
 
 void form_hno3(Ensemble *ensemble);
 
+void form_msa(Ensemble *ensemble);
+
+void form_h2so4(Ensemble *ensemble);
+
+void form_na2so4_nahso4(Ensemble *ensemble);
+
+void form_lvcite_nh4hso4(Ensemble *ensemble);
+
+void form_nh4so4_lvcite(Ensemble *ensemble);
+
+void form_nh4no3(Ensemble *ensemble);
+
+void form_nh4cl(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -192,6 +206,20 @@ int main(int argc, char **argv) {
       form_nano3(ensemble);
     } else if (func_name == "form_hno3") {
       form_hno3(ensemble);
+    } else if (func_name == "form_msa") {
+      form_msa(ensemble);
+    } else if (func_name == "form_h2so4") {
+      form_h2so4(ensemble);
+    } else if (func_name == "form_na2so4_nahso4") {
+      form_na2so4_nahso4(ensemble);
+    } else if (func_name == "form_lvcite_nh4hso4") {
+      form_lvcite_nh4hso4(ensemble);
+    } else if (func_name == "form_nh4so4_lvcite") {
+      form_nh4so4_lvcite(ensemble);
+    } else if (func_name == "form_nh4no3") {
+      form_nh4no3(ensemble);
+    } else if (func_name == "form_nh4cl") {
+      form_nh4cl(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

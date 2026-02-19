@@ -4277,6 +4277,20 @@ struct MOSAIC{
   } // form_nano3
 
   KOKKOS_INLINE_FUNCTION static
+  void form_na2so4_nahso4(const MosaicModelData<DeviceType>& mosaic,
+                          const real_type_1d_view_type& electrolyte,
+                          const real_type_1d_view_type& store) {
+      
+      electrolyte(mosaic.jna2so4) = store(mosaic.ina_a) - store(mosaic.iso4_a);
+      electrolyte(mosaic.jnahso4) = 2.*store(mosaic.iso4_a) - store(mosaic.ina_a);
+      electrolyte(mosaic.jna2so4) = max(0.0, electrolyte(mosaic.jna2so4));
+      electrolyte(mosaic.jnahso4) = max(0.0, electrolyte(mosaic.jnahso4));
+
+      store(mosaic.ina_a)  = 0.0;
+      store(mosaic.iso4_a) = 0.0;
+  } // form_na2so4_nahso4
+  
+  KOKKOS_INLINE_FUNCTION static
   void form_lvcite_nh4hso4(const MosaicModelData<DeviceType>& mosaic,
                            const real_type_1d_view_type& electrolyte,
                            const real_type_1d_view_type& store) {

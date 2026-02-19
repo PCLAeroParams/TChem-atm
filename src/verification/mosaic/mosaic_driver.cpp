@@ -103,6 +103,8 @@ void form_nano3(Ensemble *ensemble);
 
 void form_nh4no3(Ensemble *ensemble);
 
+void form_nh4cl(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -192,6 +194,8 @@ int main(int argc, char **argv) {
       form_nano3(ensemble);
     } else if (func_name == "form_nh4no3") {
       form_nh4no3(ensemble);
+    } else if (func_name == "form_nh4cl") {
+      form_nh4cl(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

@@ -4285,6 +4285,8 @@ struct MOSAIC{
 
     store(mosaic.icl_a) = 0.0;
   } // form_hcl
+
+  KOKKOS_INLINE_FUNCTION static
   void form_hno3(const MosaicModelData<DeviceType>& mosaic,
                  const real_type_1d_view_type& electrolyte,
                  const real_type_1d_view_type& store) {

@@ -35,6 +35,7 @@ add_executable(${DRIVER_NAME}.x
                form_nacl.cpp
                form_namsa.cpp
                form_nano3.cpp
+               form_msa.cpp
                form_h2so4.cpp
                form_na2so4_nahso4.cpp
                form_lvcite_nh4hso4.cpp
@@ -81,6 +82,7 @@ SET(TEST_LIST
      form_nacl_input_ts_0
      form_namsa_input_ts_0
      form_nano3_input_ts_0
+     form_msa_input_ts_0
      form_h2so4_input_ts_0
      form_na2so4_nahso4_input_ts_0
      form_lvcite_nh4hso4_input_ts_0
@@ -122,6 +124,7 @@ SET(TEST_BASELINE
     form_nacl_output_ts_0
     form_namsa_output_ts_0
     form_nano3_output_ts_0
+    form_msa_output_ts_0
     form_h2so4_output_ts_0
     form_na2so4_nahso4_output_ts_0
     form_lvcite_nh4hso4_output_ts_0
@@ -164,6 +167,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_nacl_output_ts_0
     ${DEFAULT_TOL} # form_namsa_output_ts_0
     ${DEFAULT_TOL} # form_nano3_output_ts_0
+    ${DEFAULT_TOL} # form_msa_output_ts_0
     ${DEFAULT_TOL} # form_h2so4_output_ts_0
     ${DEFAULT_TOL} # form_na2so4_nahso4_output_ts_0
     ${DEFAULT_TOL} # form_lvcite_nh4hso4_output_ts_0

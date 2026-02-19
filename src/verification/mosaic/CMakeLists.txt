@@ -35,6 +35,7 @@ add_executable(${DRIVER_NAME}.x
                form_nacl.cpp
                form_namsa.cpp
                form_nano3.cpp
+               degas_nh3.cpp
  )
 
 
@@ -43,38 +44,39 @@ TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 
 # list of test to run
 SET(TEST_LIST
-     update_thermodynamic_constants_input_ts_0
-     check_aerosol_mass_input_ts_0
-     adjust_liquid_aerosol_input_ts_0
-     compute_activities_input_ts_0
-     adjust_solid_aerosol_input_ts_0
-     do_full_deliquescence_input_ts_0
-     calculate_XT_input_ts_0
-     fnlog_gamZ_input_ts_0
-     fuchs_sutugin_input_ts_0
-     gas_diffusivity_input_ts_0
-     mean_molecular_speed_input_ts_0
-     fn_Keq_input_ts_0
-     drh_mutual_input_ts_0
-     fn_Po_input_ts_0
-     molality_0_input_ts_0
-     bin_molality_input_ts_0
-     bin_molality_60_input_ts_0
-     MTEM_compute_log_gamZ_input_ts_0
-     aerosol_water_up_input_ts_0
-     aerosol_water_input_ts_0
-     form_nahso4_input_ts_0
-     form_na2so4_input_ts_0
-     form_caco3_input_ts_0
-     form_cacl2_input_ts_0
-     form_cano3_input_ts_0
-     form_camsa2_input_ts_0
-     form_caso4_input_ts_0
-     form_nh4msa_input_ts_0
-     form_nh4so4_input_ts_0
-     form_nacl_input_ts_0
-     form_namsa_input_ts_0
-     form_nano3_input_ts_0
+    update_thermodynamic_constants_input_ts_0
+    check_aerosol_mass_input_ts_0
+    adjust_liquid_aerosol_input_ts_0
+    compute_activities_input_ts_0
+    adjust_solid_aerosol_input_ts_0
+    do_full_deliquescence_input_ts_0
+    calculate_XT_input_ts_0
+    fnlog_gamZ_input_ts_0
+    fuchs_sutugin_input_ts_0
+    gas_diffusivity_input_ts_0
+    mean_molecular_speed_input_ts_0
+    fn_Keq_input_ts_0
+    drh_mutual_input_ts_0
+    fn_Po_input_ts_0
+    molality_0_input_ts_0
+    bin_molality_input_ts_0
+    bin_molality_60_input_ts_0
+    MTEM_compute_log_gamZ_input_ts_0
+    aerosol_water_up_input_ts_0
+    aerosol_water_input_ts_0
+    form_nahso4_input_ts_0
+    form_na2so4_input_ts_0
+    form_caco3_input_ts_0
+    form_cacl2_input_ts_0
+    form_cano3_input_ts_0
+    form_camsa2_input_ts_0
+    form_caso4_input_ts_0
+    form_nh4msa_input_ts_0
+    form_nh4so4_input_ts_0
+    form_nacl_input_ts_0
+    form_namsa_input_ts_0
+    form_nano3_input_ts_0
+    degas_nh3_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -110,6 +112,7 @@ SET(TEST_BASELINE
     form_nacl_output_ts_0
     form_namsa_output_ts_0
     form_nano3_output_ts_0
+    degas_nh3_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -146,6 +149,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_nacl_output_ts_0
     ${DEFAULT_TOL} # form_namsa_output_ts_0
     ${DEFAULT_TOL} # form_nano3_output_ts_0
+    ${DEFAULT_TOL} # degas_nh3_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

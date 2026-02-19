@@ -4276,6 +4276,32 @@ struct MOSAIC{
     store(mosaic.ino3_a) = max(0.0, store(mosaic.ino3_a));
   } // form_nano3
 
+  KOKKOS_INLINE_FUNCTION static
+  void degas_nh3(const MosaicModelData<DeviceType>& mosaic,
+                 const real_type& jp,
+                 const real_type_1d_view_type& electrolyte,
+                 const real_type_1d_view_type& store,
+                 const real_type_1d_view_type& aer_curr,
+                 const real_type_1d_view_type& aer_solid,
+                 const real_type_1d_view_type& aer_liquid,
+                 const real_type_1d_view_type& aer_total,
+                 const real_type_1d_view_type& gas) {
+
+    store(mosaic.inh4_a) = max(0.0, store(mosaic.inh4_a));
+
+    gas(mosaic.inh3_g) = gas(mosaic.inh3_g) + store(mosaic.inh4_a);
+  
+    aer_curr(mosaic.inh4_a) = (aer_curr(mosaic.inh4_a)) - (store(mosaic.inh4_a));
+    aer_curr(mosaic.inh4_a) = max(0.0, aer_curr(mosaic.inh4_a));
+
+  // also do it for jtotal
+    if(jp != mosaic.jtotal) {
+      aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    }
+
+    store(mosaic.inh4_a) = 0.0;
+  } // degas_nh3
+
 };
 
 } // namespace Impl

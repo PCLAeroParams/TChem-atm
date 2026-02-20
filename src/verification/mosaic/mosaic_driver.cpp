@@ -101,6 +101,8 @@ void form_namsa(Ensemble *ensemble);
 
 void form_nano3(Ensemble *ensemble);
 
+void degas_hno3(Ensemble *ensemble);
+
 void form_hcl(Ensemble *ensemble);
 
 void form_hno3(Ensemble *ensemble);
@@ -206,6 +208,8 @@ int main(int argc, char **argv) {
       form_namsa(ensemble);
     } else if (func_name == "form_nano3") {
       form_nano3(ensemble);
+    } else if (func_name == "degas_hno3") {
+      degas_hno3(ensemble);
     } else if (func_name == "form_hcl") {
       form_hcl(ensemble);
     } else if (func_name == "form_hno3") {

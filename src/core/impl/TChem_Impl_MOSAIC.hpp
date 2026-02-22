@@ -4302,6 +4302,170 @@ struct MOSAIC{
     store(mosaic.inh4_a) = 0.0;
   } // degas_nh3
 
+  KOKKOS_INLINE_FUNCTION static
+  void degas_hcl(const MosaicModelData<DeviceType>& mosaic,
+                 const real_type& jp,
+                 const real_type_1d_view_type& electrolyte,
+                 const real_type_1d_view_type& store,
+                 const real_type_1d_view_type& aer_curr,
+                 const real_type_1d_view_type& aer_solid,
+                 const real_type_1d_view_type& aer_liquid,
+                 const real_type_1d_view_type& aer_total,
+                 const real_type_1d_view_type& gas) {
+
+    store(mosaic.icl_a) = max(0.0, store(mosaic.icl_a));
+
+    gas(mosaic.ihcl_g) = gas(mosaic.ihcl_g) + store(mosaic.icl_a);
+
+    aer_curr(mosaic.icl_a) = (aer_curr(mosaic.icl_a)) - (store(mosaic.icl_a));
+    aer_curr(mosaic.icl_a) = max(0.0, aer_curr(mosaic.icl_a));
+
+    // also do it for jtotal
+    if(jp != mosaic.jtotal) {
+      aer_curr(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+    }
+
+    electrolyte(mosaic.jhcl) = 0.0;
+    store(mosaic.icl_a) = 0.0;
+  } // degas_hcl
+
+  KOKKOS_INLINE_FUNCTION static
+  void degas_hno3(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type& jp,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store,
+                  const real_type_1d_view_type& aer_curr,
+                  const real_type_1d_view_type& aer_solid,
+                  const real_type_1d_view_type& aer_liquid,
+                  const real_type_1d_view_type& aer_total,
+                  const real_type_1d_view_type& gas) {
+    
+    store(mosaic.ino3_a) = max(0.0, store(mosaic.ino3_a));
+    
+    gas(mosaic.ihno3_g) = gas(mosaic.ihno3_g) + store(mosaic.ino3_a);
+
+    aer_curr(mosaic.ino3_a) = (aer_curr(mosaic.ino3_a)) - (store(mosaic.ino3_a));
+    aer_curr(mosaic.ino3_a) = max(0.0, aer_curr(mosaic.ino3_a));
+
+    // also do it for jtotal
+    if(jp != mosaic.jtotal) {
+      aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+    }
+
+    electrolyte(mosaic.jhno3) = 0.0;
+    store(mosaic.ino3_a) = 0.0;
+  } // degas_hno3
+
+  KOKKOS_INLINE_FUNCTION static
+  void form_hcl(const MosaicModelData<DeviceType>& mosaic,
+                const real_type_1d_view_type& electrolyte,
+                const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jhcl) = max(0.0, store(mosaic.icl_a));
+
+    store(mosaic.icl_a) = 0.0;
+  } // form_hcl
+
+  KOKKOS_INLINE_FUNCTION static
+  void form_hno3(const MosaicModelData<DeviceType>& mosaic,
+                 const real_type_1d_view_type& electrolyte,
+                 const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jhno3) = max(0.0, store(mosaic.ino3_a));
+
+    store(mosaic.ino3_a) = 0.0;
+  } // form_hno3
+
+  KOKKOS_INLINE_FUNCTION static
+  void form_msa(const MosaicModelData<DeviceType>& mosaic,
+                const real_type_1d_view_type& electrolyte,
+                const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jmsa) = max(0.0, store(mosaic.imsa_a));
+
+    store(mosaic.imsa_a) = 0.0;
+  } // form_msa
+
+  KOKKOS_INLINE_FUNCTION static
+  void form_h2so4(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jh2so4) = max(0.0, store(mosaic.iso4_a));
+
+    store(mosaic.iso4_a) = 0.0;
+  } // form_h2so4
+  
+  KOKKOS_INLINE_FUNCTION static
+  void form_na2so4_nahso4(const MosaicModelData<DeviceType>& mosaic,
+                          const real_type_1d_view_type& electrolyte,
+                          const real_type_1d_view_type& store) {
+      
+      electrolyte(mosaic.jna2so4) = store(mosaic.ina_a) - store(mosaic.iso4_a);
+      electrolyte(mosaic.jnahso4) = 2.*store(mosaic.iso4_a) - store(mosaic.ina_a);
+      electrolyte(mosaic.jna2so4) = max(0.0, electrolyte(mosaic.jna2so4));
+      electrolyte(mosaic.jnahso4) = max(0.0, electrolyte(mosaic.jnahso4));
+
+      store(mosaic.ina_a)  = 0.0;
+      store(mosaic.iso4_a) = 0.0;
+  } // form_na2so4_nahso4
+  
+  KOKKOS_INLINE_FUNCTION static
+  void form_lvcite_nh4hso4(const MosaicModelData<DeviceType>& mosaic,
+                           const real_type_1d_view_type& electrolyte,
+                           const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jlvcite) = store(mosaic.inh4_a) - store(mosaic.iso4_a);
+    electrolyte(mosaic.jnh4hso4) = 3.*store(mosaic.iso4_a) - 2.*store(mosaic.inh4_a);
+    electrolyte(mosaic.jlvcite) = max(0.0, electrolyte(mosaic.jlvcite));
+    electrolyte(mosaic.jnh4hso4) = max(0.0, electrolyte(mosaic.jnh4hso4));
+
+    store(mosaic.inh4_a) = 0.0;
+    store(mosaic.iso4_a) = 0.0;
+  } // form_lvcite_nh4hso4
+  
+  KOKKOS_INLINE_FUNCTION static
+  void form_nh4so4_lvcite(const MosaicModelData<DeviceType>& mosaic,
+                          const real_type_1d_view_type& electrolyte,
+                          const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnh4so4) = 2.*store(mosaic.inh4_a) - 3.*store(mosaic.iso4_a);
+    electrolyte(mosaic.jlvcite) = 2.*store(mosaic.iso4_a) - store(mosaic.inh4_a);
+    electrolyte(mosaic.jnh4so4) = max(0.0, electrolyte(mosaic.jnh4so4));
+    electrolyte(mosaic.jlvcite) = max(0.0, electrolyte(mosaic.jlvcite));
+
+    store(mosaic.inh4_a) = 0.0;
+    store(mosaic.iso4_a) = 0.0;
+  } // form_nh4so4_lvcite
+  
+  KOKKOS_INLINE_FUNCTION static
+  void form_nh4no3(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type_1d_view_type& electrolyte,
+                  const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnh4no3) = min(store(mosaic.inh4_a), store(mosaic.ino3_a));
+
+    store(mosaic.inh4_a)  = store(mosaic.inh4_a)  - electrolyte(mosaic.jnh4no3);
+    store(mosaic.ino3_a) = store(mosaic.ino3_a) - electrolyte(mosaic.jnh4no3);
+
+    store(mosaic.inh4_a)  = max(0.0, store(mosaic.inh4_a));
+    store(mosaic.ino3_a) = max(0.0, store(mosaic.ino3_a));
+  } // form_nh4no3
+  
+  KOKKOS_INLINE_FUNCTION static
+  void form_nh4cl(const MosaicModelData<DeviceType>& mosaic,
+             const real_type_1d_view_type& electrolyte,
+             const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnh4cl) = min(store(mosaic.inh4_a), store(mosaic.icl_a));
+
+    store(mosaic.inh4_a)  = store(mosaic.inh4_a)  - electrolyte(mosaic.jnh4cl);
+    store(mosaic.icl_a) = store(mosaic.icl_a) - electrolyte(mosaic.jnh4cl);
+
+    store(mosaic.inh4_a)  = max(0.0, store(mosaic.inh4_a));
+    store(mosaic.icl_a) = max(0.0, store(mosaic.icl_a));
+  } // form_nh4cl
+
 };
 
 } // namespace Impl

@@ -701,13 +701,14 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
 
   // Copy results back
-  int i = 0;
-  for (ordinal_type j = 0; j < n_active_gas_species; ++j){
-    _state(i, j + 3) = y2d_h(i, j);
-  }
+  for (ordinal_type i = 0; i < _nBatch; ++i) {
+    for (ordinal_type j = 0; j < n_active_gas_species; ++j){
+      _state(i, j + 3) = y2d_h(i, j);
+    }
 
-  for (ordinal_type j = n_active_gas_species; j < total_n_species - _kmcd_host.nConstSpec; ++j){
-    _state(i, j + 3 + _kmcd_host.nConstSpec) = y2d_h(i, j);
+    for (ordinal_type j = n_active_gas_species; j < total_n_species - _kmcd_host.nConstSpec; ++j){
+      _state(i, j + 3 + _kmcd_host.nConstSpec) = y2d_h(i, j);
+    }
   }
 
   if (_verbose) {

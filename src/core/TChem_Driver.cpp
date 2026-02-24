@@ -115,7 +115,6 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
 
   using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
   Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type> cvodes;
-  using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type,host_device_type>;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
 
@@ -221,8 +220,8 @@ void TChem::Driver::createGasKineticModelConstData() {
  * Free model.
  */
 void TChem::Driver::freeAll() {
-  g_tchem->freeGasKineticModel();
-  g_tchem->freeAerosolModel();
+  this->freeGasKineticModel();
+  this->freeAerosolModel();
 }
 
 void TChem::Driver::freeGasKineticModel() {
@@ -283,7 +282,7 @@ void TChem::Driver::createDeviceWorkViews() {
 }
 
 /**
- * Set the values of the state vector for a given batch.
+ * Set the number concentration vector for a given batch.
  */
 void TChem_setNumberConcentrationVector(double *array, const ordinal_type iBatch){
   g_tchem->setNumberConcentrationVector(array, iBatch);
@@ -326,7 +325,7 @@ void TChem_setStateVector(double *array, const ordinal_type iBatch){
 }
 
 /**
- *
+ * Set the values of the state vector for a given batch.
  */
 void TChem::Driver::setStateVector(double *array, const ordinal_type iBatch) {
   auto len = TChem_getLengthOfStateVector();

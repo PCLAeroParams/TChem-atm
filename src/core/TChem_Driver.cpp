@@ -103,29 +103,6 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
   settings.set_device_id(0);
   Kokkos::initialize(settings);
 
-  using exec_space = Kokkos::DefaultExecutionSpace;
-  using host_exec_space = Kokkos::DefaultHostExecutionSpace;
-
-  const bool detail = false;
-  TChem::exec_space().print_configuration(std::cout, detail);
-  TChem::host_exec_space().print_configuration(std::cout, detail);
-
-  using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
-  using device_type = typename Tines::UseThisDevice<exec_space>::type;
-
-  using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
-  Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type> cvodes;
-  using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
-  using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
-
-  using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type,host_device_type>;
-  using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type,host_device_type>;
-
-  using kinetic_model_type = TChem::KineticModelNCAR_ConstData<device_type>;
-  using kinetic_model_host_type = TChem::KineticModelNCAR_ConstData<host_device_type>;
-
-  using ordinal_type = TChem::ordinal_type;
-
   g_tchem->setBatchSize(nBatch);
   g_tchem->createGasKineticModel(chemFile);
   g_tchem->createGasKineticModelConstData();

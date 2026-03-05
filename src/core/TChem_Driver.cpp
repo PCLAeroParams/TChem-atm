@@ -483,6 +483,15 @@ void TChem_setNParticlesTrack(ordinal_type n){
 }
 
 void TChem::Driver::setNParticlesTrack(ordinal_type n) {
+  if (_amcd_host.nParticles == 0) {
+    throw std::runtime_error(
+        "setNParticlesTrack must be called after createAerosolModelConstData");
+  }
+  if (n > _amcd_host.nParticles) {
+    throw std::runtime_error(
+        "n_particles_track (" + std::to_string(n) +
+        ") exceeds amcd.nParticles (" + std::to_string(_amcd_host.nParticles) + ")");
+  }
   _n_particles_track = n;
 }
 

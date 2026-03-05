@@ -4466,6 +4466,343 @@ struct MOSAIC{
     store(mosaic.icl_a) = max(0.0, store(mosaic.icl_a));
   } // form_nh4cl
 
+  KOKKOS_INLINE_FUNCTION static
+  void form_electrolytes(
+      const MosaicModelData<DeviceType>& mosaic,
+      const real_type& jp,
+      const real_type_1d_view_type& aer,        // aer(:,jp,ibin)
+      const real_type_1d_view_type& aer_solid,
+      const real_type_1d_view_type& aer_liquid,
+      const real_type_1d_view_type& aer_total,
+      const real_type_1d_view_type& electrolyte, // electrolyte(:,jp,ibin)
+      const real_type_1d_view_type& epercent,
+      real_type& aer_sum,
+      const real_type_1d_view_type& aer_percent,
+      real_type& electrolyte_sum,
+      real_type& XT,
+      const real_type_1d_view_type& gas,
+      const real_type_1d_view_type& total_species,
+      real_type& tot_cl_in) {
+
+    // remove negative concentrations
+    for (ordinal_type i = 0; i < mosaic.naer; ++i)
+      aer(i) = max(real_type(0.0), aer(i));
+
+    calculate_XT(mosaic, aer, XT);
+
+    const ordinal_type iXT_case =
+        (XT >= real_type(1.9999) || XT < real_type(0.0)) ? 1 : 2;
+
+    // copy aer into local scalar store variables
+    real_type s_iso4 = aer(mosaic.iso4_a);
+    real_type s_ino3 = aer(mosaic.ino3_a);
+    real_type s_icl  = aer(mosaic.icl_a);
+    real_type s_imsa = aer(mosaic.imsa_a);
+    real_type s_ico3 = aer(mosaic.ico3_a);
+    real_type s_inh4 = aer(mosaic.inh4_a);
+    real_type s_ina  = aer(mosaic.ina_a);
+    real_type s_ica  = aer(mosaic.ica_a);
+
+    // initialize electrolytes to zero
+    for (ordinal_type j = 0; j < mosaic.nelectrolyte; ++j)
+      electrolyte(j) = real_type(0.0);
+
+    // --- form_caso4 ---
+    {
+      real_type val = min(s_ica, s_iso4);
+      electrolyte(mosaic.jcaso4) = val;
+      s_ica  = max(real_type(0.0), s_ica  - val);
+      s_iso4 = max(real_type(0.0), s_iso4 - val);
+    }
+    // --- form_camsa2 ---
+    {
+      real_type val = min(s_ica, real_type(0.5)*s_imsa);
+      electrolyte(mosaic.jcamsa2) = val;
+      s_ica  = max(real_type(0.0), s_ica  - val);
+      s_imsa = max(real_type(0.0), s_imsa - real_type(2.0)*val);
+    }
+
+    if (iXT_case == 1) {
+      // XT >= 2 : sulfate deficient
+      // --- form_na2so4 ---
+      {
+        real_type val = min(real_type(0.5)*s_ina, s_iso4);
+        electrolyte(mosaic.jna2so4) = val;
+        s_ina  = max(real_type(0.0), s_ina  - real_type(2.0)*val);
+        s_iso4 = max(real_type(0.0), s_iso4 - val);
+      }
+      // --- form_namsa ---
+      {
+        real_type val = min(s_ina, s_imsa);
+        electrolyte(mosaic.jnamsa) = val;
+        s_ina  = max(real_type(0.0), s_ina  - val);
+        s_imsa = max(real_type(0.0), s_imsa - val);
+      }
+      // --- form_cano3 ---
+      {
+        real_type val = min(s_ica, real_type(0.5)*s_ino3);
+        electrolyte(mosaic.jcano3) = val;
+        s_ica  = max(real_type(0.0), s_ica  - val);
+        s_ino3 = max(real_type(0.0), s_ino3 - real_type(2.0)*val);
+      }
+      // --- form_nano3 ---
+      {
+        real_type val = min(s_ina, s_ino3);
+        electrolyte(mosaic.jnano3) = val;
+        s_ina  = max(real_type(0.0), s_ina  - val);
+        s_ino3 = max(real_type(0.0), s_ino3 - val);
+      }
+      // --- form_nacl (inline, including gas-deficit logic) ---
+      {
+        electrolyte(mosaic.jnacl) = s_ina;
+        s_ina = real_type(0.0);
+        s_icl = s_icl - electrolyte(mosaic.jnacl);
+        if (s_icl < real_type(0.0)) {
+          aer(mosaic.icl_a) = aer(mosaic.icl_a) - s_icl;
+          if (jp != mosaic.jtotal)
+            aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+          gas(mosaic.ihcl_g) = gas(mosaic.ihcl_g) + s_icl;
+          if (gas(mosaic.ihcl_g) < real_type(0.0)) {
+            total_species(mosaic.ihcl_g) = total_species(mosaic.ihcl_g) - gas(mosaic.ihcl_g);
+            tot_cl_in = tot_cl_in - gas(mosaic.ihcl_g);
+          }
+          gas(mosaic.ihcl_g) = max(real_type(0.0), gas(mosaic.ihcl_g));
+          s_icl = real_type(0.0);
+        }
+        s_icl = max(real_type(0.0), s_icl);
+      }
+      // --- form_cacl2 ---
+      {
+        real_type val = min(s_ica, real_type(0.5)*s_icl);
+        electrolyte(mosaic.jcacl2) = val;
+        s_ica = max(real_type(0.0), s_ica - val);
+        s_icl = max(real_type(0.0), s_icl - real_type(2.0)*val);
+      }
+      // --- form_caco3 (only for jsolid or jtotal) ---
+      if (jp == mosaic.jtotal || jp == mosaic.jsolid) {
+        electrolyte(mosaic.jcaco3) = s_ica;
+        aer(mosaic.ico3_a) = electrolyte(mosaic.jcaco3);
+        s_ica  = real_type(0.0);
+        s_ico3 = real_type(0.0);
+      }
+      // --- form_nh4so4 ---
+      {
+        real_type val = min(real_type(0.5)*s_inh4, s_iso4);
+        electrolyte(mosaic.jnh4so4) = val;
+        s_inh4 = max(real_type(0.0), s_inh4 - real_type(2.0)*val);
+        s_iso4 = max(real_type(0.0), s_iso4 - val);
+      }
+      // --- form_nh4msa ---
+      {
+        real_type val = min(s_inh4, s_imsa);
+        electrolyte(mosaic.jnh4msa) = val;
+        s_inh4 = max(real_type(0.0), s_inh4 - val);
+        s_imsa = max(real_type(0.0), s_imsa - val);
+      }
+      // --- form_nh4no3 ---
+      {
+        real_type val = min(s_inh4, s_ino3);
+        electrolyte(mosaic.jnh4no3) = val;
+        s_inh4 = max(real_type(0.0), s_inh4 - val);
+        s_ino3 = max(real_type(0.0), s_ino3 - val);
+      }
+      // --- form_nh4cl ---
+      {
+        real_type val = min(s_inh4, s_icl);
+        electrolyte(mosaic.jnh4cl) = val;
+        s_inh4 = max(real_type(0.0), s_inh4 - val);
+        s_icl  = max(real_type(0.0), s_icl  - val);
+      }
+      // --- form_msa ---
+      electrolyte(mosaic.jmsa) = max(real_type(0.0), s_imsa);
+      s_imsa = real_type(0.0);
+
+      if (jp == mosaic.jsolid) {
+        // degas_hno3
+        s_ino3 = max(real_type(0.0), s_ino3);
+        gas(mosaic.ihno3_g) += s_ino3;
+        aer(mosaic.ino3_a) -= s_ino3;
+        aer(mosaic.ino3_a) = max(real_type(0.0), aer(mosaic.ino3_a));
+        if (jp != mosaic.jtotal)
+          aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+        electrolyte(mosaic.jhno3) = real_type(0.0);
+        s_ino3 = real_type(0.0);
+        // degas_hcl
+        s_icl = max(real_type(0.0), s_icl);
+        gas(mosaic.ihcl_g) += s_icl;
+        aer(mosaic.icl_a) -= s_icl;
+        aer(mosaic.icl_a) = max(real_type(0.0), aer(mosaic.icl_a));
+        if (jp != mosaic.jtotal)
+          aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+        electrolyte(mosaic.jhcl) = real_type(0.0);
+        s_icl = real_type(0.0);
+      } else {
+        // form_hno3
+        electrolyte(mosaic.jhno3) = max(real_type(0.0), s_ino3);
+        s_ino3 = real_type(0.0);
+        // form_hcl
+        electrolyte(mosaic.jhcl) = max(real_type(0.0), s_icl);
+        s_icl = real_type(0.0);
+      }
+
+    } else { // iXT_case == 2
+      // XT < 2 : sulfate enough or excess
+      // --- form_namsa ---
+      {
+        real_type val = min(s_ina, s_imsa);
+        electrolyte(mosaic.jnamsa) = val;
+        s_ina  = max(real_type(0.0), s_ina  - val);
+        s_imsa = max(real_type(0.0), s_imsa - val);
+      }
+      // --- form_nh4msa ---
+      {
+        real_type val = min(s_inh4, s_imsa);
+        electrolyte(mosaic.jnh4msa) = val;
+        s_inh4 = max(real_type(0.0), s_inh4 - val);
+        s_imsa = max(real_type(0.0), s_imsa - val);
+      }
+      // --- form_msa ---
+      electrolyte(mosaic.jmsa) = max(real_type(0.0), s_imsa);
+      s_imsa = real_type(0.0);
+
+      if (s_iso4 != real_type(0.0)) {
+        real_type XT_prime  = (s_ina + s_inh4) / s_iso4;
+        real_type XNa_prime = real_type(0.5)*s_ina / s_iso4 + real_type(1.0);
+
+        if (XT_prime >= XNa_prime) {
+          // form_na2so4
+          {
+            real_type val = min(real_type(0.5)*s_ina, s_iso4);
+            electrolyte(mosaic.jna2so4) = val;
+            s_ina  = max(real_type(0.0), s_ina  - real_type(2.0)*val);
+            s_iso4 = max(real_type(0.0), s_iso4 - val);
+          }
+          real_type XNH4_prime = real_type(0.0);
+          if (s_iso4 > real_type(1.e-15))
+            XNH4_prime = s_inh4 / s_iso4;
+          if (XNH4_prime >= real_type(1.5)) {
+            // form_nh4so4_lvcite
+            electrolyte(mosaic.jnh4so4) = max(real_type(0.0), real_type(2.0)*s_inh4 - real_type(3.0)*s_iso4);
+            electrolyte(mosaic.jlvcite)  = max(real_type(0.0), real_type(2.0)*s_iso4 - s_inh4);
+            s_inh4 = real_type(0.0);
+            s_iso4 = real_type(0.0);
+          } else {
+            // form_lvcite_nh4hso4
+            electrolyte(mosaic.jnh4so4)  = max(real_type(0.0), real_type(2.0)*s_inh4 - real_type(3.0)*s_iso4);
+            electrolyte(mosaic.jlvcite)  = max(real_type(0.0), real_type(2.0)*s_iso4 - s_inh4);
+            electrolyte(mosaic.jnh4hso4) = max(real_type(0.0), electrolyte(mosaic.jnh4hso4));
+            s_inh4 = real_type(0.0);
+            s_iso4 = real_type(0.0);
+          }
+        } else if (XT_prime >= real_type(1.0)) {
+          // form_nh4hso4
+          {
+            real_type val = min(s_inh4, s_iso4);
+            electrolyte(mosaic.jnh4hso4) = val;
+            s_inh4 = max(real_type(0.0), s_inh4 - val);
+            s_iso4 = max(real_type(0.0), s_iso4 - val);
+          }
+          // form_na2so4_nahso4
+          {
+            electrolyte(mosaic.jna2so4) = s_ina - s_iso4;
+            electrolyte(mosaic.jnahso4) = real_type(2.0)*s_iso4 - s_ina;
+            electrolyte(mosaic.jna2so4) = max(real_type(0.0), electrolyte(mosaic.jna2so4));
+            electrolyte(mosaic.jnahso4) = max(real_type(0.0), electrolyte(mosaic.jnahso4));
+            s_ina  = real_type(0.0);
+            s_iso4 = real_type(0.0);
+          }
+        } else { // XT_prime < 1
+          // form_nahso4
+          {
+            real_type val = min(s_ina, s_iso4);
+            electrolyte(mosaic.jnahso4) = val;
+            s_ina  = max(real_type(0.0), s_ina  - val);
+            s_iso4 = max(real_type(0.0), s_iso4 - val);
+          }
+          // form_nh4hso4
+          {
+            real_type val = min(s_inh4, s_iso4);
+            electrolyte(mosaic.jnh4hso4) = val;
+            s_inh4 = max(real_type(0.0), s_inh4 - val);
+            s_iso4 = max(real_type(0.0), s_iso4 - val);
+          }
+          // form_h2so4
+          electrolyte(mosaic.jh2so4) = max(real_type(0.0), s_iso4);
+          s_iso4 = real_type(0.0);
+        }
+      } // end if (s_iso4 != 0)
+
+      if (jp == mosaic.jsolid) {
+        // degas_hno3
+        s_ino3 = max(real_type(0.0), s_ino3);
+        gas(mosaic.ihno3_g) += s_ino3;
+        aer(mosaic.ino3_a) -= s_ino3;
+        aer(mosaic.ino3_a) = max(real_type(0.0), aer(mosaic.ino3_a));
+        if (jp != mosaic.jtotal)
+          aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+        electrolyte(mosaic.jhno3) = real_type(0.0);
+        s_ino3 = real_type(0.0);
+        // degas_hcl
+        s_icl = max(real_type(0.0), s_icl);
+        gas(mosaic.ihcl_g) += s_icl;
+        aer(mosaic.icl_a) -= s_icl;
+        aer(mosaic.icl_a) = max(real_type(0.0), aer(mosaic.icl_a));
+        if (jp != mosaic.jtotal)
+          aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+        electrolyte(mosaic.jhcl) = real_type(0.0);
+        s_icl = real_type(0.0);
+      } else {
+        // form_hno3
+        electrolyte(mosaic.jhno3) = max(real_type(0.0), s_ino3);
+        s_ino3 = real_type(0.0);
+        // form_hcl
+        electrolyte(mosaic.jhcl) = max(real_type(0.0), s_icl);
+        s_icl = real_type(0.0);
+      }
+    } // end iXT_case
+
+    // degas_nh3 (always called for both cases)
+    s_inh4 = max(real_type(0.0), s_inh4);
+    gas(mosaic.inh3_g) += s_inh4;
+    aer(mosaic.inh4_a) -= s_inh4;
+    aer(mosaic.inh4_a) = max(real_type(0.0), aer(mosaic.inh4_a));
+    if (jp != mosaic.jtotal)
+      aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    s_inh4 = real_type(0.0);
+
+    // re-calculate ions to eliminate round-off errors
+    electrolytes_to_ions(mosaic, aer, electrolyte, aer_sum, aer_percent);
+
+    // calculate % electrolyte composition
+    real_type sum_dum = real_type(0.0);
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je) {
+      electrolyte(je) = max(real_type(0.0), electrolyte(je));
+      sum_dum += electrolyte(je);
+    }
+    if (sum_dum == real_type(0.0)) sum_dum = real_type(1.0);
+    electrolyte_sum = sum_dum;
+
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je)
+      epercent(je) = real_type(100.0) * electrolyte(je) / sum_dum;
+
+    // calculate aer_sum and aer_percent (electrolytes_to_ions already set
+    // aer_sum/aer_percent, but we recalculate here to match Fortran exactly)
+    sum_dum = aer(mosaic.ica_a)  + aer(mosaic.ina_a)  + aer(mosaic.inh4_a) +
+              aer(mosaic.iso4_a) + aer(mosaic.ino3_a)  + aer(mosaic.icl_a)  +
+              aer(mosaic.imsa_a) + aer(mosaic.ico3_a);
+    if (sum_dum == real_type(0.0)) sum_dum = real_type(1.0);
+    aer_sum = sum_dum;
+
+    aer_percent(mosaic.ica_a)  = real_type(100.0)*aer(mosaic.ica_a)  / sum_dum;
+    aer_percent(mosaic.ina_a)  = real_type(100.0)*aer(mosaic.ina_a)  / sum_dum;
+    aer_percent(mosaic.inh4_a) = real_type(100.0)*aer(mosaic.inh4_a) / sum_dum;
+    aer_percent(mosaic.iso4_a) = real_type(100.0)*aer(mosaic.iso4_a) / sum_dum;
+    aer_percent(mosaic.ino3_a) = real_type(100.0)*aer(mosaic.ino3_a) / sum_dum;
+    aer_percent(mosaic.icl_a)  = real_type(100.0)*aer(mosaic.icl_a)  / sum_dum;
+    aer_percent(mosaic.imsa_a) = real_type(100.0)*aer(mosaic.imsa_a) / sum_dum;
+    aer_percent(mosaic.ico3_a) = real_type(100.0)*aer(mosaic.ico3_a) / sum_dum;
+  } // form_electrolytes
+
 };
 
 } // namespace Impl

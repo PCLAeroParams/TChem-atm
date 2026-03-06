@@ -20,6 +20,8 @@ Questions? Contact Oscar Diaz-Ibarra at <odiazib@sandia.gov>, or
 Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 =====================================================================================
 */
+#include <cstdio>
+#include <cstdlib>
 #include "TChem_Driver.hpp"
 #include "TChem.hpp"
 #include "TChem_KineticModelNCAR_ConstData.hpp"
@@ -479,7 +481,12 @@ void TChem::Driver::setAbsoluteToleranceVector(double *array, ordinal_type len) 
  * Set the number of particles to track in RHS evaluation.
  */
 void TChem_setNParticlesTrack(ordinal_type n){
-  g_tchem->setNParticlesTrack(n);
+  try {
+    g_tchem->setNParticlesTrack(n);
+  } catch (const std::exception& e) {
+    fprintf(stderr, "TChem error: %s\n", e.what());
+    exit(1);
+  }
 }
 
 void TChem::Driver::setNParticlesTrack(ordinal_type n) {

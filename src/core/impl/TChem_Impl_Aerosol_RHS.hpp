@@ -87,6 +87,9 @@ struct Aerosol_RHS
     const ordinal_type n_particles_rhs
     )
   {
+    if (n_particles_rhs > amcd.nParticles) {
+      Kokkos::abort("n_particles_rhs exceeds amcd.nParticles");
+    }
    // set omega(rhs) to zero, because we are using Kokkos::atomic_add.
     Kokkos::parallel_for(
       Kokkos::TeamVectorRange(member, omega.extent(0)),

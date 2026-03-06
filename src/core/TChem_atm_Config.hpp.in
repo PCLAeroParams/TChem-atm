@@ -37,6 +37,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 
 /// required libraries
 #cmakedefine TCHEM_ATM_ENABLE_TPL_KOKKOS
+#cmakedefine TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS
 #cmakedefine TCHEM_ATM_ENABLE_TPL_TINES
 #cmakedefine TCHEM_ATM_ENABLE_TPL_BOOST
 

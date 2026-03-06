@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
         TChem::Impl::Aerosol_RHS<real_type, device_type>
         ::team_invoke(member, temperature, pressure,
                       number_conc_at_i, vals,
-                      constYs,  rhs_at_i, pw, kmcd, amcd);
+                      constYs,  rhs_at_i, pw, kmcd, amcd, amcd.nParticles);
       });
 
       Kokkos::Profiling::popRegion();

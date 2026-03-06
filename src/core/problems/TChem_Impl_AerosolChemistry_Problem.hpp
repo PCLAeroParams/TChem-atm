@@ -139,7 +139,7 @@ namespace Impl {
       Impl::Aerosol_RHS<real_type, device_type>
         ::team_invoke(member, _temperature, _pressure,
                       _number_conc, x,
-                      _const_concentration,  f, _work, _kmcd, _amcd);
+                      _const_concentration,  f, _work, _kmcd, _amcd, _amcd.nParticles);
       member.team_barrier();
 
     }

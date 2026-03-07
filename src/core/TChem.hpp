@@ -25,14 +25,12 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem_Util.hpp"
 #include "TChem_KineticModelData.hpp"
 #include "TChem_AerosolModelData.hpp"
-#include "TChem_AerosolChemistry_CVODE.hpp"
 #if defined(TCHEM_ATM_ENABLE_TPL_KOKKOSKERNELS)
 #include "TChem_AerosolChemistry_KokkosKernels.hpp"
 #endif
 #include "TChem_AerosolChemistry.hpp"
 #include "TChem_AtmosphericChemistry.hpp"
 #include "TChem_AtmosphericChemistryE3SM.hpp"
-#include "TChem_AtmosphericChemistryE3SM_CVODE.hpp"
 #include "TChem_AtmosphericChemistryE3SM_ExplicitEuler.hpp"
 #include "TChem_AtmosphericChemistryE3SM_ImplicitEuler.hpp"
 #include "TChem_ReactionRates.hpp"
@@ -40,7 +38,11 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem_RateofProgress.hpp"
 #include "TChem_NetProductionRates.hpp"
 #include "TChem_Linv3StratosphereSolver.hpp"
+#if defined(TCHEM_ATM_ENABLE_SUNDIALS)
+#include "TChem_AerosolChemistry_CVODE.hpp"
+#include "TChem_AtmosphericChemistryE3SM_CVODE.hpp"
 #include "TChem_AerosolChemistry_CVODE_RHS_Jacobian.hpp"
+#endif
 
 
 

@@ -31,6 +31,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #cmakedefine TCHEM_ATM_ENABLE_VERBOSE
 #cmakedefine TCHEM_ATM_ENABLE_DEBUG
 #cmakedefine TCHEM_ATM_ENABLE_SKYWALKER
+#cmakedefine TCHEM_ATM_ENABLE_SUNDIALS
 
 /// reactor specific control for sacado jaobians
 #cmakedefine TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY

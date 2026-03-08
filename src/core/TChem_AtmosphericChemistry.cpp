@@ -424,7 +424,6 @@ AtmosphericChemistry::runHostBatch( /// thread block size
 }
 
 
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
 // We need to find a better place to put this code.
   void
   TChem::AtmChemistry::setScenarioConditions(const std::string& filename,
@@ -629,7 +628,4 @@ if (root["external_forcing"]){
 
 
 }// setScenarioConditionsExternalForcing
-#endif
-
-
 } // namespace TChem

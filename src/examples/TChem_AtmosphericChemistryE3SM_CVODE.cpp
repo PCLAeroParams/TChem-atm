@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 // FIXME: use consistent name format
 // FIXME: I will keep tchem name space for now; but I want to change tchem to
 // tchem_atm  (or other name that we decided to keep)
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP) && defined(TINES_ENABLE_TPL_SUNDIALS)
+#if defined(TINES_ENABLE_TPL_SUNDIALS)
 
   /// default inputs
   std::string prefixPath("");
@@ -410,7 +410,7 @@ int main(int argc, char *argv[]) {
   Kokkos::finalize();
 
 #else
-  printf("This example requires Yaml ...\n");
+  printf("This example requires Sundials ...\n");
 #endif
 
   return 0;

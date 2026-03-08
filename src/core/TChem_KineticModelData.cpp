@@ -21,14 +21,10 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 ===================================================================================== */
 #include "TChem_KineticModelData.hpp"
 
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
 #include <cstdarg>
 #include <algorithm>
-#endif
 
 namespace TChem {
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
-
 /**
  * Helper function to print to the stream.
  * @param stream
@@ -1020,7 +1016,5 @@ kmd_type_1d_view_host KineticModelData::clone(const int n_models) {
   Kokkos::deep_copy(r_val, *this);
   return r_val;
 }
-
-#endif
 
 } // namespace TChem

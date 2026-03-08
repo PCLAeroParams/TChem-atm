@@ -39,7 +39,6 @@ using real_type_2d_view_host = TChem::real_type_2d_view_host;
 int
 main(int argc, char* argv[])
 {
-  #if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
   /// default inputs
   std::string prefixPath("");
   std::string chemFile(prefixPath + "chem.yaml");
@@ -214,10 +213,6 @@ main(int argc, char* argv[])
 
   }
   Kokkos::finalize();
-
-  #else
-   printf("This example requires Yaml ...\n" );
-  #endif
 
   return 0;
 }

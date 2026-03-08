@@ -42,10 +42,6 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #cmakedefine TCHEM_ATM_ENABLE_TPL_TINES
 #cmakedefine TCHEM_ATM_ENABLE_TPL_BOOST
 
-#if defined (TINES_ENABLE_TPL_YAML)
-#define TCHEM_ATM_ENABLE_TPL_YAML_CPP
-#endif
-
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 #define TCHEM_ATM_ENABLE_GPU
 #endif

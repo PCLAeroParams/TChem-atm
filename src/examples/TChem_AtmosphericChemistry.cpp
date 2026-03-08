@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
 // FIXME: remove TPL YAML
  // FIXME: use consistent name format
  // FIXME: I will keep tchem name space for now; but I want to change tchem to tchem_atm  (or other name that we decided to keep)
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
 
   /// default inputs
   std::string prefixPath("");
@@ -376,10 +375,6 @@ int main(int argc, char *argv[]) {
 
   }
   Kokkos::finalize();
-
-#else
-  printf("This example requires Yaml ...\n");
-#endif
 
   return 0;
 }

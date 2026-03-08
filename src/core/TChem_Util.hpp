@@ -54,9 +54,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 /// tchem configure header
 #include "TChem_atm_Config.hpp"
 
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
 #include "yaml-cpp/yaml.h"
-#endif
 
 namespace TChem {
 

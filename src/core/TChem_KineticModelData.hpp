@@ -24,10 +24,10 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 
 #include "TChem_Util.hpp"
 
-#if defined(TCHEM_ENABLE_TPL_YAML_CPP)
+// #if defined(TCHEM_ENABLE_TPL_YAML_CPP)
 #include "yaml-cpp/yaml.h"
 #include <iostream>
-#endif
+// #endif
 
 namespace TChem {
   struct KineticModelData {
@@ -103,10 +103,8 @@ namespace TChem {
     KineticModelData(const KineticModelData& b) = default;
     ~KineticModelData() = default;
 
-#if defined(TCHEM_ATM_ENABLE_TPL_YAML_CPP)
     void initYamlFile(const std::string &mechfile, std::ostream& echofile);
     ordinal_type initChemNCAR(YAML::Node& doc, std::ostream& echofile);
-#endif
     /// create multiple models sharing the data in this model
     kmd_type_1d_view_host clone(const int n_models);
 

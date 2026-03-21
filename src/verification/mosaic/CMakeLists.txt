@@ -47,6 +47,7 @@ add_executable(${DRIVER_NAME}.x
                form_nh4so4_lvcite.cpp
                form_nh4no3.cpp
                form_nh4cl.cpp
+               conform_electrolytes.cpp
  )
 
 

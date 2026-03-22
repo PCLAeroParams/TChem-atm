@@ -48,6 +48,7 @@ add_executable(${DRIVER_NAME}.x
                form_nh4no3.cpp
                form_nh4cl.cpp
                electrolytes_to_ions.cpp
+               form_electrolytes.cpp
  )
 
 

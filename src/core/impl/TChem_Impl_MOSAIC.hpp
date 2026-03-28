@@ -4626,6 +4626,17 @@ struct MOSAIC{
     aer_percent(mosaic.icl_a) = 100.0*aer_curr(mosaic.icl_a)/sum_dum;
     aer_percent(mosaic.imsa_a)= 100.0*aer_curr(mosaic.imsa_a)/sum_dum;
     aer_percent(mosaic.ico3_a)= 100.0*aer_curr(mosaic.ico3_a)/sum_dum;
+
+    // Final consistency enforcement
+    if (jp == mosaic.jtotal) {
+      for (ordinal_type i = 0; i < mosaic.naer; ++i) {
+        aer_total(i) = aer_curr(i);
+      }
+    } else {
+      for (ordinal_type i = 0; i < mosaic.naer; ++i) {
+        aer_total(i) = aer_solid(i) + aer_liquid(i);
+      }
+    }
   } // conform_electrolytes
   
   KOKKOS_INLINE_FUNCTION static

@@ -4208,6 +4208,20 @@ struct MOSAIC{
     store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
   } // form_nh4so4
 
+  KOKKOS_INLINE_FUNCTION static
+  void form_nh4hso4(const MosaicModelData<DeviceType>& mosaic,
+                   const real_type_1d_view_type& electrolyte,
+                   const real_type_1d_view_type& store) {
+
+    electrolyte(mosaic.jnh4hso4) = min(store(mosaic.inh4_a), store(mosaic.iso4_a));
+
+    store(mosaic.inh4_a)  = store(mosaic.inh4_a) - electrolyte(mosaic.jnh4hso4);
+    store(mosaic.iso4_a) = store(mosaic.iso4_a) - electrolyte(mosaic.jnh4hso4);
+
+    store(mosaic.inh4_a)  = max(0.0, store(mosaic.inh4_a));
+    store(mosaic.iso4_a) = max(0.0, store(mosaic.iso4_a));
+  } // form_nh4so4
+
   KOKKOS_INLINE_FUNCTION static void
   form_nacl(const MosaicModelData<DeviceType>& mosaic,
             const real_type& jp,
@@ -4612,7 +4626,85 @@ struct MOSAIC{
     aer_percent(mosaic.icl_a) = 100.0*aer_curr(mosaic.icl_a)/sum_dum;
     aer_percent(mosaic.imsa_a)= 100.0*aer_curr(mosaic.imsa_a)/sum_dum;
     aer_percent(mosaic.ico3_a)= 100.0*aer_curr(mosaic.ico3_a)/sum_dum;
-  }
+  } // conform_electrolytes
+  
+  KOKKOS_INLINE_FUNCTION static
+  void electrolytes_to_ions(const MosaicModelData<DeviceType>& mosaic,
+                            const real_type_1d_view_type& aer,
+                            const real_type_1d_view_type& electrolyte,
+                            real_type& aer_sum,
+                            const real_type_1d_view_type& aer_percent) {
+  
+    aer(mosaic.iso4_a) = electrolyte(mosaic.jcaso4)  +
+                         electrolyte(mosaic.jna2so4) +
+                      2.*electrolyte(mosaic.jna3hso4)+
+                         electrolyte(mosaic.jnahso4) +
+                         electrolyte(mosaic.jnh4so4) +
+                      2.*electrolyte(mosaic.jlvcite) +
+                         electrolyte(mosaic.jnh4hso4)+
+                         electrolyte(mosaic.jh2so4);
+
+    aer(mosaic.ino3_a) = electrolyte(mosaic.jnano3) +
+                      2.*electrolyte(mosaic.jcano3) +
+                         electrolyte(mosaic.jnh4no3)+
+                         electrolyte(mosaic.jhno3);
+
+    aer(mosaic.icl_a)  = electrolyte(mosaic.jnacl) +
+                      2.*electrolyte(mosaic.jcacl2)+
+                         electrolyte(mosaic.jnh4cl)+
+                         electrolyte(mosaic.jhcl);
+
+    aer(mosaic.imsa_a) = electrolyte(mosaic.jnh4msa)+
+                         electrolyte(mosaic.jnamsa) +
+                      2.*electrolyte(mosaic.jcamsa2)+
+                         electrolyte(mosaic.jmsa);
+
+    aer(mosaic.ico3_a) = electrolyte(mosaic.jcaco3);
+
+    aer(mosaic.ica_a)  = electrolyte(mosaic.jcaso4) +
+                         electrolyte(mosaic.jcano3) +
+                         electrolyte(mosaic.jcacl2) +
+                         electrolyte(mosaic.jcaco3) +
+                         electrolyte(mosaic.jcamsa2);
+    
+    aer(mosaic.ina_a)  = electrolyte(mosaic.jnano3)  +
+                         electrolyte(mosaic.jnacl)   +
+                      2.*electrolyte(mosaic.jna2so4) +
+                      3.*electrolyte(mosaic.jna3hso4)+
+                         electrolyte(mosaic.jnahso4) +
+                         electrolyte(mosaic.jnamsa);
+
+    aer(mosaic.inh4_a) = electrolyte(mosaic.jnh4no3) +
+                         electrolyte(mosaic.jnh4cl)  +
+                      2.*electrolyte(mosaic.jnh4so4) + 
+                      3.*electrolyte(mosaic.jlvcite) +
+                         electrolyte(mosaic.jnh4hso4)+
+                         electrolyte(mosaic.jnh4msa);
+
+    real_type sum_dum = aer(mosaic.ica_a) +
+                        aer(mosaic.ina_a) +
+                        aer(mosaic.inh4_a)+
+                        aer(mosaic.iso4_a)+
+                        aer(mosaic.ino3_a)+
+                        aer(mosaic.icl_a) +
+                        aer(mosaic.imsa_a)+
+                        aer(mosaic.ico3_a);
+
+    if(sum_dum == 0.0) {
+      sum_dum = 1.0;
+    }
+
+    aer_sum = sum_dum;
+
+    aer_percent(mosaic.ica_a) = 100.*aer(mosaic.ica_a)/sum_dum;
+    aer_percent(mosaic.ina_a) = 100.*aer(mosaic.ina_a)/sum_dum;
+    aer_percent(mosaic.inh4_a)= 100.*aer(mosaic.inh4_a)/sum_dum;
+    aer_percent(mosaic.iso4_a)= 100.*aer(mosaic.iso4_a)/sum_dum;
+    aer_percent(mosaic.ino3_a)= 100.*aer(mosaic.ino3_a)/sum_dum;
+    aer_percent(mosaic.icl_a) = 100.*aer(mosaic.icl_a)/sum_dum;
+    aer_percent(mosaic.imsa_a)= 100.*aer(mosaic.imsa_a)/sum_dum;
+    aer_percent(mosaic.ico3_a)= 100.*aer(mosaic.ico3_a)/sum_dum;
+  } // electrolytes_to_ions
 
 };
 

@@ -95,6 +95,8 @@ void form_nh4msa(Ensemble *ensemble);
 
 void form_nh4so4(Ensemble *ensemble);
 
+void form_nh4hso4(Ensemble *ensemble);
+
 void form_nacl(Ensemble *ensemble);
 
 void form_namsa(Ensemble *ensemble);
@@ -124,6 +126,8 @@ void form_nh4so4_lvcite(Ensemble *ensemble);
 void form_nh4no3(Ensemble *ensemble);
 
 void form_nh4cl(Ensemble *ensemble);
+
+void electrolytes_to_ions(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -206,6 +210,8 @@ int main(int argc, char **argv) {
       form_nh4msa(ensemble);
     } else if (func_name == "form_nh4so4") {
       form_nh4so4(ensemble);
+    } else if (func_name == "form_nh4hso4") {
+      form_nh4hso4(ensemble);
     } else if (func_name == "form_nacl") {
       form_nacl(ensemble);
     } else if (func_name == "form_namsa") {
@@ -236,6 +242,8 @@ int main(int argc, char **argv) {
       form_nh4no3(ensemble);
     } else if (func_name == "form_nh4cl") {
       form_nh4cl(ensemble);
+    } else if (func_name == "electrolytes_to_ions") {
+      electrolytes_to_ions(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

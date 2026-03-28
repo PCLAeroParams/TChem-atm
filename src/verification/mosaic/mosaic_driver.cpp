@@ -95,6 +95,8 @@ void form_nh4msa(Ensemble *ensemble);
 
 void form_nh4so4(Ensemble *ensemble);
 
+void form_nh4hso4(Ensemble *ensemble);
+
 void form_nacl(Ensemble *ensemble);
 
 void form_namsa(Ensemble *ensemble);
@@ -208,6 +210,8 @@ int main(int argc, char **argv) {
       form_nh4msa(ensemble);
     } else if (func_name == "form_nh4so4") {
       form_nh4so4(ensemble);
+    } else if (func_name == "form_nh4hso4") {
+      form_nh4hso4(ensemble);
     } else if (func_name == "form_nacl") {
       form_nacl(ensemble);
     } else if (func_name == "form_namsa") {

@@ -4632,10 +4632,6 @@ struct MOSAIC{
       for (ordinal_type i = 0; i < mosaic.naer; ++i) {
         aer_total(i) = aer_curr(i);
       }
-    } else {
-      for (ordinal_type i = 0; i < mosaic.naer; ++i) {
-        aer_total(i) = aer_solid(i) + aer_liquid(i);
-      }
     }
   } // conform_electrolytes
   

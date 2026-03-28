@@ -61,10 +61,10 @@ void ions_to_electrolytes(Ensemble *ensemble) {
     real_type_1d_view electrolyte_liquid("electrolyte_liquid", mmd.nelectrolyte);
     verification::convert_1d_vector_to_1d_view_device(electrolyte_liquid_arr, electrolyte_liquid);
 
-    real_type_1d_view na("na", 1);
+    real_type_1d_view na("na", mmd.nanion);
     verification::convert_1d_vector_to_1d_view_device(na_arr, na);
 
-    real_type_1d_view nc("nc", 1);
+    real_type_1d_view nc("nc", mmd.ncation);
     verification::convert_1d_vector_to_1d_view_device(nc_arr, nc);
 
     real_type_1d_view xeq_a("xeq_a", mmd.nanion);

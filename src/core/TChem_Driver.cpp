@@ -161,6 +161,11 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   _dtmin = dtmin.as<real_type>(1e-8);
   _atol_time = atol_time.as<real_type>(1e-12);
   _rtol_time = rtol_time.as<real_type>(1e-4);
+
+  auto atol_gas = solver_info["atol_gas"];
+  auto atol_aero = solver_info["atol_aero"];
+  _atol_gas = atol_gas.as<real_type>(_atol_time);
+  _atol_aero = atol_aero.as<real_type>(_atol_time);
   _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
   _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
   _krylov_dimension = krylov_dimension.as<ordinal_type>(0);
@@ -623,8 +628,8 @@ void TChem::Driver::doTimestep(const double del_t){
     const ordinal_type n_gas = n_active_gas_species;
     const ordinal_type n_aero_spec = _amcd_host.nSpec;
     const ordinal_type n_aero_tracked = n_particles_track * n_aero_spec;
-    const real_type atol_gas    = 1e-10;
-    const real_type atol_aero   = 1e-30;
+    const real_type atol_gas    = _atol_gas;
+    const real_type atol_aero   = _atol_aero;
     const real_type atol_ignore = 1.0;
     real_type_2d_view_type abstol2d((abstol.View()).data(), _nBatch, neq);
     Kokkos::parallel_for(

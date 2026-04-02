@@ -100,6 +100,8 @@ public:
    real_type _dtmin; // Minimum time step size (s).
    real_type _atol_time; // Absolute tolerance used for adaptive time stepping
    real_type _rtol_time; // Relative tolerance used for adaptive time stepping
+   real_type _atol_gas;  // Absolute tolerance for gas species equations
+   real_type _atol_aero; // Absolute tolerance for aerosol species equations
    real_type_1d_view_host _atol_time_vec; // Per-equation absolute tolerances
    ordinal_type _max_num_newton_iterations; // Maximum number of Newton iterations
    ordinal_type _max_num_time_iterations; // Maximum number of time iterations

@@ -50,6 +50,7 @@ add_executable(${DRIVER_NAME}.x
                form_nh4cl.cpp
                electrolytes_to_ions.cpp
                conform_electrolytes.cpp
+               ions_to_electrolytes.cpp
                form_electrolytes.cpp
  )
 
@@ -106,6 +107,7 @@ SET(TEST_LIST
     form_nh4cl_input_ts_0
     electrolytes_to_ions_input_ts_0
     conform_electrolytes_input_ts_0
+    ions_to_electrolytes_input_ts_0
     form_electrolytes_input_ts_0
 )
 
@@ -157,6 +159,7 @@ SET(TEST_BASELINE
     form_nh4cl_output_ts_0
     electrolytes_to_ions_output_ts_0
     conform_electrolytes_output_ts_0
+    ions_to_electrolytes_output_ts_0
     form_electrolytes_output_ts_0
 )
 
@@ -209,6 +212,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_nh4cl_output_ts_0
     ${DEFAULT_TOL} # electrolytes_to_ions_output_ts_0
     ${DEFAULT_TOL} # conform_electrolytes_output_ts_0
+    ${DEFAULT_TOL} # ions_to_electrolytes_output_ts_0
     ${DEFAULT_TOL} # form_electrolytes_output_ts_0
 )
 

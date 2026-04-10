@@ -95,11 +95,45 @@ void form_nh4msa(Ensemble *ensemble);
 
 void form_nh4so4(Ensemble *ensemble);
 
+void form_nh4hso4(Ensemble *ensemble);
+
 void form_nacl(Ensemble *ensemble);
 
 void form_namsa(Ensemble *ensemble);
 
 void form_nano3(Ensemble *ensemble);
+
+void degas_nh3(Ensemble *ensemble);
+
+void degas_hcl(Ensemble *ensemble);
+
+void degas_hno3(Ensemble *ensemble);
+
+void form_hcl(Ensemble *ensemble);
+
+void form_hno3(Ensemble *ensemble);
+
+void form_msa(Ensemble *ensemble);
+
+void form_h2so4(Ensemble *ensemble);
+
+void form_na2so4_nahso4(Ensemble *ensemble);
+
+void form_lvcite_nh4hso4(Ensemble *ensemble);
+
+void form_nh4so4_lvcite(Ensemble *ensemble);
+
+void form_nh4no3(Ensemble *ensemble);
+
+void form_nh4cl(Ensemble *ensemble);
+
+void electrolytes_to_ions(Ensemble *ensemble);
+
+void conform_electrolytes(Ensemble *ensemble);
+
+void ions_to_electrolytes(Ensemble *ensemble);
+
+void form_electrolytes(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -182,12 +216,46 @@ int main(int argc, char **argv) {
       form_nh4msa(ensemble);
     } else if (func_name == "form_nh4so4") {
       form_nh4so4(ensemble);
+    } else if (func_name == "form_nh4hso4") {
+      form_nh4hso4(ensemble);
     } else if (func_name == "form_nacl") {
       form_nacl(ensemble);
     } else if (func_name == "form_namsa") {
       form_namsa(ensemble);
     } else if (func_name == "form_nano3") {
       form_nano3(ensemble);
+    } else if (func_name == "degas_nh3") {
+      degas_nh3(ensemble);
+    } else if (func_name == "degas_hcl") {
+      degas_hcl(ensemble);
+    } else if (func_name == "degas_hno3") {
+      degas_hno3(ensemble);
+    } else if (func_name == "form_hcl") {
+      form_hcl(ensemble);
+    } else if (func_name == "form_hno3") {
+      form_hno3(ensemble);
+    } else if (func_name == "form_msa") {
+      form_msa(ensemble);
+    } else if (func_name == "form_h2so4") {
+      form_h2so4(ensemble);
+    } else if (func_name == "form_na2so4_nahso4") {
+      form_na2so4_nahso4(ensemble);
+    } else if (func_name == "form_lvcite_nh4hso4") {
+      form_lvcite_nh4hso4(ensemble);
+    } else if (func_name == "form_nh4so4_lvcite") {
+      form_nh4so4_lvcite(ensemble);
+    } else if (func_name == "form_nh4no3") {
+      form_nh4no3(ensemble);
+    } else if (func_name == "form_nh4cl") {
+      form_nh4cl(ensemble);
+    } else if (func_name == "electrolytes_to_ions") {
+      electrolytes_to_ions(ensemble);
+    } else if (func_name == "conform_electrolytes") {
+      conform_electrolytes(ensemble);
+    } else if (func_name == "ions_to_electrolytes") {
+      ions_to_electrolytes(ensemble);
+    } else if (func_name == "form_electrolytes") {
+      form_electrolytes(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

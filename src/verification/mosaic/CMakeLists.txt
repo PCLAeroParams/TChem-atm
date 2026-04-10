@@ -32,9 +32,26 @@ add_executable(${DRIVER_NAME}.x
                form_caso4.cpp
                form_nh4msa.cpp
                form_nh4so4.cpp
+               form_nh4hso4.cpp
                form_nacl.cpp
                form_namsa.cpp
                form_nano3.cpp
+               degas_nh3.cpp
+               degas_hcl.cpp
+               degas_hno3.cpp
+               form_hcl.cpp
+               form_hno3.cpp
+               form_msa.cpp
+               form_h2so4.cpp
+               form_na2so4_nahso4.cpp
+               form_lvcite_nh4hso4.cpp
+               form_nh4so4_lvcite.cpp
+               form_nh4no3.cpp
+               form_nh4cl.cpp
+               electrolytes_to_ions.cpp
+               conform_electrolytes.cpp
+               ions_to_electrolytes.cpp
+               form_electrolytes.cpp
  )
 
 
@@ -43,38 +60,55 @@ TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
 
 # list of test to run
 SET(TEST_LIST
-     update_thermodynamic_constants_input_ts_0
-     check_aerosol_mass_input_ts_0
-     adjust_liquid_aerosol_input_ts_0
-     compute_activities_input_ts_0
-     adjust_solid_aerosol_input_ts_0
-     do_full_deliquescence_input_ts_0
-     calculate_XT_input_ts_0
-     fnlog_gamZ_input_ts_0
-     fuchs_sutugin_input_ts_0
-     gas_diffusivity_input_ts_0
-     mean_molecular_speed_input_ts_0
-     fn_Keq_input_ts_0
-     drh_mutual_input_ts_0
-     fn_Po_input_ts_0
-     molality_0_input_ts_0
-     bin_molality_input_ts_0
-     bin_molality_60_input_ts_0
-     MTEM_compute_log_gamZ_input_ts_0
-     aerosol_water_up_input_ts_0
-     aerosol_water_input_ts_0
-     form_nahso4_input_ts_0
-     form_na2so4_input_ts_0
-     form_caco3_input_ts_0
-     form_cacl2_input_ts_0
-     form_cano3_input_ts_0
-     form_camsa2_input_ts_0
-     form_caso4_input_ts_0
-     form_nh4msa_input_ts_0
-     form_nh4so4_input_ts_0
-     form_nacl_input_ts_0
-     form_namsa_input_ts_0
-     form_nano3_input_ts_0
+    update_thermodynamic_constants_input_ts_0
+    check_aerosol_mass_input_ts_0
+    adjust_liquid_aerosol_input_ts_0
+    compute_activities_input_ts_0
+    adjust_solid_aerosol_input_ts_0
+    do_full_deliquescence_input_ts_0
+    calculate_XT_input_ts_0
+    fnlog_gamZ_input_ts_0
+    fuchs_sutugin_input_ts_0
+    gas_diffusivity_input_ts_0
+    mean_molecular_speed_input_ts_0
+    fn_Keq_input_ts_0
+    drh_mutual_input_ts_0
+    fn_Po_input_ts_0
+    molality_0_input_ts_0
+    bin_molality_input_ts_0
+    bin_molality_60_input_ts_0
+    MTEM_compute_log_gamZ_input_ts_0
+    aerosol_water_up_input_ts_0
+    aerosol_water_input_ts_0
+    form_nahso4_input_ts_0
+    form_na2so4_input_ts_0
+    form_caco3_input_ts_0
+    form_cacl2_input_ts_0
+    form_cano3_input_ts_0
+    form_camsa2_input_ts_0
+    form_caso4_input_ts_0
+    form_nh4msa_input_ts_0
+    form_nh4so4_input_ts_0
+    form_nh4hso4_input_ts_0
+    form_nacl_input_ts_0
+    form_namsa_input_ts_0
+    form_nano3_input_ts_0
+    degas_nh3_input_ts_0
+    degas_hno3_input_ts_0
+    degas_hcl_input_ts_0
+    form_hcl_input_ts_0
+    form_hno3_input_ts_0
+    form_msa_input_ts_0
+    form_h2so4_input_ts_0
+    form_na2so4_nahso4_input_ts_0
+    form_lvcite_nh4hso4_input_ts_0
+    form_nh4so4_lvcite_input_ts_0
+    form_nh4no3_input_ts_0
+    form_nh4cl_input_ts_0
+    electrolytes_to_ions_input_ts_0
+    conform_electrolytes_input_ts_0
+    ions_to_electrolytes_input_ts_0
+    form_electrolytes_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -107,9 +141,26 @@ SET(TEST_BASELINE
     form_caso4_output_ts_0
     form_nh4msa_output_ts_0
     form_nh4so4_output_ts_0
+    form_nh4hso4_output_ts_0
     form_nacl_output_ts_0
     form_namsa_output_ts_0
     form_nano3_output_ts_0
+    degas_nh3_output_ts_0
+    degas_hcl_output_ts_0
+    degas_hno3_output_ts_0
+    form_hcl_output_ts_0
+    form_hno3_output_ts_0
+    form_msa_output_ts_0
+    form_h2so4_output_ts_0
+    form_na2so4_nahso4_output_ts_0
+    form_lvcite_nh4hso4_output_ts_0
+    form_nh4so4_lvcite_output_ts_0
+    form_nh4no3_output_ts_0
+    form_nh4cl_output_ts_0
+    electrolytes_to_ions_output_ts_0
+    conform_electrolytes_output_ts_0
+    ions_to_electrolytes_output_ts_0
+    form_electrolytes_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -131,7 +182,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # molality_0_output_ts_0
     ${DEFAULT_TOL} # bin_molality_output_ts_0
     ${DEFAULT_TOL} # bin_molality_60_output_ts_0
-    ${DEFAULT_TOL} # MTEM_compute_log_gamZ
+    ${DEFAULT_TOL} # MTEM_compute_log_gamZ_output_ts_0
     ${DEFAULT_TOL} # aerosol_water_up_output_ts_0
     ${DEFAULT_TOL} # aerosol_water_output_ts_0
     ${DEFAULT_TOL} # form_nahso4_output_ts_0
@@ -143,9 +194,26 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_caso4_output_ts_0
     ${DEFAULT_TOL} # form_nh4msa_output_ts_0
     ${DEFAULT_TOL} # form_nh4so4_output_ts_0
+    ${DEFAULT_TOL} # form_nh4hso4_output_ts_0
     ${DEFAULT_TOL} # form_nacl_output_ts_0
     ${DEFAULT_TOL} # form_namsa_output_ts_0
     ${DEFAULT_TOL} # form_nano3_output_ts_0
+    ${DEFAULT_TOL} # degas_nh3_output_ts_0
+    ${DEFAULT_TOL} # degas_hcl_output_ts_0
+    ${DEFAULT_TOL} # degas_hno3_output_ts_0
+    ${DEFAULT_TOL} # form_hcl_output_ts_0
+    ${DEFAULT_TOL} # form_hno3_output_ts_0
+    ${DEFAULT_TOL} # form_msa_output_ts_0
+    ${DEFAULT_TOL} # form_h2so4_output_ts_0
+    ${DEFAULT_TOL} # form_na2so4_nahso4_output_ts_0
+    ${DEFAULT_TOL} # form_lvcite_nh4hso4_output_ts_0
+    ${DEFAULT_TOL} # form_nh4so4_lvcite_output_ts_0
+    ${DEFAULT_TOL} # form_nh4no3_output_ts_0
+    ${DEFAULT_TOL} # form_nh4cl_output_ts_0
+    ${DEFAULT_TOL} # electrolytes_to_ions_output_ts_0
+    ${DEFAULT_TOL} # conform_electrolytes_output_ts_0
+    ${DEFAULT_TOL} # ions_to_electrolytes_output_ts_0
+    ${DEFAULT_TOL} # form_electrolytes_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

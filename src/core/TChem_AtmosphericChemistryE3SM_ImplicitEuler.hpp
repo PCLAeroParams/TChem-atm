@@ -117,6 +117,23 @@ struct AtmosphericChemistryE3SM_ImplicitEuler
     /// const data from kinetic model
     const KineticModelNCAR_ConstData<device_type >& kmcd);
 
+  /// workspace overload: pre-allocated global memory used instead of scratch
+  static void runDeviceBatch( /// thread block size
+    typename UseThisTeamPolicy<exec_space>::type& policy,
+    const real_type_1d_view_type& tol_newton,
+    const real_type_2d_view_type& tol_time,
+    const real_type_2d_view_type& fac,
+    const time_advance_type_1d_view& tadv,
+    const real_type_2d_view_type& state,
+    const real_type_2d_view_type& photo_rates,
+    const real_type_2d_view_type& external_sources,
+    const real_type_1d_view_type& t_out,
+    const real_type_1d_view_type& dt_out,
+    const real_type_2d_view_type& state_out,
+    /// workspace [league_size x getWorkSpaceSize(kmcd)]
+    const real_type_2d_view_type& workspace,
+    const KineticModelNCAR_ConstData<device_type>& kmcd);
+
 
 
   /// tadv - an input structure for time marching
@@ -143,6 +160,23 @@ struct AtmosphericChemistryE3SM_ImplicitEuler
     /// const data from kinetic model
     const KineticModelNCAR_ConstData<host_device_type>& kmcd);
 
+  /// workspace overload: pre-allocated global memory used instead of scratch
+  static void runHostBatch(
+    typename UseThisTeamPolicy<host_exec_space>::type& policy,
+    const real_type_1d_view_host_type& tol_newton,
+    const real_type_2d_view_host_type& tol_time,
+    const real_type_2d_view_host_type& fac,
+    const time_advance_type_1d_view_host& tadv,
+    const real_type_2d_view_host_type& state,
+    const real_type_2d_view_host_type& photo_rates,
+    const real_type_2d_view_host_type& external_sources,
+    const real_type_1d_view_host_type& t_out,
+    const real_type_1d_view_host_type& dt_out,
+    const real_type_2d_view_host_type& state_out,
+    /// workspace [league_size x getWorkSpaceSize(kmcd)]
+    const real_type_2d_view_host_type& workspace,
+    const KineticModelNCAR_ConstData<host_device_type>& kmcd);
+
 
 
   static void runHostBatch( /// input
@@ -162,6 +196,23 @@ struct AtmosphericChemistryE3SM_ImplicitEuler
     const real_type_2d_view_host_type& state_out,
     /// const data from kinetic model
     const Kokkos::View<KineticModelNCAR_ConstData<host_device_type>*,host_device_type>& kmcds);
+
+  /// workspace overload: pre-allocated global memory used instead of scratch
+  static void runHostBatch(
+    typename UseThisTeamPolicy<host_exec_space>::type& policy,
+    const real_type_1d_view_host_type& tol_newton,
+    const real_type_2d_view_host_type& tol_time,
+    const real_type_2d_view_host_type& fac,
+    const time_advance_type_1d_view_host& tadv,
+    const real_type_2d_view_host_type& state,
+    const real_type_2d_view_host_type& photo_rates,
+    const real_type_2d_view_host_type& external_sources,
+    const real_type_1d_view_host_type& t_out,
+    const real_type_1d_view_host_type& dt_out,
+    const real_type_2d_view_host_type& state_out,
+    /// workspace [league_size x getWorkSpaceSize(kmcds(0))]
+    const real_type_2d_view_host_type& workspace,
+    const Kokkos::View<KineticModelNCAR_ConstData<host_device_type>*,host_device_type>& kmcds);
   //
   static void runDeviceBatch( /// thread block size
     typename UseThisTeamPolicy<exec_space>::type& policy,
@@ -179,6 +230,23 @@ struct AtmosphericChemistryE3SM_ImplicitEuler
     const real_type_1d_view_type& dt_out,
     const real_type_2d_view_type& state_out,
     /// const data from kinetic model
+    const Kokkos::View<KineticModelNCAR_ConstData<device_type>*,device_type>& kmcds);
+
+  /// workspace overload: pre-allocated global memory used instead of scratch
+  static void runDeviceBatch(
+    typename UseThisTeamPolicy<exec_space>::type& policy,
+    const real_type_1d_view_type& tol_newton,
+    const real_type_2d_view_type& tol_time,
+    const real_type_2d_view_type& fac,
+    const time_advance_type_1d_view& tadv,
+    const real_type_2d_view_type& state,
+    const real_type_2d_view_type& photo_rates,
+    const real_type_2d_view_type& external_sources,
+    const real_type_1d_view_type& t_out,
+    const real_type_1d_view_type& dt_out,
+    const real_type_2d_view_type& state_out,
+    /// workspace [league_size x getWorkSpaceSize(kmcds(0))]
+    const real_type_2d_view_type& workspace,
     const Kokkos::View<KineticModelNCAR_ConstData<device_type>*,device_type>& kmcds);
 
 };

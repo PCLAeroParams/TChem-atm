@@ -57,6 +57,8 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
   const Tines::value_type_1d_view<real_type, DeviceType>& t_out,
   const Tines::value_type_1d_view<real_type, DeviceType>& dt_out,
   const Tines::value_type_2d_view<real_type, DeviceType>& state_out,
+  /// workspace (optional: if empty, team scratch memory is used)
+  const Tines::value_type_2d_view<real_type, DeviceType>& workspace,
   /// const data from kinetic model
   const Kokkos::View<KineticModelNCAR_ConstData<DeviceType >*,DeviceType>& kmcds)
 {
@@ -77,6 +79,13 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
   const ordinal_type level = 1;
   // const ordinal_type per_team_extent = TChem::AtmosphericChemistryE3SM_ImplicitEuler::getWorkSpaceSize(kmcd_host());
   const ordinal_type per_team_extent = TChem::AtmosphericChemistryE3SM::getWorkSpaceSize(kmcd_host());
+
+  if (workspace.span()) {
+    TCHEM_CHECK_ERROR(workspace.extent(0) < ordinal_type(policy.league_size()),
+                      "Workspace is allocated smaller than the league size");
+    TCHEM_CHECK_ERROR(workspace.extent(1) < per_team_extent,
+                      "Workspace is allocated smaller than the required");
+  }
 
   Kokkos::parallel_for(
     profile_name,
@@ -111,8 +120,15 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation( /// required t
         Kokkos::subview(fac, i, Kokkos::ALL());
 
       const real_type_0d_view_type dt_out_at_i = Kokkos::subview(dt_out, i);
-      Scratch<real_type_1d_view_type> work(member.team_scratch(level),
-                                       per_team_extent);
+      real_type_1d_view_type work;
+      Scratch<real_type_1d_view_type> swork;
+      if (workspace.span()) {
+        work = Kokkos::subview(workspace, i, Kokkos::ALL());
+      } else {
+        swork = Scratch<real_type_1d_view_type>(member.team_scratch(level),
+                                                per_team_extent);
+        work = real_type_1d_view_type(swork.data(), swork.span());
+      }
 
       Impl::StateVector<real_type_1d_view_type> sv_at_i(kmcd_at_i.nSpec, state_at_i);
       Impl::StateVector<real_type_1d_view_type> sv_out_at_i(kmcd_at_i.nSpec,
@@ -232,6 +248,8 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun( /// required template argume
   const Tines::value_type_1d_view<real_type, DeviceType>& t_out,
   const Tines::value_type_1d_view<real_type, DeviceType>& dt_out,
   const Tines::value_type_2d_view<real_type, DeviceType>& state_out,
+  /// workspace (optional: if empty, team scratch memory is used)
+  const Tines::value_type_2d_view<real_type, DeviceType>& workspace,
   /// const data from kinetic model
   const KineticModelNCAR_ConstData<DeviceType>& kmcd)
 {
@@ -247,7 +265,7 @@ AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun( /// required template argume
      tol_newton, tol_time,
      fac,
      tadv, state, photo_rates, external_sources,
-     t_out, dt_out, state_out, kmcds);
+     t_out, dt_out, state_out, workspace, kmcds);
 
   Kokkos::Profiling::popRegion();
 }
@@ -271,7 +289,7 @@ AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch( /// thread block size
   /// const data from kinetic model
   const KineticModelNCAR_ConstData<device_type >& kmcd)
 {
-
+  const real_type_2d_view_type _ws;
   #define TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()                             \
           AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(                                \
           profile_name,                                                   \
@@ -287,6 +305,7 @@ AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch( /// thread block size
           t_out,                                                          \
           dt_out,                                                         \
           state_out,                                                      \
+          _ws,                                                            \
           kmcd);                                                          \
 
 //
@@ -343,6 +362,25 @@ AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch( /// input
   /// const data from kinetic model
   const KineticModelNCAR_ConstData<host_device_type>& kmcd)
 {
+  const real_type_2d_view_host_type _ws;
+  #undef TCHEM_RUN_ATMOSPHERIC_CHEMISTRY
+  #define TCHEM_RUN_ATMOSPHERIC_CHEMISTRY()                             \
+          AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(                                \
+          profile_name,                                                   \
+          value_type(),                                                   \
+          policy,                                                         \
+          tol_newton,                                                     \
+          tol_time,                                                       \
+          fac,                                                            \
+          tadv,                                                           \
+          state,                                                          \
+          photo_rates,                                                    \
+          external_sources,                                               \
+          t_out,                                                          \
+          dt_out,                                                         \
+          state_out,                                                      \
+          _ws,                                                            \
+          kmcd);                                                          \
 
 //
 const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch::kmcd";
@@ -398,6 +436,7 @@ AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch( /// thread block size
   const Kokkos::View<KineticModelNCAR_ConstData<device_type>*,device_type>& kmcds)
 {
 
+  const real_type_2d_view_type _ws;
   #define TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()                             \
   AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(                          \
     profile_name,                                                         \
@@ -413,6 +452,7 @@ AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch( /// thread block size
     t_out,                                                                \
     dt_out,                                                               \
     state_out,                                                            \
+    _ws,                                                                  \
     kmcds);                                                               \
 
     const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch::kmcd array";
@@ -468,6 +508,25 @@ AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch( /// thread block size
   /// const data from kinetic model
   const Kokkos::View<KineticModelNCAR_ConstData<host_device_type>*,host_device_type>& kmcds)
 {
+  const real_type_2d_view_host_type _ws;
+  #undef TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION
+  #define TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()                             \
+  AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(                          \
+    profile_name,                                                         \
+    value_type(),                                                         \
+    policy,                                                               \
+    tol_newton,                                                           \
+    tol_time,                                                             \
+    fac,                                                                  \
+    tadv,                                                                 \
+    state,                                                                \
+    photo_rates,                                                          \
+    external_sources,                                                     \
+    t_out,                                                                \
+    dt_out,                                                               \
+    state_out,                                                            \
+    _ws,                                                                  \
+    kmcds);                                                               \
 
     const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch::kmcd array";
 
@@ -502,6 +561,286 @@ AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch( /// thread block size
      TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_MODEL_VARIATION()
    #endif
 
+}
+
+void
+AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch(
+  typename UseThisTeamPolicy<exec_space>::type& policy,
+  const real_type_1d_view_type& tol_newton,
+  const real_type_2d_view_type& tol_time,
+  const real_type_2d_view_type& fac,
+  const time_advance_type_1d_view& tadv,
+  const real_type_2d_view_type& state,
+  const real_type_2d_view_type& photo_rates,
+  const real_type_2d_view_type& external_sources,
+  const real_type_1d_view_type& t_out,
+  const real_type_1d_view_type& dt_out,
+  const real_type_2d_view_type& state_out,
+  const real_type_2d_view_type& workspace,
+  const KineticModelNCAR_ConstData<device_type>& kmcd)
+{
+  const std::string profile_name =
+    "TChem::AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch::kmcd";
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+  using problem_type = Impl::AtmosphericChemistryE3SM_Problem<real_type, device_type>;
+  const ordinal_type m = problem_type::getNumberOfEquations(kmcd) + 1;
+  if (m < 32) {
+    using value_type = Sacado::Fad::SLFad<real_type,32>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 64) {
+    using value_type = Sacado::Fad::SLFad<real_type,64>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 128) {
+    using value_type = Sacado::Fad::SLFad<real_type,128>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 256) {
+    using value_type = Sacado::Fad::SLFad<real_type,256>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 512) {
+    using value_type = Sacado::Fad::SLFad<real_type,512>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 1024) {
+    using value_type = Sacado::Fad::SLFad<real_type,1024>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else {
+    TCHEM_CHECK_ERROR(0,
+                      "Error: Number of equations is bigger than size of sacado fad type");
+  }
+#else
+  using value_type = real_type;
+  AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+    profile_name, value_type(), policy,
+    tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+    t_out, dt_out, state_out, workspace, kmcd);
+#endif
+}
+
+void
+AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch(
+  typename UseThisTeamPolicy<host_exec_space>::type& policy,
+  const real_type_1d_view_host_type& tol_newton,
+  const real_type_2d_view_host_type& tol_time,
+  const real_type_2d_view_host_type& fac,
+  const time_advance_type_1d_view_host& tadv,
+  const real_type_2d_view_host_type& state,
+  const real_type_2d_view_host_type& photo_rates,
+  const real_type_2d_view_host_type& external_sources,
+  const real_type_1d_view_host_type& t_out,
+  const real_type_1d_view_host_type& dt_out,
+  const real_type_2d_view_host_type& state_out,
+  const real_type_2d_view_host_type& workspace,
+  const KineticModelNCAR_ConstData<host_device_type>& kmcd)
+{
+  const std::string profile_name =
+    "TChem::AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch::kmcd";
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+  using problem_type = Impl::AtmosphericChemistryE3SM_Problem<real_type, host_device_type>;
+  const ordinal_type m = problem_type::getNumberOfEquations(kmcd) + 1;
+  if (m < 32) {
+    using value_type = Sacado::Fad::SLFad<real_type,32>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 64) {
+    using value_type = Sacado::Fad::SLFad<real_type,64>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 128) {
+    using value_type = Sacado::Fad::SLFad<real_type,128>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 256) {
+    using value_type = Sacado::Fad::SLFad<real_type,256>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 512) {
+    using value_type = Sacado::Fad::SLFad<real_type,512>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else if (m < 1024) {
+    using value_type = Sacado::Fad::SLFad<real_type,1024>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcd);
+  } else {
+    TCHEM_CHECK_ERROR(0,
+                      "Error: Number of equations is bigger than size of sacado fad type");
+  }
+#else
+  using value_type = real_type;
+  AtmosphericChemistryE3SM_ImplicitEuler_TemplateRun(
+    profile_name, value_type(), policy,
+    tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+    t_out, dt_out, state_out, workspace, kmcd);
+#endif
+}
+
+void
+AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch(
+  typename UseThisTeamPolicy<exec_space>::type& policy,
+  const real_type_1d_view_type& tol_newton,
+  const real_type_2d_view_type& tol_time,
+  const real_type_2d_view_type& fac,
+  const time_advance_type_1d_view& tadv,
+  const real_type_2d_view_type& state,
+  const real_type_2d_view_type& photo_rates,
+  const real_type_2d_view_type& external_sources,
+  const real_type_1d_view_type& t_out,
+  const real_type_1d_view_type& dt_out,
+  const real_type_2d_view_type& state_out,
+  const real_type_2d_view_type& workspace,
+  const Kokkos::View<KineticModelNCAR_ConstData<device_type>*,device_type>& kmcds)
+{
+  const std::string profile_name =
+    "TChem::AtmosphericChemistryE3SM_ImplicitEuler::runDeviceBatch::kmcd array";
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+  using problem_type = Impl::AtmosphericChemistryE3SM_Problem<real_type, device_type>;
+  const ordinal_type m = problem_type::getNumberOfEquations(kmcds(0));
+  if (m < 32) {
+    using value_type = Sacado::Fad::SLFad<real_type,32>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 64) {
+    using value_type = Sacado::Fad::SLFad<real_type,64>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 128) {
+    using value_type = Sacado::Fad::SLFad<real_type,128>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 256) {
+    using value_type = Sacado::Fad::SLFad<real_type,256>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 512) {
+    using value_type = Sacado::Fad::SLFad<real_type,512>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 1024) {
+    using value_type = Sacado::Fad::SLFad<real_type,1024>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else {
+    TCHEM_CHECK_ERROR(0,
+                      "Error: Number of equations is bigger than size of sacado fad type");
+  }
+#else
+  using value_type = real_type;
+  AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+    profile_name, value_type(), policy,
+    tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+    t_out, dt_out, state_out, workspace, kmcds);
+#endif
+}
+
+void
+AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch(
+  typename UseThisTeamPolicy<host_exec_space>::type& policy,
+  const real_type_1d_view_host_type& tol_newton,
+  const real_type_2d_view_host_type& tol_time,
+  const real_type_2d_view_host_type& fac,
+  const time_advance_type_1d_view_host& tadv,
+  const real_type_2d_view_host_type& state,
+  const real_type_2d_view_host_type& photo_rates,
+  const real_type_2d_view_host_type& external_sources,
+  const real_type_1d_view_host_type& t_out,
+  const real_type_1d_view_host_type& dt_out,
+  const real_type_2d_view_host_type& state_out,
+  const real_type_2d_view_host_type& workspace,
+  const Kokkos::View<KineticModelNCAR_ConstData<host_device_type>*,host_device_type>& kmcds)
+{
+  const std::string profile_name =
+    "TChem::AtmosphericChemistryE3SM_ImplicitEuler::runHostBatch::kmcd array";
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
+  using problem_type = Impl::AtmosphericChemistryE3SM_Problem<real_type, host_device_type>;
+  const ordinal_type m = problem_type::getNumberOfEquations(kmcds(0));
+  if (m < 32) {
+    using value_type = Sacado::Fad::SLFad<real_type,32>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 64) {
+    using value_type = Sacado::Fad::SLFad<real_type,64>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 128) {
+    using value_type = Sacado::Fad::SLFad<real_type,128>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 256) {
+    using value_type = Sacado::Fad::SLFad<real_type,256>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 512) {
+    using value_type = Sacado::Fad::SLFad<real_type,512>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else if (m < 1024) {
+    using value_type = Sacado::Fad::SLFad<real_type,1024>;
+    AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+      profile_name, value_type(), policy,
+      tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+      t_out, dt_out, state_out, workspace, kmcds);
+  } else {
+    TCHEM_CHECK_ERROR(0,
+                      "Error: Number of equations is bigger than size of sacado fad type");
+  }
+#else
+  using value_type = real_type;
+  AtmosphericChemistryE3SM_ImplicitEuler_TemplateRunModelVariation(
+    profile_name, value_type(), policy,
+    tol_newton, tol_time, fac, tadv, state, photo_rates, external_sources,
+    t_out, dt_out, state_out, workspace, kmcds);
+#endif
 }
 
 } // namespace TChem

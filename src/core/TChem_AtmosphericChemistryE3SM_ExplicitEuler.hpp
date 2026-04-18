@@ -76,6 +76,21 @@ struct AtmosphericChemistryE3SM_ExplicitEuler
            /// const data from kinetic model
            const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd);
 
+  /// workspace overload: pre-allocated global memory used instead of scratch
+  static void
+  runHostBatch(
+           typename UseThisTeamPolicy<host_exec_space>::type& policy,
+           const time_advance_type_1d_view_host& tadv,
+           const real_type_2d_view_host& state,
+           const real_type_2d_view_host& photo_rates,
+           const real_type_2d_view_host& external_sources,
+           const real_type_1d_view_host& t_out,
+           const real_type_1d_view_host& dt_out,
+           const real_type_2d_view_host& state_out,
+           /// workspace [league_size x getWorkSpaceSize(kmcd)]
+           const real_type_2d_view_host_type& workspace,
+           const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd);
+
   static void 
   runDeviceBatch( /// thread block size
            typename UseThisTeamPolicy<exec_space>::type& policy,
@@ -90,6 +105,21 @@ struct AtmosphericChemistryE3SM_ExplicitEuler
            const real_type_2d_view_type& state_out,
            /// const data from kinetic model
            const KineticModelNCAR_ConstData<device_type >& kmcd);
+
+  /// workspace overload: pre-allocated global memory used instead of scratch
+  static void
+  runDeviceBatch(
+           typename UseThisTeamPolicy<exec_space>::type& policy,
+           const time_advance_type_1d_view& tadv,
+           const real_type_2d_view_type& state,
+           const real_type_2d_view_type& photo_rates,
+           const real_type_2d_view_type& external_sources,
+           const real_type_1d_view_type& t_out,
+           const real_type_1d_view_type& dt_out,
+           const real_type_2d_view_type& state_out,
+           /// workspace [league_size x getWorkSpaceSize(kmcd)]
+           const real_type_2d_view_type& workspace,
+           const KineticModelNCAR_ConstData<device_type>& kmcd);
 
 
 };

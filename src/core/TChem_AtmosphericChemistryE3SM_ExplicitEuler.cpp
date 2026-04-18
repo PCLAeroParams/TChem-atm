@@ -41,6 +41,8 @@ namespace TChem
           const Tines::value_type_1d_view<real_type, DeviceType>& t_out,
           const Tines::value_type_1d_view<real_type, DeviceType>& dt_out,
           const Tines::value_type_2d_view<real_type, DeviceType>& state_out,
+          /// workspace (optional: if empty, team scratch memory is used)
+          const Tines::value_type_2d_view<real_type, DeviceType>& workspace,
           /// const data from kinetic model
           const KineticModelNCAR_ConstData<DeviceType>& kmcd) {
     Kokkos::Profiling::pushRegion(profile_name);
@@ -54,6 +56,13 @@ namespace TChem
 
     const ordinal_type level = 1;
     const ordinal_type per_team_extent = AtmosphericChemistryE3SM_ExplicitEuler::getWorkSpaceSize(kmcd);
+
+    if (workspace.span()) {
+      TCHEM_CHECK_ERROR(workspace.extent(0) < ordinal_type(policy.league_size()),
+                        "Workspace is allocated smaller than the league size");
+      TCHEM_CHECK_ERROR(workspace.extent(1) < per_team_extent,
+                        "Workspace is allocated smaller than the required");
+    }
 
     /// this assumes host space
     Kokkos::parallel_for
@@ -88,8 +97,15 @@ namespace TChem
         Kokkos::subview(state_out, i, Kokkos::ALL());
 
     const real_type_0d_view_type dt_out_at_i = Kokkos::subview(dt_out, i);
-      Scratch<real_type_1d_view_type> work(member.team_scratch(level),
-                                       per_team_extent);
+      real_type_1d_view_type work;
+      Scratch<real_type_1d_view_type> swork;
+      if (workspace.span()) {
+        work = Kokkos::subview(workspace, i, Kokkos::ALL());
+      } else {
+        swork = Scratch<real_type_1d_view_type>(member.team_scratch(level),
+                                               per_team_extent);
+        work = real_type_1d_view_type(swork.data(), swork.span());
+      }
       Impl::StateVector<real_type_1d_view_type> sv_at_i(kmcd.nSpec, state_at_i);
       Impl::StateVector<real_type_1d_view_type> sv_out_at_i(kmcd.nSpec,
                                                         state_out_at_i);
@@ -181,7 +197,8 @@ namespace TChem
           external_sources, \
           t_out,        \
           dt_out,       \
-          state_out,        \
+          state_out,    \
+          _ws,          \
           kmcd)
 
   void
@@ -198,9 +215,11 @@ namespace TChem
            const real_type_2d_view_host& state_out,
            const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd)
   {
+    const real_type_2d_view_host_type _ws;
     const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runHostBatch::kmcd array";
     TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM();
-  }// namespace TChem
+  }
+
   void
   AtmosphericChemistryE3SM_ExplicitEuler::runDeviceBatch( /// thread block size
            typename UseThisTeamPolicy<exec_space>::type& policy,
@@ -216,6 +235,43 @@ namespace TChem
            /// const data from kinetic model
            const KineticModelNCAR_ConstData<device_type >& kmcd)
   {
+    const real_type_2d_view_type _ws;
+    const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runDeviceBatch::kmcd array";
+    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM();
+  }
+
+  void
+  AtmosphericChemistryE3SM_ExplicitEuler::runHostBatch(
+           typename UseThisTeamPolicy<host_exec_space>::type& policy,
+           const time_advance_type_1d_view_host& tadv,
+           const real_type_2d_view_host& state,
+           const real_type_2d_view_host& photo_rates,
+           const real_type_2d_view_host& external_sources,
+           const real_type_1d_view_host& t_out,
+           const real_type_1d_view_host& dt_out,
+           const real_type_2d_view_host& state_out,
+           const real_type_2d_view_host_type& workspace,
+           const KineticModelNCAR_ConstData<interf_host_device_type>& kmcd)
+  {
+    const auto& _ws = workspace;
+    const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runHostBatch::kmcd array";
+    TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM();
+  }
+
+  void
+  AtmosphericChemistryE3SM_ExplicitEuler::runDeviceBatch(
+           typename UseThisTeamPolicy<exec_space>::type& policy,
+           const time_advance_type_1d_view& tadv,
+           const real_type_2d_view_type& state,
+           const real_type_2d_view_type& photo_rates,
+           const real_type_2d_view_type& external_sources,
+           const real_type_1d_view_type& t_out,
+           const real_type_1d_view_type& dt_out,
+           const real_type_2d_view_type& state_out,
+           const real_type_2d_view_type& workspace,
+           const KineticModelNCAR_ConstData<device_type>& kmcd)
+  {
+    const auto& _ws = workspace;
     const std::string profile_name = "TChem::AtmosphericChemistryE3SM_ExpliciEuler::runDeviceBatch::kmcd array";
     TCHEM_RUN_ATMOSPHERIC_CHEMISTRY_E3SM();
   }

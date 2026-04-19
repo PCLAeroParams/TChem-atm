@@ -5245,6 +5245,34 @@ struct MOSAIC{
     }
   } // form_electrolytes
 
+  KOKKOS_INLINE_FUNCTION static
+  void quadratic(const real_type& a,
+                      const real_type& b,
+                      const real_type& c,
+                      real_type& result) {
+    using ats = Kokkos::ArithTraits<real_type>;
+    real_type x;
+    if (b != 0.0) {
+      x = 4.0 * (a/b) * (c/b);
+    } else {
+      x = 1.0e+6;
+    }
+
+    if (ats::abs(x) < 1.0e-6) {
+      real_type dum = (0.5*x) + (0.125*x*x) + (0.0625*x*x*x);
+      result = (-0.5*b/a) * dum;
+      if (result < 0.0) {
+        result = -b/a - result;
+      }
+    } else {
+      real_type disc = b*b - 4.0*a*c;
+      real_type sqrtdisc = ats::sqrt(disc);
+      real_type quad1 = ((-b) + sqrtdisc) / (2.0*a);
+      real_type quad2 = ((-b) - sqrtdisc) / (2.0*a);
+      result = max(quad1, quad2);
+    }
+  } // quadratic
+
 };
 
 } // namespace Impl

@@ -5245,6 +5245,34 @@ struct MOSAIC{
     }
   } // form_electrolytes
 
+  KOKKOS_INLINE_FUNCTION static
+  void absorb_tiny_nh4no3(const MosaicModelData<DeviceType>& mosaic,
+                          const real_type_1d_view_type& aer_solid,
+                          const real_type_1d_view_type& aer_liquid,
+                          const real_type_1d_view_type& aer_total,
+                          const real_type_1d_view_type& gas,
+                          const real_type& delta_nh3_max,
+                          const real_type& delta_hno3_max,
+                          const real_type& electrolyte_sum_total) {
+
+    real_type small_gas = 0.01 * min(delta_nh3_max, delta_hno3_max);
+    real_type small_aer = 0.01 * electrolyte_sum_total;
+    if (small_aer == 0.0) {
+      small_aer = small_gas;
+    }
+
+    real_type small_amt = min(small_gas, small_aer);
+
+    aer_liquid(mosaic.inh4_a) = aer_liquid(mosaic.inh4_a) + small_amt;
+    aer_liquid(mosaic.ino3_a) = aer_liquid(mosaic.ino3_a) + small_amt;
+
+    aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+
+    gas(mosaic.inh3_g)  = gas(mosaic.inh3_g)  - small_amt;
+    gas(mosaic.ihno3_g) = gas(mosaic.ihno3_g) - small_amt;
+  } // absorb_tiny_nh4no3
+
 };
 
 } // namespace Impl

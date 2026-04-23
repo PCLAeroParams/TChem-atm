@@ -137,6 +137,8 @@ void form_electrolytes(Ensemble *ensemble);
 
 void absorb_tiny_nh4cl(Ensemble *ensemble);
 
+void absorb_tiny_nh4no3(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -260,6 +262,8 @@ int main(int argc, char **argv) {
       form_electrolytes(ensemble);
     } else if (func_name == "absorb_tiny_nh4cl") {
       absorb_tiny_nh4cl(ensemble);
+    } else if (func_name == "absorb_tiny_nh4no3") {
+      absorb_tiny_nh4no3(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

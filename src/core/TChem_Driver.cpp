@@ -20,6 +20,8 @@ Questions? Contact Oscar Diaz-Ibarra at <odiazib@sandia.gov>, or
 Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 =====================================================================================
 */
+#include <cstdio>
+#include <cstdlib>
 #include "TChem_Driver.hpp"
 #include "TChem.hpp"
 #include "TChem_KineticModelNCAR_ConstData.hpp"
@@ -48,7 +50,7 @@ static int check_flag(const int flag, const std::string funcname)
  * Output statistics from CVODE solver.
  */
 void print_cvode_statistics(void* cvode_mem) {
-  long int nst, nfe, nsetups, nje, nni, ncfn, netf;
+  long int nst, nfe, nsetups, nje, nni, ncfn, netf, nfeLS, nli;
   int retval;
 
   retval = CVodeGetNumSteps(cvode_mem, &nst);
@@ -72,10 +74,19 @@ void print_cvode_statistics(void* cvode_mem) {
   retval = CVodeGetNumJacEvals(cvode_mem, &nje);
   check_flag(retval, "CVodeGetNumJacEvals");
 
+  retval = CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+  check_flag(retval, "CVodeGetNumLinRhsEvals");
+
+  retval = CVodeGetNumLinIters(cvode_mem, &nli);
+  check_flag(retval, "CVodeGetNumLinIters");
+
   std::cout << "\nFinal Statistics:\n"
             << "  Steps            = " << nst << "\n"
             << "  RHS evals        = " << nfe << "\n"
+            << "  LS RHS evals     = " << nfeLS << "\n"
+            << "  Total RHS evals  = " << (nfe + nfeLS) << "\n"
             << "  LS setups        = " << nsetups << "\n"
+            << "  LS iters (GMRES) = " << nli << "\n"
             << "  Jac evals        = " << nje << "\n"
             << "  NLS iters        = " << nni << "\n"
             << "  NLS fails        = " << ncfn << "\n"
@@ -94,30 +105,6 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
   settings.set_device_id(0);
   Kokkos::initialize(settings);
 
-  using exec_space = Kokkos::DefaultExecutionSpace;
-  using host_exec_space = Kokkos::DefaultHostExecutionSpace;
-
-  const bool detail = false;
-  TChem::exec_space().print_configuration(std::cout, detail);
-  TChem::host_exec_space().print_configuration(std::cout, detail);
-
-  using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
-  using device_type = typename Tines::UseThisDevice<exec_space>::type;
-
-  using time_integrator_cvode_type = Tines::TimeIntegratorCVODE<real_type,host_device_type>;
-  Tines::value_type_1d_view<time_integrator_cvode_type,host_device_type> cvodes;
-  using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type,host_device_type>;
-  using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
-  using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
-
-  using real_type_1d_view_host_type = Tines::value_type_1d_view<real_type,host_device_type>;
-  using real_type_2d_view_host_type = Tines::value_type_2d_view<real_type,host_device_type>;
-
-  using kinetic_model_type = TChem::KineticModelNCAR_ConstData<device_type>;
-  using kinetic_model_host_type = TChem::KineticModelNCAR_ConstData<host_device_type>;
-
-  using ordinal_type = TChem::ordinal_type;
-
   g_tchem->setBatchSize(nBatch);
   g_tchem->createGasKineticModel(chemFile);
   g_tchem->createGasKineticModelConstData();
@@ -127,6 +114,7 @@ void initialize(const char* chemFile, const char* aeroFile, const char* numerics
   g_tchem->getLengthOfStateVector();
   g_tchem->createNumerics(numericsFile);
   g_tchem->createNumberConcentrationVector(nBatch);
+  g_tchem->createDeviceWorkViews();
 
 }
 
@@ -166,14 +154,21 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   auto vector_size = solver_info["vector_size"];
 
   auto verbose = solver_info["verbose"];
+  auto krylov_dimension = solver_info["krylov_dimension"];
 
   _atol_newton = atol_newton.as<real_type>(1e-10);
   _rtol_newton = rtol_newton.as<real_type>(1e-6);
   _dtmin = dtmin.as<real_type>(1e-8);
   _atol_time = atol_time.as<real_type>(1e-12);
   _rtol_time = rtol_time.as<real_type>(1e-4);
+
+  auto atol_gas = solver_info["atol_gas"];
+  auto atol_aero = solver_info["atol_aero"];
+  _atol_gas = atol_gas.as<real_type>(_atol_time);
+  _atol_aero = atol_aero.as<real_type>(_atol_time);
   _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
   _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
+  _krylov_dimension = krylov_dimension.as<ordinal_type>(0);
 
   // If team_size and vector_size are not specified, default to -1
   _team_size = team_size.as<ordinal_type>(-1);
@@ -209,8 +204,8 @@ void TChem::Driver::createGasKineticModelConstData() {
  * Free model.
  */
 void TChem::Driver::freeAll() {
-  g_tchem->freeGasKineticModel();
-  g_tchem->freeAerosolModel();
+  this->freeGasKineticModel();
+  this->freeAerosolModel();
 }
 
 void TChem::Driver::freeGasKineticModel() {
@@ -259,7 +254,19 @@ void TChem::Driver::createNumberConcentrationVector(ordinal_type nBatch) {
 }
 
 /**
- * Set the values of the state vector for a given batch.
+ * Allocate persistent device work views used by doTimestep.
+ */
+void TChem::Driver::createDeviceWorkViews() {
+  const auto stateVecDim = getLengthOfStateVector();
+  _state_device = real_type_2d_view_device("state_device", _nBatch, stateVecDim);
+  _number_conc_device = real_type_2d_view_device("number_conc_device", _nBatch, _amcd_host.nParticles);
+  _const_tracers_device = real_type_2d_view_device("const_tracers_device", _nBatch, _kmcd_host.nConstSpec);
+  _temperature_device = real_type_1d_view_device("temperature_device", _nBatch);
+  _pressure_device = real_type_1d_view_device("pressure_device", _nBatch);
+}
+
+/**
+ * Set the number concentration vector for a given batch.
  */
 void TChem_setNumberConcentrationVector(double *array, const ordinal_type iBatch){
   g_tchem->setNumberConcentrationVector(array, iBatch);
@@ -302,7 +309,7 @@ void TChem_setStateVector(double *array, const ordinal_type iBatch){
 }
 
 /**
- *
+ * Set the values of the state vector for a given batch.
  */
 void TChem::Driver::setStateVector(double *array, const ordinal_type iBatch) {
   auto len = TChem_getLengthOfStateVector();
@@ -444,6 +451,62 @@ void TChem::Driver::getStateVectorHost(real_type_2d_const_view_host &view) {
   view = real_type_2d_const_view_host(&_state(0,0), _state.extent(0), _state.extent(1));
 }
 
+/**
+ * Return the number of ODE equations per batch.
+ */
+ordinal_type TChem_getNumberOfEquations(){
+  return g_tchem == nullptr ? -1 : g_tchem->getNumberOfEquations();
+}
+
+ordinal_type TChem::Driver::getNumberOfEquations() const {
+  using interf_host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
+  using problem_type =
+      TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
+  return problem_type::getNumberOfTimeODEs(_kmcd_host, _amcd_host);
+}
+
+/**
+ * Set per-equation absolute tolerances for the time integrator.
+ */
+void TChem_setAbsoluteToleranceVector(double *array, ordinal_type len){
+  g_tchem->setAbsoluteToleranceVector(array, len);
+}
+
+void TChem::Driver::setAbsoluteToleranceVector(double *array, ordinal_type len) {
+  if (_atol_time_vec.span() == 0 ||
+      static_cast<ordinal_type>(_atol_time_vec.extent(0)) != len) {
+    _atol_time_vec = real_type_1d_view_host("atol_time_vec", len);
+  }
+  for (ordinal_type k = 0; k < len; k++) {
+    _atol_time_vec(k) = array[k];
+  }
+}
+
+/**
+ * Set the number of particles to track in RHS evaluation.
+ */
+void TChem_setNParticlesTrack(ordinal_type n){
+  try {
+    g_tchem->setNParticlesTrack(n);
+  } catch (const std::exception& e) {
+    fprintf(stderr, "TChem error: %s\n", e.what());
+    exit(1);
+  }
+}
+
+void TChem::Driver::setNParticlesTrack(ordinal_type n) {
+  if (_amcd_host.nParticles == 0) {
+    throw std::runtime_error(
+        "setNParticlesTrack must be called after createAerosolModelConstData");
+  }
+  if (n > _amcd_host.nParticles) {
+    throw std::runtime_error(
+        "n_particles_track (" + std::to_string(n) +
+        ") exceeds amcd.nParticles (" + std::to_string(_amcd_host.nParticles) + ")");
+  }
+  _n_particles_track = n;
+}
+
 /* Integrate a time step */
 void TChem::Driver::doTimestep(const double del_t){
 
@@ -481,14 +544,18 @@ void TChem::Driver::doTimestep(const double del_t){
   // Create UserData
   TChem::UserData udata;
 
+  // Number of particles to compute RHS for (must match tolerance setting)
+  // Use _n_particles_track if set, otherwise default to all particles
+  const ordinal_type n_particles_track =
+      _n_particles_track > 0 ? _n_particles_track : _amcd_host.nParticles;
+
   udata.nbatches = _nBatch;
-  real_type_2d_view number_conc("NumberConcentration", _nBatch,
-      _amcd_host.nParticles);
-  Kokkos::deep_copy(number_conc, _number_concentration);
-  udata.num_concentration = number_conc;
+  Kokkos::deep_copy(_number_conc_device, _number_concentration);
+  udata.num_concentration = _number_conc_device;
   udata.batchSize = number_of_equations;
   udata.kmcd = _kmcd_device;
   udata.amcd = _amcd_device;
+  udata.n_particles_track = n_particles_track;
 
   // Create the SUNDIALS context
   sundials::Context sunctx;
@@ -501,21 +568,21 @@ void TChem::Driver::doTimestep(const double del_t){
   real_type_2d_view_type y2d((y.View()).data(), _nBatch, number_of_equations);
 
   const ordinal_type n_active_gas_species = _kmcd_host.nSpec - _kmcd_host.nConstSpec;
-  real_type_2d_view_type const_tracers("const_tracers", _nBatch, _kmcd_host.nConstSpec);
-
-  real_type_1d_view_type temperature("temperature", _nBatch);
-  real_type_1d_view_type pressure("pressure", _nBatch);
   using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
   const ordinal_type level = 1;
 
-  auto stateVecDim = TChem_getLengthOfStateVector();
-  real_type_2d_view state_device("StateVector Devices", _nBatch, stateVecDim);
-  Kokkos::deep_copy(state_device, _state);
+  Kokkos::deep_copy(_state_device, _state);
 
   const ordinal_type n_gas_spec = _kmcd_device.nSpec;
   const ordinal_type n_gas_spec_constant = _kmcd_device.nConstSpec;
   const ordinal_type total_n_species = _kmcd_device.nSpec  +
       _amcd_device.nParticles * _amcd_device.nSpec;
+
+  // Local aliases for lambda capture (avoids capturing 'this' on GPU)
+  auto state_device = _state_device;
+  auto temperature = _temperature_device;
+  auto pressure = _pressure_device;
+  auto const_tracers = _const_tracers_device;
 
   Kokkos::parallel_for(
     "fill_y", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
@@ -546,13 +613,43 @@ void TChem::Driver::doTimestep(const double del_t){
       }
   });
 
-  udata.temperature = temperature;
-  udata.pressure = pressure;
-  udata.const_tracers = const_tracers;
+  udata.temperature = _temperature_device;
+  udata.pressure = _pressure_device;
+  udata.const_tracers = _const_tracers_device;
 
   // Create vector of absolute tolerances
+  // Tolerances are set per-equation type:
+  //   Gas species:               atol_gas
+  //   Tracked aerosol particles: atol_aero (scale-appropriate for small masses)
+  //   Remaining aerosol particles: atol_ignore (effectively ignored)
   VecType abstol{length, sunctx};
-  N_VConst(SUN_RCONST(_atol_time), abstol);
+  {
+    const ordinal_type neq = number_of_equations;
+    const ordinal_type n_gas = n_active_gas_species;
+    const ordinal_type n_aero_spec = _amcd_host.nSpec;
+    const ordinal_type n_aero_tracked = n_particles_track * n_aero_spec;
+    const real_type atol_gas    = _atol_gas;
+    const real_type atol_aero   = _atol_aero;
+    const real_type atol_ignore = 1.0;
+    real_type_2d_view_type abstol2d((abstol.View()).data(), _nBatch, neq);
+    Kokkos::parallel_for(
+      "fill_abstol", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
+      KOKKOS_LAMBDA(const ordinal_type i) {
+        // Gas species
+        for (ordinal_type j = 0; j < n_gas; ++j) {
+          abstol2d(i, j) = atol_gas;
+        }
+        // Tracked aerosol particles (first n_particles_track particles)
+        for (ordinal_type j = n_gas; j < n_gas + n_aero_tracked; ++j) {
+          abstol2d(i, j) = atol_aero;
+        }
+        // Remaining aerosol particles (ignored)
+        for (ordinal_type j = n_gas + n_aero_tracked; j < neq; ++j) {
+          abstol2d(i, j) = atol_ignore;
+        }
+      });
+    Kokkos::fence();
+  }
 
   // Create CVODE using Backward Differentiation Formula methods
   void* cvode_mem = CVodeCreate(CV_BDF, sunctx);
@@ -576,7 +673,7 @@ void TChem::Driver::doTimestep(const double del_t){
 
   // Create matrix-free GMRES linear solver
   LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
-      SUNLinSol_SPGMR(y, SUN_PREC_NONE, 0, sunctx));
+      SUNLinSol_SPGMR(y, SUN_PREC_NONE, _krylov_dimension, sunctx));
 
   // Attach the linear solver to CVODE
   retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
@@ -589,46 +686,29 @@ void TChem::Driver::doTimestep(const double del_t){
   policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
   udata.policy = policy;
 
-  // Final time and time between outputs
-  const sunrealtype Tf    = SUN_RCONST(del_t);
-  const sunrealtype dTout = SUN_RCONST(del_t);
+  // Integrate from T0 to del_t in a single CVode call
+  sunrealtype t = T0;
+  retval = CVode(cvode_mem, SUN_RCONST(del_t), y, &t, CV_NORMAL);
+  exec_space_instance.fence();
+  check_flag(retval, "CVode");
 
-  // Number of output times
-  const int Nt_p = static_cast<int>(ceil(Tf / dTout));
+  sundials::kokkos::CopyFromDevice(y);
+  Kokkos::fence();
 
-  const int Nt = _max_num_time_iterations > 0 ? _max_num_time_iterations : Nt_p;
-
-  // Current time and first output time
-  sunrealtype t    = T0;
-  sunrealtype tout = T0 + dTout;
-
-  // Initial output
   real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
 
-  // Time stepping
-  int iout = 0;
-  for (iout = 0; iout < Nt; iout++)
-  {
-    // Advance in time
-    retval = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
-    exec_space_instance.fence();
-    if (check_flag(retval, "CVode")) { break; }
+  // Copy results back.
+  // ENV_OFFSET skips the 3 environmental scalars (Temperature, Pressure, Density)
+  // that occupy the leading entries of the state vector.
+  constexpr ordinal_type ENV_OFFSET = 3;
+  for (ordinal_type i = 0; i < _nBatch; ++i) {
+    for (ordinal_type j = 0; j < n_active_gas_species; ++j){
+      _state(i, j + ENV_OFFSET) = y2d_h(i, j);
+    }
 
-    sundials::kokkos::CopyFromDevice(y);
-    Kokkos::fence();
-
-    tout += dTout;
-    tout = (tout > Tf) ? Tf : tout;
-  }
-
-  // Copy results back
-  int i = 0;
-  for (ordinal_type j = 0; j < n_active_gas_species; ++j){
-    _state(i, j + 3) = y2d_h(i, j);
-  }
-
-  for (ordinal_type j = n_active_gas_species; j < total_n_species - _kmcd_host.nConstSpec; ++j){
-    _state(i, j + 3 + _kmcd_host.nConstSpec) = y2d_h(i, j);
+    for (ordinal_type j = n_active_gas_species; j < total_n_species - _kmcd_host.nConstSpec; ++j){
+      _state(i, j + ENV_OFFSET + _kmcd_host.nConstSpec) = y2d_h(i, j);
+    }
   }
 
   if (_verbose) {

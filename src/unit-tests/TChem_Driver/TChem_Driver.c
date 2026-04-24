@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <TChem_Driver.hpp>
 
 int main(int argc, char* argv[]) {
@@ -8,6 +9,11 @@ int main(int argc, char* argv[]) {
    int len;
    int nBatch = 1;
    initialize(argv[1], argv[2], argv[3], nBatch);
+
+   int nEqs = TChem_getNumberOfEquations();
+   printf("Number of equations: %d\n", nEqs);
+
+   TChem_setNParticlesTrack(1);
 
    len = TChem_getLengthOfStateVector();
    double *state = (double *)calloc(len, sizeof(double));
@@ -54,6 +60,12 @@ int main(int argc, char* argv[]) {
       fprintf(aero_prop_file, "%s %f %f %f\n", SpecName, density, mw, kappa);
    }
 
+   double *atol_vec = (double *)calloc(nEqs, sizeof(double));
+   for (int i = 0; i < nEqs; i++){
+     atol_vec[i] = 1e-12;
+   }
+   TChem_setAbsoluteToleranceVector(atol_vec, nEqs);
+
    double del_t = 30.0;
 
    TChem_doTimestep(del_t);
@@ -65,6 +77,9 @@ int main(int argc, char* argv[]) {
       fprintf(output_file, "%e \n", state[i]);
    }
 
+   free(state);
+   free(num_conc);
+   free(atol_vec);
    finalize();
    printf("TChem driver finalized.\n");
    return 0;

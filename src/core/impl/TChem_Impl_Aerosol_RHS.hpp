@@ -52,7 +52,6 @@ struct Aerosol_RHS
     ordinal_type workspace_size=reaction_rates_gas::getWorkSpaceSize(kmcd);
     return workspace_size;
   }
-    // update RHS using real_type, i.e., no sacado
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static
   void team_invoke(const MemberType& member,
@@ -64,9 +63,13 @@ struct Aerosol_RHS
     const real_type_1d_view_type& omega,
     const real_type_1d_view_type& work,
     const kinetic_model_data_type& kmcd,
-    const aerosol_model_data_type& amcd
+    const aerosol_model_data_type& amcd,
+    const ordinal_type n_particles_rhs
     )
   {
+    if (n_particles_rhs > amcd.nParticles) {
+      Kokkos::abort("n_particles_rhs exceeds amcd.nParticles");
+    }
    // set omega(rhs) to zero, because we are using Kokkos::atomic_add.
     Kokkos::parallel_for(
       Kokkos::TeamVectorRange(member, omega.extent(0)),
@@ -84,11 +87,10 @@ struct Aerosol_RHS
                          // work arrays
                          work,
                          kmcd);
-    // 2. update RHS of gas and aerosol species
-    // member.team_barrier();
+    // 2. update RHS of gas and aerosol species (only for tracked particles)
     using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, device_type >;
     Kokkos::parallel_for(
-      Kokkos::TeamVectorRange(member, amcd.nParticles),
+      Kokkos::TeamVectorRange(member, n_particles_rhs),
        [&](const ordinal_type& i_part) {
     for (size_t i_simpol = 0; i_simpol < amcd.nSimpol_tran; i_simpol++)
     {

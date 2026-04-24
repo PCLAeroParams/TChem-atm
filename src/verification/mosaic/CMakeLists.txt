@@ -52,6 +52,7 @@ add_executable(${DRIVER_NAME}.x
                conform_electrolytes.cpp
                ions_to_electrolytes.cpp
                form_electrolytes.cpp
+               absorb_tiny_nh4cl.cpp
                absorb_tiny_nh4no3.cpp
  )
 
@@ -110,6 +111,7 @@ SET(TEST_LIST
     conform_electrolytes_input_ts_0
     ions_to_electrolytes_input_ts_0
     form_electrolytes_input_ts_0
+    absorb_tiny_nh4cl_input_ts_0
     absorb_tiny_nh4no3_input_ts_0
 )
 
@@ -163,6 +165,7 @@ SET(TEST_BASELINE
     conform_electrolytes_output_ts_0
     ions_to_electrolytes_output_ts_0
     form_electrolytes_output_ts_0
+    absorb_tiny_nh4cl_output_ts_0
     absorb_tiny_nh4no3_output_ts_0
 )
 
@@ -217,6 +220,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # conform_electrolytes_output_ts_0
     ${DEFAULT_TOL} # ions_to_electrolytes_output_ts_0
     ${DEFAULT_TOL} # form_electrolytes_output_ts_0
+    ${DEFAULT_TOL} # absorb_tiny_nh4cl_output_ts_0
     ${DEFAULT_TOL} # absorb_tiny_nh4no3_output_ts_0
 )
 

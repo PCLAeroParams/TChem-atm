@@ -135,6 +135,8 @@ void ions_to_electrolytes(Ensemble *ensemble);
 
 void form_electrolytes(Ensemble *ensemble);
 
+void absorb_tiny_nh4cl(Ensemble *ensemble);
+
 void absorb_tiny_nh4no3(Ensemble *ensemble);
 
 int main(int argc, char **argv) {
@@ -258,6 +260,8 @@ int main(int argc, char **argv) {
       ions_to_electrolytes(ensemble);
     } else if (func_name == "form_electrolytes") {
       form_electrolytes(ensemble);
+    } else if (func_name == "absorb_tiny_nh4cl") {
+      absorb_tiny_nh4cl(ensemble);
     } else if (func_name == "absorb_tiny_nh4no3") {
       absorb_tiny_nh4no3(ensemble);
     } else {

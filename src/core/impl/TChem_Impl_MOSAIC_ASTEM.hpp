@@ -2,53 +2,6 @@
 #define __TCHEM_IMPL_MOSAIC_ASTEM_HPP__
 
   KOKKOS_INLINE_FUNCTION static
-  void fuchs_sutugin(const real_type& rkn,
-                     const real_type& a,
-                     real_type& fuchs_sut) {
-
-    const real_type rnum  = 0.75*a*(1. + rkn);
-    const real_type denom = ats<real_type>::pow(rkn, 2.0) + rkn + 0.283*rkn*a + 0.75*a;
-    fuchs_sut = rnum/denom;
-  } // fuchs_sutugin
-
-  KOKKOS_INLINE_FUNCTION static
-  void gas_diffusivity(const real_type& T_K,
-                       const real_type& P,
-                       const real_type& MW,
-                       const real_type& Vm,
-                       real_type& gas_diff) {
-    gas_diff = (1.0e-3 * ats<real_type>::pow(T_K, 1.75) * ats<real_type>::sqrt(1.0/MW + 0.035))/
-                    (P * ats<real_type>::pow(ats<real_type>::pow(Vm, 0.333333) + 2.7189, 2.0));
-  } // gas_diffusivity
-
-  KOKKOS_INLINE_FUNCTION static
-  void mean_molecular_speed(const real_type& T_K,
-                            const real_type& MW,
-                            real_type& mean_molec_speed) {
-
-    mean_molec_speed = 1.455e4 * ats<real_type>::sqrt(T_K/MW);
-  } // mean_molecular_speed
-
-  KOKKOS_INLINE_FUNCTION static
-  void bin_molality_60(const MosaicModelData<DeviceType>& mosaic,
-                    const ordinal_type& je,
-                    real_type& molality) {
-
-    auto a_zsr = mosaic.a_zsr.template view<DeviceType>();
-
-    const real_type aw = 0.6;
-
-    real_type xm = a_zsr(0,je) +
-               aw*(a_zsr(1,je) +
-               aw*(a_zsr(2,je) +
-               aw*(a_zsr(3,je) +
-               aw*(a_zsr(4,je) +
-               aw* a_zsr(5,je) ))));
-
-    molality = 55.509*xm/(1.0 - xm);
-  } // bin_molality_60
-
-  KOKKOS_INLINE_FUNCTION static
   void aerosol_water_up(const MosaicModelData<DeviceType>& mosaic,
                         const real_type_1d_view_type& electrolyte_total,
                         real_type& aerosol_water) {
@@ -477,35 +430,6 @@
     }
   } // form_electrolytes
 
-  KOKKOS_INLINE_FUNCTION static
-  void quadratic(const real_type& a,
-                 const real_type& b,
-                 const real_type& c,
-                 real_type& result) {
-  
-    using ats = Kokkos::ArithTraits<real_type>;
-    real_type x;
-    if (b != 0.0) {
-      x = 4.0 * (a/b) * (c/b);
-    } else {
-      x = 1.0e+6;
-    }
-
-    if (ats::abs(x) < 1.0e-6) {
-      real_type dum = (0.5*x) + (0.125*x*x) + (0.0625*x*x*x);
-      result = (-0.5*b/a) * dum;
-      if (result < 0.0) {
-        result = -b/a - result;
-      }
-    } else {
-      real_type disc = b*b - 4.0*a*c;
-      real_type sqrtdisc = ats::sqrt(disc);
-      real_type quad1 = ((-b) + sqrtdisc) / (2.0*a);
-      real_type quad2 = ((-b) - sqrtdisc) / (2.0*a);
-      result = max(quad1, quad2);
-    }
-  } // quadratic
-  
   KOKKOS_INLINE_FUNCTION static
   void absorb_tiny_nh4cl(const MosaicModelData<DeviceType>& mosaic,
                          const real_type_1d_view_type& aer_solid,

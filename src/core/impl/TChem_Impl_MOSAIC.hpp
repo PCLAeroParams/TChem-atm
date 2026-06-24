@@ -41,6 +41,12 @@ struct MOSAIC{
 
   #include "TChem_Impl_MOSAIC_Util.hpp"
 
+  #include "TChem_Impl_MOSAIC_activities.hpp"
+
+  #include "TChem_Impl_MOSAIC_MTEM.hpp"
+
+  #include "TChem_Impl_MOSAIC_form_species.hpp"
+
   #include "TChem_Impl_MOSAIC_MESA.hpp"
 
   #include "TChem_Impl_MOSAIC_ASTEM.hpp"

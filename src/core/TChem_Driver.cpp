@@ -259,7 +259,7 @@ void TChem::Driver::createNumberConcentrationVector(ordinal_type nBatch) {
 void TChem::Driver::createDeviceWorkViews() {
   const auto stateVecDim = getLengthOfStateVector();
   _state_device = real_type_2d_view_device("state_device", _nBatch, stateVecDim);
-  _number_conc_device = real_type_2d_view_device("number_conc_device", _nBatch, _amcd_host.nParticles);
+  _number_conc_device = real_type_2d_view_device("number_conc_device", _nBatch, getNumberConcentrationVectorSize());
   _const_tracers_device = real_type_2d_view_device("const_tracers_device", _nBatch, _kmcd_host.nConstSpec);
   _temperature_device = real_type_1d_view_device("temperature_device", _nBatch);
   _pressure_device = real_type_1d_view_device("pressure_device", _nBatch);

@@ -13,7 +13,11 @@ int main(int argc, char* argv[]) {
    int nEqs = TChem_getNumberOfEquations();
    printf("Number of equations: %d\n", nEqs);
 
-   TChem_setNParticlesTrack(1);
+   int *n_particles_track = (int *)calloc(nBatch, sizeof(int));
+   for (int i = 0; i < nBatch; i++){
+     n_particles_track[i] = 1;
+   }
+   TChem_setNParticlesTrack(n_particles_track, nBatch);
 
    len = TChem_getLengthOfStateVector();
    double *state = (double *)calloc(len, sizeof(double));
@@ -80,6 +84,7 @@ int main(int argc, char* argv[]) {
    free(state);
    free(num_conc);
    free(atol_vec);
+   free(n_particles_track);
    finalize();
    printf("TChem driver finalized.\n");
    return 0;

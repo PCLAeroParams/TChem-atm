@@ -47,6 +47,7 @@ struct TChemAerosolChemistryRHS {
   using policy_type = typename UseThisTeamPolicy<exec_space>::type;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
+  using ordinal_type_1d_view_type = Tines::value_type_1d_view<ordinal_type,device_type>;
 
   real_type_2d_view_type rhs;
   real_type_2d_view_type vals;
@@ -59,7 +60,8 @@ struct TChemAerosolChemistryRHS {
   ordinal_type level;
   ordinal_type per_team_extent;
   ordinal_type m;
-  ordinal_type n_particles_track;
+  // Per-batch number of particles to evaluate in the RHS (length nBatch)
+  ordinal_type_1d_view_type n_particles_track;
 
 
   TChemAerosolChemistryRHS(const real_type_2d_view_type& rhs_in,
@@ -70,7 +72,7 @@ struct TChemAerosolChemistryRHS {
            const real_type_1d_view_type& pressure_in,
            const KineticModelNCAR_ConstData<device_type>& kmcd_in,
            const AerosolModel_ConstData<device_type>& amcd_in,
-           const ordinal_type n_particles_track_in = -1)
+           const ordinal_type_1d_view_type& n_particles_track_in)
    : rhs(rhs_in),
      vals(vals_in),
      num_concentration(num_concentration_in),
@@ -79,7 +81,7 @@ struct TChemAerosolChemistryRHS {
      pressure(pressure_in),
      kmcd(kmcd_in),
      amcd(amcd_in),
-     n_particles_track(n_particles_track_in > 0 ? n_particles_track_in : amcd_in.nParticles)
+     n_particles_track(n_particles_track_in)
      {
       level = 1;
       per_team_extent
@@ -103,10 +105,13 @@ struct TChemAerosolChemistryRHS {
     auto wptr = work.data();
     auto pw = real_type_1d_view_type(wptr, per_team_extent);
     wptr +=per_team_extent;
+    // Resolve the per-batch sentinel: -1 means track all particles.
+    const ordinal_type n_part_i =
+        n_particles_track(i) < 0 ? amcd.nParticles : n_particles_track(i);
     TChem::Impl::Aerosol_RHS<real_type, device_type>
     ::team_invoke(member,
     temperature(i), pressure(i), number_conc_at_i, vals_at_i, constYs,
-    rhs_at_i, pw, kmcd, amcd, n_particles_track);
+    rhs_at_i, pw, kmcd, amcd, n_part_i);
   }
 };
 struct UserData
@@ -117,6 +122,7 @@ struct UserData
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
   using real_type_3d_view_type = Tines::value_type_3d_view<real_type,device_type>;
+  using ordinal_type_1d_view_type = Tines::value_type_1d_view<ordinal_type,device_type>;
   using policy_type = typename UseThisTeamPolicy<exec_space>::type;
 
   int nbatches  = 100; // number of chemical networks
@@ -137,7 +143,8 @@ struct UserData
 
   TChem::KineticModelNCAR_ConstData<device_type> kmcd;
   TChem::AerosolModel_ConstData<device_type> amcd;
-  ordinal_type n_particles_track{-1}; // Number of particles for RHS eval (-1 = all)
+  // Per-batch number of particles for RHS eval (length nBatch; entry -1 = all)
+  ordinal_type_1d_view_type n_particles_track;
 };
 
 struct AerosolChemistry_CVODE_K

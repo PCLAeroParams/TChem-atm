@@ -263,6 +263,8 @@ void TChem::Driver::createDeviceWorkViews() {
   _const_tracers_device = real_type_2d_view_device("const_tracers_device", _nBatch, _kmcd_host.nConstSpec);
   _temperature_device = real_type_1d_view_device("temperature_device", _nBatch);
   _pressure_device = real_type_1d_view_device("pressure_device", _nBatch);
+  _n_particles_track_device =
+      ordinal_type_1d_view_device("n_particles_track_device", _nBatch);
 }
 
 /**
@@ -483,28 +485,39 @@ void TChem::Driver::setAbsoluteToleranceVector(double *array, ordinal_type len) 
 }
 
 /**
- * Set the number of particles to track in RHS evaluation.
+ * Set the per-batch number of particles to track in RHS evaluation.
  */
-void TChem_setNParticlesTrack(ordinal_type n){
+void TChem_setNParticlesTrack(ordinal_type *array, ordinal_type nBatch){
   try {
-    g_tchem->setNParticlesTrack(n);
+    g_tchem->setNParticlesTrack(array, nBatch);
   } catch (const std::exception& e) {
     fprintf(stderr, "TChem error: %s\n", e.what());
     exit(1);
   }
 }
 
-void TChem::Driver::setNParticlesTrack(ordinal_type n) {
+void TChem::Driver::setNParticlesTrack(ordinal_type *array, ordinal_type nBatch) {
   if (_amcd_host.nParticles == 0) {
     throw std::runtime_error(
         "setNParticlesTrack must be called after createAerosolModelConstData");
   }
-  if (n > _amcd_host.nParticles) {
+  if (nBatch != _nBatch) {
     throw std::runtime_error(
-        "n_particles_track (" + std::to_string(n) +
-        ") exceeds amcd.nParticles (" + std::to_string(_amcd_host.nParticles) + ")");
+        "setNParticlesTrack length (" + std::to_string(nBatch) +
+        ") does not match batch size (" + std::to_string(_nBatch) + ")");
   }
-  _n_particles_track = n;
+  if (_n_particles_track.span() == 0) {
+    _n_particles_track = ordinal_type_1d_view_host("n_particles_track", _nBatch);
+  }
+  for (ordinal_type i = 0; i < nBatch; i++) {
+    if (array[i] > _amcd_host.nParticles) {
+      throw std::runtime_error(
+          "n_particles_track (" + std::to_string(array[i]) + ") for batch " +
+          std::to_string(i) + " exceeds amcd.nParticles (" +
+          std::to_string(_amcd_host.nParticles) + ")");
+    }
+    _n_particles_track(i) = array[i];
+  }
 }
 
 /* Integrate a time step */
@@ -544,10 +557,14 @@ void TChem::Driver::doTimestep(const double del_t){
   // Create UserData
   TChem::UserData udata;
 
-  // Number of particles to compute RHS for (must match tolerance setting)
-  // Use _n_particles_track if set, otherwise default to all particles
-  const ordinal_type n_particles_track =
-      _n_particles_track > 0 ? _n_particles_track : _amcd_host.nParticles;
+  // Per-batch number of particles to compute the RHS for (must match the
+  // tolerance setting below). If the user never set it, default every batch to
+  // -1, which the RHS kernel and abstol fill resolve to "all particles".
+  if (_n_particles_track.span() == 0) {
+    Kokkos::deep_copy(_n_particles_track_device, -1);
+  } else {
+    Kokkos::deep_copy(_n_particles_track_device, _n_particles_track);
+  }
 
   udata.nbatches = _nBatch;
   Kokkos::deep_copy(_number_conc_device, _number_concentration);
@@ -555,7 +572,7 @@ void TChem::Driver::doTimestep(const double del_t){
   udata.batchSize = number_of_equations;
   udata.kmcd = _kmcd_device;
   udata.amcd = _amcd_device;
-  udata.n_particles_track = n_particles_track;
+  udata.n_particles_track = _n_particles_track_device;
 
   // Create the SUNDIALS context
   sundials::Context sunctx;
@@ -627,19 +644,24 @@ void TChem::Driver::doTimestep(const double del_t){
     const ordinal_type neq = number_of_equations;
     const ordinal_type n_gas = n_active_gas_species;
     const ordinal_type n_aero_spec = _amcd_host.nSpec;
-    const ordinal_type n_aero_tracked = n_particles_track * n_aero_spec;
+    const ordinal_type n_particles_max = _amcd_host.nParticles;
     const real_type atol_gas    = _atol_gas;
     const real_type atol_aero   = _atol_aero;
     const real_type atol_ignore = 1.0;
+    const auto n_particles_track = _n_particles_track_device;
     real_type_2d_view_type abstol2d((abstol.View()).data(), _nBatch, neq);
     Kokkos::parallel_for(
       "fill_abstol", Kokkos::RangePolicy<TChem::exec_space>(0, _nBatch),
       KOKKOS_LAMBDA(const ordinal_type i) {
+        // Resolve the per-batch tracked particles: -1 means track all particles.
+        const ordinal_type n_part_i =
+            n_particles_track(i) < 0 ? n_particles_max : n_particles_track(i);
+        const ordinal_type n_aero_tracked = n_part_i * n_aero_spec;
         // Gas species
         for (ordinal_type j = 0; j < n_gas; ++j) {
           abstol2d(i, j) = atol_gas;
         }
-        // Tracked aerosol particles (first n_particles_track particles)
+        // Tracked aerosol particles (first n_part_i particles)
         for (ordinal_type j = n_gas; j < n_gas + n_aero_tracked; ++j) {
           abstol2d(i, j) = atol_aero;
         }

@@ -32,6 +32,8 @@ public:
    using real_type_2d_view_host = TChem::real_type_2d_view_host;
    using real_type_1d_view_device = TChem::real_type_1d_view;
    using real_type_2d_view_device = TChem::real_type_2d_view;
+   using ordinal_type_1d_view_host = TChem::ordinal_type_1d_view_host;
+   using ordinal_type_1d_view_device = TChem::ordinal_type_1d_view;
    using host_exec_space = Kokkos::DefaultHostExecutionSpace;
    using host_device_type = typename Tines::UseThisDevice<TChem::host_exec_space>::type;
    using device_type = typename Tines::UseThisDevice<exec_space>::type;
@@ -112,9 +114,11 @@ public:
    ordinal_type getNumberOfEquations() const;
    void setAbsoluteToleranceVector(double *array, ordinal_type len);
 
-   // Number of particles to track in RHS evaluation (-1 = all)
-   ordinal_type _n_particles_track{-1};
-   void setNParticlesTrack(ordinal_type n);
+   // Per-batch number of particles to track in RHS evaluation (entry -1 = all).
+   // Empty until the user sets it; doTimestep then defaults every batch to -1.
+   ordinal_type_1d_view_host _n_particles_track;
+   ordinal_type_1d_view_device _n_particles_track_device;
+   void setNParticlesTrack(ordinal_type *array, ordinal_type nBatch);
 
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);
@@ -153,7 +157,8 @@ extern "C" double TChem_getAerosolSpeciesKappa(int* index);
 extern "C" void
 TChem_setNumberConcentrationVector(TChem::real_type *array,
                                    const TChem::ordinal_type iBatch);
-extern "C" void TChem_setNParticlesTrack(TChem::ordinal_type n);
+extern "C" void TChem_setNParticlesTrack(TChem::ordinal_type *array,
+                                         TChem::ordinal_type nBatch);
 extern "C" TChem::ordinal_type TChem_getNumberOfEquations();
 extern "C" void TChem_setAbsoluteToleranceVector(double *array,
                                                   TChem::ordinal_type len);

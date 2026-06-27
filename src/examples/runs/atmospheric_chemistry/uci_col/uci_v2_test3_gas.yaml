@@ -205,29 +205,29 @@ reactions:
     CO: 1.5
     CH3O2: 0.5
     HO2: 0.5
-# - coefficients:
-#     A: 0
-#   note: PHOTOLYSIS (A := photolysis rate)
-#   type: PHOTO_RATE
-#   id: '20'
-#   reactants:
-#     soa_a1: 1
-#   products: {}
-# - coefficients:
-#     A: 0
-#   note: PHOTOLYSIS (A := photolysis rate)
-#   type: PHOTO_RATE
-#   id: '21'
-#   reactants:
-#     soa_a2: 1
-#   products: {}
-# - coefficients:
-#     A: 0
-#   note: PHOTOLYSIS (A := photolysis rate)
-#   type: PHOTO_RATE
-#   id: '22'
-#   reactants:
-#     soa_a3: 1
+- coefficients:
+    A: 0
+  note: PHOTOLYSIS (A := photolysis rate)
+  type: PHOTO_RATE
+  id: '20'
+  reactants:
+    soa_a1: 1
+  products: {}
+- coefficients:
+    A: 0
+  note: PHOTOLYSIS (A := photolysis rate)
+  type: PHOTO_RATE
+  id: '21'
+  reactants:
+    soa_a2: 1
+  products: {}
+- coefficients:
+    A: 0
+  note: PHOTOLYSIS (A := photolysis rate)
+  type: PHOTO_RATE
+  id: '22'
+  reactants:
+    soa_a3: 1
   products: {}
 - coefficients:
     A: 1.63e-10
@@ -1391,12 +1391,12 @@ species:
   name: SOAG34
 - description: ''
   name: SOAG35
-# - description: ''
-#   name: soa_a1
-# - description: ''
-#   name: soa_a2
-# - description: ''
-#   name: soa_a3
+- description: ''
+  name: soa_a1
+- description: ''
+  name: soa_a2
+- description: ''
+  name: soa_a3
 constant_species:
 - description: invariant species
   name: M
@@ -1416,19 +1416,19 @@ constant_species:
   name: prsd_NO3
 - description: invariant species
   name: prsd_OH
-# modifier_prod_O1D:
-#   coefficients:
-#     A1: 2.15e-11
-#     C1: 110.0
-#     A2: 3.3e-11
-#     C2: 55.0
-#     A3: 1.63e-10
-#     C3: 60.0
-#   species_name_1: N2
-#   species_name_2: O2
-#   species_name_3: H2O
-#   reaction_list:
-#   - 22
-#   - 23
-#   - 24
-#   photolysis_reaction_index: 0
+modifier_prod_O1D:
+  coefficients:
+    A1: 2.15e-11
+    C1: 110.0
+    A2: 3.3e-11
+    C2: 55.0
+    A3: 1.63e-10
+    C3: 60.0
+  species_name_1: N2
+  species_name_2: O2
+  species_name_3: H2O
+  reaction_list:
+  - 22
+  - 23
+  - 24
+  photolysis_reaction_index: 0

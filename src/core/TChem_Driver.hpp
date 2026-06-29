@@ -118,7 +118,7 @@ public:
    // Empty until the user sets it; doTimestep then defaults every batch to -1.
    ordinal_type_1d_view_host _n_particles_track;
    ordinal_type_1d_view_device _n_particles_track_device;
-   void setNParticlesTrack(ordinal_type *array, ordinal_type nBatch);
+   void setNParticlesTrack(ordinal_type n, ordinal_type i_batch);
 
    // Read in time integration information
    void createNumerics(const std::string &numerics_file);
@@ -157,8 +157,8 @@ extern "C" double TChem_getAerosolSpeciesKappa(int* index);
 extern "C" void
 TChem_setNumberConcentrationVector(TChem::real_type *array,
                                    const TChem::ordinal_type iBatch);
-extern "C" void TChem_setNParticlesTrack(TChem::ordinal_type *array,
-                                         TChem::ordinal_type nBatch);
+extern "C" void TChem_setNParticlesTrack(TChem::ordinal_type n,
+                                         TChem::ordinal_type i_batch);
 extern "C" TChem::ordinal_type TChem_getNumberOfEquations();
 extern "C" void TChem_setAbsoluteToleranceVector(double *array,
                                                   TChem::ordinal_type len);

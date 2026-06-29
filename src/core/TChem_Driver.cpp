@@ -485,39 +485,39 @@ void TChem::Driver::setAbsoluteToleranceVector(double *array, ordinal_type len) 
 }
 
 /**
- * Set the per-batch number of particles to track in RHS evaluation.
+ * Set the number of particles to track for batch i_batch. Only the first n
+ * particles of that batch have their aerosol RHS evaluated (and receive the
+ * aerosol absolute tolerance).
  */
-void TChem_setNParticlesTrack(ordinal_type *array, ordinal_type nBatch){
+void TChem_setNParticlesTrack(ordinal_type n, ordinal_type i_batch){
   try {
-    g_tchem->setNParticlesTrack(array, nBatch);
+    g_tchem->setNParticlesTrack(n, i_batch);
   } catch (const std::exception& e) {
     fprintf(stderr, "TChem error: %s\n", e.what());
     exit(1);
   }
 }
 
-void TChem::Driver::setNParticlesTrack(ordinal_type *array, ordinal_type nBatch) {
+void TChem::Driver::setNParticlesTrack(ordinal_type n, ordinal_type i_batch) {
   if (_amcd_host.nParticles == 0) {
     throw std::runtime_error(
         "setNParticlesTrack must be called after createAerosolModelConstData");
   }
-  if (nBatch != _nBatch) {
+  if (i_batch < 0 || i_batch >= _nBatch) {
     throw std::runtime_error(
-        "setNParticlesTrack length (" + std::to_string(nBatch) +
-        ") does not match batch size (" + std::to_string(_nBatch) + ")");
+        "setNParticlesTrack i_batch (" + std::to_string(i_batch) +
+        ") out of range [0, " + std::to_string(_nBatch) + ")");
+  }
+  if (n > _amcd_host.nParticles) {
+    throw std::runtime_error(
+        "n_particles_track (" + std::to_string(n) + ") for batch " +
+        std::to_string(i_batch) + " exceeds amcd.nParticles (" +
+        std::to_string(_amcd_host.nParticles) + ")");
   }
   if (_n_particles_track.span() == 0) {
     _n_particles_track = ordinal_type_1d_view_host("n_particles_track", _nBatch);
   }
-  for (ordinal_type i = 0; i < nBatch; i++) {
-    if (array[i] > _amcd_host.nParticles) {
-      throw std::runtime_error(
-          "n_particles_track (" + std::to_string(array[i]) + ") for batch " +
-          std::to_string(i) + " exceeds amcd.nParticles (" +
-          std::to_string(_amcd_host.nParticles) + ")");
-    }
-    _n_particles_track(i) = array[i];
-  }
+  _n_particles_track(i_batch) = n;
 }
 
 /* Integrate a time step */

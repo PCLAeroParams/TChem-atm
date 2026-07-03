@@ -685,7 +685,7 @@
     auto mw_c           = mosaic.mw_c.template view<DeviceType>();
     auto mw_electrolyte = mosaic.mw_electrolyte.template view<DeviceType>();
 
-    // remove negative concentrations
+    // remove negative concentrations, if any
     for (ordinal_type iaer = 0; iaer < mosaic.naer; ++iaer) {
       aer_liquid(iaer) = max(0.0, aer_liquid(iaer));
     }
@@ -701,13 +701,12 @@
       icase = 2; // acidic: acidity from excess SO4
     }
 
-    // initialize eleliquid to zero
     for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je) {
       eleliquid(je) = 0.0;
     }
 
     if (icase == 1) {
-      // SULFATE POOR DOMAIN: use equivalent fraction mixing
+      // SULFATE-POOR DOMAIN
 
       na(mosaic.ja_hso4) = 0.0;
       na(mosaic.ja_so4)  = aer_liquid(mosaic.iso4_a);
@@ -832,7 +831,7 @@
                                     xeq_a(mosaic.ja_msa)  * nc_Mc(mosaic.jc_h))   /
                                     mw_electrolyte(mosaic.jmsa);
 
-    } else { // icase == 2: SULFATE RICH DOMAIN
+    } else { // SULFATE-RICH DOMAIN
 
       for (ordinal_type i = 0; i < mosaic.naer; ++i) store(i) = 0.0;
 
@@ -842,7 +841,6 @@
       store(mosaic.ina_a)  = aer_liquid(mosaic.ina_a);
       store(mosaic.ica_a)  = aer_liquid(mosaic.ica_a);
 
-      // inline form_camsa2 — the existing C++ version writes to jcaso4 instead of jcamsa2
       eleliquid(mosaic.jcamsa2) = min(store(mosaic.ica_a), 0.5*store(mosaic.imsa_a));
       store(mosaic.ica_a)  = max(0.0, store(mosaic.ica_a)  - eleliquid(mosaic.jcamsa2));
       store(mosaic.imsa_a) = max(0.0, store(mosaic.imsa_a) - 2.0*eleliquid(mosaic.jcamsa2));
@@ -871,7 +869,6 @@
         store(mosaic.ina_a)  = 0.0;
       }
 
-      // goto 10 in Fortran if iso4_a == 0; replaced by conditional block
       if (store(mosaic.iso4_a) != 0.0) {
 
         real_type XT_d  = XT;
@@ -932,11 +929,9 @@
 
         }
 
-      } // end if (iso4_a != 0)
+      }
+    }
 
-    } // end icase == 2
-
-    // calculate % composition (Fortran label 10)
     real_type sum_dum = 0.0;
     for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je) {
       sum_dum += eleliquid(je);

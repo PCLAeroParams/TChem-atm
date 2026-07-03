@@ -168,7 +168,51 @@
         num_a = 0.0;
       }
     }
-   } // check_aerosol_mass
+  } // check_aerosol_mass
+
+  KOKKOS_INLINE_FUNCTION static
+  void calculate_XT(const MosaicModelData<DeviceType>& mosaic,
+                    const real_type_1d_view_type& aer,
+                    real_type &XT) {
+
+    //aer nmol/m^3
+    if ((aer(mosaic.iso4_a) + aer(mosaic.imsa_a)) > 0.0) {
+        XT = (aer(mosaic.inh4_a) + aer(mosaic.ina_a) +
+             2.0 * aer(mosaic.ica_a)) /
+            (aer(mosaic.iso4_a) + 0.5 * aer(mosaic.imsa_a));
+    } else {
+        XT = -1.0;
+    }
+  } // calculate_XT
+
+  KOKKOS_INLINE_FUNCTION static
+  void aerosol_water(const MosaicModelData<DeviceType>& mosaic,
+                     const real_type_1d_view_type& electrolyte,
+                     const real_type& aH2O_a,
+                     const real_type_1d_view_type& molalities,
+                     real_type& jaerosolstate,
+                     real_type& jphase,
+                     real_type& jhyst_leg,
+                     real_type& aerosol_water) {
+
+    for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
+      real_type molality = 0.0;
+      bin_molality(mosaic, je, aH2O_a, molality); // compute aH2O dependent binary molalities  EFFI
+      molalities(je) = molality;
+    }
+
+    real_type dum = 0.0;
+    for (ordinal_type je = 0; je < (mosaic.nsalt + 4); je++) { // include hno3 and hcl in water calculation
+      dum += electrolyte(je) / molalities(je);
+    }
+
+    aerosol_water = dum * 1.0e-9;
+    if (aerosol_water <= 0.0) {
+      jaerosolstate = mosaic.all_solid;
+      jphase = mosaic.jsolid;
+      jhyst_leg = mosaic.jhyst_lo;
+    }
+  } // aerosol_water
 
   KOKKOS_INLINE_FUNCTION static
   void fnlog_gamZ(const MosaicModelData<DeviceType>& mosaic,

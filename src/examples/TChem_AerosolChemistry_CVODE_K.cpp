@@ -282,6 +282,11 @@ int main(int argc, char *argv[]) {
     udata.batchSize=number_of_equations;
     udata.kmcd=kmcd;
     udata.amcd=amcd;
+
+    ordinal_type_type_1d_view_type n_particles_track("n_particles_track", nBatch);
+    Kokkos::deep_copy(n_particles_track, -1);
+    udata.n_particles_track = n_particles_track;
+    
     // Create vector with the initial condition
     const sunrealtype T0 = SUN_RCONST(tbeg);
 

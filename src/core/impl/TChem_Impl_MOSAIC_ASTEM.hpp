@@ -518,4 +518,36 @@
     aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
   } // degas_solid_nh4no3
 
+  KOKKOS_INLINE_FUNCTION static
+  void degas_solid_nh4cl(const MosaicModelData<DeviceType>& mosaic,
+                         const real_type_1d_view_type& gas,
+                         const real_type_1d_view_type& Keq_sg,
+                         const real_type_1d_view_type& electrolyte_solid,
+                         const real_type_1d_view_type& aer_solid,
+                         const real_type_1d_view_type& aer_liquid,
+                         const real_type_1d_view_type& aer_total) {
+  
+    real_type a = 1.0;
+    real_type b = gas(mosaic.inh3_g) + gas(mosaic.ihcl_g);
+    real_type c = gas(mosaic.inh3_g)*gas(mosaic.ihcl_g) - Keq_sg(1);
+    real_type xgas = 0.0;
+    quadratic(a, b, c, xgas);
+
+    if (xgas >= electrolyte_solid(mosaic.jnh4cl)) {
+      gas(mosaic.inh3_g) = gas(mosaic.inh3_g) + electrolyte_solid(mosaic.jnh4cl);
+      gas(mosaic.ihcl_g)= gas(mosaic.ihcl_g) + electrolyte_solid(mosaic.jnh4cl);
+      aer_solid(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) - electrolyte_solid(mosaic.jnh4cl);
+      aer_solid(mosaic.icl_a) = aer_solid(mosaic.icl_a) - electrolyte_solid(mosaic.jnh4cl);
+    } else { // degas only xgas amount of nh4cl
+      gas(mosaic.inh3_g) = gas(mosaic.inh3_g)  + xgas;
+      gas(mosaic.ihcl_g)= gas(mosaic.ihcl_g) + xgas;
+      aer_solid(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) - xgas;
+      aer_solid(mosaic.icl_a) = aer_solid(mosaic.icl_a) - xgas;
+    }
+
+    // update jtotal
+    aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+  } // degas_solid_nh4cl
+
 #endif

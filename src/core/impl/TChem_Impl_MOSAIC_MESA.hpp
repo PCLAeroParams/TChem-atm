@@ -188,50 +188,6 @@
   } // do_full_deliquescence
 
   KOKKOS_INLINE_FUNCTION static
-  void calculate_XT(const MosaicModelData<DeviceType>& mosaic,
-                    const real_type_1d_view_type& aer,
-                    real_type &XT) {
-
-    //aer nmol/m^3
-    if ((aer(mosaic.iso4_a) + aer(mosaic.imsa_a)) > 0.0) {
-        XT = (aer(mosaic.inh4_a) + aer(mosaic.ina_a) +
-             2.0 * aer(mosaic.ica_a)) /
-            (aer(mosaic.iso4_a) + 0.5 * aer(mosaic.imsa_a));
-    } else {
-        XT = -1.0;
-    }
-  }// calculate_XT
-
-  KOKKOS_INLINE_FUNCTION static
-  void aerosol_water(const MosaicModelData<DeviceType>& mosaic,
-                     const real_type_1d_view_type& electrolyte,
-                     const real_type& aH2O_a,
-                     const real_type_1d_view_type& molalities,
-                     real_type& jaerosolstate,
-                     real_type& jphase,
-                     real_type& jhyst_leg,
-                     real_type& aerosol_water) {
-
-    for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
-      real_type molality = 0.0;
-      bin_molality(mosaic, je, aH2O_a, molality); // compute aH2O dependent binary molalities  EFFI
-      molalities(je) = molality;
-    }
-
-    real_type dum = 0.0;
-    for (ordinal_type je = 0; je < (mosaic.nsalt + 4); je++) { // include hno3 and hcl in water calculation
-      dum += electrolyte(je) / molalities(je);
-    }
-
-    aerosol_water = dum * 1.0e-9;
-    if (aerosol_water <= 0.0) {
-      jaerosolstate = mosaic.all_solid;
-      jphase = mosaic.jsolid;
-      jhyst_leg = mosaic.jhyst_lo;
-    }
-  } // aerosol_water
-
-  KOKKOS_INLINE_FUNCTION static
   void electrolytes_to_ions(const MosaicModelData<DeviceType>& mosaic,
                             const real_type_1d_view_type& aer,
                             const real_type_1d_view_type& electrolyte,
@@ -663,6 +619,151 @@
       }
     }
   } // ions_to_electrolytes
+
+  KOKKOS_INLINE_FUNCTION static
+  void MESA_dissolve_small_salt(const MosaicModelData<DeviceType>& mosaic,
+                                const ordinal_type& js,
+                                const real_type_1d_view_type& aer_liquid,
+                                const real_type_1d_view_type& aer_solid,
+                                const real_type_1d_view_type& electrolyte_solid) {
+
+    auto sum_nh4_solid = [&]() {
+      return electrolyte_solid(mosaic.jnh4no3)  +
+             electrolyte_solid(mosaic.jnh4cl)   +
+         2.0*electrolyte_solid(mosaic.jnh4so4)  +
+         3.0*electrolyte_solid(mosaic.jlvcite)  +
+             electrolyte_solid(mosaic.jnh4hso4) +
+             electrolyte_solid(mosaic.jnh4msa);
+    };
+
+    auto sum_so4_solid = [&]() {
+      return electrolyte_solid(mosaic.jcaso4)   +
+             electrolyte_solid(mosaic.jna2so4)  +
+         2.0*electrolyte_solid(mosaic.jna3hso4) +
+             electrolyte_solid(mosaic.jnahso4)  +
+             electrolyte_solid(mosaic.jnh4so4)  +
+         2.0*electrolyte_solid(mosaic.jlvcite)  +
+             electrolyte_solid(mosaic.jnh4hso4) +
+             electrolyte_solid(mosaic.jh2so4);
+    };
+
+    auto sum_na_solid = [&]() {
+      return electrolyte_solid(mosaic.jnano3)   +
+             electrolyte_solid(mosaic.jnacl)    +
+         2.0*electrolyte_solid(mosaic.jna2so4)  +
+         3.0*electrolyte_solid(mosaic.jna3hso4) +
+             electrolyte_solid(mosaic.jnahso4)  +
+             electrolyte_solid(mosaic.jnamsa);
+    };
+
+    auto sum_no3_solid = [&]() {
+      return electrolyte_solid(mosaic.jnano3)  +
+         2.0*electrolyte_solid(mosaic.jcano3)  +
+             electrolyte_solid(mosaic.jnh4no3) +
+             electrolyte_solid(mosaic.jhno3);
+    };
+
+    auto sum_cl_solid = [&]() {
+      return electrolyte_solid(mosaic.jnacl)   +
+         2.0*electrolyte_solid(mosaic.jcacl2)  +
+             electrolyte_solid(mosaic.jnh4cl)  +
+             electrolyte_solid(mosaic.jhcl);
+    };
+
+    auto sum_ca_solid = [&]() {
+      return electrolyte_solid(mosaic.jcaso4)  +
+             electrolyte_solid(mosaic.jcano3)  +
+             electrolyte_solid(mosaic.jcacl2)  +
+             electrolyte_solid(mosaic.jcaco3)  +
+             electrolyte_solid(mosaic.jcamsa2);
+    };
+
+    if (js == mosaic.jnh4so4) {
+      aer_liquid(mosaic.inh4_a) += 2.0*electrolyte_solid(js);
+      aer_liquid(mosaic.iso4_a) +=     electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.inh4_a) = sum_nh4_solid();
+      aer_solid(mosaic.iso4_a) = sum_so4_solid();
+
+    } else if (js == mosaic.jlvcite) {
+      aer_liquid(mosaic.inh4_a) += 3.0*electrolyte_solid(js);
+      aer_liquid(mosaic.iso4_a) += 2.0*electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.inh4_a) = sum_nh4_solid();
+      aer_solid(mosaic.iso4_a) = sum_so4_solid();
+
+    } else if (js == mosaic.jnh4hso4) {
+      aer_liquid(mosaic.inh4_a) += electrolyte_solid(js);
+      aer_liquid(mosaic.iso4_a) += electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.inh4_a) = sum_nh4_solid();
+      aer_solid(mosaic.iso4_a) = sum_so4_solid();
+
+    } else if (js == mosaic.jna2so4) {
+      aer_liquid(mosaic.ina_a)  += 2.0*electrolyte_solid(js);
+      aer_liquid(mosaic.iso4_a) +=     electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.ina_a)  = sum_na_solid();
+      aer_solid(mosaic.iso4_a) = sum_so4_solid();
+
+    } else if (js == mosaic.jna3hso4) {
+      aer_liquid(mosaic.ina_a)  += 3.0*electrolyte_solid(js);
+      aer_liquid(mosaic.iso4_a) += 2.0*electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.ina_a)  = sum_na_solid();
+      aer_solid(mosaic.iso4_a) = sum_so4_solid();
+
+    } else if (js == mosaic.jnahso4) {
+      aer_liquid(mosaic.ina_a)  += electrolyte_solid(js);
+      aer_liquid(mosaic.iso4_a) += electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.ina_a)  = sum_na_solid();
+      aer_solid(mosaic.iso4_a) = sum_so4_solid();
+
+    } else if (js == mosaic.jnh4no3) {
+      aer_liquid(mosaic.inh4_a) += electrolyte_solid(js);
+      aer_liquid(mosaic.ino3_a) += electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.inh4_a) = sum_nh4_solid();
+      aer_solid(mosaic.ino3_a) = sum_no3_solid();
+
+    } else if (js == mosaic.jnh4cl) {
+      aer_liquid(mosaic.inh4_a) += electrolyte_solid(js);
+      aer_liquid(mosaic.icl_a)  += electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.inh4_a) = sum_nh4_solid();
+      aer_solid(mosaic.icl_a)  = sum_cl_solid();
+
+    } else if (js == mosaic.jnano3) {
+      aer_liquid(mosaic.ina_a)  += electrolyte_solid(js);
+      aer_liquid(mosaic.ino3_a) += electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.ina_a)  = sum_na_solid();
+      aer_solid(mosaic.ino3_a) = sum_no3_solid();
+
+    } else if (js == mosaic.jnacl) {
+      aer_liquid(mosaic.ina_a) += electrolyte_solid(js);
+      aer_liquid(mosaic.icl_a) += electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.ina_a) = sum_na_solid();
+      aer_solid(mosaic.icl_a) = sum_cl_solid();
+
+    } else if (js == mosaic.jcano3) {
+      aer_liquid(mosaic.ica_a)  +=     electrolyte_solid(js);
+      aer_liquid(mosaic.ino3_a) += 2.0*electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.ica_a)  = sum_ca_solid();
+      aer_solid(mosaic.ino3_a) = sum_no3_solid();
+
+    } else if (js == mosaic.jcacl2) {
+      aer_liquid(mosaic.ica_a) +=     electrolyte_solid(js);
+      aer_liquid(mosaic.icl_a) += 2.0*electrolyte_solid(js);
+      electrolyte_solid(js) = 0.0;
+      aer_solid(mosaic.ica_a) = sum_ca_solid();
+      aer_solid(mosaic.icl_a) = sum_cl_solid();
+    }
+
+  } // MESA_dissolve_small_salt
 
   KOKKOS_INLINE_FUNCTION static
   void MESA_estimate_eleliquid(

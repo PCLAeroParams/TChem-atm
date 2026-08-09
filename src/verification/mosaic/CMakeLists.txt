@@ -56,6 +56,7 @@ add_executable(${DRIVER_NAME}.x
                absorb_tiny_nh4cl.cpp
                absorb_tiny_nh4no3.cpp
                degas_solid_nh4no3.cpp
+               MESA_estimate_eleliquid.cpp
                degas_solid_nh4cl.cpp
  )
 
@@ -118,6 +119,7 @@ SET(TEST_LIST
     absorb_tiny_nh4cl_input_ts_0
     absorb_tiny_nh4no3_input_ts_0
     degas_solid_nh4no3_input_ts_0
+    MESA_estimate_eleliquid_input_ts_0
     degas_solid_nh4cl_input_ts_0
 )
 
@@ -175,6 +177,7 @@ SET(TEST_BASELINE
     absorb_tiny_nh4cl_output_ts_0
     absorb_tiny_nh4no3_output_ts_0
     degas_solid_nh4no3_output_ts_0
+    MESA_estimate_eleliquid_output_ts_0
     degas_solid_nh4cl_output_ts_0
 )
 
@@ -233,6 +236,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # absorb_tiny_nh4cl_output_ts_0
     ${DEFAULT_TOL} # absorb_tiny_nh4no3_output_ts_0
     ${DEFAULT_TOL} # degas_solid_nh4no3_output_ts_0
+    ${DEFAULT_TOL} # MESA_estimate_eleliquid_output_ts_0
     ${DEFAULT_TOL} # degas_solid_nh4cl_output_ts_0
 )
 

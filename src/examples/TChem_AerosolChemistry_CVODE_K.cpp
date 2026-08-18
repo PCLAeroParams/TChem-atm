@@ -282,6 +282,8 @@ int main(int argc, char *argv[]) {
     udata.batchSize=number_of_equations;
     udata.kmcd=kmcd;
     udata.amcd=amcd;
+
+    
     // Create vector with the initial condition
     const sunrealtype T0 = SUN_RCONST(tbeg);
 

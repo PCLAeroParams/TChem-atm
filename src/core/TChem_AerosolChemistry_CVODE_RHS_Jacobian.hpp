@@ -106,8 +106,10 @@ struct TChemAerosolChemistryRHS {
     auto pw = real_type_1d_view_type(wptr, per_team_extent);
     wptr +=per_team_extent;
     // Resolve the per-batch sentinel: -1 means track all particles.
+    // Check unallocated or -1 (default, all particles in a system)
     const ordinal_type n_part_i =
-        n_particles_track(i) < 0 ? amcd.nParticles : n_particles_track(i);
+        (n_particles_track.span() == 0 || n_particles_track(i) < 0) 
+        ? amcd.nParticles : n_particles_track(i);
     TChem::Impl::Aerosol_RHS<real_type, device_type>
     ::team_invoke(member,
     temperature(i), pressure(i), number_conc_at_i, vals_at_i, constYs,

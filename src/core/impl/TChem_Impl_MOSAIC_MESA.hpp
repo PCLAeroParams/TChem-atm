@@ -334,7 +334,7 @@
     // initialize moles of ions depending on the sulfate domain
     if (icase == 1) {
       na(mosaic.ja_hso4) = 0.0;
-      na(mosaic.ja_no3) = aer_curr(mosaic.iso4_a);
+      na(mosaic.ja_so4) = aer_curr(mosaic.iso4_a);
       na(mosaic.ja_no3) = aer_curr(mosaic.ino3_a);
       na(mosaic.ja_cl)  = aer_curr(mosaic.icl_a);
       na(mosaic.ja_msa) = aer_curr(mosaic.imsa_a);
@@ -1046,5 +1046,133 @@
     }
 
   } // MESA_estimate_eleliquid
+
+  KOKKOS_INLINE_FUNCTION static
+  void MESA_flux_salt(const MosaicModelData<DeviceType>& mosaic,
+      const real_type_1d_view_type& aer_liquid,
+      const real_type_1d_view_type& aer_solid,
+      const real_type_1d_view_type& aer_total,
+      const real_type_1d_view_type& electrolyte_solid,
+      const real_type_1d_view_type& electrolyte_liquid,
+      const real_type_1d_view_type& electrolyte_total,
+      const real_type_1d_view_type& Keq_sl,
+      const real_type_1d_view_type& Keq_ll,
+      const real_type_1d_view_type& store,
+      const real_type_1d_view_type& na,
+      const real_type_1d_view_type& nc,
+      const real_type_1d_view_type& xeq_a,
+      const real_type_1d_view_type& xeq_c,
+      const real_type_1d_view_type& na_Ma,
+      const real_type_1d_view_type& nc_Mc,
+      real_type& electrolyte_sum_liq,
+      const real_type_1d_view_type& epercent_liquid,    // nelectrolyte
+      real_type& aer_sum,
+      const real_type_1d_view_type& aer_percent,        // naer
+      // work arrays for compute_activities
+      const real_type_1d_view_type& molalities,         // nelectrolyte
+      const real_type_1d_view_type& xmol,              // nelectrolyte
+      const real_type_1d_view_type& ma,                 // nanion
+      const real_type_1d_view_type& mc,                 // ncation
+      const real_type_1d_view_type& log_gam,            // nelectrolyte
+      const real_type_2d_view_type& log_gamZ,           // (nelectrolyte, nelectrolyte)
+      const real_type_1d_view_type& gam,               // nelectrolyte
+      const real_type_1d_view_type& activity,           // nelectrolyte
+      // work array for MESA_estimate_eleliquid
+      const real_type_1d_view_type& eleliquid,          // nelectrolyte
+      // phase / state scalars (in/out)
+      real_type& jaerosolstate,
+      real_type& jphase,
+      real_type& jhyst_leg,
+      real_type& aH2O_a,
+      // salt presence flags (integer, nsalt) — set by MESA_PTC before calling this
+      const real_type_1d_view_type& jsalt_present,
+      // output arrays
+      const real_type_1d_view_type& flux_sl,            // nsalt
+      const real_type_1d_view_type& phi_salt,           // nsalt
+      const real_type_1d_view_type& sat_ratio,          // nsalt
+      const real_type_1d_view_type& frac_salt_solid,    // nsalt
+      const real_type_1d_view_type& frac_salt_liq,      // nsalt
+      real_type& electrolyte_sum_solid) {
+
+
+    // compute activitie and water content
+    ions_to_electrolytes(mosaic, mosaic.jliquid,
+                         aer_liquid, aer_solid, aer_liquid, aer_total,
+                         store, electrolyte_liquid, electrolyte_solid, electrolyte_liquid,
+                         na, nc, xeq_a, xeq_c, na_Ma, nc_Mc,
+                         electrolyte_sum_liq, epercent_liquid, aer_sum, aer_percent);
+
+    compute_activities(mosaic, molalities, xmol, aer_liquid, ma, mc,
+                       Keq_ll, electrolyte_solid, electrolyte_liquid, electrolyte_total,
+                       log_gam, log_gamZ, gam, activity,
+                       jaerosolstate, jphase, jhyst_leg, aH2O_a);
+    real_type water_a = 0.0;
+    aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
+
+    activity(mosaic.jna3hso4) = 0.0;
+
+    if (water_a <= 0.0) {
+      for (ordinal_type js = 0; js < mosaic.nsalt; ++js) {
+        flux_sl(js) = 0.0;
+      }
+      return;
+    }
+
+    MESA_estimate_eleliquid(mosaic, aer_liquid, eleliquid, electrolyte_sum_liq,
+                            epercent_liquid, na, nc, xeq_a, xeq_c, na_Ma, nc_Mc, store);
+
+    const real_type calcium = aer_liquid(mosaic.ica_a);
+
+    // calculate % electrolyte composition in the solid and liquid phases
+    real_type sum_salt = 0.0;
+    for (ordinal_type js = 0; js < mosaic.nsalt; ++js) {
+      sum_salt += electrolyte_solid(js);
+    }
+    electrolyte_sum_solid = sum_salt;
+    if (sum_salt == 0.0) sum_salt = 1.0;
+    for (ordinal_type js = 0; js < mosaic.nsalt; ++js) {
+      frac_salt_solid(js) = electrolyte_solid(js) / sum_salt;
+      frac_salt_liq(js)   = epercent_liquid(js) / 100.0;
+    }
+
+    // compute salt fluxes
+    for (ordinal_type js = 0; js < mosaic.nsalt; ++js) {
+      // compute new saturation ratio
+      sat_ratio(js) = activity(js) / Keq_sl(js);
+      // compute relative driving force
+      phi_salt(js)  = (sat_ratio(js) - 1.0) / max(sat_ratio(js), 1.0);
+
+      // check if too little solid-phase salt is trying to dissolve
+      if (sat_ratio(js) < 1.0 &&
+          frac_salt_solid(js) < 0.01 &&
+          frac_salt_solid(js) > 0.0) {
+        MESA_dissolve_small_salt(mosaic, js, aer_liquid, aer_solid, electrolyte_solid);
+        MESA_estimate_eleliquid(mosaic, aer_liquid, eleliquid, electrolyte_sum_liq,
+                                epercent_liquid, na, nc, xeq_a, xeq_c, na_Ma, nc_Mc, store);
+        sat_ratio(js) = activity(js) / Keq_sl(js);
+      }
+
+      // compute flux
+      flux_sl(js) = sat_ratio(js) - 1.0;
+
+      // apply Heaviside function
+      if ((sat_ratio(js) < 1.0 && electrolyte_solid(js) == 0.0) ||
+          (calcium > 0.0 && frac_salt_liq(js) < 0.01) ||
+          (calcium > 0.0 && jsalt_present(js) == 0)) {
+        flux_sl(js)  = 0.0;
+        phi_salt(js) = 0.0;
+      }
+    }
+
+    // force cacl2 and cano3 fluxes to zero
+    sat_ratio(mosaic.jcano3) = 1.0;
+    phi_salt(mosaic.jcano3)  = 0.0;
+    flux_sl(mosaic.jcano3)   = 0.0;
+
+    sat_ratio(mosaic.jcacl2) = 1.0;
+    phi_salt(mosaic.jcacl2)  = 0.0;
+    flux_sl(mosaic.jcacl2)   = 0.0;
+
+  } // MESA_flux_salt
 
 #endif

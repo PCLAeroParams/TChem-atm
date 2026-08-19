@@ -52,7 +52,6 @@ void MESA_flux_salt(Ensemble *ensemble) {
     real_type_1d_view epercent_liquid("epercent_liquid", mmd.nelectrolyte);
     verification::convert_1d_vector_to_1d_view_device(epercent_liquid_arr, epercent_liquid);
 
-    // jsalt_present is an integer array — convert from real YAML values
     real_type_1d_view jsalt_present("jsalt_present", mmd.nsalt);
     {
       auto jsalt_present_h = Kokkos::create_mirror_view(jsalt_present);
@@ -62,7 +61,6 @@ void MESA_flux_salt(Ensemble *ensemble) {
       Kokkos::deep_copy(jsalt_present, jsalt_present_h);
     }
 
-    // Phase/state scalars stored as 1-element views for lambda capture
     real_type_1d_view jaerosolstate("jaerosolstate", 1);
     verification::convert_1d_vector_to_1d_view_device(jaerosolstate_arr, jaerosolstate);
 
@@ -84,7 +82,6 @@ void MESA_flux_salt(Ensemble *ensemble) {
     real_type_2d_view log_gamZ("log_gamZ", mmd.nelectrolyte, mmd.nelectrolyte);
     verification::convert_1d_vector_to_2d_view_device(log_gamZ_arr, log_gamZ);
 
-    // Work arrays (scratch) — zeroed on allocation
     real_type_1d_view store("store", mmd.naer);
     real_type_1d_view na("na", mmd.nanion);
     real_type_1d_view nc("nc", mmd.ncation);
@@ -102,12 +99,10 @@ void MESA_flux_salt(Ensemble *ensemble) {
     real_type_1d_view activity("activity", mmd.nelectrolyte);
     real_type_1d_view eleliquid("eleliquid", mmd.nelectrolyte);
 
-    // Scalar outputs as 1-element views
     real_type_1d_view electrolyte_sum_liq("electrolyte_sum_liq", 1);
     real_type_1d_view aer_sum("aer_sum", 1);
     real_type_1d_view electrolyte_sum_solid("electrolyte_sum_solid", 1);
 
-    // Output salt arrays
     real_type_1d_view flux_sl("flux_sl", mmd.nsalt);
     real_type_1d_view phi_salt("phi_salt", mmd.nsalt);
     real_type_1d_view sat_ratio("sat_ratio", mmd.nsalt);
@@ -167,7 +162,6 @@ void MESA_flux_salt(Ensemble *ensemble) {
         electrolyte_sum_solid(0));
     });
 
-    // Collect outputs
     std::vector<real_type> aer_liquid_out(mmd.naer);
     std::vector<real_type> aer_solid_out(mmd.naer);
     std::vector<real_type> aer_total_out(mmd.naer);
@@ -198,7 +192,6 @@ void MESA_flux_salt(Ensemble *ensemble) {
     verification::convert_1d_view_device_to_1d_vector(jhyst_leg, jhyst_leg_out);
     verification::convert_1d_view_device_to_1d_vector(aH2O_a, aH2O_a_out);
 
-    // jsalt_present is integer — convert back to real for output
     std::vector<real_type> jsalt_present_out(mmd.nsalt);
     {
       auto jsalt_present_h = Kokkos::create_mirror_view(jsalt_present);
@@ -208,7 +201,6 @@ void MESA_flux_salt(Ensemble *ensemble) {
       }
     }
 
-    // Keq and log_gamZ are inputs that don't change, but must appear in output
     std::vector<real_type> Keq_ll_out(mmd.nrxn_aer_ll);
     std::vector<real_type> Keq_sl_out(mmd.nsalt);
     std::vector<real_type> log_gamZ_out(mmd.nelectrolyte * mmd.nelectrolyte);

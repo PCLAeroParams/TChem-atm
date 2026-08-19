@@ -1049,51 +1049,45 @@
 
   KOKKOS_INLINE_FUNCTION static
   void MESA_flux_salt(const MosaicModelData<DeviceType>& mosaic,
-      const real_type_1d_view_type& aer_liquid,
-      const real_type_1d_view_type& aer_solid,
-      const real_type_1d_view_type& aer_total,
-      const real_type_1d_view_type& electrolyte_solid,
-      const real_type_1d_view_type& electrolyte_liquid,
-      const real_type_1d_view_type& electrolyte_total,
-      const real_type_1d_view_type& Keq_sl,
-      const real_type_1d_view_type& Keq_ll,
-      const real_type_1d_view_type& store,
-      const real_type_1d_view_type& na,
-      const real_type_1d_view_type& nc,
-      const real_type_1d_view_type& xeq_a,
-      const real_type_1d_view_type& xeq_c,
-      const real_type_1d_view_type& na_Ma,
-      const real_type_1d_view_type& nc_Mc,
-      real_type& electrolyte_sum_liq,
-      const real_type_1d_view_type& epercent_liquid,    // nelectrolyte
-      real_type& aer_sum,
-      const real_type_1d_view_type& aer_percent,        // naer
-      // work arrays for compute_activities
-      const real_type_1d_view_type& molalities,         // nelectrolyte
-      const real_type_1d_view_type& xmol,              // nelectrolyte
-      const real_type_1d_view_type& ma,                 // nanion
-      const real_type_1d_view_type& mc,                 // ncation
-      const real_type_1d_view_type& log_gam,            // nelectrolyte
-      const real_type_2d_view_type& log_gamZ,           // (nelectrolyte, nelectrolyte)
-      const real_type_1d_view_type& gam,               // nelectrolyte
-      const real_type_1d_view_type& activity,           // nelectrolyte
-      // work array for MESA_estimate_eleliquid
-      const real_type_1d_view_type& eleliquid,          // nelectrolyte
-      // phase / state scalars (in/out)
-      real_type& jaerosolstate,
-      real_type& jphase,
-      real_type& jhyst_leg,
-      real_type& aH2O_a,
-      // salt presence flags (integer, nsalt) — set by MESA_PTC before calling this
-      const real_type_1d_view_type& jsalt_present,
-      // output arrays
-      const real_type_1d_view_type& flux_sl,            // nsalt
-      const real_type_1d_view_type& phi_salt,           // nsalt
-      const real_type_1d_view_type& sat_ratio,          // nsalt
-      const real_type_1d_view_type& frac_salt_solid,    // nsalt
-      const real_type_1d_view_type& frac_salt_liq,      // nsalt
-      real_type& electrolyte_sum_solid) {
-
+                      const real_type_1d_view_type& aer_liquid,
+                      const real_type_1d_view_type& aer_solid,
+                      const real_type_1d_view_type& aer_total,
+                      const real_type_1d_view_type& electrolyte_solid,
+                      const real_type_1d_view_type& electrolyte_liquid,
+                      const real_type_1d_view_type& electrolyte_total,
+                      const real_type_1d_view_type& Keq_sl,
+                      const real_type_1d_view_type& Keq_ll,
+                      const real_type_1d_view_type& store,
+                      const real_type_1d_view_type& na,
+                      const real_type_1d_view_type& nc,
+                      const real_type_1d_view_type& xeq_a,
+                      const real_type_1d_view_type& xeq_c,
+                      const real_type_1d_view_type& na_Ma,
+                      const real_type_1d_view_type& nc_Mc,
+                      real_type& electrolyte_sum_liq,
+                      const real_type_1d_view_type& epercent_liquid,
+                      real_type& aer_sum,
+                      const real_type_1d_view_type& aer_percent,
+                      const real_type_1d_view_type& molalities,
+                      const real_type_1d_view_type& xmol,
+                      const real_type_1d_view_type& ma,
+                      const real_type_1d_view_type& mc,
+                      const real_type_1d_view_type& log_gam,
+                      const real_type_2d_view_type& log_gamZ,
+                      const real_type_1d_view_type& gam,
+                      const real_type_1d_view_type& activity,
+                      const real_type_1d_view_type& eleliquid,
+                      real_type& jaerosolstate,
+                      real_type& jphase,
+                      real_type& jhyst_leg,
+                      real_type& aH2O_a,
+                      const real_type_1d_view_type& jsalt_present,
+                      const real_type_1d_view_type& flux_sl,
+                      const real_type_1d_view_type& phi_salt,
+                      const real_type_1d_view_type& sat_ratio,
+                      const real_type_1d_view_type& frac_salt_solid,
+                      const real_type_1d_view_type& frac_salt_liq,
+                      real_type& electrolyte_sum_solid) {
 
     // compute activitie and water content
     ions_to_electrolytes(mosaic, mosaic.jliquid,

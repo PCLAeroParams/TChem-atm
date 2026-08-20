@@ -1061,47 +1061,47 @@
             const real_type_1d_view_type& Keq_sl,
             const real_type_1d_view_type& Keq_ll,
             const real_type_2d_view_type& log_gamZ,
-           const real_type_1d_view_type& MDRH_T,
-           real_type& jaerosolstate,
-           real_type& jphase,
-           real_type& jhyst_leg,
-           real_type& aH2O_a,
-           real_type& mass_dry_a,
-           real_type& vol_dry_a,
-           real_type& mass_wet_a,
-           real_type& vol_wet_a,
-           real_type& growth_factor,
-           const real_type_1d_view_type& jsalt_present,  // nsalt
-           const real_type_1d_view_type&    hsalt,           // nsalt
-           const real_type_1d_view_type&    phi_salt,        // nsalt
-           const real_type_1d_view_type&    phi_salt_old,    // nsalt
-           const real_type_1d_view_type&    phi_bar,         // nsalt
-           const real_type_1d_view_type&    alpha_salt,      // nsalt
-           const real_type_1d_view_type&    sat_ratio,       // nsalt
-           const real_type_1d_view_type&    flux_sl,         // nsalt
-           const real_type_1d_view_type&    frac_salt_solid, // nsalt
-           const real_type_1d_view_type&    frac_salt_liq,   // nsalt
-           const real_type_1d_view_type&    eleliquid,       // nelectrolyte
-           const real_type_1d_view_type&    store,           // naer
-           const real_type_1d_view_type&    na,              // nanion
-           const real_type_1d_view_type&    nc,              // ncation
-           const real_type_1d_view_type&    xeq_a,           // nanion
-           const real_type_1d_view_type&    xeq_c,           // ncation
-           const real_type_1d_view_type&    na_Ma,           // nanion
-           const real_type_1d_view_type&    nc_Mc,           // ncation
-           const real_type_1d_view_type&    aer_percent,     // naer
-           const real_type_1d_view_type&    molalities,      // nelectrolyte
-           const real_type_1d_view_type&    xmol,            // nelectrolyte
-           const real_type_1d_view_type&    ma,              // nanion
-           const real_type_1d_view_type&    mc_view,         // ncation
-           const real_type_1d_view_type&    log_gam,         // nelectrolyte
-           const real_type_1d_view_type&    gam,             // nelectrolyte
-           const real_type_1d_view_type&    activity,        // nelectrolyte
-           const real_type_1d_view_type&    tau_p,           // nsalt
-           const real_type_1d_view_type&    tau_d,           // nsalt
-           real_type& electrolyte_sum_solid,
-           real_type& electrolyte_sum_liq,
-           real_type& aer_sum) {
+            const real_type_1d_view_type& MDRH_T,
+            real_type& jaerosolstate,
+            real_type& jphase,
+            real_type& jhyst_leg,
+            real_type& aH2O_a,
+            real_type& mass_dry_a,
+            real_type& vol_dry_a,
+            real_type& mass_wet_a,
+            real_type& vol_wet_a,
+            real_type& growth_factor,
+            const real_type_1d_view_type& jsalt_present,  // nsalt
+            const real_type_1d_view_type&    hsalt,           // nsalt
+            const real_type_1d_view_type&    phi_salt,        // nsalt
+            const real_type_1d_view_type&    phi_salt_old,    // nsalt
+            const real_type_1d_view_type&    phi_bar,         // nsalt
+            const real_type_1d_view_type&    alpha_salt,      // nsalt
+            const real_type_1d_view_type&    sat_ratio,       // nsalt
+            const real_type_1d_view_type&    flux_sl,         // nsalt
+            const real_type_1d_view_type&    frac_salt_solid, // nsalt
+            const real_type_1d_view_type&    frac_salt_liq,   // nsalt
+            const real_type_1d_view_type&    eleliquid,       // nelectrolyte
+            const real_type_1d_view_type&    store,           // naer
+            const real_type_1d_view_type&    na,              // nanion
+            const real_type_1d_view_type&    nc,              // ncation
+            const real_type_1d_view_type&    xeq_a,           // nanion
+            const real_type_1d_view_type&    xeq_c,           // ncation
+            const real_type_1d_view_type&    na_Ma,           // nanion
+            const real_type_1d_view_type&    nc_Mc,           // ncation
+            const real_type_1d_view_type&    aer_percent,     // naer
+            const real_type_1d_view_type&    molalities,      // nelectrolyte
+            const real_type_1d_view_type&    xmol,            // nelectrolyte
+            const real_type_1d_view_type&    ma,              // nanion
+            const real_type_1d_view_type&    mc_view,         // ncation
+            const real_type_1d_view_type&    log_gam,         // nelectrolyte
+            const real_type_1d_view_type&    gam,             // nelectrolyte
+            const real_type_1d_view_type&    activity,        // nelectrolyte
+            const real_type_1d_view_type&    tau_p,           // nsalt
+            const real_type_1d_view_type&    tau_d,           // nsalt
+            real_type& electrolyte_sum_solid,
+            real_type& electrolyte_sum_liq,
+            real_type& aer_sum) {
 
     auto jsalt_index_view = mosaic.jsalt_index.template view<DeviceType>();
     auto jsulf_poor_view  = mosaic.jsulf_poor.template view<DeviceType>();

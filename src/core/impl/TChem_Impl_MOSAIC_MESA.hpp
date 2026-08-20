@@ -1047,4 +1047,259 @@
 
   } // MESA_estimate_eleliquid
 
+  KOKKOS_INLINE_FUNCTION static
+  void MESA_PTC(const MosaicModelData<DeviceType>& mosaic,
+                const real_type_1d_view_type& aer_liquid,
+                const real_type_1d_view_type& aer_solid,
+                const real_type_1d_view_type& aer_total,
+                const real_type_1d_view_type& electrolyte_solid,
+                const real_type_1d_view_type& electrolyte_liquid,
+                const real_type_1d_view_type& electrolyte_total,
+                const real_type_1d_view_type& epercent_liquid,
+                const real_type_1d_view_type& epercent_solid,
+                const real_type_1d_view_type& epercent_total,
+                const real_type_1d_view_type& Keq_sl,
+                const real_type_1d_view_type& Keq_ll,
+                const real_type_2d_view_type& log_gamZ,
+                real_type& jaerosolstate,
+                real_type& jphase,
+                real_type& jhyst_leg,
+                real_type& aH2O_a,
+                real_type& mass_dry_a,
+                real_type& vol_dry_a,
+                real_type& mass_wet_a,
+                real_type& vol_wet_a,
+                real_type& growth_factor,
+                real_type& electrolyte_sum_solid,
+                const real_type_1d_view_type& jsalt_present,
+                const real_type_1d_view_type& hsalt,
+                const real_type_1d_view_type& phi_salt,
+                const real_type_1d_view_type& phi_salt_old,
+                const real_type_1d_view_type& phi_bar,
+                const real_type_1d_view_type& alpha_salt,
+                const real_type_1d_view_type& sat_ratio,
+                const real_type_1d_view_type& flux_sl,
+                const real_type_1d_view_type& frac_salt_solid,
+                const real_type_1d_view_type& frac_salt_liq,
+                const real_type_1d_view_type& eleliquid,
+                const real_type_1d_view_type& store,
+                const real_type_1d_view_type& na,
+                const real_type_1d_view_type& nc,
+                const real_type_1d_view_type& xeq_a,
+                const real_type_1d_view_type& xeq_c,
+                const real_type_1d_view_type& na_Ma,
+                const real_type_1d_view_type& nc_Mc,
+                const real_type_1d_view_type& aer_percent,
+                const real_type_1d_view_type& molalities,
+                const real_type_1d_view_type& xmol,
+                const real_type_1d_view_type& ma,
+                const real_type_1d_view_type& mc_view,
+                const real_type_1d_view_type& log_gam,
+                const real_type_1d_view_type& gam,
+                const real_type_1d_view_type& activity,
+                const real_type_1d_view_type& tau_p,
+                const real_type_1d_view_type& tau_d) {
+
+    auto mw_aer_mac     = mosaic.mw_aer_mac.template view<DeviceType>();
+    auto mw_electrolyte = mosaic.mw_electrolyte.template view<DeviceType>();
+    auto dens_aer_mac   = mosaic.dens_aer_mac.template view<DeviceType>();
+
+    // initialize
+    for (int js = 0; js < mosaic.nsalt; ++js) {
+      hsalt(js)     = 0.0;
+      sat_ratio(js) = 0.0;
+      phi_salt(js)  = 0.0;
+      flux_sl(js)   = 0.0;
+      jsalt_present(js) = (epercent_total(js) > 1.0) ? 1.0 : 0.0;
+    }
+
+    real_type aer_H = (2.0 * aer_total(mosaic.iso4_a) +
+                             aer_total(mosaic.ino3_a)  +
+                             aer_total(mosaic.icl_a)   +
+                             aer_total(mosaic.imsa_a)  +
+                       2.0 * aer_total(mosaic.ico3_a)) -
+                      (2.0 * aer_total(mosaic.ica_a)  +
+                             aer_total(mosaic.ina_a)   +
+                             aer_total(mosaic.inh4_a));
+    aer_H = max(aer_H, 0.0);
+
+    real_type mass_dry_a_loc = 0.0;
+    real_type vol_dry_a_loc  = 0.0;
+    for (int iaer = 0; iaer < mosaic.naer; ++iaer) {
+      mass_dry_a_loc += aer_total(iaer) * mw_aer_mac(iaer);
+      vol_dry_a_loc  += aer_total(iaer) * mw_aer_mac(iaer) / dens_aer_mac(iaer);
+    }
+    mass_dry_a_loc = (mass_dry_a_loc + aer_H) * 1.0e-15;
+    vol_dry_a_loc  = (vol_dry_a_loc  + aer_H) * 1.0e-15;
+    mass_dry_a = mass_dry_a_loc;
+    vol_dry_a  = vol_dry_a_loc;
+
+    real_type mass_dry_salt = 0.0;
+    for (int je = 0; je < mosaic.nsalt; ++je) {
+      mass_dry_salt += electrolyte_total(je) * mw_electrolyte(je) * 1.0e-15;
+    }
+
+    real_type electrolyte_sum_liq_scratch = 0.0;
+    real_type aer_sum_scratch             = 0.0;
+
+    real_type water_a = 0.0;
+    aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
+
+    // commented code from MOSAIC source
+    // !      call MESA_check_complete_dissolution(ibin,
+    // !      &                                     mdissolved,
+    // !     &                                     iconverge_flux)
+    // !      if(mdissolved .eq. mYES .or. iconverge_flux .eq. mYES)then
+    // !        return
+    // !      endif
+
+    // begin pseudo time continuation loop
+    for (int itdum = 1; itdum <= mosaic.Nmax_MESA; ++itdum) {
+
+      // compute new salt fluxes
+      MESA_flux_salt(mosaic,
+        aer_liquid, aer_solid, aer_total,
+        electrolyte_solid, electrolyte_liquid, electrolyte_total,
+        Keq_sl, Keq_ll,
+        store, na, nc, xeq_a, xeq_c, na_Ma, nc_Mc,
+        electrolyte_sum_liq_scratch,
+        epercent_liquid, aer_sum_scratch, aer_percent,
+        molalities, xmol, ma, mc_view, log_gam, log_gamZ,
+        gam, activity, eleliquid,
+        jaerosolstate, jphase, jhyst_leg, aH2O_a,
+        jsalt_present,
+        flux_sl, phi_salt, sat_ratio,
+        frac_salt_solid, frac_salt_liq,
+        electrolyte_sum_solid);
+
+      // check convergence
+      real_type iconverge_mass = 0.0;
+      real_type iconverge_flux = 0.0;
+      real_type idissolved     = 0.0;
+      MESA_convergence_criterion(mosaic,
+        electrolyte_solid, mass_dry_salt,
+        phi_salt, flux_sl, aer_solid,
+        iconverge_mass, iconverge_flux, idissolved);
+
+      if (iconverge_mass == 1) {
+        jaerosolstate = static_cast<real_type>(mosaic.all_solid);
+        adjust_solid_aerosol(mosaic,
+          aer_solid, aer_liquid, aer_total,
+          electrolyte_solid, electrolyte_liquid, electrolyte_total,
+          epercent_solid, epercent_liquid, epercent_total,
+          water_a, jphase, jhyst_leg);
+        growth_factor = 1.0;
+        mass_wet_a = mass_dry_a_loc;
+        vol_wet_a  = vol_dry_a_loc;
+        return;
+
+      } else if (iconverge_flux == 1) {
+        jaerosolstate = static_cast<real_type>(mosaic.mixed);
+        mass_wet_a = mass_dry_a_loc + water_a * 1.0e-3;
+        vol_wet_a  = vol_dry_a_loc  + water_a * 1.0e-3; // cc(aer)/cc(air) or m^3/m^3(air)
+        if (mass_dry_a_loc > 0.0) {
+          growth_factor = mass_wet_a / mass_dry_a_loc; // mass growth factor
+        } else {
+          growth_factor = 1.0;
+        }
+
+        if (idissolved == 1) {
+          jaerosolstate = static_cast<real_type>(mosaic.all_liquid);
+          // from MOSAIC source:
+          // jhyst_leg(ibin) = jhyst_up  ! ! do this later (to avoid tripping kelvin iterations)
+        } else {
+          jaerosolstate = static_cast<real_type>(mosaic.mixed);
+          jhyst_leg = static_cast<real_type>(mosaic.jhyst_lo);
+        }
+
+        // calculate epercent(jsolid) composition in mixed-phase aerosol
+        real_type sum_dum = 0.0;
+        for (int je = 0; je < mosaic.nelectrolyte; ++je) {
+          if (electrolyte_solid(je) < 0.0) electrolyte_solid(je) = 0.0;
+          sum_dum += electrolyte_solid(je);
+        }
+        electrolyte_sum_solid = sum_dum;
+        if (sum_dum == 0.0) sum_dum = 1.0;
+        for (int je = 0; je < mosaic.nelectrolyte; ++je) {
+          epercent_solid(je) = 100.0 * electrolyte_solid(je) / sum_dum;
+        }
+        return;
+      }
+
+      // calculate hsalt(js) and time step
+      real_type hsalt_min = 1.0e25;
+      for (int js = 0; js < mosaic.nsalt; ++js) {
+        const real_type phi_prod = phi_salt(js) * phi_salt_old(js);
+
+        if (itdum > 1 && phi_prod > 0.0) {
+          phi_bar(js) = (abs(phi_salt(js)) - abs(phi_salt_old(js))) /
+                         alpha_salt(js); 
+        } else {
+          phi_bar(js) = 0.0; // oscillating, or phi_salt and/or phi_salt_old may be zero
+        }
+
+        if (phi_bar(js) < 0.0) { // good. phi getting lower. maybe able to take bigger alphas
+          phi_bar(js) = max(phi_bar(js), (real_type)-10.0);
+          const real_type alpha_fac = 3.0 * exp(phi_bar(js));
+          alpha_salt(js) = min(alpha_fac * abs(phi_salt(js)), (real_type)0.9);
+        } else if (phi_bar(js) > 0.0) { // bad - phi is getting bigger. so be conservative with alpha
+          alpha_salt(js) = min(abs(phi_salt(js)), (real_type)0.5);
+        } else { // very bad - phi is oscillating. be very conservative
+          alpha_salt(js) = min(abs(phi_salt(js)) / 3.0, (real_type)0.5);
+        }
+
+        phi_salt_old(js) = phi_salt(js);
+
+        if (flux_sl(js) > 0.0) {
+          tau_p(js) = eleliquid(js) / flux_sl(js); // precipitation time scale
+          if (tau_p(js) == 0.0) {
+            hsalt(js)    = 1.e25;
+            flux_sl(js)  = 0.0;
+            phi_salt(js) = 0.0;
+          } else {
+            hsalt(js) = alpha_salt(js) * tau_p(js);
+          }
+        } else if (flux_sl(js) < 0.0) {
+          tau_p(js) = -eleliquid(js)         / flux_sl(js); // precipitation time scale
+          tau_d(js) = -electrolyte_solid(js) / flux_sl(js); // dissolution time scale
+          if (tau_p(js) == 0.0) {
+            hsalt(js) = alpha_salt(js) * tau_d(js);
+          } else {
+            hsalt(js) = alpha_salt(js) * min(tau_p(js), tau_d(js));
+          }
+        } else {
+          hsalt(js) = 1.0e25;
+        }
+
+        hsalt_min = min(hsalt(js), hsalt_min);
+      }
+
+      // integrate electrolyte_solid
+      for (int js = 0; js < mosaic.nsalt; ++js) {
+        electrolyte_solid(js) += hsalt(js) * flux_sl(js);
+      }
+
+      // compute aer_solid from electrolyte_solid
+      electrolytes_to_ions(mosaic, aer_solid, electrolyte_solid,
+                           aer_sum_scratch, aer_percent);
+
+      // compute new electrolyte_liquid from mass balance 
+      for (int iaer = 0; iaer < mosaic.naer; ++iaer) {
+        aer_liquid(iaer) = aer_total(iaer) - aer_solid(iaer);
+      }
+
+    } // end time continuation loop
+
+    jaerosolstate = static_cast<real_type>(mosaic.mixed);
+    jhyst_leg     = static_cast<real_type>(mosaic.jhyst_lo);
+    mass_wet_a = mass_dry_a_loc + water_a * 1.e-3; // g/cc(air)
+    vol_wet_a  = vol_dry_a_loc  + water_a * 1.e-3; // cc(aer)/cc(air) or m^3/m^3(air)
+    if (mass_dry_a_loc > 0.0) {
+      growth_factor = mass_wet_a / mass_dry_a_loc;
+    } else {
+      growth_factor = 1.0;
+    }
+
+  } // MESA_PTC
+
 #endif

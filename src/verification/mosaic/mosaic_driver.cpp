@@ -149,6 +149,8 @@ void MESA_estimate_eleliquid(Ensemble *ensemble);
 
 void degas_solid_nh4cl(Ensemble *ensemble);
 
+void MESA_PTC(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -284,6 +286,8 @@ int main(int argc, char **argv) {
       MESA_estimate_eleliquid(ensemble);
     } else if (func_name == "degas_solid_nh4cl") {
       degas_solid_nh4cl(ensemble);
+    } else if (func_name == "MESA_PTC") {
+      MESA_PTC(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

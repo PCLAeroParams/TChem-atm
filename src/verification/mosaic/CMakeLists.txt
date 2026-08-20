@@ -59,6 +59,7 @@ add_executable(${DRIVER_NAME}.x
                MESA_dissolve_small_salt.cpp
                MESA_estimate_eleliquid.cpp
                degas_solid_nh4cl.cpp
+               calc_dry_n_wet_aerosol_props.cpp
  )
 
 
@@ -123,6 +124,7 @@ SET(TEST_LIST
     MESA_dissolve_small_salt_input_ts_0
     MESA_estimate_eleliquid_input_ts_0
     degas_solid_nh4cl_input_ts_0
+    calc_dry_n_wet_aerosol_props_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -182,6 +184,7 @@ SET(TEST_BASELINE
     MESA_dissolve_small_salt_output_ts_0
     MESA_estimate_eleliquid_output_ts_0
     degas_solid_nh4cl_output_ts_0
+    calc_dry_n_wet_aerosol_props_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -242,6 +245,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # MESA_dissolve_small_salt_output_ts_0
     ${DEFAULT_TOL} # MESA_estimate_eleliquid_output_ts_0
     ${DEFAULT_TOL} # degas_solid_nh4cl_output_ts_0
+    ${DEFAULT_TOL} # calc_dry_n_wet_aerosol_props_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

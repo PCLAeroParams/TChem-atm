@@ -766,19 +766,18 @@
   } // MESA_dissolve_small_salt
 
   KOKKOS_INLINE_FUNCTION static
-  void MESA_estimate_eleliquid(
-      const MosaicModelData<DeviceType>& mosaic,
-      const real_type_1d_view_type& aer_liquid,   // aer(:,jliquid,ibin)
-      const real_type_1d_view_type& eleliquid,    // nelectrolyte
-      real_type& electrolyte_sum,                 // electrolyte_sum(jliquid,ibin)
-      const real_type_1d_view_type& epercent,     // epercent(:,jliquid,ibin)
-      const real_type_1d_view_type& na,           // nanion
-      const real_type_1d_view_type& nc,           // ncation
-      const real_type_1d_view_type& xeq_a,        // nanion
-      const real_type_1d_view_type& xeq_c,        // ncation
-      const real_type_1d_view_type& na_Ma,        // nanion
-      const real_type_1d_view_type& nc_Mc,        // ncation
-      const real_type_1d_view_type& store) {      // naer
+  void MESA_estimate_eleliquid(const MosaicModelData<DeviceType>& mosaic,
+                               const real_type_1d_view_type& aer_liquid,
+                               const real_type_1d_view_type& eleliquid,
+                               real_type& electrolyte_sum,
+                               const real_type_1d_view_type& epercent,
+                               const real_type_1d_view_type& na,
+                               const real_type_1d_view_type& nc,
+                               const real_type_1d_view_type& xeq_a,
+                               const real_type_1d_view_type& xeq_c,
+                               const real_type_1d_view_type& na_Ma,
+                               const real_type_1d_view_type& nc_Mc,
+                               const real_type_1d_view_type& store) {
 
     auto za             = mosaic.za.template view<DeviceType>();
     auto zc             = mosaic.zc.template view<DeviceType>();
@@ -1071,34 +1070,34 @@
             real_type& mass_wet_a,
             real_type& vol_wet_a,
             real_type& growth_factor,
-            const real_type_1d_view_type& jsalt_present,  // nsalt
-            const real_type_1d_view_type&    hsalt,           // nsalt
-            const real_type_1d_view_type&    phi_salt,        // nsalt
-            const real_type_1d_view_type&    phi_salt_old,    // nsalt
-            const real_type_1d_view_type&    phi_bar,         // nsalt
-            const real_type_1d_view_type&    alpha_salt,      // nsalt
-            const real_type_1d_view_type&    sat_ratio,       // nsalt
-            const real_type_1d_view_type&    flux_sl,         // nsalt
-            const real_type_1d_view_type&    frac_salt_solid, // nsalt
-            const real_type_1d_view_type&    frac_salt_liq,   // nsalt
-            const real_type_1d_view_type&    eleliquid,       // nelectrolyte
-            const real_type_1d_view_type&    store,           // naer
-            const real_type_1d_view_type&    na,              // nanion
-            const real_type_1d_view_type&    nc,              // ncation
-            const real_type_1d_view_type&    xeq_a,           // nanion
-            const real_type_1d_view_type&    xeq_c,           // ncation
-            const real_type_1d_view_type&    na_Ma,           // nanion
-            const real_type_1d_view_type&    nc_Mc,           // ncation
-            const real_type_1d_view_type&    aer_percent,     // naer
-            const real_type_1d_view_type&    molalities,      // nelectrolyte
-            const real_type_1d_view_type&    xmol,            // nelectrolyte
-            const real_type_1d_view_type&    ma,              // nanion
-            const real_type_1d_view_type&    mc_view,         // ncation
-            const real_type_1d_view_type&    log_gam,         // nelectrolyte
-            const real_type_1d_view_type&    gam,             // nelectrolyte
-            const real_type_1d_view_type&    activity,        // nelectrolyte
-            const real_type_1d_view_type&    tau_p,           // nsalt
-            const real_type_1d_view_type&    tau_d,           // nsalt
+            const real_type_1d_view_type& jsalt_present,
+            const real_type_1d_view_type& hsalt,
+            const real_type_1d_view_type& phi_salt,
+            const real_type_1d_view_type& phi_salt_old,
+            const real_type_1d_view_type& phi_bar,
+            const real_type_1d_view_type& alpha_salt,
+            const real_type_1d_view_type& sat_ratio,
+            const real_type_1d_view_type& flux_sl,
+            const real_type_1d_view_type& frac_salt_solid,
+            const real_type_1d_view_type& frac_salt_liq,
+            const real_type_1d_view_type& eleliquid,
+            const real_type_1d_view_type& store,
+            const real_type_1d_view_type& na,
+            const real_type_1d_view_type& nc,
+            const real_type_1d_view_type& xeq_a,
+            const real_type_1d_view_type& xeq_c,
+            const real_type_1d_view_type& na_Ma,
+            const real_type_1d_view_type& nc_Mc,
+            const real_type_1d_view_type& aer_percent,
+            const real_type_1d_view_type& molalities,
+            const real_type_1d_view_type& xmol,
+            const real_type_1d_view_type& ma,
+            const real_type_1d_view_type& mc_view,
+            const real_type_1d_view_type& log_gam,
+            const real_type_1d_view_type& gam,
+            const real_type_1d_view_type& activity,
+            const real_type_1d_view_type& tau_p,
+            const real_type_1d_view_type& tau_d,
             real_type& electrolyte_sum_solid,
             real_type& electrolyte_sum_liq,
             real_type& aer_sum) {
@@ -1145,7 +1144,7 @@
                                electrolyte_total(mosaic.jcaco3) +
                                aer_total(mosaic.ioin_a);
 
-      if (sum_soluble < 1.e-15 && solids > 0.0) {
+      if (sum_soluble < 1.0e-15 && solids > 0.0) {
         jaerosolstate = static_cast<real_type>(mosaic.all_solid); // no soluble material present
         jphase        = static_cast<real_type>(mosaic.jsolid);
         adjust_solid_aerosol(mosaic, aer_solid, aer_liquid, aer_total,
@@ -1183,8 +1182,8 @@
                              jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a);
         }
         // new wet mass and wet volume
-        mass_wet_a    = mass_dry_a + water_a * 1.e-3; // g/cc(air)
-        vol_wet_a     = vol_dry_a  + water_a * 1.e-3; // cc/cc(air) or m^3/m^3(air)
+        mass_wet_a    = mass_dry_a + water_a * 1.0e-3; // g/cc(air)
+        vol_wet_a     = vol_dry_a  + water_a * 1.0e-3; // cc/cc(air) or m^3/m^3(air)
         growth_factor = (mass_dry_a > 0.0) ? mass_wet_a / mass_dry_a : 1.0; // mass growth factor
         return;
       }
@@ -1239,7 +1238,7 @@
              electrolyte_solid, electrolyte_liquid, electrolyte_total,
              epercent_liquid, epercent_solid, epercent_total,
              Keq_sl, Keq_ll, log_gamZ,
-             jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a,
+             jaerosolstate, jphase, jhyst_leg, aH2O_a,
              mass_dry_a, vol_dry_a, mass_wet_a, vol_wet_a, growth_factor,
              electrolyte_sum_solid,
              jsalt_present, hsalt, phi_salt, phi_salt_old, phi_bar,

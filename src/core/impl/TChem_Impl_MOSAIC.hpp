@@ -49,6 +49,8 @@ struct MOSAIC{
 
   #include "TChem_Impl_MOSAIC_MESA.hpp"
 
+  #include "TChem_Impl_MOSAIC_adjust_aerosol.hpp"
+
   #include "TChem_Impl_MOSAIC_ASTEM.hpp"
 
 };

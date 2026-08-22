@@ -429,6 +429,71 @@
   } // MESA_estimate_eleliquid
 
   KOKKOS_INLINE_FUNCTION static
+  void MESA_convergence_criterion(const MosaicModelData<DeviceType>& mosaic,
+                                  const real_type_1d_view_type& electrolyte_solid,
+                                  const real_type& mass_dry_salt,
+                                  const real_type_1d_view_type& phi_salt,
+                                  const real_type_1d_view_type& flux_sl,
+                                  const real_type_1d_view_type& aer_solid,
+                                  real_type& iconverge_mass,
+                                  real_type& iconverge_flux,
+                                  real_type& idissolved) {
+
+    auto mw_electrolyte = mosaic.mw_electrolyte.template view<DeviceType>();
+
+    idissolved     = 0;
+
+    // check mass convergence
+    iconverge_mass = 0;
+
+    // commented code from MOSAIC source
+    // !      call electrolytes_to_ions(jsolid,ibin)
+    // !      mass_solid = 0.0
+    // !      do iaer = 1, naer
+    // !        mass_solid = mass_solid +
+    // !     &               aer(iaer,jsolid,ibin)*mw_aer_mac(iaer)*1.e-15	! g/cc(air)
+    // !      enddo
+
+    real_type mass_solid_salt = 0.0;
+    for (int je = 0; je < mosaic.nsalt; ++je) {
+      mass_solid_salt += electrolyte_solid(je) * mw_electrolyte(je) * 1.e-15;
+    }
+
+    // frac_solid = mass_solid/mass_dry_a(ibin)
+    if (mass_dry_salt != 0.0) {
+      real_type frac_solid = mass_solid_salt / mass_dry_salt;
+      if (frac_solid >= 0.98) {
+        iconverge_mass = 1; // mYES
+        return;
+      }
+    }
+
+    // check relative driving force convergence
+    iconverge_flux = 1; // mYES
+    for (int js = 0; js < mosaic.nsalt; ++js) {
+      if (Kokkos::abs(phi_salt(js)) > mosaic.rtol_mesa) {
+        iconverge_flux = 0; // mNO
+        return;
+      }
+    }
+
+    // check if all the fluxes are zero
+    real_type sumflux = 0.0;
+    for (int js = 0; js < mosaic.nsalt; ++js) {
+      sumflux += Kokkos::abs(flux_sl(js));
+    }
+
+    const real_type crustal_solids = electrolyte_solid(mosaic.jcaco3) +
+                                     electrolyte_solid(mosaic.jcaso4) +
+                                     aer_solid(mosaic.ioin_a);
+
+    if (sumflux == 0.0 && crustal_solids == 0.0) {
+      idissolved = 1;
+    }
+
+  } // MESA_convergence_criterion
+
+  KOKKOS_INLINE_FUNCTION static
   void MESA_flux_salt(const MosaicModelData<DeviceType>& mosaic,
                       const real_type_1d_view_type& aer_liquid,
                       const real_type_1d_view_type& aer_solid,

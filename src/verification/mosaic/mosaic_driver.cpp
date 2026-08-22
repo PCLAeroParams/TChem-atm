@@ -151,6 +151,8 @@ void degas_solid_nh4cl(Ensemble *ensemble);
 
 void MESA_convergence_criterion(Ensemble *ensemble);
 
+void MESA_flux_salt(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -288,6 +290,8 @@ int main(int argc, char **argv) {
       degas_solid_nh4cl(ensemble);
     } else if (func_name == "MESA_convergence_criterion") {
       MESA_convergence_criterion(ensemble);
+    } else if (func_name == "MESA_flux_salt") {
+      MESA_flux_salt(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

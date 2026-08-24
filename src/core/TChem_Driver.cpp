@@ -516,6 +516,7 @@ void TChem::Driver::setNParticlesTrack(ordinal_type n, ordinal_type i_batch) {
   }
   if (_n_particles_track.span() == 0) {
     _n_particles_track = ordinal_type_1d_view_host("n_particles_track", _nBatch);
+    Kokkos::deep_copy(_n_particles_track, -1);
   }
   _n_particles_track(i_batch) = n;
 }

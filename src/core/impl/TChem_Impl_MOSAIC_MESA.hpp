@@ -524,7 +524,6 @@
     real_type aer_sum_scratch             = 0.0;
 
     real_type water_a = 0.0;
-    aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
 
     // commented code from MOSAIC source
     // !      call MESA_check_complete_dissolution(ibin,

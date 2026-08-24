@@ -81,9 +81,6 @@ void MESA_PTC(Ensemble *ensemble) {
     real_type_1d_view aH2O_a("aH2O_a", 1);
     verification::convert_1d_vector_to_1d_view_device(aH2O_a_arr, aH2O_a);
 
-    real_type_1d_view water_a("water_a", 1);
-    verification::convert_1d_vector_to_1d_view_device(water_a_arr, water_a);
-
     real_type_1d_view phi_salt_old("phi_salt_old", mmd.nsalt);
     verification::convert_1d_vector_to_1d_view_device(phi_salt_old_arr, phi_salt_old);
 
@@ -142,7 +139,7 @@ void MESA_PTC(Ensemble *ensemble) {
         electrolyte_solid, electrolyte_liquid, electrolyte_total,
         epercent_liquid, epercent_solid, epercent_total,
         Keq_sl, Keq_ll, log_gamZ,
-        jaerosolstate(0), jphase(0), jhyst_leg(0), aH2O_a(0), water_a(0),
+        jaerosolstate(0), jphase(0), jhyst_leg(0), aH2O_a(0),
         mass_dry_a_view(0), vol_dry_a_view(0),
         mass_wet_a_view(0), vol_wet_a_view(0),
         growth_factor_view(0),
@@ -170,7 +167,6 @@ void MESA_PTC(Ensemble *ensemble) {
     std::vector<real_type> jphase_out(1);
     std::vector<real_type> jhyst_leg_out(1);
     std::vector<real_type> aH2O_a_out(1);
-    std::vector<real_type> water_a_out(1);
     std::vector<real_type> phi_salt_old_out(mmd.nsalt);
     std::vector<real_type> alpha_salt_out(mmd.nsalt);
     std::vector<real_type> phi_salt_out(mmd.nsalt);
@@ -199,7 +195,6 @@ void MESA_PTC(Ensemble *ensemble) {
     verification::convert_1d_view_device_to_1d_vector(jphase, jphase_out);
     verification::convert_1d_view_device_to_1d_vector(jhyst_leg, jhyst_leg_out);
     verification::convert_1d_view_device_to_1d_vector(aH2O_a, aH2O_a_out);
-    verification::convert_1d_view_device_to_1d_vector(water_a, water_a_out);
     verification::convert_1d_view_device_to_1d_vector(phi_salt_old, phi_salt_old_out);
     verification::convert_1d_view_device_to_1d_vector(alpha_salt, alpha_salt_out);
     verification::convert_1d_view_device_to_1d_vector(phi_salt, phi_salt_out);
@@ -228,7 +223,6 @@ void MESA_PTC(Ensemble *ensemble) {
     output.set("jphase",                jphase_out);
     output.set("jhyst_leg",             jhyst_leg_out);
     output.set("aH2O_a",                aH2O_a_out);
-    output.set("water_a",               water_a_out);
     output.set("phi_salt_old",          phi_salt_old_out);
     output.set("alpha_salt",            alpha_salt_out);
     output.set("phi_salt",              phi_salt_out);

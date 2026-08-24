@@ -1065,6 +1065,7 @@
             real_type& jphase,
             real_type& jhyst_leg,
             real_type& aH2O_a,
+            real_type& water_a,
             real_type& mass_dry_a,
             real_type& vol_dry_a,
             real_type& mass_wet_a,
@@ -1106,9 +1107,8 @@
     auto jsulf_poor_view  = mosaic.jsulf_poor.template view<DeviceType>();
     auto jsulf_rich_view  = mosaic.jsulf_rich.template view<DeviceType>();
 
-    real_type XT, water_a = 0.0;
+    real_type XT = 0.0;
     calculate_XT(mosaic, aer_total, XT);
-    aerosol_water(mosaic, electrolyte_liquid, aH2O_a, molalities, jaerosolstate, jphase, jhyst_leg, water_a);
 
     const real_type CRH = 0.35;
 
@@ -1179,7 +1179,7 @@
           compute_activities(mosaic, molalities, xmol, aer_liquid, ma, mc_view,
                              Keq_ll, electrolyte_solid, electrolyte_liquid, electrolyte_total,
                              log_gam, log_gamZ, gam, activity,
-                             jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a);
+                             jaerosolstate, jphase, jhyst_leg, aH2O_a);
         }
         // new wet mass and wet volume
         mass_wet_a    = mass_dry_a + water_a * 1.0e-3; // g/cc(air)

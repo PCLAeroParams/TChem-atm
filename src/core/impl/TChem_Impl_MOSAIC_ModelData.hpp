@@ -159,6 +159,9 @@ struct MosaicModelData {
     const ordinal_type Nmax_MESA = 80;
     const real_type rtol_mesa    =  0.01;
 
+    // ASTEM parameters
+    const real_type ptol_mol_astem = 0.01;
+
     // Temperature-dependent thermodynamic parameters
     // liquid-liquid
     real_type_1d_dual_view Keq_298_ll; // ("Keq_298_ll_", nrxn_aer_ll);

@@ -606,7 +606,10 @@
                              electrolyte_solid, electrolyte_liquid, electrolyte_total,
                              epercent_solid, epercent_liquid, epercent_total,
                              water_a, jphase, jhyst_leg);
-        
+        return;
+      }
+    }
+
     // step 4: none of the above means it must be sub-saturated or mixed-phase
     do_full_deliquescence(mosaic,
                           electrolyte_solid, electrolyte_liquid, electrolyte_total,

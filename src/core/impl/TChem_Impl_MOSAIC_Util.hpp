@@ -407,4 +407,65 @@
     }
   } // quadratic
 
+  KOKKOS_INLINE_FUNCTION static
+  void calc_dry_n_wet_aerosol_props(const MosaicModelData<DeviceType>& mosaic,
+                                    const real_type_1d_view_type& aer_total,
+                                    const real_type  water_a,
+                                    const real_type  num_a,
+                                    const real_type  jaerosolstate,
+                                    real_type& mass_dry_a,
+                                    real_type& vol_dry_a,
+                                    real_type& mass_wet_a,
+                                    real_type& vol_wet_a,
+                                    real_type& dens_dry_a,
+                                    real_type& dens_wet_a,
+                                    real_type& Dp_dry_a,
+                                    real_type& Dp_wet_a,
+                                    real_type& area_dry_a,
+                                    real_type& area_wet_a) {
+
+    auto mw_aer_mac   = mosaic.mw_aer_mac.template view<DeviceType>();
+    auto dens_aer_mac = mosaic.dens_aer_mac.template view<DeviceType>();
+
+    mass_dry_a = 0.0;
+    vol_dry_a  = 0.0;
+    area_dry_a = 0.0;
+
+    if (static_cast<ordinal_type>(jaerosolstate) != mosaic.no_aerosol) {
+
+      real_type aer_H = (2.0 * aer_total(mosaic.iso4_a) +
+                               aer_total(mosaic.ino3_a)  +
+                               aer_total(mosaic.icl_a)   +
+                               aer_total(mosaic.imsa_a)  +
+                         2.0 * aer_total(mosaic.ico3_a)) -
+                        (2.0 * aer_total(mosaic.ica_a)  +
+                               aer_total(mosaic.ina_a)   +
+                               aer_total(mosaic.inh4_a));
+      aer_H = max(aer_H, (real_type)0.0);
+
+      for (int iaer = 0; iaer < mosaic.naer; ++iaer) {
+        mass_dry_a += aer_total(iaer) * mw_aer_mac(iaer);
+        vol_dry_a  += aer_total(iaer) * mw_aer_mac(iaer) / dens_aer_mac(iaer);
+      }
+      mass_dry_a = (mass_dry_a + aer_H) * 1.e-15;
+      vol_dry_a  = (vol_dry_a  + aer_H) * 1.e-15;
+
+      mass_wet_a = mass_dry_a + water_a * 1.e-3;
+      vol_wet_a  = vol_dry_a  + water_a * 1.e-3;
+
+      dens_dry_a = mass_dry_a / vol_dry_a;
+      dens_wet_a = mass_wet_a / vol_wet_a;
+
+      Dp_dry_a = ats<real_type>::pow(1.90985 * vol_dry_a / num_a, 0.3333333);
+      Dp_wet_a = ats<real_type>::pow(1.90985 * vol_wet_a / num_a, 0.3333333);
+
+      area_dry_a = 0.785398 * num_a * Dp_dry_a * Dp_dry_a;
+      area_wet_a = 0.785398 * num_a * Dp_wet_a * Dp_wet_a;
+
+    } else {
+      dens_dry_a = 1.0;
+      dens_wet_a = 1.0;
+    }
+  } // calc_dry_n_wet_aerosol_props
+
 #endif

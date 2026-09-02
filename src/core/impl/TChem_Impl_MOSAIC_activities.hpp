@@ -1,7 +1,7 @@
 #ifndef __TCHEM_IMPL_MOSAIC_ACTIVITIES_HPP__
 #define __TCHEM_IMPL_MOSAIC_ACTIVITIES_HPP__
 
-KOKKOS_INLINE_FUNCTION static
+  KOKKOS_INLINE_FUNCTION static
   void compute_activities(const MosaicModelData<DeviceType>& mosaic,
                           const real_type_1d_view_type& molalities,
                           const real_type_1d_view_type& xmol,

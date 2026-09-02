@@ -157,6 +157,10 @@ void MESA_convergence_criterion(Ensemble *ensemble);
 
 void MESA_flux_salt(Ensemble *ensemble);
 
+void aerosol_phase_state(Ensemble *ensemble);
+
+void calculate_kelvin(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -300,6 +304,10 @@ int main(int argc, char **argv) {
       MESA_convergence_criterion(ensemble);
     } else if (func_name == "MESA_flux_salt") {
       MESA_flux_salt(ensemble);
+    } else if (func_name == "aerosol_phase_state") {
+      aerosol_phase_state(ensemble);
+    } else if (func_name == "calculate_kelvin") {
+      calculate_kelvin(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

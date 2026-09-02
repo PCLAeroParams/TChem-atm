@@ -9,7 +9,7 @@ using real_type_2d_view = TChem::real_type_2d_view;
 using namespace skywalker;
 using namespace TChem;
 
-void MESA_PTC(Ensemble *ensemble) {
+void MESA(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
 
     const auto aer_liquid_arr         = input.get_array("aer_liquid");
@@ -24,11 +24,14 @@ void MESA_PTC(Ensemble *ensemble) {
     const auto Keq_ll_arr             = input.get_array("Keq_ll");
     const auto Keq_sl_arr             = input.get_array("Keq_sl");
     const auto log_gamZ_arr           = input.get_array("log_gamZ");
+    const auto MDRH_T_arr             = input.get_array("MDRH_T");
     const auto jaerosolstate_arr      = input.get_array("jaerosolstate");
     const auto jphase_arr             = input.get_array("jphase");
     const auto jhyst_leg_arr          = input.get_array("jhyst_leg");
     const auto aH2O_a_arr             = input.get_array("aH2O_a");
     const auto water_a_arr            = input.get_array("water_a");
+    const auto mass_dry_a_arr         = input.get_array("mass_dry_a");
+    const auto vol_dry_a_arr          = input.get_array("vol_dry_a");
     const auto phi_salt_old_arr       = input.get_array("phi_salt_old");
     const auto alpha_salt_arr         = input.get_array("alpha_salt");
     const auto mass_wet_a_arr         = input.get_array("mass_wet_a");
@@ -71,6 +74,9 @@ void MESA_PTC(Ensemble *ensemble) {
     real_type_2d_view log_gamZ("log_gamZ", mmd.nelectrolyte, mmd.nelectrolyte);
     verification::convert_1d_vector_to_2d_view_device(log_gamZ_arr, log_gamZ);
 
+    real_type_1d_view MDRH_T("MDRH_T", 63);
+    verification::convert_1d_vector_to_1d_view_device(MDRH_T_arr, MDRH_T);
+
     real_type_1d_view jaerosolstate("jaerosolstate", 1);
     verification::convert_1d_vector_to_1d_view_device(jaerosolstate_arr, jaerosolstate);
 
@@ -85,6 +91,12 @@ void MESA_PTC(Ensemble *ensemble) {
 
     real_type_1d_view water_a("water_a", 1);
     verification::convert_1d_vector_to_1d_view_device(water_a_arr, water_a);
+
+    real_type_1d_view mass_dry_a_view("mass_dry_a", 1);
+    verification::convert_1d_vector_to_1d_view_device(mass_dry_a_arr, mass_dry_a_view);
+
+    real_type_1d_view vol_dry_a_view("vol_dry_a", 1);
+    verification::convert_1d_vector_to_1d_view_device(vol_dry_a_arr, vol_dry_a_view);
 
     real_type_1d_view phi_salt_old("phi_salt_old", mmd.nsalt);
     verification::convert_1d_vector_to_1d_view_device(phi_salt_old_arr, phi_salt_old);
@@ -120,17 +132,16 @@ void MESA_PTC(Ensemble *ensemble) {
     real_type_1d_view log_gam("log_gam", mmd.nelectrolyte);
     real_type_1d_view gam("gam", mmd.nelectrolyte);
     real_type_1d_view activity("activity", mmd.nelectrolyte);
-
     real_type_1d_view tau_p("tau_p", mmd.nsalt);
     real_type_1d_view tau_d("tau_d", mmd.nsalt);
 
-    real_type_1d_view mass_dry_a_view("mass_dry_a", 1);
-    real_type_1d_view vol_dry_a_view("vol_dry_a", 1);
     real_type_1d_view vol_wet_a_view("vol_wet_a", 1);
     real_type_1d_view growth_factor_view("growth_factor", 1);
     real_type_1d_view electrolyte_sum_solid_view("electrolyte_sum_solid", 1);
+    real_type_1d_view electrolyte_sum_liq_view("electrolyte_sum_liq", 1);
+    real_type_1d_view aer_sum_view("aer_sum", 1);
 
-    std::string profile_name = "Verification_test_MESA_PTC";
+    std::string profile_name = "Verification_test_MESA";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
     const auto exec_space_instance = TChem::exec_space();
@@ -140,22 +151,24 @@ void MESA_PTC(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::MESA_PTC(
+      TChem::Impl::MOSAIC<real_type, device_type>::MESA(
         mmd,
         aer_liquid, aer_solid, aer_total,
         electrolyte_solid, electrolyte_liquid, electrolyte_total,
         epercent_liquid, epercent_solid, epercent_total,
-        Keq_sl, Keq_ll, log_gamZ,
+        Keq_sl, Keq_ll, log_gamZ, MDRH_T,
         jaerosolstate(0), jphase(0), jhyst_leg(0), aH2O_a(0), water_a(0),
         mass_dry_a_view(0), vol_dry_a_view(0),
         mass_wet_a(0), vol_wet_a_view(0),
         growth_factor_view(0),
-        electrolyte_sum_solid_view(0),
         jsalt_present, hsalt, phi_salt, phi_salt_old, phi_bar, alpha_salt,
         sat_ratio, flux_sl, frac_salt_solid, frac_salt_liq, eleliquid,
-        store, na, nc, xeq_a, xeq_c, na_Ma, nc_Mc,
-        aer_percent, molalities, xmol, ma, mc_view, log_gam, gam, activity,
-        tau_p, tau_d);
+        store, na, nc, xeq_a, xeq_c, na_Ma, nc_Mc, aer_percent,
+        molalities, xmol, ma, mc_view, log_gam, gam, activity,
+        tau_p, tau_d,
+        electrolyte_sum_solid_view(0),
+        electrolyte_sum_liq_view(0),
+        aer_sum_view(0));
     });
 
     std::vector<real_type> aer_liquid_out(mmd.naer);
@@ -170,22 +183,19 @@ void MESA_PTC(Ensemble *ensemble) {
     std::vector<real_type> Keq_ll_out(mmd.nrxn_aer_ll);
     std::vector<real_type> Keq_sl_out(mmd.nsalt);
     std::vector<real_type> log_gamZ_out(mmd.nelectrolyte * mmd.nelectrolyte);
+    std::vector<real_type> MDRH_T_out(63);
     std::vector<real_type> jaerosolstate_out(1);
     std::vector<real_type> jphase_out(1);
     std::vector<real_type> jhyst_leg_out(1);
     std::vector<real_type> aH2O_a_out(1);
     std::vector<real_type> water_a_out(1);
-    std::vector<real_type> phi_salt_old_out(mmd.nsalt);
-    std::vector<real_type> alpha_salt_out(mmd.nsalt);
-    std::vector<real_type> phi_salt_out(mmd.nsalt);
-    std::vector<real_type> flux_sl_out(mmd.nsalt);
-    std::vector<real_type> sat_ratio_out(mmd.nsalt);
     std::vector<real_type> mass_dry_a_out(1);
     std::vector<real_type> vol_dry_a_out(1);
+    std::vector<real_type> phi_salt_old_out(mmd.nsalt);
+    std::vector<real_type> alpha_salt_out(mmd.nsalt);
     std::vector<real_type> mass_wet_a_out(1);
     std::vector<real_type> vol_wet_a_out(1);
     std::vector<real_type> growth_factor_out(1);
-    std::vector<real_type> electrolyte_sum_solid_out(1);
 
     verification::convert_1d_view_device_to_1d_vector(aer_liquid, aer_liquid_out);
     verification::convert_1d_view_device_to_1d_vector(aer_solid, aer_solid_out);
@@ -199,50 +209,44 @@ void MESA_PTC(Ensemble *ensemble) {
     verification::convert_1d_view_device_to_1d_vector(Keq_ll, Keq_ll_out);
     verification::convert_1d_view_device_to_1d_vector(Keq_sl, Keq_sl_out);
     verification::convert_2d_view_device_to_1d_vector(log_gamZ, log_gamZ_out);
+    verification::convert_1d_view_device_to_1d_vector(MDRH_T, MDRH_T_out);
     verification::convert_1d_view_device_to_1d_vector(jaerosolstate, jaerosolstate_out);
     verification::convert_1d_view_device_to_1d_vector(jphase, jphase_out);
     verification::convert_1d_view_device_to_1d_vector(jhyst_leg, jhyst_leg_out);
     verification::convert_1d_view_device_to_1d_vector(aH2O_a, aH2O_a_out);
     verification::convert_1d_view_device_to_1d_vector(water_a, water_a_out);
-    verification::convert_1d_view_device_to_1d_vector(phi_salt_old, phi_salt_old_out);
-    verification::convert_1d_view_device_to_1d_vector(alpha_salt, alpha_salt_out);
-    verification::convert_1d_view_device_to_1d_vector(phi_salt, phi_salt_out);
-    verification::convert_1d_view_device_to_1d_vector(flux_sl, flux_sl_out);
-    verification::convert_1d_view_device_to_1d_vector(sat_ratio, sat_ratio_out);
     verification::convert_1d_view_device_to_1d_vector(mass_dry_a_view, mass_dry_a_out);
     verification::convert_1d_view_device_to_1d_vector(vol_dry_a_view, vol_dry_a_out);
+    verification::convert_1d_view_device_to_1d_vector(phi_salt_old, phi_salt_old_out);
+    verification::convert_1d_view_device_to_1d_vector(alpha_salt, alpha_salt_out);
     verification::convert_1d_view_device_to_1d_vector(mass_wet_a, mass_wet_a_out);
     verification::convert_1d_view_device_to_1d_vector(vol_wet_a_view, vol_wet_a_out);
     verification::convert_1d_view_device_to_1d_vector(growth_factor_view, growth_factor_out);
-    verification::convert_1d_view_device_to_1d_vector(electrolyte_sum_solid_view, electrolyte_sum_solid_out);
 
-    output.set("aer_liquid",            aer_liquid_out);
-    output.set("aer_solid",             aer_solid_out);
-    output.set("aer_total",             aer_total_out);
-    output.set("electrolyte_solid",     electrolyte_solid_out);
-    output.set("electrolyte_liquid",    electrolyte_liquid_out);
-    output.set("electrolyte_total",     electrolyte_total_out);
-    output.set("epercent_liquid",       epercent_liquid_out);
-    output.set("epercent_solid",        epercent_solid_out);
-    output.set("epercent_total",        epercent_total_out);
-    output.set("Keq_ll",                Keq_ll_out);
-    output.set("Keq_sl",                Keq_sl_out);
-    output.set("log_gamZ",              log_gamZ_out);
-    output.set("jaerosolstate",         jaerosolstate_out);
-    output.set("jphase",                jphase_out);
-    output.set("jhyst_leg",             jhyst_leg_out);
-    output.set("aH2O_a",                aH2O_a_out);
-    output.set("water_a",               water_a_out);
-    output.set("phi_salt_old",          phi_salt_old_out);
-    output.set("alpha_salt",            alpha_salt_out);
-    output.set("phi_salt",              phi_salt_out);
-    output.set("flux_sl",               flux_sl_out);
-    output.set("sat_ratio",             sat_ratio_out);
-    output.set("mass_dry_a",            mass_dry_a_out);
-    output.set("vol_dry_a",             vol_dry_a_out);
-    output.set("mass_wet_a",            mass_wet_a_out);
-    output.set("vol_wet_a",             vol_wet_a_out);
-    output.set("growth_factor",         growth_factor_out);
-    output.set("electrolyte_sum_solid", electrolyte_sum_solid_out);
+    output.set("aer_liquid",         aer_liquid_out);
+    output.set("aer_solid",          aer_solid_out);
+    output.set("aer_total",          aer_total_out);
+    output.set("electrolyte_solid",  electrolyte_solid_out);
+    output.set("electrolyte_liquid", electrolyte_liquid_out);
+    output.set("electrolyte_total",  electrolyte_total_out);
+    output.set("epercent_liquid",    epercent_liquid_out);
+    output.set("epercent_solid",     epercent_solid_out);
+    output.set("epercent_total",     epercent_total_out);
+    output.set("Keq_ll",             Keq_ll_out);
+    output.set("Keq_sl",             Keq_sl_out);
+    output.set("log_gamZ",           log_gamZ_out);
+    output.set("MDRH_T",             MDRH_T_out);
+    output.set("jaerosolstate",      jaerosolstate_out);
+    output.set("jphase",             jphase_out);
+    output.set("jhyst_leg",          jhyst_leg_out);
+    output.set("aH2O_a",             aH2O_a_out);
+    output.set("water_a",            water_a_out);
+    output.set("mass_dry_a",         mass_dry_a_out);
+    output.set("vol_dry_a",          vol_dry_a_out);
+    output.set("phi_salt_old",       phi_salt_old_out);
+    output.set("alpha_salt",         alpha_salt_out);
+    output.set("mass_wet_a",         mass_wet_a_out);
+    output.set("vol_wet_a",          vol_wet_a_out);
+    output.set("growth_factor",      growth_factor_out);
   });
 }

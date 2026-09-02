@@ -149,6 +149,8 @@ void MESA_estimate_eleliquid(Ensemble *ensemble);
 
 void degas_solid_nh4cl(Ensemble *ensemble);
 
+void MESA(Ensemble *ensemble);
+
 void MESA_PTC(Ensemble *ensemble);
 
 void calc_dry_n_wet_aerosol_props(Ensemble *ensemble);
@@ -292,6 +294,8 @@ int main(int argc, char **argv) {
       MESA_estimate_eleliquid(ensemble);
     } else if (func_name == "degas_solid_nh4cl") {
       degas_solid_nh4cl(ensemble);
+    } else if (func_name == "MESA") {
+      MESA(ensemble);
     } else if (func_name == "MESA_PTC") {
       MESA_PTC(ensemble);
     } else if (func_name == "calc_dry_n_wet_aerosol_props") {

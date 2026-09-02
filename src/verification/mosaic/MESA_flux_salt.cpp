@@ -6,7 +6,6 @@
 using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
 using real_type_1d_view = TChem::real_type_1d_view;
 using real_type_2d_view = TChem::real_type_2d_view;
-using ordinal_type = TChem::ordinal_type;
 using namespace skywalker;
 using namespace TChem;
 
@@ -25,6 +24,7 @@ void MESA_flux_salt(Ensemble *ensemble) {
     const auto jphase_arr              = input.get_array("jphase");
     const auto jhyst_leg_arr           = input.get_array("jhyst_leg");
     const auto aH2O_a_arr              = input.get_array("aH2O_a");
+    const auto water_a_arr             = input.get_array("water_a");
     const auto Keq_ll_arr              = input.get_array("Keq_ll");
     const auto Keq_sl_arr              = input.get_array("Keq_sl");
     const auto log_gamZ_arr            = input.get_array("log_gamZ");
@@ -56,7 +56,7 @@ void MESA_flux_salt(Ensemble *ensemble) {
     {
       auto jsalt_present_h = Kokkos::create_mirror_view(jsalt_present);
       for (ordinal_type i = 0; i < mmd.nsalt; ++i) {
-        jsalt_present_h(i) = static_cast<ordinal_type>(jsalt_present_raw[i]);
+        jsalt_present_h(i) = jsalt_present_raw[i];
       }
       Kokkos::deep_copy(jsalt_present, jsalt_present_h);
     }
@@ -72,6 +72,9 @@ void MESA_flux_salt(Ensemble *ensemble) {
 
     real_type_1d_view aH2O_a("aH2O_a", 1);
     verification::convert_1d_vector_to_1d_view_device(aH2O_a_arr, aH2O_a);
+
+    real_type_1d_view water_a("water_a", 1);
+    verification::convert_1d_vector_to_1d_view_device(water_a_arr, water_a);
 
     real_type_1d_view Keq_ll("Keq_ll", mmd.nrxn_aer_ll);
     verification::convert_1d_vector_to_1d_view_device(Keq_ll_arr, Keq_ll);
@@ -153,6 +156,7 @@ void MESA_flux_salt(Ensemble *ensemble) {
         jphase(0),
         jhyst_leg(0),
         aH2O_a(0),
+        water_a(0),
         jsalt_present,
         flux_sl,
         phi_salt,
@@ -172,10 +176,13 @@ void MESA_flux_salt(Ensemble *ensemble) {
     std::vector<real_type> flux_sl_out(mmd.nsalt);
     std::vector<real_type> phi_salt_out(mmd.nsalt);
     std::vector<real_type> sat_ratio_out(mmd.nsalt);
+    std::vector<real_type> frac_salt_solid_out(mmd.nsalt);
+    std::vector<real_type> frac_salt_liq_out(mmd.nsalt);
     std::vector<real_type> jaerosolstate_out(1);
     std::vector<real_type> jphase_out(1);
     std::vector<real_type> jhyst_leg_out(1);
     std::vector<real_type> aH2O_a_out(1);
+    std::vector<real_type> water_a_out(1);
 
     verification::convert_1d_view_device_to_1d_vector(aer_liquid, aer_liquid_out);
     verification::convert_1d_view_device_to_1d_vector(aer_solid, aer_solid_out);
@@ -187,19 +194,17 @@ void MESA_flux_salt(Ensemble *ensemble) {
     verification::convert_1d_view_device_to_1d_vector(flux_sl, flux_sl_out);
     verification::convert_1d_view_device_to_1d_vector(phi_salt, phi_salt_out);
     verification::convert_1d_view_device_to_1d_vector(sat_ratio, sat_ratio_out);
+    verification::convert_1d_view_device_to_1d_vector(frac_salt_solid, frac_salt_solid_out);
+    verification::convert_1d_view_device_to_1d_vector(frac_salt_liq, frac_salt_liq_out);
+    verification::convert_1d_view_device_to_1d_vector(water_a, water_a_out);
     verification::convert_1d_view_device_to_1d_vector(jaerosolstate, jaerosolstate_out);
     verification::convert_1d_view_device_to_1d_vector(jphase, jphase_out);
     verification::convert_1d_view_device_to_1d_vector(jhyst_leg, jhyst_leg_out);
     verification::convert_1d_view_device_to_1d_vector(aH2O_a, aH2O_a_out);
+    verification::convert_1d_view_device_to_1d_vector(water_a, water_a_out);
 
     std::vector<real_type> jsalt_present_out(mmd.nsalt);
-    {
-      auto jsalt_present_h = Kokkos::create_mirror_view(jsalt_present);
-      Kokkos::deep_copy(jsalt_present_h, jsalt_present);
-      for (ordinal_type i = 0; i < mmd.nsalt; ++i) {
-        jsalt_present_out[i] = static_cast<real_type>(jsalt_present_h(i));
-      }
-    }
+    verification::convert_1d_view_device_to_1d_vector(jsalt_present, jsalt_present_out);
 
     std::vector<real_type> Keq_ll_out(mmd.nrxn_aer_ll);
     std::vector<real_type> Keq_sl_out(mmd.nsalt);
@@ -220,11 +225,15 @@ void MESA_flux_salt(Ensemble *ensemble) {
     output.set("jphase",             jphase_out);
     output.set("jhyst_leg",          jhyst_leg_out);
     output.set("aH2O_a",             aH2O_a_out);
+    output.set("water_a",            water_a_out);
     output.set("Keq_ll",             Keq_ll_out);
     output.set("Keq_sl",             Keq_sl_out);
     output.set("log_gamZ",           log_gamZ_out);
+    output.set("water_a",            water_a_out);
     output.set("flux_sl",            flux_sl_out);
     output.set("phi_salt",           phi_salt_out);
     output.set("sat_ratio",          sat_ratio_out);
+    output.set("frac_salt_solid",    frac_salt_solid_out);
+    output.set("frac_salt_liq",      frac_salt_liq_out);
   });
 }

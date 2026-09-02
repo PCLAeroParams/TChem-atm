@@ -159,6 +159,9 @@ struct MosaicModelData {
     const ordinal_type Nmax_MESA = 80;
     const real_type rtol_mesa    =  0.01;
 
+    // ASTEM parameters
+    const real_type ptol_mol_astem = 0.01;
+
     // Temperature-dependent thermodynamic parameters
     // liquid-liquid
     real_type_1d_dual_view Keq_298_ll; // ("Keq_298_ll_", nrxn_aer_ll);
@@ -189,6 +192,11 @@ struct MosaicModelData {
     real_type_1d_dual_view mw_c; // ("MW_c_", ncation)
     real_type_1d_dual_view mw_a; // ("MW_a_", anion)
 
+    // salt index tracking and sulfate regimes
+    real_type_1d_dual_view jsalt_index; // ("jsalt_index_", nsalt)
+    real_type_1d_dual_view jsulf_rich;  // ("jsulf_rich_", 71)
+    real_type_1d_dual_view jsulf_poor;  // ("jsulf_poor_", 211)
+
     public:
       MosaicModelData() {
 
@@ -207,6 +215,9 @@ struct MosaicModelData {
         za = ordinal_type_1d_dual_view(do_not_init_tag("MosaicModelData::za"), ncation);
         mw_c = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_c"), ncation);
         mw_a = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_a"), nanion);
+        jsalt_index = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_a"), nsalt);
+        jsulf_rich = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_rich"), 71);
+        jsulf_poor = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_poor"), 211);
 
         auto a_zsr_host = a_zsr.view_host();
         auto aw_min_host = aw_min.view_host();
@@ -223,6 +234,9 @@ struct MosaicModelData {
         auto za_host = za.view_host();
         auto mw_c_host = mw_c.view_host();
         auto mw_a_host = mw_a.view_host();
+        auto jsalt_index_host = jsalt_index.view_host();
+        auto jsulf_rich_host = jsulf_rich.view_host();
+        auto jsulf_poor_host = jsulf_poor.view_host();
 
         a_zsr_host(0, jnh4so4) =   1.30894;
         a_zsr_host(1, jnh4so4) =  -7.09922;
@@ -2274,6 +2288,96 @@ struct MosaicModelData {
         mw_a_host(ja_cl)   = 35.5;
         mw_a_host(ja_msa)  = 95.0;
 
+        // jsalt index
+        jsalt_index_host(jnh4so4)  = 5;   // AS 
+        jsalt_index_host(jlvcite)  = 2;   // LC
+        jsalt_index_host(jnh4hso4) = 1;   // AB
+        jsalt_index_host(jnh4no3)  = 2;   // AN
+        jsalt_index_host(jnh4cl)   = 1;   // AC
+        jsalt_index_host(jna2so4)  = 60;  // SS
+        jsalt_index_host(jnahso4)  = 10;  // SB
+        jsalt_index_host(jnano3)   = 40;  // SN
+        jsalt_index_host(jnacl)    = 10;  // SC
+        jsalt_index_host(jcano3)   = 120; // CN
+        jsalt_index_host(jcacl2)   = 80;  // CC
+        jsalt_index_host(jnh4msa)  = 0;   // AM zero for now
+        jsalt_index_host(jnamsa)   = 0;   // SM zero for now
+        jsalt_index_host(jcamsa2)  = 0;   // CM zero for now
+
+        // Aerosol Indices
+        //  AC = 1, AN = 2, AS = 5, SC = 10, SN = 40, SS = 60, CC = 80, CN = 120,
+        //  AB = 1, LV = 2, SB = 10
+
+        // SULFATE-POOR DOMAIN
+        jsulf_poor_host(1)   = 	1;	// 	AC
+        jsulf_poor_host(2)   = 	2;	// 	AN
+        jsulf_poor_host(5)   = 	3;	// 	AS
+        jsulf_poor_host(10)  = 	4;	// 	SC
+        jsulf_poor_host(40)  = 	5;	// 	SN
+        jsulf_poor_host(60)  = 	6;	// 	SS
+        jsulf_poor_host(80)  = 	7;	// 	CC
+        jsulf_poor_host(120) = 	8;	// 	CN
+        jsulf_poor_host(3)   = 	9;	// 	AN + AC
+        jsulf_poor_host(6)   = 	10;	// 	AS + AC
+        jsulf_poor_host(7)   = 	11;	// 	AS + AN
+        jsulf_poor_host(8)   =  12;	// 	AS + AN + AC
+        jsulf_poor_host(11)  = 	13;	// 	SC + AC
+        jsulf_poor_host(41)  = 	14;	// 	SN + AC
+        jsulf_poor_host(42)  = 	15;	// 	SN + AN
+        jsulf_poor_host(43)  = 	16;	// 	SN + AN + AC
+        jsulf_poor_host(50)  = 	17;	// 	SN + SC
+        jsulf_poor_host(51)  = 	18;	// 	SN + SC + AC
+        jsulf_poor_host(60)  = 	19;	// 	SS + AC
+        jsulf_poor_host(62)  = 	20;	//	SS + AN
+        jsulf_poor_host(63)  = 	21;	//	SS + AN + AC
+        jsulf_poor_host(65)  = 	22;	//	SS + AS
+        jsulf_poor_host(66)  = 	23;	//	SS + AS + AC
+        jsulf_poor_host(67)  = 	24;	// 	SS + AS + AN
+        jsulf_poor_host(68)  = 	25;	// 	SS + AS + AN + AC
+        jsulf_poor_host(70)  = 	26;	// 	SS + SC
+        jsulf_poor_host(71)  = 	27;	// 	SS + SC + AC
+        jsulf_poor_host(100) = 	28;	//	SS + SN
+        jsulf_poor_host(101) = 	29;	//	SS + SN + AC
+        jsulf_poor_host(102) = 	30;	//	SS + SN + AN
+        jsulf_poor_host(103) = 	31;	//	SS + SN + AN + AC
+        jsulf_poor_host(110) = 	32;	//	SS + SN + SC
+        jsulf_poor_host(111) = 	33;	//	SS + SN + SC + AC
+        jsulf_poor_host(81)  = 	34;	// 	CC + AC
+        jsulf_poor_host(90)  = 	35;	// 	CC + SC
+        jsulf_poor_host(91)  = 	36;	// 	CC + SC + AC
+        jsulf_poor_host(121) = 	37;	// 	CN + AC
+        jsulf_poor_host(122) = 	38;	// 	CN + AN
+        jsulf_poor_host(123) = 	39;	// 	CN + AN + AC
+        jsulf_poor_host(130) = 	40;	// 	CN + SC
+        jsulf_poor_host(131) = 	41;	// 	CN + SC + AC
+        jsulf_poor_host(160) = 	42;	// 	CN + SN
+        jsulf_poor_host(161) = 	43;	// 	CN + SN + AC
+        jsulf_poor_host(162) = 	44;	// 	CN + SN + AN
+        jsulf_poor_host(163) = 	45;	// 	CN + SN + AN + AC
+        jsulf_poor_host(170) = 	46;	// 	CN + SN + SC
+        jsulf_poor_host(171) = 	47;	// 	CN + SN + SC + AC
+        jsulf_poor_host(200) = 	48;	// 	CN + CC
+        jsulf_poor_host(201) = 	49;	// 	CN + CC + AC
+        jsulf_poor_host(210) = 	50;	// 	CN + CC + SC
+        jsulf_poor_host(211) = 	51;	// 	CN + CC + SC + AC
+
+        // SULFATE-RICH DOMAIN
+        jsulf_rich_host(1)   = 	52;	// 	AB
+        jsulf_rich_host(2)   = 	53;	//	LV
+        jsulf_rich_host(10)  = 	54;	//	SB
+        jsulf_rich_host(3)   = 	55;	//	AB + LV
+        jsulf_rich_host(7)   = 	56;	//	AS + LV
+        jsulf_rich_host(70)  = 	57;	//	SS + SB
+        jsulf_rich_host(62)  = 	58;	//	SS + LV
+        jsulf_rich_host(67)  = 	59;	//	SS + AS + LV
+        jsulf_rich_host(61)  = 	60;	//	SS + AB
+        jsulf_rich_host(63)  = 	61;	//	SS + LV + AB
+        jsulf_rich_host(11)  = 	62;	//	SB + AB
+        jsulf_rich_host(71)  = 	63;	//	SS + SB + AB
+        jsulf_rich_host(5)   = 	3;	//	AS
+        jsulf_rich_host(60)  = 	6;	// 	SS
+        jsulf_rich_host(65)  = 	22;	// 	SS + AS
+        
         a_zsr.modify_host();
         aw_min.modify_host();
         b_zsr.modify_host();
@@ -2289,6 +2393,9 @@ struct MosaicModelData {
         za.modify_host();
         mw_c.modify_host();
         mw_a.modify_host();
+        jsalt_index.modify_host();
+        jsulf_poor.modify_host();
+        jsulf_rich.modify_host();
 
         a_zsr.sync_device();
         aw_min.sync_device();
@@ -2305,6 +2412,9 @@ struct MosaicModelData {
         za.sync_device();
         mw_c.sync_device();
         mw_a.sync_device();
+        jsalt_index.sync_device();
+        jsulf_poor.sync_device();
+        jsulf_rich.sync_device();
       }
 
       ~MosaicModelData() = default;

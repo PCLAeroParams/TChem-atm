@@ -24,6 +24,7 @@ void compute_activities(Ensemble *ensemble) {
     auto jphase_arr = input.get_array("jphase");
     auto jhyst_leg_arr = input.get_array("jhyst_leg");
     const auto aH2O_a_arr = input.get_array("aH2O_a");
+    auto water_a_arr = input.get_array("water_a");
 
     const auto mmd = TChem::Impl::MosaicModelData<device_type>();
 
@@ -47,7 +48,6 @@ void compute_activities(Ensemble *ensemble) {
     const auto nsize_electrolyte = static_cast<ordinal_type>(electrolyte_arr.size())/n;
     std::vector<std::vector<real_type>> electrolyte_arr_2d;
     for (size_t i = 0; i < n*nsize_electrolyte; i += nsize_electrolyte) {
-        // Create a small vector from a segment of long_vector
         std::vector<real_type> electrolyte_temp(electrolyte_arr.begin() + i, electrolyte_arr.begin() + i + nsize_electrolyte);
         electrolyte_arr_2d.push_back(electrolyte_temp);
     }
@@ -74,6 +74,9 @@ void compute_activities(Ensemble *ensemble) {
     real_type_1d_view aH2O_a("aH2O_a", 1);
     verification::convert_1d_vector_to_1d_view_device(aH2O_a_arr, aH2O_a);
 
+    real_type_1d_view water_a("water_a", 1);
+    verification::convert_1d_vector_to_1d_view_device(water_a_arr, water_a);
+
     real_type_1d_view molalities("molalities", mmd.nelectrolyte);
     real_type_1d_view xmol("xmol", mmd.nelectrolyte);
     real_type_1d_view gam("gam", mmd.nelectrolyte);
@@ -86,13 +89,11 @@ void compute_activities(Ensemble *ensemble) {
     const auto host_exec_space = TChem::host_exec_space();
     policy_type policy(exec_space_instance, 1, Kokkos::AUTO());
 
-    // Check this routines on GPUs.
     Kokkos::parallel_for(
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-    // Perform the adjustment calculation
     TChem::Impl::MOSAIC<real_type, device_type>::compute_activities(
       mmd,
       molalities,
@@ -111,7 +112,8 @@ void compute_activities(Ensemble *ensemble) {
       jaerosolstate(0),
       jphase(0),
       jhyst_leg(0),
-      aH2O_a(0));
+      aH2O_a(0),
+      water_a(0));
     });
 
     verification::convert_1d_view_device_to_1d_vector(jaerosolstate, jaerosolstate_arr);
@@ -126,5 +128,9 @@ void compute_activities(Ensemble *ensemble) {
     std::vector<real_type> activity_arr(mmd.nelectrolyte);
     verification::convert_1d_view_device_to_1d_vector(activity, activity_arr);
     output.set("activity", activity_arr);
+
+    std::vector<real_type> water_a_arr_out(1);
+    verification::convert_1d_view_device_to_1d_vector(water_a, water_a_arr_out);
+    output.set("water_a", water_a_arr_out);
   });
 }

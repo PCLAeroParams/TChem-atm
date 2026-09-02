@@ -5,7 +5,6 @@
 
 using device_type = typename Tines::UseThisDevice<TChem::exec_space>::type;
 using real_type_1d_view = TChem::real_type_1d_view;
-using ordinal_type = TChem::ordinal_type;
 using namespace skywalker;
 using namespace TChem;
 
@@ -46,15 +45,13 @@ void aerosol_water(Ensemble *ensemble) {
     const auto host_exec_space = TChem::host_exec_space();
     policy_type policy(exec_space_instance, 1, Kokkos::AUTO());
 
-    // Check this routines on GPUs.
     Kokkos::parallel_for(
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
-      Real& aerosol_water = outputs_aerosol_water(0);
+      Real& water_a = outputs_aerosol_water(0);
 
-    // Perform the adjustment calculation
     TChem::Impl::MOSAIC<real_type, device_type>::aerosol_water(
       mmd,
       electrolyte,
@@ -63,14 +60,14 @@ void aerosol_water(Ensemble *ensemble) {
       jaerosolstate(0),
       jphase(0),
       jhyst_leg(0),
-      aerosol_water);
+      water_a);
     });
 
     const auto outputs_aerosol_water_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_aerosol_water);
 
-    Real aerosol_water = outputs_aerosol_water_h(0);
+    Real water_a = outputs_aerosol_water_h(0);
 
-    output.set("aerosol_water", aerosol_water);
+    output.set("water_a", water_a);
 
     verification::convert_1d_view_device_to_1d_vector(jaerosolstate, jaerosolstate_arr);
     output.set("jaerosolstate", jaerosolstate_arr);

@@ -193,7 +193,7 @@
                      real_type& jaerosolstate,
                      real_type& jphase,
                      real_type& jhyst_leg,
-                     real_type& aerosol_water) {
+                     real_type& water_a) {
 
     for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
       real_type molality = 0.0;
@@ -206,8 +206,8 @@
       dum += electrolyte(je) / molalities(je);
     }
 
-    aerosol_water = dum * 1.0e-9;
-    if (aerosol_water <= 0.0) {
+    water_a = dum * 1.0e-9;
+    if (water_a <= 0.0) {
       jaerosolstate = mosaic.all_solid;
       jphase = mosaic.jsolid;
       jhyst_leg = mosaic.jhyst_lo;

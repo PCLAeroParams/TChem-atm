@@ -533,8 +533,8 @@
                              epercent_solid, epercent_liquid, epercent_total,
                              water_a, jphase, jhyst_leg);
         // new wet mass and wet volume
-        mass_wet_a    = mass_dry_a + water_a * 1.e-3; // g/cc(air)
-        vol_wet_a     = vol_dry_a  + water_a * 1.e-3; // cc/cc(air) or m^3/m^3(air)
+        mass_wet_a    = mass_dry_a + water_a * 1.0e-3; // g/cc(air)
+        vol_wet_a     = vol_dry_a  + water_a * 1.0e-3; // cc/cc(air) or m^3/m^3(air)
         growth_factor = (mass_dry_a > 0.0) ? mass_wet_a / mass_dry_a : 1.0; // mass growth factor
         return;
       } else if (sum_soluble > 0.0 && solids == 0.0) {
@@ -560,7 +560,7 @@
           compute_activities(mosaic, molalities, xmol, aer_liquid, ma, mc_view,
                              Keq_ll, electrolyte_solid, electrolyte_liquid, electrolyte_total,
                              log_gam, log_gamZ, gam, activity,
-                             jaerosolstate, jphase, jhyst_leg, aH2O_a);
+                             jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a);
         }
         // new wet mass and wet volume
         mass_wet_a    = mass_dry_a + water_a * 1.0e-3; // g/cc(air)
@@ -596,7 +596,7 @@
                                    ? jsulf_poor_view(jdum)
                                    : jsulf_rich_view(jdum);
 
-      const real_type MDRH_val = MDRH_T(j_index - 1); // Fortran 1-based → C++ 0-based
+      const real_type MDRH_val = MDRH_T(j_index - 1);
 
       if (aH2O_a * 100.0 < MDRH_val) {
         jaerosolstate = static_cast<real_type>(mosaic.all_solid);
@@ -619,7 +619,7 @@
              electrolyte_solid, electrolyte_liquid, electrolyte_total,
              epercent_liquid, epercent_solid, epercent_total,
              Keq_sl, Keq_ll, log_gamZ,
-             jaerosolstate, jphase, jhyst_leg, aH2O_a,
+             jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a,
              mass_dry_a, vol_dry_a, mass_wet_a, vol_wet_a, growth_factor,
              electrolyte_sum_solid,
              jsalt_present, hsalt, phi_salt, phi_salt_old, phi_bar,
@@ -649,6 +649,7 @@
                 real_type& jphase,
                 real_type& jhyst_leg,
                 real_type& aH2O_a,
+                real_type& water_a,
                 real_type& mass_dry_a,
                 real_type& vol_dry_a,
                 real_type& mass_wet_a,
@@ -726,8 +727,6 @@
     real_type electrolyte_sum_liq_scratch = 0.0;
     real_type aer_sum_scratch             = 0.0;
 
-    real_type water_a = 0.0;
-
     // commented code from MOSAIC source
     // !      call MESA_check_complete_dissolution(ibin,
     // !      &                                     mdissolved,
@@ -749,7 +748,7 @@
         epercent_liquid, aer_sum_scratch, aer_percent,
         molalities, xmol, ma, mc_view, log_gam, log_gamZ,
         gam, activity, eleliquid,
-        jaerosolstate, jphase, jhyst_leg, aH2O_a,
+        jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a,
         jsalt_present,
         flux_sl, phi_salt, sat_ratio,
         frac_salt_solid, frac_salt_liq,
@@ -772,13 +771,13 @@
           epercent_solid, epercent_liquid, epercent_total,
           water_a, jphase, jhyst_leg);
         growth_factor = 1.0;
-        mass_wet_a = mass_dry_a_loc;
+        // mass_wet_a = mass_dry_a_loc;
         vol_wet_a  = vol_dry_a_loc;
         return;
 
       } else if (iconverge_flux == 1) {
         jaerosolstate = static_cast<real_type>(mosaic.mixed);
-        mass_wet_a = mass_dry_a_loc + water_a * 1.0e-3;
+        // mass_wet_a = mass_dry_a_loc + water_a * 1.0e-3;
         vol_wet_a  = vol_dry_a_loc  + water_a * 1.0e-3; // cc(aer)/cc(air) or m^3/m^3(air)
         if (mass_dry_a_loc > 0.0) {
           growth_factor = mass_wet_a / mass_dry_a_loc; // mass growth factor
@@ -984,6 +983,7 @@
                       real_type& jphase,
                       real_type& jhyst_leg,
                       real_type& aH2O_a,
+                      real_type& water_a,
                       const real_type_1d_view_type& jsalt_present,
                       const real_type_1d_view_type& flux_sl,
                       const real_type_1d_view_type& phi_salt,
@@ -998,13 +998,11 @@
                          store, electrolyte_liquid, electrolyte_solid, electrolyte_liquid,
                          na, nc, xeq_a, xeq_c, na_Ma, nc_Mc,
                          electrolyte_sum_liq, epercent_liquid, aer_sum, aer_percent);
-
+    
     compute_activities(mosaic, molalities, xmol, aer_liquid, ma, mc,
                        Keq_ll, electrolyte_solid, electrolyte_liquid, electrolyte_total,
                        log_gam, log_gamZ, gam, activity,
-                       jaerosolstate, jphase, jhyst_leg, aH2O_a);
-    real_type water_a = 0.0;
-    aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
+                       jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a);
 
     activity(mosaic.jna3hso4) = 0.0;
 

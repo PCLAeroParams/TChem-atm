@@ -34,6 +34,7 @@ void MESA(Ensemble *ensemble) {
     const auto vol_dry_a_arr          = input.get_array("vol_dry_a");
     const auto phi_salt_old_arr       = input.get_array("phi_salt_old");
     const auto alpha_salt_arr         = input.get_array("alpha_salt");
+    const auto mass_wet_a_arr         = input.get_array("mass_wet_a");
 
     const auto mmd = TChem::Impl::MosaicModelData<device_type>();
 
@@ -103,6 +104,9 @@ void MESA(Ensemble *ensemble) {
     real_type_1d_view alpha_salt("alpha_salt", mmd.nsalt);
     verification::convert_1d_vector_to_1d_view_device(alpha_salt_arr, alpha_salt);
 
+    real_type_1d_view mass_wet_a("mass_wet_a", 1);
+    verification::convert_1d_vector_to_1d_view_device(mass_wet_a_arr, mass_wet_a);
+
     real_type_1d_view phi_salt("phi_salt", mmd.nsalt);
     real_type_1d_view phi_bar("phi_bar", mmd.nsalt);
     real_type_1d_view hsalt("hsalt", mmd.nsalt);
@@ -131,7 +135,6 @@ void MESA(Ensemble *ensemble) {
     real_type_1d_view tau_p("tau_p", mmd.nsalt);
     real_type_1d_view tau_d("tau_d", mmd.nsalt);
 
-    real_type_1d_view mass_wet_a_view("mass_wet_a", 1);
     real_type_1d_view vol_wet_a_view("vol_wet_a", 1);
     real_type_1d_view growth_factor_view("growth_factor", 1);
     real_type_1d_view electrolyte_sum_solid_view("electrolyte_sum_solid", 1);
@@ -156,7 +159,7 @@ void MESA(Ensemble *ensemble) {
         Keq_sl, Keq_ll, log_gamZ, MDRH_T,
         jaerosolstate(0), jphase(0), jhyst_leg(0), aH2O_a(0), water_a(0),
         mass_dry_a_view(0), vol_dry_a_view(0),
-        mass_wet_a_view(0), vol_wet_a_view(0),
+        mass_wet_a(0), vol_wet_a_view(0),
         growth_factor_view(0),
         jsalt_present, hsalt, phi_salt, phi_salt_old, phi_bar, alpha_salt,
         sat_ratio, flux_sl, frac_salt_solid, frac_salt_liq, eleliquid,
@@ -216,7 +219,7 @@ void MESA(Ensemble *ensemble) {
     verification::convert_1d_view_device_to_1d_vector(vol_dry_a_view, vol_dry_a_out);
     verification::convert_1d_view_device_to_1d_vector(phi_salt_old, phi_salt_old_out);
     verification::convert_1d_view_device_to_1d_vector(alpha_salt, alpha_salt_out);
-    verification::convert_1d_view_device_to_1d_vector(mass_wet_a_view, mass_wet_a_out);
+    verification::convert_1d_view_device_to_1d_vector(mass_wet_a, mass_wet_a_out);
     verification::convert_1d_view_device_to_1d_vector(vol_wet_a_view, vol_wet_a_out);
     verification::convert_1d_view_device_to_1d_vector(growth_factor_view, growth_factor_out);
 

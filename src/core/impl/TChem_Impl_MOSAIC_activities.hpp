@@ -19,14 +19,15 @@ KOKKOS_INLINE_FUNCTION static
                           real_type& jaerosolstate,
                           real_type& jphase,
                           real_type& jhyst_leg,
-                          real_type& aH2O_a) {
+                          real_type& aH2O_a,
+                          real_type& water_a) {
 
     // local variables
-    real_type a_c, sum_elec, gam_ratio, water_a, mSULF = 0.0;
+    real_type a_c, sum_elec, gam_ratio, mSULF = 0.0;
     ordinal_type jA = 0;
 
     // get aerosol water activity
-    aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
+    aerosol_water(mosaic, electrolyte_liquid, aH2O_a, molalities, jaerosolstate, jphase, jhyst_leg, water_a);
 
     if (water_a == 0.0) {
       return;

@@ -619,7 +619,7 @@
 
     auto mw_aer_mac   = mosaic.mw_aer_mac.template view<DeviceType>();
     auto dens_aer_mac = mosaic.dens_aer_mac.template view<DeviceType>();
-    auto v_molar_g    = mosaic.v_molar_g.template view<DeviceType>();
+    auto partial_molar_vol = mosaic.partial_molar_vol.template view<DeviceType>();
 
     aH2O_a = RH_pc * 0.01;
     kelvin  = 1.0;
@@ -700,7 +700,7 @@
 
     // now compute kelvin effect terms for condensing species (nh3, hno3, and hcl)
     for (ordinal_type iv = 0; iv < mosaic.ngas_volatile; ++iv) {
-      real_type term = 4.0*sigma_soln*v_molar_g(iv) / (8.3144e7*T_K*DpmV);
+      real_type term = 4.0*sigma_soln*partial_molar_vol(iv) / (8.3144e7*T_K*DpmV);
       kel(iv) = 1.0 + term*(1.0 + 0.5*term*(1.0 + term/3.0));
     }
   } // aerosol_phase_state

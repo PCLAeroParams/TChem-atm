@@ -26,7 +26,7 @@ Fork of TChem_AerosolChemistry_RHSs.cpp by Sam Frederick, July 2026
 #include "TChem.hpp"
 #include "TChem_CommandLineParser.hpp"
 #include "TChem_Impl_AerosolChemistry.hpp"
-#include "TChem_RHS_Adapter.hpp"
+#include "TChem_Impl_AerosolChemistryRHS.hpp"
 
 using ordinal_type = TChem::ordinal_type;
 using real_type = TChem::real_type;
@@ -318,7 +318,7 @@ int main(int argc, char *argv[]) {
       timer.reset();
       Kokkos::Profiling::pushRegion(profile_name);
       // Create a AerosolChemistryRHS object for the batch of teams
-      using AerosolRHS = AerosolChemistryRHS<problem_type>;
+      using AerosolRHS = TChem::Impl::AerosolChemistryRHS<problem_type>;
       AerosolRHS batched_state(state, num_concentration, kmcd, amcd);
 
       Kokkos::parallel_for

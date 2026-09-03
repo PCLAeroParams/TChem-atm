@@ -22,6 +22,12 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 */
 #include "TChem.hpp"
 #include "TChem_CommandLineParser.hpp"
+#include <sundials/sundials_context.h>
+#include <sundials/sundials_logger.h>
+
+#include "TChem_Impl_AerosolChemistryRHS.hpp" // AerosolChemistryRHS
+#include "TChem_AerosolChemistry_CVODE_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
+
 
 using ordinal_type = TChem::ordinal_type;
 using real_type = TChem::real_type;
@@ -83,6 +89,10 @@ int main(int argc, char *argv[]) {
   // , dtmax(1e-1);
   // Linear solver type
   int solver_type = 1;
+  // Max Krylov subspace dimension for SPGMR (SUNDIALS defaults to 5 if <= 0)
+  int spgmr_maxl = 20;
+  ordinal_type bgmr_max_iter(20); // Max Krylov subspace dimension for BGMR
+  std::string logFile(""); // If non-empty, write SUNDIALS' INFO log here (needs SUNDIALS built with LOGGING_LEVEL=3).
 
 
 
@@ -113,6 +123,15 @@ int main(int argc, char *argv[]) {
   opts.set_option<real_type>("tend", "Time end", &tend);
   opts.set_option<real_type>("dtmin", "Minimum time step size", &dtmin);
   opts.set_option<int>("solver_type", "solver type. ", &solver_type);
+  opts.set_option<int>("spgmr_maxl",
+                       "Max Krylov subspace dimension for SPGMR (<=0 uses the SUNDIALS default of 5)",
+                       &spgmr_maxl);
+  opts.set_option<std::string>("log_file",
+                               "If set, write the SUNDIALS INFO log (b-norm/b-tol/res-tol per linear solve) here",
+                               &logFile);
+  opts.set_option<int>("bgmr_max_iter",
+                       "Max Krylov subspace dimension for BGMR",
+                       &bgmr_max_iter);
   opts.set_option<bool>(
       "write-time-profiles", "If true, this example will write the time profile output to a file.", &write_time_profiles);
   opts.set_option<int>("max-time-iterations",
@@ -123,6 +142,21 @@ int main(int argc, char *argv[]) {
     return 0; // print help return
   // Create the SUNDIALS context
   sundials::Context sunctx;
+
+  // Route SUNDIALS' INFO log to a file, if SUNDIALS is built with -D SUNDIALS_LOGGING_LEVEL=3 
+  if (!logFile.empty()) {
+    SUNLogger logger = nullptr;
+    if (SUNContext_GetLogger(sunctx, &logger) == SUN_SUCCESS && logger != nullptr) {
+      if (SUNLogger_SetInfoFilename(logger, logFile.c_str()) == SUN_SUCCESS) {
+        printf("..SUNDIALS info log -> %s\n", logFile.c_str());
+      } else {
+        printf("WARNING: SUNLogger_SetInfoFilename failed for %s\n", logFile.c_str());
+      }
+    } else {
+      printf("WARNING: could not get the SUNDIALS logger from the context\n");
+    }
+  }
+
   Kokkos::initialize(argc, argv);
   {
 
@@ -385,7 +419,11 @@ int main(int argc, char *argv[]) {
 
     ordinal_type per_team_extent=0;
 
-    if (solver_type == 0)
+    // Select the linear solver to attach to CVODE 
+    // - 0: Kokkos Batched Dense LU-based solver
+    // - 1: SUNDIALS SPGMR, non-batched matrix-free GMRES
+    // - 2: Custom Batched matrix-free GMRES
+    if (solver_type == 0) // Kokkos Batched Dense (LU-based solver)
     {
       // Create Kokkos dense block diagonal matrix
       A = std::make_unique<MatType>(udata.nbatches, udata.batchSize, udata.batchSize, sunctx);
@@ -409,11 +447,13 @@ int main(int argc, char *argv[]) {
     udata.JacRL=JacRL;
 #endif
     }
-    else
+    else if (solver_type == 1)
     {
-      // Create matrix-free GMRES linear solver
+      // Create matrix-free GMRES linear solver.
+      // NOTE the third argument is the maximum Krylov subspace dimension. Passing 0 here
+      // selects SUNDIALS default of SUNSPGMR_MAXL_DEFAULT = 5 (too small for this prob)
       LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
-        SUNLinSol_SPGMR(y, SUN_PREC_NONE, 0, sunctx));
+        SUNLinSol_SPGMR(y, SUN_PREC_NONE, spgmr_maxl, sunctx));
 
       // Attach the linear solver to CVODE
       retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
@@ -422,6 +462,33 @@ int main(int argc, char *argv[]) {
          = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
 
     }
+    else if (solver_type == 2){
+
+      // Create a AerosolChemistryRHS object for the batch of teams
+      using AerosolRHS = TChem::Impl::AerosolChemistryRHS<problem_type>;
+      AerosolRHS rhs_object(state, num_concentration, kmcd, amcd);
+
+      ordinal_type system_size = number_of_equations;
+      ordinal_type n_systems = static_cast<ordinal_type>(nBatch); // nBatch was defined int so need to convert to ordinal_type to ensure correct type passed to linear solver
+
+      // Create linear solver
+      SUNLinearSolver bgmr = TChem::SUNLinSol_BatchedGMRES(y, rhs_object, system_size, n_systems, bgmr_max_iter, policy, sunctx);
+      if (check_ptr(bgmr, "SUNLinSol_BatchedGMRES")) { return 1; }
+      // Diagnostic printing (once per Newton solve, turn off/on with --verbose)
+      TChem::SUNLinSol_BatchedGMRESSetVerbose(bgmr, verbose);
+      LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(std::move(bgmr));
+
+      // Attach the linear solver to CVODE
+      retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
+      if (check_flag(retval, "CVodeSetLinearSolver")) { return 1; }
+
+      per_team_extent = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
+
+    } else { // catch for solver type not in (0, 1, 2)
+      printf("Invalid solver type %d\n", solver_type);
+      return 1;
+    }
+
     const ordinal_type per_team_scratch =
       TChem::Scratch<real_type_1d_view_type>::shmem_size(per_team_extent);
       policy.set_scratch_size(level, Kokkos::PerTeam(per_team_scratch));
@@ -524,6 +591,17 @@ int main(int argc, char *argv[]) {
     retval = CVodeGetNumJacEvals(cvode_mem, &nje);
     check_flag(retval, "CVodeGetNumJacEvals");
 
+    // Iterative-linear-solver statistics. 
+    //   njtv  : number of J*v products
+    //   nfeLS : RHS evaluations consumed by the difference quotient
+    //   nli   : total Krylov iterations; nli/nni is the per-Newton-solve iteration count
+    //   ncfl  : linear solves that failed to converge
+    long int nli = 0, nfeLS = 0, njtv = 0, ncfl = 0;
+    CVodeGetNumLinIters(cvode_mem, &nli);
+    CVodeGetNumLinRhsEvals(cvode_mem, &nfeLS);
+    CVodeGetNumJtimesEvals(cvode_mem, &njtv);
+    CVodeGetNumLinConvFails(cvode_mem, &ncfl);
+
    fprintf(fout_times, ", \n ");
    fprintf(fout_times, " \"Sundials Final Statistics\": \n  {\n");
    fprintf(fout_times, "%s: %d, \n", "\"steps\"", nst);
@@ -532,7 +610,11 @@ int main(int argc, char *argv[]) {
    fprintf(fout_times, "%s: %d, \n", "\"Jac_evals\"", nje);
    fprintf(fout_times, "%s: %d, \n", "\"NLS_iters\"", nni);
    fprintf(fout_times, "%s: %d, \n", "\"NLS_fails\"", ncfn);
-   fprintf(fout_times, "%s: %d \n", "\"Error_test_fails\"", netf);
+   fprintf(fout_times, "%s: %d, \n", "\"Error_test_fails\"", netf);
+   fprintf(fout_times, "%s: %d, \n", "\"lin_iters\"", nli);
+   fprintf(fout_times, "%s: %d, \n", "\"lin_RHS_evals\"", nfeLS);
+   fprintf(fout_times, "%s: %d, \n", "\"Jtimes_evals\"", njtv);
+   fprintf(fout_times, "%s: %d \n", "\"lin_conv_fails\"", ncfl);
    fprintf(fout_times, "} \n "); // reaction rates
 
     std::cout << "\nFinal Statistics:\n"
@@ -542,7 +624,14 @@ int main(int argc, char *argv[]) {
               << "  Jac evals        = " << nje << "\n"
               << "  NLS iters        = " << nni << "\n"
               << "  NLS fails        = " << ncfn << "\n"
-              << "  Error test fails = " << netf << "\n";
+              << "  Error test fails = " << netf << "\n"
+              << "  --- iterative linear solver ---\n"
+              << "  Krylov iters     = " << nli << "\n"
+              << "  Jv products      = " << njtv << "\n"
+              << "  RHS evals (DQ)   = " << nfeLS << "\n"
+              << "  Lin conv fails   = " << ncfl << "\n"
+              << "  Krylov iters/NLS = "
+              << (nni > 0 ? static_cast<double>(nli)/static_cast<double>(nni) : 0.0) << "\n";
 
     // Free objects
     CVodeFree(&cvode_mem);

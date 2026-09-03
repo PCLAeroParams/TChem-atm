@@ -550,4 +550,159 @@
     aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
   } // degas_solid_nh4cl
 
+  KOKKOS_INLINE_FUNCTION static
+  void aerosol_phase_state(const MosaicModelData<DeviceType>& mosaic,
+                           const real_type_1d_view_type& aer_liquid,
+                           const real_type_1d_view_type& aer_solid,
+                           const real_type_1d_view_type& aer_total,
+                           const real_type_1d_view_type& electrolyte_solid,
+                           const real_type_1d_view_type& electrolyte_liquid,
+                           const real_type_1d_view_type& electrolyte_total,
+                           const real_type_1d_view_type& epercent_liquid,
+                           const real_type_1d_view_type& epercent_solid,
+                           const real_type_1d_view_type& epercent_total,
+                           const real_type_1d_view_type& Keq_sl,
+                           const real_type_1d_view_type& Keq_ll,
+                           const real_type_2d_view_type& log_gamZ,
+                           const real_type_1d_view_type& MDRH_T,
+                           real_type& jaerosolstate,
+                           real_type& jphase,
+                           real_type& jhyst_leg,
+                           real_type& aH2O_a,
+                           real_type& water_a,
+                           real_type& mass_dry_a,
+                           real_type& vol_dry_a,
+                           real_type& mass_wet_a,
+                           real_type& vol_wet_a,
+                           real_type& growth_factor,
+                           const real_type_1d_view_type& jsalt_present,
+                           const real_type_1d_view_type& hsalt,
+                           const real_type_1d_view_type& phi_salt,
+                           const real_type_1d_view_type& phi_salt_old,
+                           const real_type_1d_view_type& phi_bar,
+                           const real_type_1d_view_type& alpha_salt,
+                           const real_type_1d_view_type& sat_ratio,
+                           const real_type_1d_view_type& flux_sl,
+                           const real_type_1d_view_type& frac_salt_solid,
+                           const real_type_1d_view_type& frac_salt_liq,
+                           const real_type_1d_view_type& eleliquid,
+                           const real_type_1d_view_type& store,
+                           const real_type_1d_view_type& na,
+                           const real_type_1d_view_type& nc,
+                           const real_type_1d_view_type& xeq_a,
+                           const real_type_1d_view_type& xeq_c,
+                           const real_type_1d_view_type& na_Ma,
+                           const real_type_1d_view_type& nc_Mc,
+                           const real_type_1d_view_type& aer_percent,
+                           const real_type_1d_view_type& molalities,
+                           const real_type_1d_view_type& xmol,
+                           const real_type_1d_view_type& ma,
+                           const real_type_1d_view_type& mc_view,
+                           const real_type_1d_view_type& log_gam,
+                           const real_type_1d_view_type& gam,
+                           const real_type_1d_view_type& activity,
+                           const real_type_1d_view_type& tau_p,
+                           const real_type_1d_view_type& tau_d,
+                           real_type& electrolyte_sum_solid,
+                           real_type& electrolyte_sum_liq,
+                           real_type& aer_sum,
+                           real_type& kelvin,
+                           const real_type_1d_view_type& kel,
+                           const real_type& num_a,
+                           real_type& sigma_soln,
+                           real_type& DpmV,
+                           real_type& volume_a,
+                           real_type& water_a_up,
+                           const real_type& sigma_water,
+                           const real_type& T_K,
+                           const real_type& RH_pc) {
+
+    auto mw_aer_mac   = mosaic.mw_aer_mac.template view<DeviceType>();
+    auto dens_aer_mac = mosaic.dens_aer_mac.template view<DeviceType>();
+    auto partial_molar_vol = mosaic.partial_molar_vol.template view<DeviceType>();
+
+    aH2O_a = RH_pc * 0.01;
+    kelvin  = 1.0;
+    for (ordinal_type iv = 0; iv < mosaic.ngas_volatile; ++iv) {
+      kel(iv) = 1.0;
+    }
+
+    const real_type kelvin_toler = (RH_pc <= 99.0) ? 1.0e-4 : 1.0e-8;
+
+    real_type aer_H =   2.0*aer_total(mosaic.iso4_a)
+                      +     aer_total(mosaic.ino3_a)
+                      +     aer_total(mosaic.icl_a)
+                      +     aer_total(mosaic.imsa_a)
+                      + 2.0*aer_total(mosaic.ico3_a)
+                      - 2.0*aer_total(mosaic.ica_a)
+                      -     aer_total(mosaic.ina_a)
+                      -     aer_total(mosaic.inh4_a);
+    aer_H = max(aer_H, 0.0);
+
+    mass_dry_a = 0.0;
+    vol_dry_a  = 0.0;
+    for (ordinal_type iaer = 0; iaer < mosaic.naer; ++iaer) {
+      mass_dry_a += aer_total(iaer) * mw_aer_mac(iaer); // ng/m^3(air)
+      vol_dry_a  += aer_total(iaer) * mw_aer_mac(iaer) / dens_aer_mac(iaer); // ncc/m^3(air)
+    }
+    mass_dry_a = (mass_dry_a + aer_H) * 1.0e-15; // g/cc(air)
+    vol_dry_a  = (vol_dry_a  + aer_H) * 1.0e-15; // cc(aer)/cc(air) or m^3/m^3(air)
+
+    mass_wet_a = mass_dry_a + water_a * 1.0e-3; // g/cc(air)
+    vol_wet_a  = vol_dry_a  + water_a * 1.0e-3; // cc(aer)/cc(air) or m^3/m^3(air)
+
+    // water uptake at reference RH (60%)
+    aerosol_water_up(mosaic, electrolyte_total, water_a_up); // for hysteresis curve determination
+
+    for (ordinal_type iter_kelvin = 1; iter_kelvin < 100; ++iter_kelvin) {
+
+      // binary molalities at current aH2O_a
+      for (ordinal_type je = 0; je < mosaic.nelectrolyte; ++je) {
+        real_type mol = 0.0;
+        bin_molality(mosaic, je, aH2O_a, mol);
+        molalities(je) = mol;
+      }
+
+      MESA(mosaic,
+           aer_liquid, aer_solid, aer_total,
+           electrolyte_solid, electrolyte_liquid, electrolyte_total,
+           epercent_liquid, epercent_solid, epercent_total,
+           Keq_sl, Keq_ll, log_gamZ, MDRH_T,
+           jaerosolstate, jphase, jhyst_leg,
+           aH2O_a, water_a,
+           mass_dry_a, vol_dry_a, mass_wet_a, vol_wet_a,
+           growth_factor,
+           jsalt_present, hsalt, phi_salt, phi_salt_old, phi_bar,
+           alpha_salt, sat_ratio, flux_sl,
+           frac_salt_solid, frac_salt_liq,
+           eleliquid, store,
+           na, nc, xeq_a, xeq_c, na_Ma, nc_Mc,
+           aer_percent, molalities, xmol, ma, mc_view,
+           log_gam, gam, activity,
+           tau_p, tau_d,
+           electrolyte_sum_solid, electrolyte_sum_liq, aer_sum);
+
+      if (static_cast<ordinal_type>(jaerosolstate) == mosaic.all_solid) return;
+
+      calculate_kelvin(vol_wet_a, num_a, aH2O_a, sigma_water, T_K,
+                       volume_a, DpmV, sigma_soln, kelvin);
+
+      real_type aH2O_a_new = RH_pc*0.01 / kelvin;
+      real_type rel_err = ats<real_type>::abs((aH2O_a_new - aH2O_a) / aH2O_a);
+      if (rel_err <= kelvin_toler) break;
+
+      aH2O_a = aH2O_a_new;
+    }
+
+    if (static_cast<ordinal_type>(jaerosolstate) == mosaic.all_liquid) {
+      jhyst_leg = static_cast<real_type>(mosaic.jhyst_up);
+    }
+
+    // now compute kelvin effect terms for condensing species (nh3, hno3, and hcl)
+    for (ordinal_type iv = 0; iv < mosaic.ngas_volatile; ++iv) {
+      real_type term = 4.0*sigma_soln*partial_molar_vol(iv) / (8.3144e7*T_K*DpmV);
+      kel(iv) = 1.0 + term*(1.0 + 0.5*term*(1.0 + term/3.0));
+    }
+  } // aerosol_phase_state
+
 #endif

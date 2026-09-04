@@ -6,21 +6,38 @@
 #=======================================================================================
 # User configuration  -- begin
 
-# example:
-# set CUDA="ON" to use GPU, else set to "OFF"
+# usage:
+#     ./build_script.sh [host|cuda|hip]      (default: host)
 # JFLAG is for makefile compilation on multiple cores, here 4
-# if CUDA="ON", make sure nvcc is in your system PATH
+# for the cuda backend, make sure nvcc is reachable via CUDA_HOME below
+# (on clusters, the GPU compute node and the login node may have different
+#  CUDA paths -- build on the node you intend to run on)
 
 MY_CC=gcc
 MY_CXX=g++
 MY_FC=gfortran
 JFLAG="-j 10"
-# Kokkos backends
-# set CUDA="ON" to use a NVIDIA GPU
-CUDA="OFF"
-# set HIP="ON" to use a AMD GPU
-HIP="OFF"
-#Note that both CUDA and HIP cannot be enabled simultaneously.
+# Kokkos backend, selected from the command line:
+#     ./build_script.sh [host|cuda|hip]      (default: host)
+# Only one backend is enabled at a time; CUDA and HIP cannot be enabled simultaneously.
+BACKEND="${1:-host}"
+BACKEND="$(echo "${BACKEND}" | tr '[:upper:]' '[:lower:]')"
+
+case "${BACKEND}" in
+  host) CUDA="OFF"; HIP="OFF" ;;
+  cuda) CUDA="ON";  HIP="OFF" ;;
+  hip)  CUDA="OFF"; HIP="ON"  ;;
+  *)
+    echo "ERROR: unknown backend '${BACKEND}'."
+    echo "Usage: $0 [host|cuda|hip]   (default: host)"
+    exit 1
+    ;;
+esac
+echo "Kokkos backend: ${BACKEND}  (CUDA=${CUDA}, HIP=${HIP})"
+
+# Path to the CUDA toolkit (only used when the cuda backend is selected);
+# nvcc must be reachable via this path.
+CUDA_HOME=/usr/local/cuda
 SACADO="OFF"
 
 # Path to TChem repository.
@@ -129,6 +146,12 @@ SUNDIALS_INSTALL_PATH=${INSTALL_BASE_TPL_HOST}/sundials
 
 if [ "${CUDA}" = "ON" ]
 then
+  export PATH="${CUDA_HOME}/bin:${PATH}"
+  export LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
+  if ! command -v nvcc >/dev/null 2>&1; then
+      echo "ERROR: nvcc not found on PATH after adding CUDA_HOME=${CUDA_HOME}. Check CUDA_HOME in this script."
+      exit 1
+  fi
   KOKKOS_REPOSITORY_PATH=${TINES_REPOSITORY_PATH}/ext/kokkos
   KOKKOS_INSTALL_PATH=${INSTALL_BASE_TPL_DEVICE}/kokkos
   KOKKOSKERNELS_INSTALL_PATH=$INSTALL_BASE_TPL_DEVICE/kokkos-kernels

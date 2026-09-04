@@ -13,7 +13,6 @@ LIST(APPEND TCHEM_ATM_EXAMPLE_SOURCES
   TChem_AerosolChemistry_CVODE.cpp
   TChem_AerosolChemistry.cpp
   TChem_AerosolChemistry_RHSs.cpp
-  TChem_AerosolChemistry_MatrixFree_test.cpp
   TChem_GasChemistry_RHSs.cpp
 )
 

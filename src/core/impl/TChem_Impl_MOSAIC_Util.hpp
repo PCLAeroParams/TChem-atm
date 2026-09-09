@@ -468,4 +468,23 @@
     }
   } // calc_dry_n_wet_aerosol_props
 
+  KOKKOS_INLINE_FUNCTION static
+  void calculate_kelvin(const real_type& vol_wet_a,
+                        const real_type& num_a,
+                        const real_type& aH2O_a,
+                        const real_type& sigma_water,
+                        const real_type& T_K,
+                        real_type& volume_a,
+                        real_type& DpmV,
+                        real_type& sigma_soln,
+                        real_type& kelvin) {
+
+    volume_a   = vol_wet_a; // [cc/cc(air)]
+    DpmV       = ats<real_type>::pow(6.0*volume_a / (num_a*3.14159265358979),
+                                     1.0/3.0); // [cm]
+    sigma_soln = sigma_water + 49.0*(1.0 - aH2O_a); // [dyn/cm]
+    real_type term = 72.0*sigma_soln / (8.3144e7*T_K*DpmV);
+    kelvin = 1.0 + term*(1.0 + 0.5*term*(1.0 + term/3.0));
+  } // calculate_kelvin
+
 #endif

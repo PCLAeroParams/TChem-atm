@@ -197,6 +197,8 @@ struct MosaicModelData {
     real_type_1d_dual_view jsulf_rich;  // ("jsulf_rich_", 71)
     real_type_1d_dual_view jsulf_poor;  // ("jsulf_poor_", 211)
 
+    real_type_1d_dual_view partial_molar_vol; // ("partial_molar_vol_", ngas_volatile)
+
     public:
       MosaicModelData() {
 
@@ -218,6 +220,7 @@ struct MosaicModelData {
         jsalt_index = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_a"), nsalt);
         jsulf_rich = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_rich"), 71);
         jsulf_poor = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_poor"), 211);
+        partial_molar_vol = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::partial_molar_vol"), ngas_volatile);
 
         auto a_zsr_host = a_zsr.view_host();
         auto aw_min_host = aw_min.view_host();
@@ -237,6 +240,7 @@ struct MosaicModelData {
         auto jsalt_index_host = jsalt_index.view_host();
         auto jsulf_rich_host = jsulf_rich.view_host();
         auto jsulf_poor_host = jsulf_poor.view_host();
+        auto partial_molar_vol_host = partial_molar_vol.view_host();
 
         a_zsr_host(0, jnh4so4) =   1.30894;
         a_zsr_host(1, jnh4so4) =  -7.09922;
@@ -2377,6 +2381,20 @@ struct MosaicModelData {
         jsulf_rich_host(5)   = 	3;	//	AS
         jsulf_rich_host(60)  = 	6;	// 	SS
         jsulf_rich_host(65)  = 	22;	// 	SS + AS
+
+        partial_molar_vol_host(ih2so4_g) = 51.83;
+        partial_molar_vol_host(ihno3_g)  = 31.45;
+        partial_molar_vol_host(ihcl_g)   = 20.96;
+        partial_molar_vol_host(inh3_g)   = 24.03;
+        partial_molar_vol_host(imsa_g)   = 53.33;
+        partial_molar_vol_host(iaro1_g)  = 150.0;
+        partial_molar_vol_host(iaro2_g)  = 150.0;
+        partial_molar_vol_host(ialk1_g)  = 140.0;
+        partial_molar_vol_host(iole1_g)  = 140.0;
+        partial_molar_vol_host(iapi1_g)  = 184.0;
+        partial_molar_vol_host(iapi2_g)  = 184.0;
+        partial_molar_vol_host(ilim1_g)  = 200.0;
+        partial_molar_vol_host(ilim2_g)  = 200.0;
         
         a_zsr.modify_host();
         aw_min.modify_host();
@@ -2396,6 +2414,7 @@ struct MosaicModelData {
         jsalt_index.modify_host();
         jsulf_poor.modify_host();
         jsulf_rich.modify_host();
+        partial_molar_vol.modify_host();
 
         a_zsr.sync_device();
         aw_min.sync_device();
@@ -2415,6 +2434,7 @@ struct MosaicModelData {
         jsalt_index.sync_device();
         jsulf_poor.sync_device();
         jsulf_rich.sync_device();
+        partial_molar_vol.sync_device();
       }
 
       ~MosaicModelData() = default;

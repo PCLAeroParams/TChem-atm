@@ -146,6 +146,7 @@ struct SUNLinearSolverContent_BatchedGMRES
     //real_type_2d_view_type f_y0;
     ordinal_type numiters = 0;
     ordinal_type gmres_max_iter;
+    ordinal_type maxit = 0;
     //real_type gmres_tol; 
     ordinal_type system_size;
     ordinal_type n_systems; // nBatch
@@ -206,7 +207,7 @@ struct SUNLinearSolverContent_BatchedGMRES
         // ---- GMRES scratch memory ----
         // originally used level 0 for GMRES scratch, but with large systems (n_particles > 100), the scratch allocation exceeds shared memory (~48 KB for L40S)
         ordinal_type systems_per_team = 1; // each team works with 1 chemical system (key assumption of this solver)
-        const ordinal_type maxit = (gmres_max_iter < system_size) ? gmres_max_iter : system_size; // for small systems with size < gmres_max_iter, we only need at most system_size # of iterations
+        maxit = (gmres_max_iter < system_size) ? gmres_max_iter : system_size; // for small systems with size < gmres_max_iter, we only need at most system_size # of iterations
         const size_t per_team_gmres_scratch  = real_type_2d_view_type::shmem_size(systems_per_team, (maxit + 1) + system_size + 2); // Givens rotation history + working vector + mask + tmp
         
         policy.set_scratch_size(scratch_level, Kokkos::PerTeam(per_team_rhs_scratch + per_team_gmres_scratch));
@@ -355,16 +356,24 @@ struct SUNLinearSolverContent_BatchedGMRES
         Kokkos::fence();
         
         // Evaluate diagnostics for GMRES batch solve 
-        numiters = 0;
-        resnorm = 0;
-        bool all_conv = true;
-        for (ordinal_type i = 0; i < n_systems; i++){
-            numiters = std::max(numiters, handle.get_iteration_host(i)); // TODO mixing int with whatever ordinal_type is.. could be an issue--exlicitly set numiters as type int?
-            all_conv &= handle.is_converged_host(i); // is converged just tells us that we exit before exhausting # of iterations, not that we actually converge to the tolerance
-            resnorm = std::max(resnorm, handle.get_last_norm_host(i));
+        auto h = handle;
+        int not_conv = 0;
+        Kokkos::parallel_reduce(Kokkos::RangePolicy<exec_space>(0, n_systems), KOKKOS_LAMBDA (const ordinal_type i, ordinal_type& itermax, real_type& resnorm_max, int& n_unconv) {
+            itermax = itermax > h.get_iteration(i) ? itermax : h.get_iteration(i);
+            resnorm_max = resnorm_max > h.get_last_norm(i) ? resnorm_max : h.get_last_norm(i);
+            // GMRES returns iteration count = -1 if it did not converge within the max # of iterations
+            if (h.get_iteration(i) == -1){
+                n_unconv += 1;
+            }
+        }, Kokkos::Max<ordinal_type>(numiters), Kokkos::Max<real_type>(resnorm), Kokkos::Sum<int>(not_conv));
+
+        // any failures to converge means at least once system took the max allowed iterations 
+        // and numiters should indicate this 
+        if (not_conv != 0){
+            numiters = maxit;
         }
 
-        if (all_conv && (resnorm <= tol)) {
+        if ((not_conv == 0) && (resnorm <= tol)) {
             last_flag = SUN_SUCCESS;
         } else {
             last_flag = SUNLS_RES_REDUCED;
@@ -378,18 +387,14 @@ struct SUNLinearSolverContent_BatchedGMRES
         // reduction: resnorm/||b~||, <<1 for successful linear solves; if ~ 1, GMRES was not able to converge on an adequate solution
         // tol: CVODE absolute tolerance
         // tol/bnorm_max: relative tolerance used by GMRES
-        // n_maxed: number of systems GMRES failed to converge before it hit the max number of Arnoldi iterations
+        // not_conv: number of systems GMRES failed to converge before it hit the max number of Arnoldi iterations
         // n_systems: number of independent systems in the batch 
         if (verbose) {
-          ordinal_type n_maxed = 0;
-          for (ordinal_type i = 0; i < n_systems; i++) {
-            if (!handle.is_converged_host(i)) ++n_maxed;
-          }
           const real_type reduction = (bnorm_max > 0) ? resnorm/bnorm_max : 0.0;
           printf("  [bgmr] solve %ld: iters(max) = %d, resnorm(max) = %.3e, ||b~|| = %.3e, "
                  "reduction = %.3e, tol = %.3e (rel = %.3e), not converged = %d/%d%s\n",
                  nsolves, numiters, resnorm, bnorm_max, reduction, tol, tol/bnorm_max,
-                 n_maxed, n_systems,
+                 not_conv, n_systems,
                  (last_flag == SUN_SUCCESS) ? "" : "   <-- FAIL");
         }
         nsolves++;

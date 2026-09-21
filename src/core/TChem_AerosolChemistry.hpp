@@ -58,7 +58,27 @@ struct AerosolChemistry
     using problem_type = Impl::AerosolChemistry_Problem<real_type, device_type>;
     const ordinal_type m = problem_type::getNumberOfEquations(kmcd,amcd);
     ordinal_type work_size(0);
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY)
+    const ordinal_type m1 = m + 1;
+    if (m1 < 32) {
+      work_size = Impl::AerosolChemistry<Sacado::Fad::SLFad<real_type,32>, device_type>::getWorkSpaceSize(kmcd,amcd);
+    } else if (m1 < 64) {
+      work_size = Impl::AerosolChemistry<Sacado::Fad::SLFad<real_type,64>, device_type>::getWorkSpaceSize(kmcd,amcd);
+    } else if (m1 < 128) {
+      work_size = Impl::AerosolChemistry<Sacado::Fad::SLFad<real_type,128>, device_type>::getWorkSpaceSize(kmcd,amcd);
+    } else if (m1 < 256) {
+      work_size = Impl::AerosolChemistry<Sacado::Fad::SLFad<real_type,256>, device_type>::getWorkSpaceSize(kmcd,amcd);
+    } else if (m1 < 512) {
+      work_size = Impl::AerosolChemistry<Sacado::Fad::SLFad<real_type,512>, device_type>::getWorkSpaceSize(kmcd,amcd);
+    } else if (m1 < 1024) {
+      work_size = Impl::AerosolChemistry<Sacado::Fad::SLFad<real_type,1024>, device_type>::getWorkSpaceSize(kmcd,amcd);
+    } else {
+      TCHEM_CHECK_ERROR(0,
+                        "Error: Number of equations is bigger than size of sacado fad type");
+    }
+#else
     work_size = Impl::AerosolChemistry<real_type, device_type>::getWorkSpaceSize(kmcd,amcd);
+#endif
     return work_size + m;
   }
 

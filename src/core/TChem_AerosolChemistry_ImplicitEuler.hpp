@@ -53,15 +53,48 @@ struct AerosolChemistry_ImplicitEuler
     using problem_type = Impl::AerosolChemistry_Problem<real_type, device_type>;
     using time_integrator_type = Impl::TimeIntegratorImplicitEuler<real_type, device_type>;
 
-    problem_type problem;
-    problem._kmcd = kmcd;
-    problem._amcd = amcd;
-    const ordinal_type work_size_problem = problem.getWorkSpaceSize();
-    const ordinal_type m = problem.getNumberOfEquations();
-    ordinal_type wlen(0);
-    time_integrator_type::workspace(m, wlen);
+    const ordinal_type m = problem_type::getNumberOfEquations(kmcd, amcd) + 1;
 
-    return m + wlen + work_size_problem;
+    ordinal_type work_size_problem(0);
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY)
+    if (m < 32) {
+      using value_type = Sacado::Fad::SLFad<real_type,32>;
+      using problem_value_type = Impl::AerosolChemistry_Problem<value_type, device_type>;
+      work_size_problem = problem_value_type::getWorkSpaceSize(kmcd, amcd);
+    } else if (m < 64) {
+      using value_type = Sacado::Fad::SLFad<real_type,64>;
+      using problem_value_type = Impl::AerosolChemistry_Problem<value_type, device_type>;
+      work_size_problem = problem_value_type::getWorkSpaceSize(kmcd, amcd);
+    } else if (m < 128) {
+      using value_type = Sacado::Fad::SLFad<real_type,128>;
+      using problem_value_type = Impl::AerosolChemistry_Problem<value_type, device_type>;
+      work_size_problem = problem_value_type::getWorkSpaceSize(kmcd, amcd);
+    } else if (m < 256) {
+      using value_type = Sacado::Fad::SLFad<real_type,256>;
+      using problem_value_type = Impl::AerosolChemistry_Problem<value_type, device_type>;
+      work_size_problem = problem_value_type::getWorkSpaceSize(kmcd, amcd);
+    } else if (m < 512) {
+      using value_type = Sacado::Fad::SLFad<real_type,512>;
+      using problem_value_type = Impl::AerosolChemistry_Problem<value_type, device_type>;
+      work_size_problem = problem_value_type::getWorkSpaceSize(kmcd, amcd);
+    } else if (m < 1024) {
+      using value_type = Sacado::Fad::SLFad<real_type,1024>;
+      using problem_value_type = Impl::AerosolChemistry_Problem<value_type, device_type>;
+      work_size_problem = problem_value_type::getWorkSpaceSize(kmcd, amcd);
+    } else {
+      TCHEM_CHECK_ERROR(0,
+                        "Error: Number of equations is bigger than size of sacado fad type");
+    }
+#else
+    {
+      work_size_problem = problem_type::getWorkSpaceSize(kmcd, amcd);
+    }
+#endif
+
+    ordinal_type wlen(0);
+    time_integrator_type::workspace(m - 1, wlen);
+
+    return (m - 1) + wlen + work_size_problem;
   }
 
   static void

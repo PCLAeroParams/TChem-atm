@@ -27,6 +27,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 
 #include "TChem_KineticModelData.hpp"
 #include "TChem_Impl_Aerosol_RHS.hpp"
+#include "TChem_Impl_ReactionRatesAerosol.hpp"
 
 namespace TChem {
 namespace Impl {
@@ -117,9 +118,8 @@ namespace Impl {
       = Aerosol_RHS<value_type, device_type>::getWorkSpaceSize(kmcd, amcd);
       const ordinal_type m = getNumberOfEquations(kmcd,amcd);
       // src term + jacobian
-      const ordinal_type workspace_size = (src_workspace_size + 2*m);
-      // FIXME: sacado work_space
-      // *ats<value_type>::sacadoStorageCapacity();
+      const ordinal_type workspace_size = (src_workspace_size + 2*m)
+        *ats<value_type>::sacadoStorageCapacity();
 
       return workspace_size;
 
@@ -143,7 +143,6 @@ namespace Impl {
       member.team_barrier();
 
     }
-#if 0
     template<typename MemberType>
     KOKKOS_INLINE_FUNCTION
     void computeFunctionSacado(const MemberType& member,
@@ -151,7 +150,6 @@ namespace Impl {
 			       const value_type_1d_view_type& f) const
     {
     if (_kmcd.nConstSpec > 0 ) {
-      // Kokkos::abort("Error Atmospheric Chemistry : sacado version does not work with tracer species.\n");
       Impl::ReactionRatesAerosol<value_type, device_type>
       ::team_invoke_sacado(member, _temperature, _pressure, x, _const_concentration, f, _work,  _kmcd);
     } else {
@@ -161,7 +159,6 @@ namespace Impl {
 
     member.team_barrier();
     }
-#endif
     /// this one is used in time integration nonlinear solve
     template<typename MemberType>
     KOKKOS_INLINE_FUNCTION
@@ -206,11 +203,11 @@ namespace Impl {
              const real_type_2d_view_type& J) const
   {
 
-// #if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY)
-//      computeSacadoJacobian(member, s, J);
-// #else
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY)
+     computeSacadoJacobian(member, s, J);
+#else
      computeNumericalJacobian(member, s, J);
-// #endif
+#endif
 
   }
 

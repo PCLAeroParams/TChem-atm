@@ -55,8 +55,8 @@ namespace TChem
     using real_type_1d_view_type = Tines::value_type_1d_view<real_type, DeviceType>;
     using real_type_2d_view_type = Tines::value_type_2d_view<real_type, DeviceType>;
     using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
-    using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type, DeviceType>;
-    using time_integrator_type = Impl::TimeIntegratorImplicitEuler<real_type, DeviceType>;
+    using problem_type = TChem::Impl::AerosolChemistry_Problem<ValueType, DeviceType>;
+    using time_integrator_type = Impl::TimeIntegratorImplicitEuler<ValueType, DeviceType>;
 
     const ordinal_type level = 1;
     const ordinal_type per_team_extent =
@@ -226,23 +226,55 @@ namespace TChem
            ) {
     const std::string profile_name =
       "TChem::AerosolChemistry_ImplicitEuler::runHostBatch::kmcd array";
+
+#define TCHEM_RUN_AEROSOL_CHEMISTRY_IE() \
+    AerosolChemistry_ImplicitEuler_TemplateRun( \
+          profile_name, \
+          value_type(), \
+          policy,       \
+          tol_newton,   \
+          tol_time,     \
+          fac,          \
+          tadv,         \
+          state,        \
+          number_conc,  \
+          t_out,        \
+          dt_out,       \
+          state_out,    \
+          team_conf_output, \
+          kmcd,         \
+          amcd)
+
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY)
+    using problem_type = Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
+    const ordinal_type m = problem_type::getNumberOfEquations(kmcd, amcd) + 1;
+    if (m < 32) {
+      using value_type = Sacado::Fad::SLFad<real_type,32>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE();
+    } else if (m < 64) {
+      using value_type = Sacado::Fad::SLFad<real_type,64>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE();
+    } else if (m < 128) {
+      using value_type = Sacado::Fad::SLFad<real_type,128>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE();
+    } else if (m < 256) {
+      using value_type = Sacado::Fad::SLFad<real_type,256>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE();
+    } else if (m < 512) {
+      using value_type = Sacado::Fad::SLFad<real_type,512>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE();
+    } else if (m < 1024) {
+      using value_type = Sacado::Fad::SLFad<real_type,1024>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE();
+    } else {
+      TCHEM_CHECK_ERROR(0,
+                        "Error: Number of equations is bigger than size of sacado fad type");
+    }
+#else
     using value_type = real_type;
-    AerosolChemistry_ImplicitEuler_TemplateRun(
-          profile_name,
-          value_type(),
-          policy,
-          tol_newton,
-          tol_time,
-          fac,
-          tadv,
-          state,
-          number_conc,
-          t_out,
-          dt_out,
-          state_out,
-          team_conf_output,
-          kmcd,
-          amcd);
+    TCHEM_RUN_AEROSOL_CHEMISTRY_IE();
+#endif
+#undef TCHEM_RUN_AEROSOL_CHEMISTRY_IE
   }
 
   void
@@ -266,23 +298,55 @@ namespace TChem
            ) {
     const std::string profile_name =
       "TChem::AerosolChemistry_ImplicitEuler::runDeviceBatch::kmcd array";
+
+#define TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV() \
+    AerosolChemistry_ImplicitEuler_TemplateRun( \
+          profile_name, \
+          value_type(), \
+          policy,       \
+          tol_newton,   \
+          tol_time,     \
+          fac,          \
+          tadv,         \
+          state,        \
+          number_conc,  \
+          t_out,        \
+          dt_out,       \
+          state_out,    \
+          team_conf_output, \
+          kmcd,         \
+          amcd)
+
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY)
+    using problem_type = Impl::AerosolChemistry_Problem<real_type, device_type>;
+    const ordinal_type m = problem_type::getNumberOfEquations(kmcd, amcd) + 1;
+    if (m < 32) {
+      using value_type = Sacado::Fad::SLFad<real_type,32>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV();
+    } else if (m < 64) {
+      using value_type = Sacado::Fad::SLFad<real_type,64>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV();
+    } else if (m < 128) {
+      using value_type = Sacado::Fad::SLFad<real_type,128>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV();
+    } else if (m < 256) {
+      using value_type = Sacado::Fad::SLFad<real_type,256>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV();
+    } else if (m < 512) {
+      using value_type = Sacado::Fad::SLFad<real_type,512>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV();
+    } else if (m < 1024) {
+      using value_type = Sacado::Fad::SLFad<real_type,1024>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV();
+    } else {
+      TCHEM_CHECK_ERROR(0,
+                        "Error: Number of equations is bigger than size of sacado fad type");
+    }
+#else
     using value_type = real_type;
-    AerosolChemistry_ImplicitEuler_TemplateRun(
-          profile_name,
-          value_type(),
-          policy,
-          tol_newton,
-          tol_time,
-          fac,
-          tadv,
-          state,
-          number_conc,
-          t_out,
-          dt_out,
-          state_out,
-          team_conf_output,
-          kmcd,
-          amcd);
+    TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV();
+#endif
+#undef TCHEM_RUN_AEROSOL_CHEMISTRY_IE_DEV
   }
 
 } // namespace TChem

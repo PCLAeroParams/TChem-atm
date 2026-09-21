@@ -227,9 +227,35 @@ namespace TChem
            const AerosolModel_ConstData<interf_host_device_type>& amcd
            ) {
     const std::string profile_name = "TChem::AerosolChemistry::runHostBatch::kmcd array";
-    // Note: we do not support SACADO and Kokkos-kernels. Thus, BDF::KokkosKernel solver uses a numerical Jacobian.
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY)
+    using problem_type = Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
+    const ordinal_type m = problem_type::getNumberOfEquations(kmcd, amcd) + 1;
+    if (m < 32) {
+      using value_type = Sacado::Fad::SLFad<real_type,32>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 64) {
+      using value_type = Sacado::Fad::SLFad<real_type,64>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 128) {
+      using value_type = Sacado::Fad::SLFad<real_type,128>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 256) {
+      using value_type = Sacado::Fad::SLFad<real_type,256>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 512) {
+      using value_type = Sacado::Fad::SLFad<real_type,512>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 1024) {
+      using value_type = Sacado::Fad::SLFad<real_type,1024>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else {
+      TCHEM_CHECK_ERROR(0,
+                        "Error: Number of equations is bigger than size of sacado fad type");
+    }
+#else
     using value_type = real_type;
     TCHEM_RUN_AEROSOL_CHEMISTRY();
+#endif
   }// namespace TChem
 
     void
@@ -252,8 +278,35 @@ namespace TChem
            const AerosolModel_ConstData<device_type>& amcd
            ) {
     const std::string profile_name = "TChem::AerosolChemistry::runDeviceBatch::kmcd array";
+#if defined(TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY)
+    using problem_type = Impl::AerosolChemistry_Problem<real_type, device_type>;
+    const ordinal_type m = problem_type::getNumberOfEquations(kmcd, amcd) + 1;
+    if (m < 32) {
+      using value_type = Sacado::Fad::SLFad<real_type,32>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 64) {
+      using value_type = Sacado::Fad::SLFad<real_type,64>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 128) {
+      using value_type = Sacado::Fad::SLFad<real_type,128>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 256) {
+      using value_type = Sacado::Fad::SLFad<real_type,256>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 512) {
+      using value_type = Sacado::Fad::SLFad<real_type,512>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else if (m < 1024) {
+      using value_type = Sacado::Fad::SLFad<real_type,1024>;
+      TCHEM_RUN_AEROSOL_CHEMISTRY();
+    } else {
+      TCHEM_CHECK_ERROR(0,
+                        "Error: Number of equations is bigger than size of sacado fad type");
+    }
+#else
     using value_type = real_type;
     TCHEM_RUN_AEROSOL_CHEMISTRY();
+#endif
   }// namespace TChem
 
 }

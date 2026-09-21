@@ -35,6 +35,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 
 /// reactor specific control for sacado jaobians
 #cmakedefine TCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY
+#cmakedefine TCHEM_ATM_ENABLE_SACADO_JACOBIAN_AEROSOL_CHEMISTRY
 
 /// required libraries
 #cmakedefine TCHEM_ATM_ENABLE_TPL_KOKKOS

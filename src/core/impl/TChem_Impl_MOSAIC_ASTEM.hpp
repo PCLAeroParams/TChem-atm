@@ -550,4 +550,61 @@
     aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
   } // degas_solid_nh4cl
 
+  KOKKOS_INLINE_FUNCTION static
+  void aerosolmtc(const MosaicModelData<DeviceType>& mosaic,
+                  const real_type   T_K,
+                  const real_type   P_atm,
+                  const real_type   jaerosolstate,
+                  const real_type_1d_view_type& aer_total,  // naer
+                  const real_type   water_a,
+                  const real_type   num_a,
+                  const real_type_1d_view_type& kg,         // ngas_volatile, input/output
+                  const real_type_1d_view_type& Dg,         // ngas_volatile scratch
+                  const real_type_1d_view_type& freepath,   // ngas_volatile scratch
+                  real_type& mass_dry_a, real_type& vol_dry_a,
+                  real_type& mass_wet_a, real_type& vol_wet_a,
+                  real_type& dens_dry_a, real_type& dens_wet_a,
+                  real_type& Dp_dry_a,   real_type& Dp_wet_a,
+                  real_type& area_dry_a, real_type& area_wet_a) {
+
+    auto mw_vol_g_view  = mosaic.mw_vol_g.template view<DeviceType>();
+    auto v_molar_g_view = mosaic.v_molar_g.template view<DeviceType>();
+    auto accom_g_view   = mosaic.accom_g.template view<DeviceType>();
+
+    // ioa: compute gas diffusivity and mean free path from T, P, MW, molar volume
+    for (ordinal_type iv = 0; iv < mosaic.ngas_ioa; ++iv) {
+      real_type speed, gas_diff;
+      mean_molecular_speed(T_K, mw_vol_g_view(iv), speed);
+      gas_diffusivity(T_K, P_atm, mw_vol_g_view(iv), v_molar_g_view(iv), gas_diff);
+      Dg(iv)       = gas_diff;
+      freepath(iv) = 3.0 * Dg(iv) / speed;
+    }
+    // soa: Dg fixed at 0.1 cm^2/s
+    for (ordinal_type iv = mosaic.iaro1_g; iv < mosaic.ngas_volatile; ++iv) {
+      real_type speed;
+      mean_molecular_speed(T_K, mw_vol_g_view(iv), speed);
+      Dg(iv)       = 0.1;
+      freepath(iv) = 3.0 * Dg(iv) / speed;
+    }
+
+    if (static_cast<ordinal_type>(jaerosolstate) == mosaic.no_aerosol) {
+      for (ordinal_type iv = 0; iv < mosaic.ngas_volatile; ++iv)
+        kg(iv) = 0.0;
+      return;
+    }
+
+    calc_dry_n_wet_aerosol_props(mosaic, aer_total, water_a, num_a, jaerosolstate,
+                                 mass_dry_a, vol_dry_a, mass_wet_a, vol_wet_a,
+                                 dens_dry_a, dens_wet_a, Dp_dry_a, Dp_wet_a,
+                                 area_dry_a, area_wet_a);
+
+    const real_type cdum = 6.283185 * Dp_wet_a * num_a;
+    for (ordinal_type iv = 0; iv < mosaic.ngas_volatile; ++iv) {
+      const real_type Kn = 2.0 * freepath(iv) / Dp_wet_a;
+      real_type Fkn;
+      fuchs_sutugin(Kn, accom_g_view(iv), Fkn);
+      kg(iv) = cdum * Dg(iv) * Fkn;
+    }
+  } // aerosolmtc
+
 #endif

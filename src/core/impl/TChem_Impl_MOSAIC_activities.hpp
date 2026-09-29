@@ -1,7 +1,7 @@
 #ifndef __TCHEM_IMPL_MOSAIC_ACTIVITIES_HPP__
 #define __TCHEM_IMPL_MOSAIC_ACTIVITIES_HPP__
 
-KOKKOS_INLINE_FUNCTION static
+  KOKKOS_INLINE_FUNCTION static
   void compute_activities(const MosaicModelData<DeviceType>& mosaic,
                           const real_type_1d_view_type& molalities,
                           const real_type_1d_view_type& xmol,
@@ -19,14 +19,15 @@ KOKKOS_INLINE_FUNCTION static
                           real_type& jaerosolstate,
                           real_type& jphase,
                           real_type& jhyst_leg,
-                          real_type& aH2O_a) {
+                          real_type& aH2O_a,
+                          real_type& water_a) {
 
     // local variables
-    real_type a_c, sum_elec, gam_ratio, water_a, mSULF = 0.0;
+    real_type a_c, sum_elec, gam_ratio, mSULF = 0.0;
     ordinal_type jA = 0;
 
     // get aerosol water activity
-    aerosol_water(mosaic,electrolyte_liquid,aH2O_a,molalities,jaerosolstate,jphase,jhyst_leg,water_a);
+    aerosol_water(mosaic, electrolyte_liquid, aH2O_a, molalities, jaerosolstate, jphase, jhyst_leg, water_a);
 
     if (water_a == 0.0) {
       return;
@@ -134,8 +135,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = ats<real_type>::pow(mc(mosaic.jc_nh4),2.) *
-                      ma(mosaic.ja_so4) *
-                      ats<real_type>::pow(gam(jA),3.);
+                       ma(mosaic.ja_so4) *
+                       ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jnh4no3;
@@ -152,8 +153,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_nh4) *
-                      ma(mosaic.ja_no3) *
-                      ats<real_type>::pow(gam(jA),2.);
+                       ma(mosaic.ja_no3) *
+                       ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jnh4cl;
@@ -170,8 +171,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_nh4) *
-                      ma(mosaic.ja_cl) *
-                      ats<real_type>::pow(gam(jA),2.);
+                       ma(mosaic.ja_cl) *
+                       ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jna2so4;
@@ -188,8 +189,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = ats<real_type>::pow(mc(mosaic.jc_na),2.) *
-                      ma(mosaic.ja_so4) *
-                      ats<real_type>::pow(gam(jA),3.);
+                       ma(mosaic.ja_so4) *
+                       ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jnano3;
@@ -206,8 +207,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_na) *
-                      ma(mosaic.ja_no3) *
-                      ats<real_type>::pow(gam(jA),2.);
+                       ma(mosaic.ja_no3) *
+                       ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jnacl;
@@ -224,22 +225,22 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_na) *
-                      ma(mosaic.ja_cl) *
-                      ats<real_type>::pow(gam(jA),2.);
+                       ma(mosaic.ja_cl) *
+                       ats<real_type>::pow(gam(jA),2.);
       }
 
-  // Note: these are commented out in MOSAIC also.
-  //  jA = mosaic.jcano3;
-  //  if (xmol(jA) > 0.) {
-  //    gam(jA) = 1.;
-  //    activity(jA) = 1.;
-  //  }
+      // Note: these are commented out in MOSAIC also.
+      //  jA = mosaic.jcano3;
+      //  if (xmol(jA) > 0.) {
+      //    gam(jA) = 1.;
+      //    activity(jA) = 1.;
+      //  }
 
-  //  jA = mosaic.jacl2;
-  //  if (xmol(jA) > 0.) {
-  //    gam(jA) = 1.;
-  //    activity(jA) = 1.;
-  //  }
+      //  jA = mosaic.jacl2;
+      //  if (xmol(jA) > 0.) {
+      //    gam(jA) = 1.;
+      //    activity(jA) = 1.;
+      //  }
 
       jA = mosaic.jcano3;
       if (xmol(jA) > 0.0) {
@@ -255,8 +256,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_ca) *
-                      ats<real_type>::pow(ma(mosaic.ja_no3),2.) *
-                      ats<real_type>::pow(gam(jA),3.);
+                       ats<real_type>::pow(ma(mosaic.ja_no3),2.) *
+                       ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jcacl2;
@@ -273,8 +274,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_ca) *
-                      ats<real_type>::pow(ma(mosaic.ja_cl),2.) *
-                      ats<real_type>::pow(gam(jA),3.);
+                       ats<real_type>::pow(ma(mosaic.ja_cl),2.) *
+                       ats<real_type>::pow(gam(jA),3.);
       }
 
       jA = mosaic.jhno3;
@@ -291,8 +292,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_h) *
-                      ma(mosaic.ja_no3) *
-                      ats<real_type>::pow(gam(jA),2.);
+                       ma(mosaic.ja_no3) *
+                       ats<real_type>::pow(gam(jA),2.);
       }
 
       jA = mosaic.jhcl;
@@ -309,8 +310,8 @@ KOKKOS_INLINE_FUNCTION static
                       xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
         gam(jA) = ats<real_type>::pow(10., log_gam(jA));
         activity(jA) = mc(mosaic.jc_h) *
-                      ma(mosaic.ja_cl) *
-                      ats<real_type>::pow(gam(jA),2.);
+                       ma(mosaic.ja_cl) *
+                       ats<real_type>::pow(gam(jA),2.);
       }
 
       // FIXME: duplicated code to avoid goto statement
@@ -325,20 +326,20 @@ KOKKOS_INLINE_FUNCTION static
       activity(mosaic.jnh4hso4) = 0.0;
 
       activity(mosaic.jnh4msa) = mc(mosaic.jc_nh4) * ma(mosaic.ja_msa) *
-                                gam(mosaic.jnh4msa) * gam(mosaic.jnh4msa);
+                                 gam(mosaic.jnh4msa) * gam(mosaic.jnh4msa);
 
       activity(mosaic.jna3hso4) = 0.0;
       activity(mosaic.jnahso4)  = 0.0;
 
       activity(mosaic.jnamsa)  = mc(mosaic.jc_na) * ma(mosaic.ja_msa) *
-                                gam(mosaic.jnamsa) * gam(mosaic.jnamsa);
+                                 gam(mosaic.jnamsa) * gam(mosaic.jnamsa);
       activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) * ma(mosaic.ja_msa) *
-                                gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2);
+                                 gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2);
 
       gam_ratio = gam(mosaic.jnh4no3) * gam(mosaic.jnh4no3) /
                   gam(mosaic.jhno3)   * gam(mosaic.jhno3);
 
-    // end SULFATE POOR regime
+      // end SULFATE POOR regime
     } else {
       // SULFATE RICH: solve for SO4= and HSO4- ions
 
@@ -367,13 +368,13 @@ KOKKOS_INLINE_FUNCTION static
         gam(mosaic.jnamsa)  = 1.0;
         gam(mosaic.jcamsa2) = 1.0;
 
-      // compute equilibrium pH
-      // cation molalities (mol / kg water)
+        // compute equilibrium pH
+        // cation molalities (mol / kg water)
         mc(mosaic.jc_ca)  = 1.e-9 * aer_liquid(mosaic.ica_a)  / water_a;
         mc(mosaic.jc_nh4) = 1.e-9 * aer_liquid(mosaic.inh4_a) / water_a;
         mc(mosaic.jc_na)  = 1.e-9 * aer_liquid(mosaic.ina_a)  / water_a;
 
-      // anion molalities (mol / kg water)
+        // anion molalities (mol / kg water)
         mSULF              = 1.e-9 * aer_liquid(mosaic.iso4_a) / water_a;
         ma(mosaic.ja_hso4) = 0.0;
         ma(mosaic.ja_so4)  = 0.0;
@@ -396,7 +397,7 @@ KOKKOS_INLINE_FUNCTION static
         cq = dumK * (c_bal -mSULF);
 
         real_type xq = 0.0;
-      //--quadratic solution
+        //--quadratic solution
         if (bq != 0.0) {
           xq = 4. * (1./bq) * (cq/bq);
 
@@ -415,63 +416,63 @@ KOKKOS_INLINE_FUNCTION static
           quad = 0.5 * (-bq + ats<real_type>::sqrt(bq*bq - 4.*cq));
         }
 
-      //--end of quadratic solution
+        //--end of quadratic solution
         mc(mosaic.jc_h) = quad > 1.e-7 ? quad : 1.e-7;
         ma(mosaic.ja_so4)  = mSULF * dumK / (mc(mosaic.jc_h) + dumK);
         ma(mosaic.ja_hso4) = mSULF - ma(mosaic.ja_so4);
 
         activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) *
-                                  ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
-                                  ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
+                                   ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
+                                   ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
 
         activity(mosaic.jnh4so4) = ats<real_type>::pow(mc(mosaic.jc_nh4),2.) *
-                                  ma(mosaic.ja_so4) *
-                                  ats<real_type>::pow(gam(mosaic.jnh4so4),3.);
+                                   ma(mosaic.ja_so4) *
+                                   ats<real_type>::pow(gam(mosaic.jnh4so4),3.);
 
         activity(mosaic.jlvcite) = ats<real_type>::pow(mc(mosaic.jc_nh4),3.) *
-                                  ma(mosaic.ja_hso4) *
-                                  ma(mosaic.ja_so4) *
-                                  ats<real_type>::pow(gam(mosaic.jlvcite),5.);
+                                   ma(mosaic.ja_hso4) *
+                                   ma(mosaic.ja_so4) *
+                                   ats<real_type>::pow(gam(mosaic.jlvcite),5.);
 
         activity(mosaic.jnh4hso4) = mc(mosaic.jc_nh4) *
                                     ma(mosaic.ja_hso4) *
                                     ats<real_type>::pow(gam(mosaic.jnh4hso4),2.);
 
         activity(mosaic.jnh4msa) = mc(mosaic.jc_nh4) *
-                                  ma(mosaic.ja_msa) *
-                                  ats<real_type>::pow(gam(mosaic.jnh4msa),2.);
+                                   ma(mosaic.ja_msa) *
+                                   ats<real_type>::pow(gam(mosaic.jnh4msa),2.);
 
         activity(mosaic.jna2so4) = ats<real_type>::pow(mc(mosaic.jc_na),2.) *
-                                  ma(mosaic.ja_so4) *
-                                  ats<real_type>::pow(gam(mosaic.jna2so4),3.);
+                                   ma(mosaic.ja_so4) *
+                                   ats<real_type>::pow(gam(mosaic.jna2so4),3.);
 
         activity(mosaic.jnahso4) = mc(mosaic.jc_na) *
-                                  ma(mosaic.ja_hso4) *
-                                  ats<real_type>::pow(gam(mosaic.jnahso4),2.);
+                                   ma(mosaic.ja_hso4) *
+                                   ats<real_type>::pow(gam(mosaic.jnahso4),2.);
 
         activity(mosaic.jnamsa)  = mc(mosaic.jc_na) *
-                                  ma(mosaic.ja_msa) *
-                                  ats<real_type>::pow(gam(mosaic.jnamsa),2.);
+                                   ma(mosaic.ja_msa) *
+                                   ats<real_type>::pow(gam(mosaic.jnamsa),2.);
 
-  // Note: these lines are also commented out in MOSAIC
-  //      activity(jna3hso4,ibin)= mc(jc_na,ibin)**3 * ma(ja_hso4,ibin) *
-  //     &                         ma(ja_so4,ibin) * gam(jna3hso4,ibin)**5
+        // Note: these lines are also commented out in MOSAIC
+        //      activity(jna3hso4,ibin)= mc(jc_na,ibin)**3 * ma(ja_hso4,ibin) *
+        //     &                         ma(ja_so4,ibin) * gam(jna3hso4,ibin)**5
 
         activity(mosaic.jna3hso4) = 0.0;
 
         activity(mosaic.jhno3) = mc(mosaic.jc_h) *
-                                ma(mosaic.ja_no3) *
-                                ats<real_type>::pow(gam(mosaic.jhno3),2.);
+                                 ma(mosaic.ja_no3) *
+                                 ats<real_type>::pow(gam(mosaic.jhno3),2.);
 
         activity(mosaic.jhcl)  = mc(mosaic.jc_h) *
-                                ma(mosaic.ja_cl) *
-                                ats<real_type>::pow(gam(mosaic.jhcl),2.);
+                                 ma(mosaic.ja_cl) *
+                                 ats<real_type>::pow(gam(mosaic.jhcl),2.);
 
         activity(mosaic.jmsa)  = mc(mosaic.jc_h) *
-                                ma(mosaic.ja_msa) *
-                                ats<real_type>::pow(gam(mosaic.jmsa),2.);
+                                 ma(mosaic.ja_msa) *
+                                 ats<real_type>::pow(gam(mosaic.jmsa),2.);
 
-  // sulfate-poor species
+        // sulfate-poor species
         activity(mosaic.jnh4no3) = 0.0;
         activity(mosaic.jnh4cl)  = 0.0;
         activity(mosaic.jnano3)  = 0.0;
@@ -490,7 +491,7 @@ KOKKOS_INLINE_FUNCTION static
       xmol(mosaic.jhno3)    = 2. * electrolyte_liquid(mosaic.jhno3)    / sum_elec;
       xmol(mosaic.jhcl)     = 2. * electrolyte_liquid(mosaic.jhcl)     / sum_elec;
 
-    // 2H.SO4
+      // 2H.SO4
       jA = mosaic.jh2so4;
       log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
@@ -503,7 +504,7 @@ KOKKOS_INLINE_FUNCTION static
                     xmol(mosaic.jhcl)     * log_gamZ(jA,mosaic.jhcl);
       gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
 
-    // H.HSO4
+      // H.HSO4
       jA = mosaic.jhhso4;
       log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
@@ -517,7 +518,7 @@ KOKKOS_INLINE_FUNCTION static
       gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
 
 
-    // NH4HSO4
+      // NH4HSO4
       jA = mosaic.jnh4hso4;
       log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
@@ -531,7 +532,7 @@ KOKKOS_INLINE_FUNCTION static
       gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
 
 
-    // LETOVICITE
+      // LETOVICITE
       jA = mosaic.jlvcite;
       log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
@@ -545,7 +546,7 @@ KOKKOS_INLINE_FUNCTION static
       gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
 
 
-    // (NH4)2SO4
+      // (NH4)2SO4
       jA = mosaic.jnh4so4;
       log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
@@ -559,7 +560,7 @@ KOKKOS_INLINE_FUNCTION static
       gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
 
 
-    // NaHSO4
+      // NaHSO4
       jA = mosaic.jnahso4;
       log_gam(jA) = xmol(mosaic.jh2so4)   * log_gamZ(jA,mosaic.jh2so4)   +
                     xmol(mosaic.jnh4hso4) * log_gamZ(jA,mosaic.jnh4hso4) +
@@ -573,19 +574,19 @@ KOKKOS_INLINE_FUNCTION static
       gam(jA) = ats<real_type>::pow(10.,log_gam(jA));
 
 
- // Na3H(SO4)2
+      // Na3H(SO4)2
       jA = mosaic.jna3hso4;
- // Note: commented out in MOSAIC also.
- //      log_gam(jA) = xmol(jh2so4)  *log_gamZ(jA,jh2so4)  +
- //     &              xmol(jnh4hso4)*log_gamZ(jA,jnh4hso4)+
- //     &              xmol(jlvcite) *log_gamZ(jA,jlvcite) +
- //     &              xmol(jnh4so4) *log_gamZ(jA,jnh4so4) +
- //     &              xmol(jnahso4) *log_gamZ(jA,jnahso4) +
- //     &              xmol(jna3hso4)*log_gamZ(jA,jna3hso4)+
- //     &              xmol(jna2so4) *log_gamZ(jA,jna2so4) +
- //     &              xmol(jhno3)   *log_gamZ(jA,jhno3)   +
- //     &              xmol(jhcl)    *log_gamZ(jA,jhcl)
- //      gam(jA,ibin) = 10.**log_gam(jA)
+      // Note: commented out in MOSAIC also.
+      //      log_gam(jA) = xmol(jh2so4)  *log_gamZ(jA,jh2so4)  +
+      //     &              xmol(jnh4hso4)*log_gamZ(jA,jnh4hso4)+
+      //     &              xmol(jlvcite) *log_gamZ(jA,jlvcite) +
+      //     &              xmol(jnh4so4) *log_gamZ(jA,jnh4so4) +
+      //     &              xmol(jnahso4) *log_gamZ(jA,jnahso4) +
+      //     &              xmol(jna3hso4)*log_gamZ(jA,jna3hso4)+
+      //     &              xmol(jna2so4) *log_gamZ(jA,jna2so4) +
+      //     &              xmol(jhno3)   *log_gamZ(jA,jhno3)   +
+      //     &              xmol(jhcl)    *log_gamZ(jA,jhcl)
+      //      gam(jA,ibin) = 10.**log_gam(jA)
       gam(jA) = 1.0;
 
 
@@ -695,57 +696,57 @@ KOKKOS_INLINE_FUNCTION static
       ma(mosaic.ja_hso4) = mSULF - ma(mosaic.ja_so4);
 
       activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) *
-                                ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
-                                ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
+                                 ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
+                                 ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
 
       activity(mosaic.jnh4so4) = ats<real_type>::pow(mc(mosaic.jc_nh4),2.) *
-                                ma(mosaic.ja_so4) *
-                                ats<real_type>::pow(gam(mosaic.jnh4so4),3.);
+                                 ma(mosaic.ja_so4) *
+                                 ats<real_type>::pow(gam(mosaic.jnh4so4),3.);
 
       activity(mosaic.jlvcite) = ats<real_type>::pow(mc(mosaic.jc_nh4),3.) *
-                                ma(mosaic.ja_hso4) *
-                                ma(mosaic.ja_so4) *
-                                ats<real_type>::pow(gam(mosaic.jlvcite),5.);
+                                 ma(mosaic.ja_hso4) *
+                                 ma(mosaic.ja_so4) *
+                                 ats<real_type>::pow(gam(mosaic.jlvcite),5.);
 
       activity(mosaic.jnh4hso4) = mc(mosaic.jc_nh4) *
                                   ma(mosaic.ja_hso4) *
                                   ats<real_type>::pow(gam(mosaic.jnh4hso4),2.);
 
       activity(mosaic.jnh4msa) = mc(mosaic.jc_nh4) *
-                                ma(mosaic.ja_msa) *
-                                ats<real_type>::pow(gam(mosaic.jnh4msa),2.);
+                                 ma(mosaic.ja_msa) *
+                                 ats<real_type>::pow(gam(mosaic.jnh4msa),2.);
 
       activity(mosaic.jna2so4) = ats<real_type>::pow(mc(mosaic.jc_na),2.) *
-                                ma(mosaic.ja_so4) *
-                                ats<real_type>::pow(gam(mosaic.jna2so4),3.);
+                                 ma(mosaic.ja_so4) *
+                                 ats<real_type>::pow(gam(mosaic.jna2so4),3.);
 
       activity(mosaic.jnahso4) = mc(mosaic.jc_na) *
-                                ma(mosaic.ja_hso4) *
-                                ats<real_type>::pow(gam(mosaic.jnahso4),2.);
+                                 ma(mosaic.ja_hso4) *
+                                 ats<real_type>::pow(gam(mosaic.jnahso4),2.);
 
       activity(mosaic.jnamsa)  = mc(mosaic.jc_na) *
-                                ma(mosaic.ja_msa) *
-                                ats<real_type>::pow(gam(mosaic.jnamsa),2.);
+                                 ma(mosaic.ja_msa) *
+                                 ats<real_type>::pow(gam(mosaic.jnamsa),2.);
 
-  // Note: these lines are also commented out in MOSAIC.
-  //      activity(jna3hso4,ibin)= mc(jc_na,ibin)**3 * ma(ja_hso4,ibin) *
-  //     &                         ma(ja_so4,ibin) * gam(jna3hso4,ibin)**5
+      // Note: these lines are also commented out in MOSAIC.
+      //      activity(jna3hso4,ibin)= mc(jc_na,ibin)**3 * ma(ja_hso4,ibin) *
+      //     &                         ma(ja_so4,ibin) * gam(jna3hso4,ibin)**5
 
       activity(mosaic.jna3hso4) = 0.0;
 
       activity(mosaic.jhno3) = mc(mosaic.jc_h) *
-                              ma(mosaic.ja_no3) *
-                              ats<real_type>::pow(gam(mosaic.jhno3),2.);
+                               ma(mosaic.ja_no3) *
+                               ats<real_type>::pow(gam(mosaic.jhno3),2.);
 
       activity(mosaic.jhcl)  = mc(mosaic.jc_h) *
-                              ma(mosaic.ja_cl) *
-                              ats<real_type>::pow(gam(mosaic.jhcl),2.);
+                               ma(mosaic.ja_cl) *
+                               ats<real_type>::pow(gam(mosaic.jhcl),2.);
 
       activity(mosaic.jmsa)  = mc(mosaic.jc_h) *
-                              ma(mosaic.ja_msa) *
-                              ats<real_type>::pow(gam(mosaic.jmsa),2.);
+                               ma(mosaic.ja_msa) *
+                               ats<real_type>::pow(gam(mosaic.jmsa),2.);
 
-  // sulfate-poor species
+      // sulfate-poor species
       activity(mosaic.jnh4no3) = 0.0;
       activity(mosaic.jnh4cl)  = 0.0;
       activity(mosaic.jnano3)  = 0.0;
@@ -755,4 +756,4 @@ KOKKOS_INLINE_FUNCTION static
     }
   } // compute_activities
 
-# endif
+#endif

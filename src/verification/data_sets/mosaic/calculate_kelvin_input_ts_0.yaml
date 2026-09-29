@@ -1,0 +1,10 @@
+
+TChem-atm:
+  function: calculate_kelvin
+input:
+  fixed:
+    vol_wet_a: [  0.11988115123653083E-014]
+    num_a: [  0.11776320829312793E+002]
+    aH2O_a: [  0.94750573512584713E+000]
+    sigma_water: [  0.73205135929453977E-001]
+    T_K: [  0.29005740000000003E+003]

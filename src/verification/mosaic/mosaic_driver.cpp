@@ -151,6 +151,20 @@ void degas_solid_nh4cl(Ensemble *ensemble);
 
 void aerosolmtc(Ensemble *ensemble);
 
+void MESA(Ensemble *ensemble);
+
+void MESA_PTC(Ensemble *ensemble);
+
+void calc_dry_n_wet_aerosol_props(Ensemble *ensemble);
+
+void MESA_convergence_criterion(Ensemble *ensemble);
+
+void MESA_flux_salt(Ensemble *ensemble);
+
+void aerosol_phase_state(Ensemble *ensemble);
+
+void calculate_kelvin(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -287,6 +301,22 @@ int main(int argc, char **argv) {
     } else if (func_name == "degas_solid_nh4cl") {
       degas_solid_nh4cl(ensemble);
     } else if (func_name == "aerosol_mtc") {
+      aerosolmtc(ensemble);
+    } else if (func_name == "MESA") {
+      MESA(ensemble);
+    } else if (func_name == "MESA_PTC") {
+      MESA_PTC(ensemble);
+    } else if (func_name == "calc_dry_n_wet_aerosol_props") {
+      calc_dry_n_wet_aerosol_props(ensemble);
+    } else if (func_name == "MESA_convergence_criterion") {
+      MESA_convergence_criterion(ensemble);
+    } else if (func_name == "MESA_flux_salt") {
+      MESA_flux_salt(ensemble);
+    } else if (func_name == "aerosol_phase_state") {
+      aerosol_phase_state(ensemble);
+    } else if (func_name == "calculate_kelvin") {
+      calculate_kelvin(ensemble);
+    } else if (func_name == "aerosolmtc") {
       aerosolmtc(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name

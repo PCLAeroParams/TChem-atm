@@ -193,7 +193,7 @@
                      real_type& jaerosolstate,
                      real_type& jphase,
                      real_type& jhyst_leg,
-                     real_type& aerosol_water) {
+                     real_type& water_a) {
 
     for (ordinal_type je = 0; je < mosaic.nelectrolyte; je++) {
       real_type molality = 0.0;
@@ -206,8 +206,8 @@
       dum += electrolyte(je) / molalities(je);
     }
 
-    aerosol_water = dum * 1.0e-9;
-    if (aerosol_water <= 0.0) {
+    water_a = dum * 1.0e-9;
+    if (water_a <= 0.0) {
       jaerosolstate = mosaic.all_solid;
       jphase = mosaic.jsolid;
       jhyst_leg = mosaic.jhyst_lo;
@@ -406,5 +406,85 @@
       result = max(quad1, quad2);
     }
   } // quadratic
+
+  KOKKOS_INLINE_FUNCTION static
+  void calc_dry_n_wet_aerosol_props(const MosaicModelData<DeviceType>& mosaic,
+                                    const real_type_1d_view_type& aer_total,
+                                    const real_type  water_a,
+                                    const real_type  num_a,
+                                    const real_type  jaerosolstate,
+                                    real_type& mass_dry_a,
+                                    real_type& vol_dry_a,
+                                    real_type& mass_wet_a,
+                                    real_type& vol_wet_a,
+                                    real_type& dens_dry_a,
+                                    real_type& dens_wet_a,
+                                    real_type& Dp_dry_a,
+                                    real_type& Dp_wet_a,
+                                    real_type& area_dry_a,
+                                    real_type& area_wet_a) {
+
+    auto mw_aer_mac   = mosaic.mw_aer_mac.template view<DeviceType>();
+    auto dens_aer_mac = mosaic.dens_aer_mac.template view<DeviceType>();
+
+    mass_dry_a = 0.0;
+    vol_dry_a  = 0.0;
+    area_dry_a = 0.0;
+
+    if (static_cast<ordinal_type>(jaerosolstate) != mosaic.no_aerosol) {
+
+      real_type aer_H = (2.0 * aer_total(mosaic.iso4_a) +
+                               aer_total(mosaic.ino3_a)  +
+                               aer_total(mosaic.icl_a)   +
+                               aer_total(mosaic.imsa_a)  +
+                         2.0 * aer_total(mosaic.ico3_a)) -
+                        (2.0 * aer_total(mosaic.ica_a)  +
+                               aer_total(mosaic.ina_a)   +
+                               aer_total(mosaic.inh4_a));
+      aer_H = max(aer_H, (real_type)0.0);
+
+      for (int iaer = 0; iaer < mosaic.naer; ++iaer) {
+        mass_dry_a += aer_total(iaer) * mw_aer_mac(iaer);
+        vol_dry_a  += aer_total(iaer) * mw_aer_mac(iaer) / dens_aer_mac(iaer);
+      }
+      mass_dry_a = (mass_dry_a + aer_H) * 1.e-15;
+      vol_dry_a  = (vol_dry_a  + aer_H) * 1.e-15;
+
+      mass_wet_a = mass_dry_a + water_a * 1.e-3;
+      vol_wet_a  = vol_dry_a  + water_a * 1.e-3;
+
+      dens_dry_a = mass_dry_a / vol_dry_a;
+      dens_wet_a = mass_wet_a / vol_wet_a;
+
+      Dp_dry_a = ats<real_type>::pow(1.90985 * vol_dry_a / num_a, 0.3333333);
+      Dp_wet_a = ats<real_type>::pow(1.90985 * vol_wet_a / num_a, 0.3333333);
+
+      area_dry_a = 0.785398 * num_a * Dp_dry_a * Dp_dry_a;
+      area_wet_a = 0.785398 * num_a * Dp_wet_a * Dp_wet_a;
+
+    } else {
+      dens_dry_a = 1.0;
+      dens_wet_a = 1.0;
+    }
+  } // calc_dry_n_wet_aerosol_props
+
+  KOKKOS_INLINE_FUNCTION static
+  void calculate_kelvin(const real_type& vol_wet_a,
+                        const real_type& num_a,
+                        const real_type& aH2O_a,
+                        const real_type& sigma_water,
+                        const real_type& T_K,
+                        real_type& volume_a,
+                        real_type& DpmV,
+                        real_type& sigma_soln,
+                        real_type& kelvin) {
+
+    volume_a   = vol_wet_a; // [cc/cc(air)]
+    DpmV       = ats<real_type>::pow(6.0*volume_a / (num_a*3.14159265358979),
+                                     1.0/3.0); // [cm]
+    sigma_soln = sigma_water + 49.0*(1.0 - aH2O_a); // [dyn/cm]
+    real_type term = 72.0*sigma_soln / (8.3144e7*T_K*DpmV);
+    kelvin = 1.0 + term*(1.0 + 0.5*term*(1.0 + term/3.0));
+  } // calculate_kelvin
 
 #endif

@@ -99,9 +99,9 @@ struct MatrixFreeBatchedGMRESTeamFunctor {
 
     // generate 2D slices of the linearization point y0, the system rhs b, and the ODE RHS function f()
     // size (1, n) views (expected by GMRES)
-    auto delta_slice    = Kokkos::subview(delta,   Kokkos::make_pair(first, last), Kokkos::ALL);
-    auto b_slice    = Kokkos::subview(b,   Kokkos::make_pair(first, last), Kokkos::ALL);
-    auto f_slice = f.team_slice(first, last, pw); 
+    auto delta_slice    = Kokkos::subview(delta,   Kokkos::make_pair(i_member, i_member+1), Kokkos::ALL);
+    auto b_slice    = Kokkos::subview(b,   Kokkos::make_pair(i_member, i_member+1), Kokkos::ALL);
+    auto f_slice = f.team_slice(i_member, pw); 
 
     // 1D slices of x and f(x)
     auto delta_i = Kokkos::subview(delta, member.league_rank(), Kokkos::ALL); // size (n) views
@@ -217,7 +217,7 @@ struct SUNLinearSolverContent_BatchedGMRES
         //handle = KrylovHandleType(n_systems, systems_per_team, gmres_max_iter, /*monitor_residual=*/true);
         handle.set_ortho_strategy(1); // use modified gram-schmidt for consistency with SUNDIALS
         //handle.set_tolerance(gmres_tol);
-        handle.set_compute_last_residual(true);
+        handle.set_compute_last_residual(false);
         handle.Arnoldi_view = KrylovHandleType::ArnoldiViewType(
             "Arnoldi_view", n_systems, gmres_max_iter, system_size + gmres_max_iter + 3);
 
@@ -391,8 +391,8 @@ struct SUNLinearSolverContent_BatchedGMRES
         // n_systems: number of independent systems in the batch 
         if (verbose) {
           const real_type reduction = (bnorm_max > 0) ? resnorm/bnorm_max : 0.0;
-          printf("  [bgmr] solve %ld: iters(max) = %d, resnorm(max) = %.3e, ||b~|| = %.3e, "
-                 "reduction = %.3e, tol = %.3e (rel = %.3e), not converged = %d/%d%s\n",
+          printf("  [bgmr] solve %ld: iters(max) = %d, resnorm(max) = %.16e, ||b~|| = %.16e, "
+                 "reduction = %.16e, tol = %.16e (rel = %.16e), not converged = %d/%d%s\n",
                  nsolves, numiters, resnorm, bnorm_max, reduction, tol, tol/bnorm_max,
                  not_conv, n_systems,
                  (last_flag == SUN_SUCCESS) ? "" : "   <-- FAIL");

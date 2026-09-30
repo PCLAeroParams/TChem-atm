@@ -552,15 +552,15 @@
 
   KOKKOS_INLINE_FUNCTION static
   void aerosolmtc(const MosaicModelData<DeviceType>& mosaic,
-                  const real_type   T_K,
-                  const real_type   P_atm,
-                  const real_type   jaerosolstate,
-                  const real_type_1d_view_type& aer_total,  // naer
-                  const real_type   water_a,
-                  const real_type   num_a,
-                  const real_type_1d_view_type& kg,         // ngas_volatile, input/output
-                  const real_type_1d_view_type& Dg,         // ngas_volatile scratch
-                  const real_type_1d_view_type& freepath,   // ngas_volatile scratch
+                  const real_type T_K,
+                  const real_type P_atm,
+                  const real_type jaerosolstate,
+                  const real_type_1d_view_type& aer_total,
+                  const real_type water_a,
+                  const real_type num_a,
+                  const real_type_1d_view_type& kg,
+                  const real_type_1d_view_type& Dg,
+                  const real_type_1d_view_type& freepath,
                   real_type& mass_dry_a, real_type& vol_dry_a,
                   real_type& mass_wet_a, real_type& vol_wet_a,
                   real_type& dens_dry_a, real_type& dens_wet_a,
@@ -571,7 +571,6 @@
     auto v_molar_g_view = mosaic.v_molar_g.template view<DeviceType>();
     auto accom_g_view   = mosaic.accom_g.template view<DeviceType>();
 
-    // ioa: compute gas diffusivity and mean free path from T, P, MW, molar volume
     for (ordinal_type iv = 0; iv < mosaic.ngas_ioa; ++iv) {
       real_type speed, gas_diff;
       mean_molecular_speed(T_K, mw_vol_g_view(iv), speed);
@@ -579,7 +578,7 @@
       Dg(iv)       = gas_diff;
       freepath(iv) = 3.0 * Dg(iv) / speed;
     }
-    // soa: Dg fixed at 0.1 cm^2/s
+
     for (ordinal_type iv = mosaic.iaro1_g; iv < mosaic.ngas_volatile; ++iv) {
       real_type speed;
       mean_molecular_speed(T_K, mw_vol_g_view(iv), speed);

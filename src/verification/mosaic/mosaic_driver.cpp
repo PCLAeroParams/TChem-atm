@@ -149,6 +149,8 @@ void MESA_estimate_eleliquid(Ensemble *ensemble);
 
 void degas_solid_nh4cl(Ensemble *ensemble);
 
+void aerosolmtc(Ensemble *ensemble);
+
 void MESA(Ensemble *ensemble);
 
 void MESA_PTC(Ensemble *ensemble);
@@ -298,6 +300,8 @@ int main(int argc, char **argv) {
       MESA_estimate_eleliquid(ensemble);
     } else if (func_name == "degas_solid_nh4cl") {
       degas_solid_nh4cl(ensemble);
+    } else if (func_name == "aerosol_mtc") {
+      aerosolmtc(ensemble);
     } else if (func_name == "MESA") {
       MESA(ensemble);
     } else if (func_name == "MESA_PTC") {
@@ -312,6 +316,8 @@ int main(int argc, char **argv) {
       aerosol_phase_state(ensemble);
     } else if (func_name == "calculate_kelvin") {
       calculate_kelvin(ensemble);
+    } else if (func_name == "aerosolmtc") {
+      aerosolmtc(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

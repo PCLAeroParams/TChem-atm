@@ -39,14 +39,11 @@ void aerosolmtc(Ensemble *ensemble) {
     real_type_1d_view num_a_view("num_a", 1);
     verification::convert_1d_vector_to_1d_view_device(num_a_arr, num_a_view);
 
-    // outputs
     real_type_1d_view kg("kg", mmd.ngas_volatile);
 
-    // scratch for aerosolmtc (Dg, freepath) and calc_dry_n_wet_aerosol_props
     real_type_1d_view Dg("Dg", mmd.ngas_volatile);
     real_type_1d_view freepath("freepath", mmd.ngas_volatile);
 
-    // scratch for calc_dry_n_wet_aerosol_props
     real_type_1d_view mass_dry_a_view("mass_dry_a", 1);
     real_type_1d_view vol_dry_a_view("vol_dry_a", 1);
     real_type_1d_view mass_wet_a_view("mass_wet_a", 1);
@@ -86,7 +83,6 @@ void aerosolmtc(Ensemble *ensemble) {
         area_dry_a_view(0), area_wet_a_view(0));
     });
 
-    // Collect outputs
     std::vector<real_type> T_K_out(1);
     std::vector<real_type> P_atm_out(1);
     std::vector<real_type> jaerosolstate_out(1);
@@ -111,7 +107,6 @@ void aerosolmtc(Ensemble *ensemble) {
     output.set("num_a",         num_a_out);
     output.set("kg",            kg_out);
 
-    // remaining outputs: Dg/freepath and the calc_dry_n_wet_aerosol_props results
     const auto set_view = [&](const char* name, const real_type_1d_view& v) {
       std::vector<real_type> out(v.extent(0));
       verification::convert_1d_view_device_to_1d_vector(v, out);

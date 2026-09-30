@@ -463,10 +463,12 @@ int main(int argc, char *argv[]) {
 
     }
     else if (solver_type == 2){
+      auto n_particles_track = udata.n_particles_track; // empty (track all particles)
 
       // Create a AerosolChemistryRHS object for the batch of teams
       using AerosolRHS = TChem::Impl::AerosolChemistryRHS<problem_type>;
-      AerosolRHS rhs_object(state, num_concentration, kmcd, amcd);
+      AerosolRHS rhs_object(num_concentration, const_tracers, 
+        temperature, pressure, kmcd, amcd, n_particles_track);
 
       ordinal_type system_size = number_of_equations;
       ordinal_type n_systems = static_cast<ordinal_type>(nBatch); // nBatch was defined int so need to convert to ordinal_type to ensure correct type passed to linear solver

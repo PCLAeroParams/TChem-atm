@@ -76,8 +76,7 @@ struct MatrixFreeBatchedGMRESTeamFunctor {
   KOKKOS_INLINE_FUNCTION void operator()(const MemberType &member) const{ 
 
     const int system_size   = y0.extent(1);
-    const int first = static_cast<int>(member.league_rank());
-    const int last  = first + 1;
+    const int i_member = static_cast<int>(member.league_rank());
 
     // --- Partition scratch (level-1) memory [ pw | x_shift | f_shift ] ---
     // claim workspace region of memory

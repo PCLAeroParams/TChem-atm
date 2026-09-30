@@ -737,7 +737,7 @@ void TChem::Driver::doTimestep(const double del_t){
       fprintf(stderr, "TChem error: Invalid linear solver type %d\n", _linear_solver);
       exit(1);
   }
-
+  
   // Attach the linear solver to CVODE
   retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
 

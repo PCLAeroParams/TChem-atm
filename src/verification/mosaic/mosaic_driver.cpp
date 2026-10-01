@@ -163,6 +163,8 @@ void aerosol_phase_state(Ensemble *ensemble);
 
 void calculate_kelvin(Ensemble *ensemble);
 
+void ASTEM_non_volatiles(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -312,6 +314,8 @@ int main(int argc, char **argv) {
       aerosol_phase_state(ensemble);
     } else if (func_name == "calculate_kelvin") {
       calculate_kelvin(ensemble);
+    } else if (func_name == "ASTEM_non_volatiles") {
+      ASTEM_non_volatiles(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

@@ -189,8 +189,14 @@ struct MosaicModelData {
     ordinal_type_1d_dual_view za; // ("za_", nanion)
 
     // molecular weights of ions [g/mol]
-    real_type_1d_dual_view mw_c; // ("MW_c_", ncation)
-    real_type_1d_dual_view mw_a; // ("MW_a_", anion)
+    real_type_1d_dual_view mw_c; // ("mw_c_", ncation)
+    real_type_1d_dual_view mw_a; // ("mw_a_", anion)
+
+    // molecular weights, molar volumes, and mass accommodation coefficients
+    // for volatile gas species 
+    real_type_1d_dual_view mw_vol_g;  // ("mw_vol_g_", ngas_volatile)
+    real_type_1d_dual_view v_molar_g; // ("v_molar_g_", ngas_volatile)
+    real_type_1d_dual_view accom_g;   // ("accom_g_", ngas_volatile)
 
     // salt index tracking and sulfate regimes
     real_type_1d_dual_view jsalt_index; // ("jsalt_index_", nsalt)
@@ -217,6 +223,9 @@ struct MosaicModelData {
         za = ordinal_type_1d_dual_view(do_not_init_tag("MosaicModelData::za"), ncation);
         mw_c = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_c"), ncation);
         mw_a = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_a"), nanion);
+        mw_vol_g  = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_vol_g"),  ngas_volatile);
+        v_molar_g = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::v_molar_g"), ngas_volatile);
+        accom_g   = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::accom_g"),   ngas_volatile);
         jsalt_index = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_a"), nsalt);
         jsulf_rich = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_rich"), 71);
         jsulf_poor = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_poor"), 211);
@@ -237,6 +246,9 @@ struct MosaicModelData {
         auto za_host = za.view_host();
         auto mw_c_host = mw_c.view_host();
         auto mw_a_host = mw_a.view_host();
+        auto mw_vol_g_host  = mw_vol_g.view_host();
+        auto v_molar_g_host = v_molar_g.view_host();
+        auto accom_g_host   = accom_g.view_host();
         auto jsalt_index_host = jsalt_index.view_host();
         auto jsulf_rich_host = jsulf_rich.view_host();
         auto jsulf_poor_host = jsulf_poor.view_host();
@@ -2292,6 +2304,29 @@ struct MosaicModelData {
         mw_a_host(ja_cl)   = 35.5;
         mw_a_host(ja_msa)  = 95.0;
 
+        mw_vol_g_host(ih2so4_g) = 98.0;
+        mw_vol_g_host(ihno3_g)  = 63.0;
+        mw_vol_g_host(ihcl_g)   = 36.5;
+        mw_vol_g_host(inh3_g)   = 17.0;
+        mw_vol_g_host(imsa_g)   = 96.0;
+        mw_vol_g_host(iaro1_g)  = 150.0;
+        mw_vol_g_host(iaro2_g)  = 150.0;
+        mw_vol_g_host(ialk1_g)  = 140.0;
+        mw_vol_g_host(iole1_g)  = 140.0;
+        mw_vol_g_host(iapi1_g)  = 184.0;
+        mw_vol_g_host(iapi2_g)  = 184.0;
+        mw_vol_g_host(ilim1_g)  = 200.0;
+        mw_vol_g_host(ilim2_g)  = 200.0;
+
+        for (ordinal_type iv = 0; iv < ngas_volatile; ++iv) v_molar_g_host(iv) = 0.0;
+        v_molar_g_host(ih2so4_g) = 42.88;
+        v_molar_g_host(ihno3_g)  = 24.11;
+        v_molar_g_host(ihcl_g)   = 21.48;
+        v_molar_g_host(inh3_g)   = 14.90;
+        v_molar_g_host(imsa_g)   = 58.00;
+
+        for (ordinal_type iv = 0; iv < ngas_volatile; ++iv) accom_g_host(iv) = 0.1;
+
         // jsalt index
         jsalt_index_host(jnh4so4)  = 5;   // AS 
         jsalt_index_host(jlvcite)  = 2;   // LC
@@ -2411,6 +2446,9 @@ struct MosaicModelData {
         za.modify_host();
         mw_c.modify_host();
         mw_a.modify_host();
+        mw_vol_g.modify_host();
+        v_molar_g.modify_host();
+        accom_g.modify_host();
         jsalt_index.modify_host();
         jsulf_poor.modify_host();
         jsulf_rich.modify_host();
@@ -2431,6 +2469,9 @@ struct MosaicModelData {
         za.sync_device();
         mw_c.sync_device();
         mw_a.sync_device();
+        mw_vol_g.sync_device();
+        v_molar_g.sync_device();
+        accom_g.sync_device();
         jsalt_index.sync_device();
         jsulf_poor.sync_device();
         jsulf_rich.sync_device();

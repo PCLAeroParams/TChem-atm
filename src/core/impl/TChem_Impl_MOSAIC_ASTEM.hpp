@@ -761,4 +761,96 @@
     }
   } // aerosol_phase_state
 
+  KOKKOS_INLINE_FUNCTION static
+  void ASTEM_non_volatiles_gas(const MosaicModelData<DeviceType>& mosaic,
+                               const real_type& dtchem,
+                               const real_type& sumkg_h2so4,
+                               const real_type& sumkg_msa,
+                               const real_type& sumkg_nh3,
+                               const real_type& sumkg_hno3,
+                               const real_type& sumkg_hcl,
+                               const real_type_1d_view_type& gas, // ngas_volatile, in/out
+                               real_type& delta_h2so4,
+                               real_type& delta_tmsa,
+                               real_type& delta_nh3,
+                               real_type& delta_hno3,
+                               real_type& delta_hcl) {
+
+    if (gas(mosaic.ih2so4_g) > 1.0e-14) {
+      const real_type decay_h2so4 = ats<real_type>::exp(-sumkg_h2so4*dtchem);
+      delta_h2so4 = gas(mosaic.ih2so4_g)*(1.0 - decay_h2so4);
+      gas(mosaic.ih2so4_g) = gas(mosaic.ih2so4_g)*decay_h2so4;
+    } else {
+      delta_h2so4 = 0.0;
+    }
+
+    if (gas(mosaic.imsa_g) > 1.0e-14) {
+      const real_type decay_msa = ats<real_type>::exp(-sumkg_msa*dtchem);
+      delta_tmsa = gas(mosaic.imsa_g)*(1.0 - decay_msa);
+      gas(mosaic.imsa_g) = gas(mosaic.imsa_g)*decay_msa;
+    } else {
+      delta_tmsa = 0.0;
+    }
+
+    delta_nh3  = gas(mosaic.inh3_g) *(1.0 - ats<real_type>::exp(-sumkg_nh3*dtchem));
+    delta_hno3 = gas(mosaic.ihno3_g)*(1.0 - ats<real_type>::exp(-sumkg_hno3*dtchem));
+    delta_hcl  = gas(mosaic.ihcl_g) *(1.0 - ats<real_type>::exp(-sumkg_hcl*dtchem));
+  } // ASTEM_non_volatiles_gas
+
+  KOKKOS_INLINE_FUNCTION static
+  void ASTEM_non_volatiles(const MosaicModelData<DeviceType>& mosaic,
+                           const real_type& jaerosolstate,
+                           const real_type_1d_view_type& kg,
+                           const real_type_1d_view_type& epercent_total,
+                           const real_type_1d_view_type& aer_total,
+                           const real_type& sumkg_h2so4,
+                           const real_type& sumkg_msa,
+                           const real_type& sumkg_nh3,
+                           const real_type& sumkg_hno3,
+                           const real_type& sumkg_hcl,
+                           const real_type& delta_h2so4,
+                           const real_type& delta_tmsa,
+                           const real_type& delta_nh3,
+                           const real_type& delta_hno3,
+                           const real_type& delta_hcl,
+                           real_type& delta_nh3_max,
+                           real_type& delta_hno3_max,
+                           real_type& delta_hcl_max,
+                           real_type& delta_nh4) {
+
+    const bool has_aerosol =
+    static_cast<ordinal_type>(jaerosolstate) != mosaic.no_aerosol;
+
+    real_type delta_so4 = 0.0;
+    if (has_aerosol && delta_h2so4 > 0.0) {
+      delta_so4 = delta_h2so4*kg(mosaic.ih2so4_g)/sumkg_h2so4;
+      aer_total(mosaic.iso4_a) = aer_total(mosaic.iso4_a) + delta_so4;
+    }
+
+    real_type delta_msa = 0.0;
+    if (has_aerosol && delta_tmsa > 0.0) {
+      delta_msa = delta_tmsa*kg(mosaic.imsa_g)/sumkg_msa;
+      aer_total(mosaic.imsa_a) = aer_total(mosaic.imsa_a) + delta_msa;
+    }
+
+    if (has_aerosol) {
+      delta_nh3_max  = delta_nh3 *kg(mosaic.inh3_g) /sumkg_nh3;
+      delta_hno3_max = delta_hno3*kg(mosaic.ihno3_g)/sumkg_hno3;
+      delta_hcl_max  = delta_hcl *kg(mosaic.ihcl_g) /sumkg_hcl;
+    }
+
+    delta_nh4 = 0.0;
+    if (delta_h2so4 == 0.0 && delta_tmsa == 0.0) return;
+
+    if (epercent_total(mosaic.jnacl)  == 0.0 &&
+        epercent_total(mosaic.jcacl2) == 0.0 &&
+        epercent_total(mosaic.jnano3) == 0.0 &&
+        epercent_total(mosaic.jcano3) == 0.0 &&
+        epercent_total(mosaic.jcaco3) == 0.0 &&
+        has_aerosol) {
+      delta_nh4 = min(2.0*delta_so4 + delta_msa, delta_nh3_max);
+      aer_total(mosaic.inh4_a) = aer_total(mosaic.inh4_a) + delta_nh4;
+    }
+  } // ASTEM_non_volatiles
+
 #endif

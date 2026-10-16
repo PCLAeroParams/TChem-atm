@@ -37,6 +37,7 @@ struct Aerosol_RHS
   using real_type = scalar_type;
   /// sacado is value type
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
+  using value_type_2d_view_type = Tines::value_type_2d_view<value_type,device_type>;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using ordinal_type_1d_view_type = Tines::value_type_1d_view<ordinal_type,device_type>;
   using aerosol_model_data_type= AerosolModel_ConstData<device_type>;
@@ -117,8 +118,53 @@ struct Aerosol_RHS
 #endif
   }
 
+  template<typename MemberType>
+  KOKKOS_INLINE_FUNCTION static
+  void team_invoke_per_particle_gas_contrib(
+    const MemberType& member,
+    const real_type& t,
+    const real_type& p,
+    const real_type_1d_view_type& number_conc,
+    const value_type_1d_view_type& state,
+    const value_type_1d_view_type& particle_tendency,
+    const value_type_2d_view_type& gas_tendency_contrib,
+    const aerosol_model_data_type& amcd,
+    const ordinal_type n_particles_rhs
+    )
+    {
 
+    if (n_particles_rhs > amcd.nParticles) {
+      Kokkos::abort("n_particles_rhs exceeds amcd.nParticles");
+    }
 
+    // set tendency views to zero
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, particle_tendency.extent(0)),
+       [&](const ordinal_type& i) {
+      particle_tendency(i) = 0.0;
+    });
+
+    Kokkos::parallel_for(Kokkos::TeamVectorMDRange(member, 
+      gas_tendency_contrib.extent(0), gas_tendency_contrib.extent(1)),
+      [&](const int i, const int j) {
+          gas_tendency_contrib(i, j) = 0.0;
+    });
+
+    member.team_barrier();
+
+    // Compute per-particle contributions to RHS of gas and aerosol species (only for tracked particles)
+    using SIMPOL_single_particle_type = TChem::Impl::SIMPOL_single_particle<real_type, device_type >;
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_particles_rhs),
+       [&](const ordinal_type& i_part) {
+        for (size_t i_simpol = 0; i_simpol < amcd.nSimpol_tran; i_simpol++)
+        {
+        SIMPOL_single_particle_type::team_invoke_per_particle_gas_contrib(
+          member, i_part,i_simpol, t, p, number_conc, state, 
+          particle_tendency, gas_tendency_contrib, amcd);
+
+    }// i_simpol
+    });// i_part
+
+    }
 };
 } // namespace Impl
 } // namespace TChem

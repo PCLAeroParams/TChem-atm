@@ -1,23 +1,26 @@
 # **Methodology**
 
-TChem-atm computes the source term or the right-hand side of the gas-species equations:
+TChem-atm performs two key functions for atmospheric chemical systems. First, it determines the tendency (i.e., ODE right-hand side or RHS) at which chemical reactions proceed. Second, TChem-atm can advance the system state via coupling to numerous solver packages. Below, we describe these capabilities in more detail. 
 
-<!-- \begin{equation}\label{eq:ode_vmr} -->
+## **RHS construction**
+
+TChem-atm computes the tendency $\dot{\vec{\omega}}$ of a gas or multiphase system $\vec{\eta}$, where
+<!-- \begin{equation}\label{eq:ode_general} -->
 $$
 \newcommand{\dif}{\mathrm{d}}
 \newcommand{\eee}{\mathrm{E3SM}}
-  \frac{\dif{} \eta_k}{\dif{} t}=\dot{\omega}_k,\quad k = 1, \dots, N
+  \frac{\dif{} \vec{\eta}}{\dif{} t}=\dot{\vec{\omega}}.
 $$
 <!-- \end{equation} -->
+The state vector $\vec{\eta}$ may be exclusively gas phase species or may include both gas and aerosol species, depending on the chemical mechanism specified by the user. The following subsections describe RHS construction for both gas and multiphase (gas-aerosol) systems.
 
-and its associated Jacobian matrix, $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which is evaluated using either finite differences (Tines library) or automatic differentiation (Sacado library).
-Furthermore, TChem-atm has an interface for Tines or CVODE ODE (ordinary differential equation) solver to advance the volumetric mixing ratio (vmr, $\eta_k$ ) of gas species, $k$, in time.
+### **Gas systems**
 
-The net production rate of species $k$, $\dot{\omega}_k$, or the "right-hand side" of the previous equation is computed using:
+The net production rate (or RHS) of species $k$, $\dot{\omega}_k$ is determined as
 
 <!-- \begin{equation}\label{eq:net_production_rates} -->
 $$
-  \dot{\omega}_k=\sum_{i=1}^{N_{\text{react}}}\nu_{ki}q_i,\quad \nu_{ki}=\nu''_{ki}-\nu'_{ki},
+  \dot{\omega}_k=\sum_{i=1}^{N_{\text{react}}}\nu_{ki}q_i,\quad \nu_{ki}=\nu''_{ki}-\nu'_{ki},\quad k = 1, \dots, N
 $$
 <!-- \end{equation} -->
 
@@ -30,17 +33,27 @@ $$
 $$
 <!-- \end{equation} -->
 
-where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction constant of reaction $i$. The reaction constant ${k_f}_i$ can take several functional forms depending on the reaction type. We present below the reaction types that are available in TChem-atm.
+where $N_{\text{spec}}$ is the number of species, ${k_f}_i$ is the reaction constant of reaction $i$. The reaction constant ${k_f}_i$ can take several functional forms depending on the reaction type. Supported gas phase reaction types are described [here](methodology.md#reaction-types)
 
 <!-- Note that in $\eee{}$`s CAMPP solver, only forward reaction calculations are employed, and the single reaction constant values depend on the type of reaction. -->
 
-## **Aerosol-Gas interations**
+### **Multiphase systems**
 
 TChem-atm facilitates the construction of source terms (or RHS) for gas-aerosol cases. In these cases, the RHS is constructed as follows:
 
 ![RHS of gas-aerosol](figures/RHS_gas_aerosol.png)
 
-Where, the first part of the RHS corresponds to the concentration of gas species. Then, the concentration of each particle is appended. Currently, TChem-atm supports the [SIMPOL mass transfer](methodology.md#simpol-mass-transfer).
+Where, the first part of the RHS corresponds to the concentration of gas species. Then, the concentration of each particle is appended. Currently, TChem-atm supports the [SIMPOL mass transfer](#simpol-mass-transfer).
+
+## **Time integration**
+
+TChem-atm advances the system state $\vec{\eta}$ in time by interfacing with either TINES or SUNDIALS ODE solvers. TChem-atm currently supports TINES TrBDF2 and SUNDIALS CVODE, both of which are backward differentiation formula (BDF) methods. 
+
+BDF methods are implicit solvers and are well-suited to highly stiff, non-linear systems such as atmospheric chemical kinetics where reaction rates vary widely. Determining the system state at the next time step involves solving a non-linear system through an iterative series of linear solves. These inner linear solves require evaluation of the system Jacobian $\textbf{J}_{ij} = \frac{\partial \dot{\omega}_i}{\partial \eta_j }$, which for smaller systems can be constructed explicitly via finite differencing (TINES) or through automatic differentiation (Sacado). These explicitly-constructed Jacobians are then used by dense linear solvers such as LU-based methods. For solving dense systems, CVODE can be coupled to Kokkos Kernels' dense LU solver and TrBDF2 can be coupled to a comparable TINES linear solver. Both of these linear solvers are batched, which enables the simulation of multiple, independent chemical systems in parallel (e.g., grid cells in a 3D model). 
+
+For larger systems (e.g., use of TChem-atm for particle-resolved applications in which the aerosol state is represented by thousands of computational particles), constructing the system Jacobian may be computationally prohibitive or too large to fit in memory. In these cases, Jacobian-free linear methods such as the Generalized Minimal Residual (GMRES) algorithm are widely used. TChem-atm contains two GMRES solvers, both of which are coupled to the CVODE integrator. The first, SPGMR, is a native SUNDIALS linear solver. SPGMR is an unbatched solver, meaning that it should only be used when running TChem-atm for a single chemical system. For solving a batch of large systems, TChem-atm has recently been coupled to the Kokkos Kernels batched GMRES solver. TChem-atm includes an interface layer between Kokkos Kernels' batched GMRES and SUNDIALS CVODE to allow users to attach the linear solver to CVODE in the same manner as the SUNDIALS SPGMR method.  
+
+
 
 ## **Reaction Types**
 

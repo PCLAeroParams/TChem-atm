@@ -1,0 +1,10 @@
+particles:
+  initial_state:
+    POA:
+      initial_value: [1e-08]
+    ISOP-P1_aero:
+      initial_value: [1e-09]
+    TERP-P1_aero:
+      initial_value: [1e-09]
+  num_concentration:
+    initial_value: [1000000.0]

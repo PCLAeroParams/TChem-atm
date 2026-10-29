@@ -1,6 +1,6 @@
 #include <sundials/sundials_linearsolver.h>
 #include "TChem.hpp"
-#include "TChem_AerosolChemistry_CVODE_BatchedGMRES.hpp"
+#include "TChem_AerosolChemistry_CVODE_K_BatchedGMRES.hpp"
 
 #define BGMR_CONTENT(S) (static_cast<TChem::SUNLinearSolverContent_BatchedGMRES*>((S)->content))
 

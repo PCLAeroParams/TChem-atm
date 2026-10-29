@@ -343,6 +343,7 @@ struct SUNLinearSolverContent_BatchedGMRES
             return last_flag; 
         }
 
+        // TODO possible to set tolerance as a view with each entry tol (scalar)/(||b_i||) for each system i?
         handle.set_tolerance(tol/bnorm_max);
         handle.reset(); // reset the iteration numbers and residual norms
 

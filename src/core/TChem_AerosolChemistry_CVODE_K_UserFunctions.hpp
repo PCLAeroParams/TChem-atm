@@ -20,8 +20,8 @@ Questions? Contact Oscar Diaz-Ibarra at <odiazib@sandia.gov>, or
 Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 =====================================================================================
 */
-#ifndef __TCHEM_AEROSOL_CHEMISTRY_CVODE_RHS_JACOBIAN_HPP__
-#define __TCHEM_AEROSOL_CHEMISTRY_CVODE_RHS_JACOBIAN_HPP__
+#ifndef __TCHEM_AEROSOL_CHEMISTRY_CVODE_K_USER_FUNCTIONS_HPP__
+#define __TCHEM_AEROSOL_CHEMISTRY_CVODE_K_USER_FUNCTIONS_HPP__
 
 #include "TChem_Util.hpp"
 #include "TChem_KineticModelData.hpp"

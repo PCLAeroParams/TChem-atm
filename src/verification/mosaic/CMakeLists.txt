@@ -68,7 +68,16 @@ add_executable(${DRIVER_NAME}.x
                aerosol_phase_state.cpp
                calculate_kelvin.cpp
                ASTEM_non_volatiles.cpp
- )
+               ASTEM_flux_dry_case1.cpp
+               ASTEM_flux_dry_case2.cpp
+               ASTEM_flux_dry_case3a.cpp
+               ASTEM_flux_dry_case3b.cpp
+               ASTEM_flux_dry_case4.cpp
+               ASTEM_flux_dry_case4a.cpp
+               ASTEM_flux_dry_case4b.cpp
+               ASTEM_flux_dry_case4ab.cpp
+               ASTEM_flux_dry.cpp
+)
 
 
 TARGET_LINK_LIBRARIES(${DRIVER_NAME}.x verification;${TCHEM_ATM_LINK_LIBRARIES})
@@ -141,6 +150,15 @@ SET(TEST_LIST
     aerosol_phase_state_input_ts_0
     calculate_kelvin_input_ts_0
     ASTEM_non_volatiles_input_ts_0
+    ASTEM_flux_dry_case1_input_ts_0
+    ASTEM_flux_dry_case2_input_ts_0
+    ASTEM_flux_dry_case3a_input_ts_0
+    ASTEM_flux_dry_case3b_input_ts_0
+    ASTEM_flux_dry_case4_input_ts_0
+    ASTEM_flux_dry_case4a_input_ts_0
+    ASTEM_flux_dry_case4b_input_ts_0
+    ASTEM_flux_dry_case4ab_input_ts_0
+    ASTEM_flux_dry_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -209,6 +227,15 @@ SET(TEST_BASELINE
     aerosol_phase_state_output_ts_0
     calculate_kelvin_output_ts_0
     ASTEM_non_volatiles_output_ts_0
+    ASTEM_flux_dry_case1_output_ts_0
+    ASTEM_flux_dry_case2_output_ts_0
+    ASTEM_flux_dry_case3a_output_ts_0
+    ASTEM_flux_dry_case3b_output_ts_0
+    ASTEM_flux_dry_case4_output_ts_0
+    ASTEM_flux_dry_case4a_output_ts_0
+    ASTEM_flux_dry_case4b_output_ts_0
+    ASTEM_flux_dry_case4ab_output_ts_0
+    ASTEM_flux_dry_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -278,6 +305,15 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # aerosol_phase_state_output_ts_0
     ${DEFAULT_TOL} # calculate_kelvin_output_ts_0
     ${DEFAULT_TOL} # ASTEM_non_volatiles_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case1_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case2_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case3a_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case3b_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case4_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case4a_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case4b_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_case4ab_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_dry_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

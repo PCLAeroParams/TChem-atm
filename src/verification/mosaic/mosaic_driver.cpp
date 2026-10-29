@@ -167,6 +167,8 @@ void calculate_kelvin(Ensemble *ensemble);
 
 void ASTEM_non_volatiles(Ensemble *ensemble);
 
+void cubic(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -322,6 +324,8 @@ int main(int argc, char **argv) {
       ASTEM_non_volatiles(ensemble);
     } else if (func_name == "aerosolmtc") {
       aerosolmtc(ensemble);
+    } else if (func_name == "cubic") {
+      cubic(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

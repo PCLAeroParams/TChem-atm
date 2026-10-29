@@ -27,7 +27,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem_KineticModelNCAR_ConstData.hpp"
 #include "TChem_CommandLineParser.hpp"
 #include "TChem_Impl_AerosolChemistryRHS.hpp" // AerosolChemistryRHS
-#include "TChem_AerosolChemistry_CVODE_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
+#include "TChem_AerosolChemistry_CVODE_K_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
 
 using real_type = TChem::real_type;
 using ordinal_type = TChem::ordinal_type;
@@ -706,7 +706,7 @@ void TChem::Driver::doTimestep(const double del_t){
     printf("TChem solver configuration:\n");
     printf("..Integrator: SUNDIALS CVODE\n");
     printf("..Linear Solver: SUNDIALS SPGMR (unbatched)\n");
-  LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
+    LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
       SUNLinSol_SPGMR(y, SUN_PREC_NONE, _krylov_dimension, sunctx));
   } else if (_linear_solver == 2){
     // Kokkos-Kernels Batched GMRES 

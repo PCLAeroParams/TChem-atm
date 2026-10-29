@@ -26,7 +26,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include <sundials/sundials_logger.h>
 
 #include "TChem_Impl_AerosolChemistryRHS.hpp" // AerosolChemistryRHS
-#include "TChem_AerosolChemistry_CVODE_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
+#include "TChem_AerosolChemistry_CVODE_K_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
 
 
 using ordinal_type = TChem::ordinal_type;

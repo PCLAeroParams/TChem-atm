@@ -68,6 +68,7 @@ add_executable(${DRIVER_NAME}.x
                aerosol_phase_state.cpp
                calculate_kelvin.cpp
                ASTEM_non_volatiles.cpp
+               cubic.cpp
  )
 
 
@@ -141,6 +142,7 @@ SET(TEST_LIST
     aerosol_phase_state_input_ts_0
     calculate_kelvin_input_ts_0
     ASTEM_non_volatiles_input_ts_0
+    cubic_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -209,6 +211,7 @@ SET(TEST_BASELINE
     aerosol_phase_state_output_ts_0
     calculate_kelvin_output_ts_0
     ASTEM_non_volatiles_output_ts_0
+    cubic_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -278,6 +281,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # aerosol_phase_state_output_ts_0
     ${DEFAULT_TOL} # calculate_kelvin_output_ts_0
     ${DEFAULT_TOL} # ASTEM_non_volatiles_output_ts_0
+    ${DEFAULT_TOL} # cubic_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

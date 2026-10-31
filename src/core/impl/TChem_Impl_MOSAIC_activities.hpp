@@ -20,10 +20,11 @@
                           real_type& jphase,
                           real_type& jhyst_leg,
                           real_type& aH2O_a,
-                          real_type& water_a) {
+                          real_type& water_a,
+                          real_type& gam_ratio) {
 
     // local variables
-    real_type a_c, sum_elec, gam_ratio, mSULF = 0.0;
+    real_type a_c, sum_elec, mSULF = 0.0;
     ordinal_type jA = 0;
 
     // get aerosol water activity
@@ -86,6 +87,7 @@
         gam(mosaic.jnh4hso4) = 1.0;
         gam(mosaic.jnh4msa)  = 1.0;
         gam(mosaic.jna3hso4) = 1.0;
+        gam(mosaic.jnahso4)  = 1.0;
         gam(mosaic.jnamsa)   = 1.0;
         gam(mosaic.jcamsa2)  = 1.0;
 
@@ -100,11 +102,12 @@
 
         activity(mosaic.jnamsa)  = mc(mosaic.jc_na) * ma(mosaic.ja_msa) *
                                    gam(mosaic.jnamsa) * gam(mosaic.jnamsa);
-        activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) * ma(mosaic.ja_msa) *
-                                   gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2);
+        activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) *
+                                   ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
+                                   ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
 
-        gam_ratio = gam(mosaic.jnh4no3) * gam(mosaic.jnh4no3) /
-                    gam(mosaic.jhno3)   * gam(mosaic.jhno3);
+        gam_ratio = ats<real_type>::pow(gam(mosaic.jnh4no3),2.) /
+                    ats<real_type>::pow(gam(mosaic.jhno3),2.);
 
         return;
       }
@@ -278,47 +281,46 @@
                        ats<real_type>::pow(gam(jA),3.);
       }
 
+      // computed even when xmol(jA) == 0, as in MOSAIC
       jA = mosaic.jhno3;
-      if (xmol(jA) > 0.0) {
-        log_gam(jA) = xmol(mosaic.jnh4no3) * log_gamZ(jA,mosaic.jnh4no3) +
-                      xmol(mosaic.jnh4cl)  * log_gamZ(jA,mosaic.jnh4cl)  +
-                      xmol(mosaic.jnh4so4) * log_gamZ(jA,mosaic.jnh4so4) +
-                      xmol(mosaic.jna2so4) * log_gamZ(jA,mosaic.jna2so4) +
-                      xmol(mosaic.jnano3)  * log_gamZ(jA,mosaic.jnano3)  +
-                      xmol(mosaic.jnacl)   * log_gamZ(jA,mosaic.jnacl)   +
-                      xmol(mosaic.jcano3)  * log_gamZ(jA,mosaic.jcano3)  +
-                      xmol(mosaic.jcacl2)  * log_gamZ(jA,mosaic.jcacl2)  +
-                      xmol(mosaic.jhno3)   * log_gamZ(jA,mosaic.jhno3)   +
-                      xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
-        gam(jA) = ats<real_type>::pow(10., log_gam(jA));
-        activity(jA) = mc(mosaic.jc_h) *
-                       ma(mosaic.ja_no3) *
-                       ats<real_type>::pow(gam(jA),2.);
-      }
+      log_gam(jA) = xmol(mosaic.jnh4no3) * log_gamZ(jA,mosaic.jnh4no3) +
+                    xmol(mosaic.jnh4cl)  * log_gamZ(jA,mosaic.jnh4cl)  +
+                    xmol(mosaic.jnh4so4) * log_gamZ(jA,mosaic.jnh4so4) +
+                    xmol(mosaic.jna2so4) * log_gamZ(jA,mosaic.jna2so4) +
+                    xmol(mosaic.jnano3)  * log_gamZ(jA,mosaic.jnano3)  +
+                    xmol(mosaic.jnacl)   * log_gamZ(jA,mosaic.jnacl)   +
+                    xmol(mosaic.jcano3)  * log_gamZ(jA,mosaic.jcano3)  +
+                    xmol(mosaic.jcacl2)  * log_gamZ(jA,mosaic.jcacl2)  +
+                    xmol(mosaic.jhno3)   * log_gamZ(jA,mosaic.jhno3)   +
+                    xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10., log_gam(jA));
+      activity(jA) = mc(mosaic.jc_h) *
+                     ma(mosaic.ja_no3) *
+                     ats<real_type>::pow(gam(jA),2.);
 
+      // computed even when xmol(jA) == 0, as in MOSAIC
       jA = mosaic.jhcl;
-      if (xmol(jA) > 0.0) {
-        log_gam(jA) = xmol(mosaic.jnh4no3) * log_gamZ(jA,mosaic.jnh4no3) +
-                      xmol(mosaic.jnh4cl)  * log_gamZ(jA,mosaic.jnh4cl)  +
-                      xmol(mosaic.jnh4so4) * log_gamZ(jA,mosaic.jnh4so4) +
-                      xmol(mosaic.jna2so4) * log_gamZ(jA,mosaic.jna2so4) +
-                      xmol(mosaic.jnano3)  * log_gamZ(jA,mosaic.jnano3)  +
-                      xmol(mosaic.jnacl)   * log_gamZ(jA,mosaic.jnacl)   +
-                      xmol(mosaic.jcano3)  * log_gamZ(jA,mosaic.jcano3)  +
-                      xmol(mosaic.jcacl2)  * log_gamZ(jA,mosaic.jcacl2)  +
-                      xmol(mosaic.jhno3)   * log_gamZ(jA,mosaic.jhno3)   +
-                      xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
-        gam(jA) = ats<real_type>::pow(10., log_gam(jA));
-        activity(jA) = mc(mosaic.jc_h) *
-                       ma(mosaic.ja_cl) *
-                       ats<real_type>::pow(gam(jA),2.);
-      }
+      log_gam(jA) = xmol(mosaic.jnh4no3) * log_gamZ(jA,mosaic.jnh4no3) +
+                    xmol(mosaic.jnh4cl)  * log_gamZ(jA,mosaic.jnh4cl)  +
+                    xmol(mosaic.jnh4so4) * log_gamZ(jA,mosaic.jnh4so4) +
+                    xmol(mosaic.jna2so4) * log_gamZ(jA,mosaic.jna2so4) +
+                    xmol(mosaic.jnano3)  * log_gamZ(jA,mosaic.jnano3)  +
+                    xmol(mosaic.jnacl)   * log_gamZ(jA,mosaic.jnacl)   +
+                    xmol(mosaic.jcano3)  * log_gamZ(jA,mosaic.jcano3)  +
+                    xmol(mosaic.jcacl2)  * log_gamZ(jA,mosaic.jcacl2)  +
+                    xmol(mosaic.jhno3)   * log_gamZ(jA,mosaic.jhno3)   +
+                    xmol(mosaic.jhcl)    * log_gamZ(jA,mosaic.jhcl);
+      gam(jA) = ats<real_type>::pow(10., log_gam(jA));
+      activity(jA) = mc(mosaic.jc_h) *
+                     ma(mosaic.ja_cl) *
+                     ats<real_type>::pow(gam(jA),2.);
 
       // FIXME: duplicated code to avoid goto statement
       gam(mosaic.jlvcite)  = 1.0;
       gam(mosaic.jnh4hso4) = 1.0;
       gam(mosaic.jnh4msa)  = 1.0;
       gam(mosaic.jna3hso4) = 1.0;
+      gam(mosaic.jnahso4)  = 1.0;
       gam(mosaic.jnamsa)   = 1.0;
       gam(mosaic.jcamsa2)  = 1.0;
 
@@ -333,11 +335,12 @@
 
       activity(mosaic.jnamsa)  = mc(mosaic.jc_na) * ma(mosaic.ja_msa) *
                                  gam(mosaic.jnamsa) * gam(mosaic.jnamsa);
-      activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) * ma(mosaic.ja_msa) *
-                                 gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2) * gam(mosaic.jcamsa2);
+      activity(mosaic.jcamsa2) = mc(mosaic.jc_ca) *
+                                 ats<real_type>::pow(ma(mosaic.ja_msa),2.) *
+                                 ats<real_type>::pow(gam(mosaic.jcamsa2),3.);
 
-      gam_ratio = gam(mosaic.jnh4no3) * gam(mosaic.jnh4no3) /
-                  gam(mosaic.jhno3)   * gam(mosaic.jhno3);
+      gam_ratio = ats<real_type>::pow(gam(mosaic.jnh4no3),2.) /
+                  ats<real_type>::pow(gam(mosaic.jhno3),2.);
 
       // end SULFATE POOR regime
     } else {

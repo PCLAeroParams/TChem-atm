@@ -101,6 +101,7 @@ void ions_to_electrolytes(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+    real_type XT = 0.0; // not part of this test's data
     TChem::Impl::MOSAIC<real_type, device_type>::ions_to_electrolytes(
       mmd,
       jp(0),
@@ -121,7 +122,8 @@ void ions_to_electrolytes(Ensemble *ensemble) {
       electrolyte_sum(0),
       epercent,
       aer_sum(0),
-      aer_percent);
+      aer_percent,
+      XT);
     });
 
     std::vector<Real> aer_curr_out(mmd.naer), aer_solid_out(mmd.naer), aer_liquid_out(mmd.naer), aer_total_out(mmd.naer), 

@@ -557,10 +557,11 @@
                                 electrolyte_solid, electrolyte_liquid, electrolyte_total,
                                 epercent_solid, epercent_liquid, epercent_total,
                                 jphase, jhyst_leg);
+          real_type gam_ratio = 0.0; // gam_ratio(ibin) in MOSAIC; not used here
           compute_activities(mosaic, molalities, xmol, aer_liquid, ma, mc_view,
                              Keq_ll, electrolyte_solid, electrolyte_liquid, electrolyte_total,
                              log_gam, log_gamZ, gam, activity,
-                             jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a);
+                             jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a, gam_ratio);
         }
         // new wet mass and wet volume
         mass_wet_a    = mass_dry_a + water_a * 1.0e-3; // g/cc(air)
@@ -993,16 +994,18 @@
                       real_type& electrolyte_sum_solid) {
 
     // compute activitie and water content
+    real_type XT = 0.0;        // MESA_estimate_eleliquid recomputes XT itself
+    real_type gam_ratio = 0.0; // gam_ratio(ibin) in MOSAIC; not used here
     ions_to_electrolytes(mosaic, mosaic.jliquid,
                          aer_liquid, aer_solid, aer_liquid, aer_total,
                          store, electrolyte_liquid, electrolyte_solid, electrolyte_liquid,
                          na, nc, xeq_a, xeq_c, na_Ma, nc_Mc,
-                         electrolyte_sum_liq, epercent_liquid, aer_sum, aer_percent);
+                         electrolyte_sum_liq, epercent_liquid, aer_sum, aer_percent, XT);
     
     compute_activities(mosaic, molalities, xmol, aer_liquid, ma, mc,
                        Keq_ll, electrolyte_solid, electrolyte_liquid, electrolyte_total,
                        log_gam, log_gamZ, gam, activity,
-                       jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a);
+                       jaerosolstate, jphase, jhyst_leg, aH2O_a, water_a, gam_ratio);
 
     activity(mosaic.jna3hso4) = 0.0;
 

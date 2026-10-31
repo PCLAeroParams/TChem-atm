@@ -285,7 +285,8 @@ KOKKOS_INLINE_FUNCTION static
                             real_type& electrolyte_sum,
                             const real_type_1d_view_type& epercent,
                             real_type& aer_sum,
-                            const real_type_1d_view_type& aer_percent) {
+                            const real_type_1d_view_type& aer_percent,
+                            real_type& XT) {
 
     // Note: this function should only be called on liquid-phase or total-phase
     // transfers caso4 and caco3 from liquid to solid phase
@@ -316,7 +317,7 @@ KOKKOS_INLINE_FUNCTION static
       electrolyte_liquid(mosaic.jcaso4) = 0.0;
     }
 
-    real_type XT = 0.0;
+    XT = 0.0;
     calculate_XT(mosaic, aer_liquid, XT);
 
     ordinal_type icase = 0;
@@ -492,7 +493,7 @@ KOKKOS_INLINE_FUNCTION static
       }
 
       // first form msa electrolytes
-      real_type rem_na, rem_nh4 = 0.0;
+      real_type rem_na = 0.0, rem_nh4 = 0.0;
       if(sum_na_nh4 > store(mosaic.imsa_a)) {
         electrolyte_curr(mosaic.jnamsa)  = f_na *store(mosaic.imsa_a);
         electrolyte_curr(mosaic.jnh4msa) = f_nh4*store(mosaic.imsa_a);
@@ -502,6 +503,8 @@ KOKKOS_INLINE_FUNCTION static
         electrolyte_curr(mosaic.jnamsa)  = aer_curr(mosaic.ina_a);
         electrolyte_curr(mosaic.jnh4msa) = aer_curr(mosaic.inh4_a);
         electrolyte_curr(mosaic.jmsa)    = store(mosaic.imsa_a) - sum_na_nh4;
+        rem_nh4 = 0.0;  // remaining nh4
+        rem_na  = 0.0;  // remaining na
       }
 
 

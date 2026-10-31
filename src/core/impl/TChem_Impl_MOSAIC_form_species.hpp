@@ -79,7 +79,7 @@
                    const real_type_1d_view_type& electrolyte,
                    const real_type_1d_view_type& store) {
 
-    electrolyte(mosaic.jcaso4) = min(store(mosaic.ica_a), 0.5*store(mosaic.imsa_a));
+    electrolyte(mosaic.jcamsa2) = min(store(mosaic.ica_a), 0.5*store(mosaic.imsa_a));
 
     store(mosaic.ica_a)  = store(mosaic.ica_a)  - electrolyte(mosaic.jcamsa2);
     store(mosaic.imsa_a) = store(mosaic.imsa_a) - 2.*electrolyte(mosaic.jcamsa2);

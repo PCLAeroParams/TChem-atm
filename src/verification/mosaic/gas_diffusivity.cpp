@@ -66,16 +66,18 @@ void gas_diffusivity(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& gas_diffusivity = outputs_gas_diffusivity(0);
+        Real& gas_diffusivity = outputs_gas_diffusivity(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::gas_diffusivity(
-      T_K(0),
-      P(0),
-      MW(0),
-      Vm(0),
-      gas_diffusivity);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::gas_diffusivity(
+        T_K(0),
+        P(0),
+        MW(0),
+        Vm(0),
+        gas_diffusivity);
+      });
     });
 
     const auto outputs_gas_diffusivity_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_gas_diffusivity);

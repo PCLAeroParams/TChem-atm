@@ -67,16 +67,18 @@ void fnlog_gamZ(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& log_gamZ = outputs_fnlog_gamZ(0);
+        Real& log_gamZ = outputs_fnlog_gamZ(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::fnlog_gamZ(
-      mmd,
-      jA(0)-1,
-      jE(0)-1,
-      aH2O(0),
-      log_gamZ);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::fnlog_gamZ(
+        mmd,
+        jA(0)-1,
+        jE(0)-1,
+        aH2O(0),
+        log_gamZ);
+      });
     });
 
     const auto outputs_fnlog_gamZ_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_fnlog_gamZ);

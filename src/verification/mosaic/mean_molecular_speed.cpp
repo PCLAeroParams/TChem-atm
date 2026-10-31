@@ -58,14 +58,16 @@ void mean_molecular_speed(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& mean_molecular_speed = outputs_mean_molecular_speed(0);
+        Real& mean_molecular_speed = outputs_mean_molecular_speed(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::mean_molecular_speed(
-      T_K(0),
-      MW(0),
-      mean_molecular_speed);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::mean_molecular_speed(
+        T_K(0),
+        MW(0),
+        mean_molecular_speed);
+      });
     });
 
     const auto outputs_mean_molecular_speed_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_mean_molecular_speed);

@@ -58,14 +58,16 @@ void fuchs_sutugin(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& fuchs_sutugin = outputs_fuchs_sutugin(0);
+        Real& fuchs_sutugin = outputs_fuchs_sutugin(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::fuchs_sutugin(
-      rkn(0),
-      a(0),
-      fuchs_sutugin);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::fuchs_sutugin(
+        rkn(0),
+        a(0),
+        fuchs_sutugin);
+      });
     });
 
     const auto outputs_fuchs_sutugin_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_fuchs_sutugin);

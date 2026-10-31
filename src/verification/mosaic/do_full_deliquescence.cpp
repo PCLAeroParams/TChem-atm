@@ -81,11 +81,13 @@ void do_full_deliquescence(Ensemble *ensemble) {
         profile_name,
         policy,
         KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+          Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-            TChem::Impl::MOSAIC<real_type, device_type>::do_full_deliquescence(
-            mmd,
-            electrolyte_solid, electrolyte_liquid, electrolyte_total,
-            aer_solid, aer_liquid, aer_total);
+              TChem::Impl::MOSAIC<real_type, device_type>::do_full_deliquescence(
+              mmd,
+              electrolyte_solid, electrolyte_liquid, electrolyte_total,
+              aer_solid, aer_liquid, aer_total);
+          });
         });
 
             verification::convert_1d_view_device_to_1d_vector(electrolyte_solid, electrolyte_db_2d[0]);

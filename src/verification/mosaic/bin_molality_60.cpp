@@ -59,14 +59,16 @@ void bin_molality_60(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& molality = outputs_bin_molality_60(0);
+        Real& molality = outputs_bin_molality_60(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::bin_molality_60(
-      mmd,
-      je(0)-1,
-      molality);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::bin_molality_60(
+        mmd,
+        je(0)-1,
+        molality);
+      });
     });
 
     const auto outputs_bin_molality_60_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_bin_molality_60);

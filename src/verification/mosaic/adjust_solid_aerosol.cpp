@@ -110,18 +110,20 @@ void adjust_solid_aerosol(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& water_a = outputs_adjust_solid_aerosol(0);
-      Real& jphase = outputs_adjust_solid_aerosol(1);
-      Real& jhyst_leg = outputs_adjust_solid_aerosol(2);
+        Real& water_a = outputs_adjust_solid_aerosol(0);
+        Real& jphase = outputs_adjust_solid_aerosol(1);
+        Real& jhyst_leg = outputs_adjust_solid_aerosol(2);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::adjust_solid_aerosol(
-      mmd,
-      aer_solid, aer_liquid, aer_total,
-      electrolyte_solid, electrolyte_liquid, electrolyte_total,
-      epercent_solid, epercent_liquid, epercent_total,
-      water_a, jphase, jhyst_leg);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::adjust_solid_aerosol(
+        mmd,
+        aer_solid, aer_liquid, aer_total,
+        electrolyte_solid, electrolyte_liquid, electrolyte_total,
+        epercent_solid, epercent_liquid, epercent_total,
+        water_a, jphase, jhyst_leg);
+      });
     });
 
     const auto outputs_adjust_solid_aerosol_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_adjust_solid_aerosol);

@@ -42,12 +42,14 @@ void MESA_dissolve_small_salt(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::MESA_dissolve_small_salt(
-        mmd,
-        js,
-        aer_liquid,
-        aer_solid,
-        electrolyte_solid);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        TChem::Impl::MOSAIC<real_type, device_type>::MESA_dissolve_small_salt(
+          mmd,
+          js,
+          aer_liquid,
+          aer_solid,
+          electrolyte_solid);
+      });
     });
 
     std::vector<real_type> aer_liquid_out(mmd.naer);

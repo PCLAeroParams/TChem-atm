@@ -151,24 +151,26 @@ void MESA(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::MESA(
-        mmd,
-        aer_liquid, aer_solid, aer_total,
-        electrolyte_solid, electrolyte_liquid, electrolyte_total,
-        epercent_liquid, epercent_solid, epercent_total,
-        Keq_sl, Keq_ll, log_gamZ, MDRH_T,
-        jaerosolstate(0), jphase(0), jhyst_leg(0), aH2O_a(0), water_a(0),
-        mass_dry_a_view(0), vol_dry_a_view(0),
-        mass_wet_a(0), vol_wet_a_view(0),
-        growth_factor_view(0),
-        jsalt_present, hsalt, phi_salt, phi_salt_old, phi_bar, alpha_salt,
-        sat_ratio, flux_sl, frac_salt_solid, frac_salt_liq, eleliquid,
-        store, na, nc, xeq_a, xeq_c, na_Ma, nc_Mc, aer_percent,
-        molalities, xmol, ma, mc_view, log_gam, gam, activity,
-        tau_p, tau_d,
-        electrolyte_sum_solid_view(0),
-        electrolyte_sum_liq_view(0),
-        aer_sum_view(0));
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        TChem::Impl::MOSAIC<real_type, device_type>::MESA(
+          mmd,
+          aer_liquid, aer_solid, aer_total,
+          electrolyte_solid, electrolyte_liquid, electrolyte_total,
+          epercent_liquid, epercent_solid, epercent_total,
+          Keq_sl, Keq_ll, log_gamZ, MDRH_T,
+          jaerosolstate(0), jphase(0), jhyst_leg(0), aH2O_a(0), water_a(0),
+          mass_dry_a_view(0), vol_dry_a_view(0),
+          mass_wet_a(0), vol_wet_a_view(0),
+          growth_factor_view(0),
+          jsalt_present, hsalt, phi_salt, phi_salt_old, phi_bar, alpha_salt,
+          sat_ratio, flux_sl, frac_salt_solid, frac_salt_liq, eleliquid,
+          store, na, nc, xeq_a, xeq_c, na_Ma, nc_Mc, aer_percent,
+          molalities, xmol, ma, mc_view, log_gam, gam, activity,
+          tau_p, tau_d,
+          electrolyte_sum_solid_view(0),
+          electrolyte_sum_liq_view(0),
+          aer_sum_view(0));
+      });
     });
 
     std::vector<real_type> aer_liquid_out(mmd.naer);

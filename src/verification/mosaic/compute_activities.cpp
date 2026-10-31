@@ -94,6 +94,7 @@ void compute_activities(Ensemble *ensemble) {
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
 
+    real_type gam_ratio = 0.0; // not part of this test's data
     TChem::Impl::MOSAIC<real_type, device_type>::compute_activities(
       mmd,
       molalities,
@@ -113,7 +114,8 @@ void compute_activities(Ensemble *ensemble) {
       jphase(0),
       jhyst_leg(0),
       aH2O_a(0),
-      water_a(0));
+      water_a(0),
+      gam_ratio);
     });
 
     verification::convert_1d_view_device_to_1d_vector(jaerosolstate, jaerosolstate_arr);

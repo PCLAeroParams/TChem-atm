@@ -41,12 +41,14 @@ void form_caco3(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-    TChem::Impl::MOSAIC<real_type, device_type>::form_caco3(
-      mmd,
-      jp(0),
-      electrolyte,
-      aer,
-      store);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      TChem::Impl::MOSAIC<real_type, device_type>::form_caco3(
+        mmd,
+        jp(0),
+        electrolyte,
+        aer,
+        store);
+      });
     });
 
     std::vector<Real> store_out(mmd.naer), electrolyte_out(mmd.nelectrolyte), aer_out(mmd.naer);

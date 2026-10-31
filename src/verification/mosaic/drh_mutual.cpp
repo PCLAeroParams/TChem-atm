@@ -60,15 +60,17 @@ void drh_mutual(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& drh_mutual = outputs_drh_mutual(0);
+        Real& drh_mutual = outputs_drh_mutual(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::drh_mutual(
-      mmd,
-      j_index(0)-1,
-      T_K(0),
-      drh_mutual);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::drh_mutual(
+        mmd,
+        j_index(0)-1,
+        T_K(0),
+        drh_mutual);
+      });
     });
 
     const auto outputs_drh_mutual_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_drh_mutual);

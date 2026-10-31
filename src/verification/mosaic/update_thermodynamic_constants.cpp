@@ -92,12 +92,14 @@ void update_thermodynamic_constants(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-    TChem::Impl::MOSAIC<real_type, device_type>::update_thermodynamic_constants(
-      mmd, T_K(0), aH2O(0), log_gamZ,
-      Keq_gl, Keq_ll, Kp_nh3(0), Kp_nh4no3(0),
-      Kp_nh4cl(0), Keq_sg, Keq_sl, Po_soa,
-      sat_soa, sigma_water(0), MDRH_T,
-      Kp_nh4no3_0(0), Kp_nh4cl_0(0));
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      TChem::Impl::MOSAIC<real_type, device_type>::update_thermodynamic_constants(
+        mmd, T_K(0), aH2O(0), log_gamZ,
+        Keq_gl, Keq_ll, Kp_nh3(0), Kp_nh4no3(0),
+        Kp_nh4cl(0), Keq_sg, Keq_sl, Po_soa,
+        sat_soa, sigma_water(0), MDRH_T,
+        Kp_nh4no3_0(0), Kp_nh4cl_0(0));
+      });
     });
 
     verification::convert_1d_view_device_to_1d_vector(Keq_gl, Keq_gl_arr);

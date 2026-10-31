@@ -60,16 +60,18 @@ void degas_nh3(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-    TChem::Impl::MOSAIC<real_type, device_type>::degas_nh3(
-      mmd,
-      jp(0),
-      electrolyte,
-      store,
-      aer_curr,
-      aer_solid,
-      aer_liquid,
-      aer_total,
-      gas);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      TChem::Impl::MOSAIC<real_type, device_type>::degas_nh3(
+        mmd,
+        jp(0),
+        electrolyte,
+        store,
+        aer_curr,
+        aer_solid,
+        aer_liquid,
+        aer_total,
+        gas);
+      });
     });
 
     std::vector<Real> electrolyte_out(mmd.nelectrolyte), store_out(mmd.naer), gas_out(mmd.ngas_volatile), total_species_out(mmd.ngas_volatile), tot_cl_in_out(1);

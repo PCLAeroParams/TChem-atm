@@ -59,12 +59,14 @@ void MTEM_compute_log_gamZ(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::MTEM_compute_log_gamZ(
-      mmd,
-      aH2O(0),
-      log_gamZ);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::MTEM_compute_log_gamZ(
+        mmd,
+        aH2O(0),
+        log_gamZ);
+      });
     });
 
     std::vector<Real> log_gamZ_out(mmd.nelectrolyte*mmd.nelectrolyte, 0.0);

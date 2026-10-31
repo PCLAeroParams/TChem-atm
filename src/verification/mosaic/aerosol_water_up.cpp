@@ -68,12 +68,14 @@ void aerosol_water_up(Ensemble *ensemble) {
         profile_name,
         policy,
         KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-          Real& aerosol_water = outputs_aerosol_water_up(0);
+          Kokkos::single(Kokkos::PerTeam(member), [&]() {
+            Real& aerosol_water = outputs_aerosol_water_up(0);
 
-        TChem::Impl::MOSAIC<real_type, device_type>::aerosol_water_up(
-          mmd,
-          electrolyte_total,
-          aerosol_water);
+          TChem::Impl::MOSAIC<real_type, device_type>::aerosol_water_up(
+            mmd,
+            electrolyte_total,
+            aerosol_water);
+          });
         });
 
         const auto outputs_aerosol_water_up_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_aerosol_water_up);

@@ -33,10 +33,12 @@ void form_nh4cl(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-    TChem::Impl::MOSAIC<real_type, device_type>::form_nh4cl(
-      mmd,
-      electrolyte,
-      store);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      TChem::Impl::MOSAIC<real_type, device_type>::form_nh4cl(
+        mmd,
+        electrolyte,
+        store);
+      });
     });
 
     std::vector<Real> store_out(mmd.naer), electrolyte_out(mmd.nelectrolyte);

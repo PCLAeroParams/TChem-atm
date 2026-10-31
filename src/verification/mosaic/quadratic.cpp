@@ -38,12 +38,14 @@ void quadratic(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      Real& result = outputs_quadratic(0);
-      TChem::Impl::MOSAIC<real_type, device_type>::quadratic(
-        a(0),
-        b(0),
-        c(0),
-        result);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        Real& result = outputs_quadratic(0);
+        TChem::Impl::MOSAIC<real_type, device_type>::quadratic(
+          a(0),
+          b(0),
+          c(0),
+          result);
+      });
     });
 
     const auto outputs_quadratic_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_quadratic);

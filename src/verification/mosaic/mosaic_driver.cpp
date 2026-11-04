@@ -167,6 +167,24 @@ void calculate_kelvin(Ensemble *ensemble);
 
 void ASTEM_non_volatiles(Ensemble *ensemble);
 
+void ASTEM_flux_dry_case1(Ensemble *ensemble);
+
+void ASTEM_flux_dry_case2(Ensemble *ensemble);
+
+void ASTEM_flux_dry_case3a(Ensemble *ensemble);
+
+void ASTEM_flux_dry_case3b(Ensemble *ensemble);
+
+void ASTEM_flux_dry_case4(Ensemble *ensemble);
+
+void ASTEM_flux_dry_case4a(Ensemble *ensemble);
+
+void ASTEM_flux_dry_case4b(Ensemble *ensemble);
+
+void ASTEM_flux_dry_case4ab(Ensemble *ensemble);
+
+void ASTEM_flux_dry(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -322,6 +340,24 @@ int main(int argc, char **argv) {
       ASTEM_non_volatiles(ensemble);
     } else if (func_name == "aerosolmtc") {
       aerosolmtc(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case1") {
+      ASTEM_flux_dry_case1(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case2") {
+      ASTEM_flux_dry_case2(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case3a") {
+      ASTEM_flux_dry_case3a(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case3b") {
+      ASTEM_flux_dry_case3b(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case4") {
+      ASTEM_flux_dry_case4(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case4a") {
+      ASTEM_flux_dry_case4a(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case4b") {
+      ASTEM_flux_dry_case4b(ensemble);
+    } else if (func_name == "ASTEM_flux_dry_case4ab") {
+      ASTEM_flux_dry_case4ab(ensemble);
+    } else if (func_name == "ASTEM_flux_dry") {
+      ASTEM_flux_dry(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

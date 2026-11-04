@@ -1,0 +1,8 @@
+
+TChem-atm:
+  function: cubic
+input:
+  fixed:
+    psngl: [  0.77884098236964133E-006]
+    qsngl: [ -0.87655531620419030E-001]
+    rsngl: [ -0.22974294770675662E-007]

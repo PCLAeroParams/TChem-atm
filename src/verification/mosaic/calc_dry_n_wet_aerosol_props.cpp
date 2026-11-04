@@ -51,22 +51,24 @@ void calc_dry_n_wet_aerosol_props(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::calc_dry_n_wet_aerosol_props(
-        mmd,
-        aer_total,
-        water_a_view(0),
-        num_a_view(0),
-        jaerosolstate_view(0),
-        mass_dry_a_view(0),
-        vol_dry_a_view(0),
-        mass_wet_a_view(0),
-        vol_wet_a_view(0),
-        dens_dry_a_view(0),
-        dens_wet_a_view(0),
-        Dp_dry_a_view(0),
-        Dp_wet_a_view(0),
-        area_dry_a_view(0),
-        area_wet_a_view(0));
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        TChem::Impl::MOSAIC<real_type, device_type>::calc_dry_n_wet_aerosol_props(
+          mmd,
+          aer_total,
+          water_a_view(0),
+          num_a_view(0),
+          jaerosolstate_view(0),
+          mass_dry_a_view(0),
+          vol_dry_a_view(0),
+          mass_wet_a_view(0),
+          vol_wet_a_view(0),
+          dens_dry_a_view(0),
+          dens_wet_a_view(0),
+          Dp_dry_a_view(0),
+          Dp_wet_a_view(0),
+          area_dry_a_view(0),
+          area_wet_a_view(0));
+      });
     });
 
     std::vector<real_type> aer_total_out(mmd.naer);

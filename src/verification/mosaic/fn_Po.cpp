@@ -62,15 +62,17 @@ void fn_Po(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& Po = outputs_fn_Po(0);
+        Real& Po = outputs_fn_Po(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::fn_Po(
-      Po_298(0),
-      DH(0),
-      T_K(0),
-      Po);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::fn_Po(
+        Po_298(0),
+        DH(0),
+        T_K(0),
+        Po);
+      });
     });
 
     const auto outputs_fn_Po_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_fn_Po);

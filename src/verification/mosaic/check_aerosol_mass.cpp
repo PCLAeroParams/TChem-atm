@@ -84,14 +84,16 @@ void check_aerosol_mass(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::check_aerosol_mass(
-      mmd,
-      aer_total,
-      mass_dry_a(0),
-      jphase(0),
-      jaerosolstate(0),
-      num_a(0));
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::check_aerosol_mass(
+        mmd,
+        aer_total,
+        mass_dry_a(0),
+        jphase(0),
+        jaerosolstate(0),
+        num_a(0));
+      });
     });
 
     // Convert modified variables data from Kokkos views to std::vector for output

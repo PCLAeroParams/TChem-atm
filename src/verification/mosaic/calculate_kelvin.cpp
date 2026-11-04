@@ -46,16 +46,18 @@ void calculate_kelvin(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::calculate_kelvin(
-        vol_wet_a_view(0),
-        num_a_view(0),
-        aH2O_a_view(0),
-        sigma_water_view(0),
-        T_K_view(0),
-        volume_a_view(0),
-        DpmV_view(0),
-        sigma_soln_view(0),
-        kelvin_view(0));
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        TChem::Impl::MOSAIC<real_type, device_type>::calculate_kelvin(
+          vol_wet_a_view(0),
+          num_a_view(0),
+          aH2O_a_view(0),
+          sigma_water_view(0),
+          T_K_view(0),
+          volume_a_view(0),
+          DpmV_view(0),
+          sigma_soln_view(0),
+          kelvin_view(0));
+      });
     });
 
     std::vector<real_type> vol_wet_a_out(1);

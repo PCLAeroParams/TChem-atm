@@ -70,19 +70,21 @@ void MESA_estimate_eleliquid(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::MESA_estimate_eleliquid(
-        mmd,
-        aer_liquid,
-        eleliquid,
-        electrolyte_sum_liquid(0),
-        epercent_liquid,
-        na,
-        nc,
-        xeq_a,
-        xeq_c,
-        na_Ma,
-        nc_Mc,
-        store);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        TChem::Impl::MOSAIC<real_type, device_type>::MESA_estimate_eleliquid(
+          mmd,
+          aer_liquid,
+          eleliquid,
+          electrolyte_sum_liquid(0),
+          epercent_liquid,
+          na,
+          nc,
+          xeq_a,
+          xeq_c,
+          na_Ma,
+          nc_Mc,
+          store);
+      });
     });
 
     std::vector<real_type> aer_liquid_out(mmd.naer);

@@ -66,16 +66,18 @@ void fn_Keq(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& Keq = outputs_fn_Keq(0);
+        Real& Keq = outputs_fn_Keq(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::fn_Keq(
-      Keq_298(0),
-      a(0),
-      b(0),
-      T(0),
-      Keq);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::fn_Keq(
+        Keq_298(0),
+        a(0),
+        b(0),
+        T(0),
+        Keq);
+      });
     });
 
     const auto outputs_fn_Keq_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_fn_Keq);

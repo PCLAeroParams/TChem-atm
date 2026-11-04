@@ -68,6 +68,7 @@ add_executable(${DRIVER_NAME}.x
                aerosol_phase_state.cpp
                calculate_kelvin.cpp
                ASTEM_non_volatiles.cpp
+               cubic.cpp
                ASTEM_flux_dry_case1.cpp
                ASTEM_flux_dry_case2.cpp
                ASTEM_flux_dry_case3a.cpp
@@ -150,6 +151,7 @@ SET(TEST_LIST
     aerosol_phase_state_input_ts_0
     calculate_kelvin_input_ts_0
     ASTEM_non_volatiles_input_ts_0
+    cubic_input_ts_0
     ASTEM_flux_dry_case1_input_ts_0
     ASTEM_flux_dry_case2_input_ts_0
     ASTEM_flux_dry_case3a_input_ts_0
@@ -227,6 +229,7 @@ SET(TEST_BASELINE
     aerosol_phase_state_output_ts_0
     calculate_kelvin_output_ts_0
     ASTEM_non_volatiles_output_ts_0
+    cubic_output_ts_0
     ASTEM_flux_dry_case1_output_ts_0
     ASTEM_flux_dry_case2_output_ts_0
     ASTEM_flux_dry_case3a_output_ts_0
@@ -305,6 +308,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # aerosol_phase_state_output_ts_0
     ${DEFAULT_TOL} # calculate_kelvin_output_ts_0
     ${DEFAULT_TOL} # ASTEM_non_volatiles_output_ts_0
+    ${DEFAULT_TOL} # cubic_output_ts_0
     ${DEFAULT_TOL} # ASTEM_flux_dry_case1_output_ts_0
     ${DEFAULT_TOL} # ASTEM_flux_dry_case2_output_ts_0
     ${DEFAULT_TOL} # ASTEM_flux_dry_case3a_output_ts_0

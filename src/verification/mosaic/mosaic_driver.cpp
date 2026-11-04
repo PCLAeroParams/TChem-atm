@@ -167,6 +167,8 @@ void calculate_kelvin(Ensemble *ensemble);
 
 void ASTEM_non_volatiles(Ensemble *ensemble);
 
+void cubic(Ensemble *ensemble);
+
 void ASTEM_flux_dry_case1(Ensemble *ensemble);
 
 void ASTEM_flux_dry_case2(Ensemble *ensemble);
@@ -340,6 +342,8 @@ int main(int argc, char **argv) {
       ASTEM_non_volatiles(ensemble);
     } else if (func_name == "aerosolmtc") {
       aerosolmtc(ensemble);
+    } else if (func_name == "cubic") {
+      cubic(ensemble);
     } else if (func_name == "ASTEM_flux_dry_case1") {
       ASTEM_flux_dry_case1(ensemble);
     } else if (func_name == "ASTEM_flux_dry_case2") {

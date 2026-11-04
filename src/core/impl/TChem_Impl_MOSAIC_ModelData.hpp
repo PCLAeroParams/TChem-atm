@@ -161,6 +161,7 @@ struct MosaicModelData {
 
     // ASTEM parameters
     const real_type ptol_mol_astem = 0.01;
+    const real_type rtol_eqb_astem = 0.01;
 
     // Temperature-dependent thermodynamic parameters
     // liquid-liquid

@@ -703,16 +703,16 @@ void TChem::Driver::doTimestep(const double del_t){
   // Select linear solver to attach to CVODE
   if (_linear_solver == 1){
     // SUNDIALS Sparse GMRES (unbatched)
-    printf("TChem solver configuration:\n");
-    printf("..Integrator: SUNDIALS CVODE\n");
-    printf("..Linear Solver: SUNDIALS SPGMR (unbatched)\n");
+    //printf("TChem solver configuration:\n");
+    //printf("..Integrator: SUNDIALS CVODE\n");
+    //printf("..Linear Solver: SUNDIALS SPGMR (unbatched)\n");
     LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
       SUNLinSol_SPGMR(y, SUN_PREC_NONE, _krylov_dimension, sunctx));
   } else if (_linear_solver == 2){
     // Kokkos-Kernels Batched GMRES 
-    printf("TChem solver configuration:\n");
-    printf("..Integrator: SUNDIALS CVODE\n");
-    printf("..Linear Solver: Kokkos Kernels Batched GMRES\n");
+    //printf("TChem solver configuration:\n");
+    //printf("..Integrator: SUNDIALS CVODE\n");
+    //printf("..Linear Solver: Kokkos Kernels Batched GMRES\n");
     // Create a AerosolChemistryRHS object for the batch of teams
     using AerosolRHS = TChem::Impl::AerosolChemistryRHS<problem_type_device>;
     AerosolRHS rhs_object(_number_conc_device, _const_tracers_device,
@@ -775,7 +775,8 @@ void TChem::Driver::doTimestep(const double del_t){
   }
 
   if (_verbose) {
-    print_cvode_statistics(cvode_mem);
+    //print_cvode_statistics(cvode_mem);
+    CVodePrintAllStats(cvode_mem, stdout, SUN_OUTPUTFORMAT_CSV);
   };
 
   CVodeFree(&cvode_mem);

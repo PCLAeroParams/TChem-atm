@@ -4,23 +4,32 @@
 # example script to download, build, install, & test:
 #     tines, tchem
 #=======================================================================================
-# User configuration  -- begin
+# Usage:
+# Select Kokkos backend from the command line:
+#     ./build_script.sh [host|cuda|hip]      (default: host)
+# Only one backend is enabled at a time; CUDA and HIP cannot be enabled simultaneously.
+BACKEND="${1:-host}"
+BACKEND="$(echo "${BACKEND}" | tr '[:upper:]' '[:lower:]')"
 
-# example:
-# set CUDA="ON" to use GPU, else set to "OFF"
+case "${BACKEND}" in
+  host) CUDA="OFF"; HIP="OFF" ;;
+  cuda) CUDA="ON";  HIP="OFF" ;;
+  hip)  CUDA="OFF"; HIP="ON"  ;;
+  *)
+    echo "ERROR: unknown backend '${BACKEND}'."
+    echo "Usage: $0 [host|cuda|hip]   (default: host)"
+    exit 1
+    ;;
+esac
+echo "Kokkos backend: ${BACKEND}  (CUDA=${CUDA}, HIP=${HIP})"
+
+# User configuration  -- begin
 # JFLAG is for makefile compilation on multiple cores, here 4
-# if CUDA="ON", make sure nvcc is in your system PATH
 
 MY_CC=gcc
 MY_CXX=g++
 MY_FC=gfortran
 JFLAG="-j 10"
-# Kokkos backends
-# set CUDA="ON" to use a NVIDIA GPU
-CUDA="OFF"
-# set HIP="ON" to use a AMD GPU
-HIP="OFF"
-#Note that both CUDA and HIP cannot be enabled simultaneously.
 SACADO="OFF"
 
 # Path to TChem repository.

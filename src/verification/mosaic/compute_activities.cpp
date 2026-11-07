@@ -93,7 +93,6 @@ void compute_activities(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-
     real_type gam_ratio = 0.0; // not part of this test's data
     TChem::Impl::MOSAIC<real_type, device_type>::compute_activities(
       mmd,

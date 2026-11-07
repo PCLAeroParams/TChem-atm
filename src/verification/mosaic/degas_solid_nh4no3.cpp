@@ -49,14 +49,16 @@ void degas_solid_nh4no3(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::degas_solid_nh4no3(
-        mmd,
-        gas,
-        Keq_sg,
-        electrolyte_solid,
-        aer_solid,
-        aer_liquid,
-        aer_total);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        TChem::Impl::MOSAIC<real_type, device_type>::degas_solid_nh4no3(
+          mmd,
+          gas,
+          Keq_sg,
+          electrolyte_solid,
+          aer_solid,
+          aer_liquid,
+          aer_total);
+      });
     });
 
     std::vector<real_type> gas_out(mmd.ngas_volatile);

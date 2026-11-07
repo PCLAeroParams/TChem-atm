@@ -81,22 +81,24 @@ void form_electrolytes(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-    TChem::Impl::MOSAIC<real_type, device_type>::form_electrolytes(
-      mmd,
-      jp(0),
-      aer_curr,
-      aer_solid,
-      aer_liquid,
-      aer_total,
-      gas,
-      store,
-      electrolyte,
-      total_species,
-      tot_cl_in(0),
-      electrolyte_sum(0),
-      epercent,
-      aer_sum(0),
-      aer_percent);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      TChem::Impl::MOSAIC<real_type, device_type>::form_electrolytes(
+        mmd,
+        jp(0),
+        aer_curr,
+        aer_solid,
+        aer_liquid,
+        aer_total,
+        gas,
+        store,
+        electrolyte,
+        total_species,
+        tot_cl_in(0),
+        electrolyte_sum(0),
+        epercent,
+        aer_sum(0),
+        aer_percent);
+      });
     });
 
     std::vector<Real> aer_curr_out(mmd.naer), aer_solid_out(mmd.naer), aer_liquid_out(mmd.naer), aer_total_out(mmd.naer), gas_out(mmd.ngas_volatile), store_out(mmd.naer), electrolyte_out(mmd.nelectrolyte), total_species_out(mmd.ngas_volatile), tot_cl_in_out(1), electrolyte_sum_out(1), epercent_out(mmd.nelectrolyte), aer_sum_out(1), aer_percent_out(mmd.naer);

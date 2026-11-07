@@ -55,15 +55,17 @@ void absorb_tiny_nh4no3(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      TChem::Impl::MOSAIC<real_type, device_type>::absorb_tiny_nh4no3(
-        mmd,
-        aer_solid,
-        aer_liquid,
-        aer_total,
-        gas,
-        delta_nh3_max_view(0),
-        delta_hno3_max_view(0),
-        electrolyte_sum_view(0));
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        TChem::Impl::MOSAIC<real_type, device_type>::absorb_tiny_nh4no3(
+          mmd,
+          aer_solid,
+          aer_liquid,
+          aer_total,
+          gas,
+          delta_nh3_max_view(0),
+          delta_hno3_max_view(0),
+          electrolyte_sum_view(0));
+      });
     });
 
     std::vector<Real> aer_solid_out(mmd.naer), aer_liquid_out(mmd.naer),

@@ -41,12 +41,14 @@ void electrolytes_to_ions(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-    TChem::Impl::MOSAIC<real_type, device_type>::electrolytes_to_ions(
-      mmd,
-      aer,
-      electrolyte,
-      aer_sum(0),
-      aer_percent);
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      TChem::Impl::MOSAIC<real_type, device_type>::electrolytes_to_ions(
+        mmd,
+        aer,
+        electrolyte,
+        aer_sum(0),
+        aer_percent);
+      });
     });
 
     std::vector<Real> aer_out(mmd.naer), electrolyte_out(mmd.nelectrolyte), aer_sum_out(1), aer_percent_out(mmd.naer);

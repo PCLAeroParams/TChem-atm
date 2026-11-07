@@ -61,14 +61,16 @@ void calculate_XT(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
 
-      Real& XT = outputs_calculate_XT(0);
+        Real& XT = outputs_calculate_XT(0);
 
-    // Perform the adjustment calculation
-    TChem::Impl::MOSAIC<real_type, device_type>::calculate_XT(
-      mmd,
-      aer,
-      XT);
+      // Perform the adjustment calculation
+      TChem::Impl::MOSAIC<real_type, device_type>::calculate_XT(
+        mmd,
+        aer,
+        XT);
+      });
     });
 
     const auto outputs_calculate_XT_h = Kokkos::create_mirror_view_and_copy(host_exec_space, outputs_calculate_XT);

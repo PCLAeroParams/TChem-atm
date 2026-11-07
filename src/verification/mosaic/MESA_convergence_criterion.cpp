@@ -48,24 +48,26 @@ void MESA_convergence_criterion(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      real_type iconverge_mass = 0;
-      real_type iconverge_flux = 0;
-      real_type idissolved     = 0;
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        real_type iconverge_mass = 0;
+        real_type iconverge_flux = 0;
+        real_type idissolved     = 0;
 
-      TChem::Impl::MOSAIC<real_type, device_type>::MESA_convergence_criterion(
-        mmd,
-        electrolyte_solid,
-        mass_dry_salt_view(0),
-        phi_salt,
-        flux_sl,
-        aer_solid,
-        iconverge_mass,
-        iconverge_flux,
-        idissolved);
+        TChem::Impl::MOSAIC<real_type, device_type>::MESA_convergence_criterion(
+          mmd,
+          electrolyte_solid,
+          mass_dry_salt_view(0),
+          phi_salt,
+          flux_sl,
+          aer_solid,
+          iconverge_mass,
+          iconverge_flux,
+          idissolved);
 
-      iconverge_mass_view(0) = static_cast<real_type>(iconverge_mass);
-      iconverge_flux_view(0) = static_cast<real_type>(iconverge_flux);
-      idissolved_view(0)     = static_cast<real_type>(idissolved);
+        iconverge_mass_view(0) = static_cast<real_type>(iconverge_mass);
+        iconverge_flux_view(0) = static_cast<real_type>(iconverge_flux);
+        idissolved_view(0)     = static_cast<real_type>(idissolved);
+      });
     });
 
     std::vector<real_type> electrolyte_solid_out(mmd.nelectrolyte);

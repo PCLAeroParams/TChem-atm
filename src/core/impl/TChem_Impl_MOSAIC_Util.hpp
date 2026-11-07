@@ -487,4 +487,70 @@
     kelvin = 1.0 + term*(1.0 + 0.5*term*(1.0 + term/3.0));
   } // calculate_kelvin
 
+  KOKKOS_INLINE_FUNCTION static
+  void cubic(const real_type& psngl,
+             const real_type& qsngl,
+             const real_type& rsngl,
+             real_type& result) {
+
+    const real_type third = 1.0/3.0;
+    const real_type q = qsngl;
+    const real_type p = psngl;
+    const real_type r = rsngl;
+
+    const real_type A = (1.0/3.0)*((3.0*q) - (p*p));
+    real_type B = (1.0/27.0)*((2.0*p*p*p) - (9.0*p*q) + (27.0*r));
+    const real_type D = ((A*A*A)/27.0) + ((B*B)/4.0);
+
+    real_type x[3];
+    real_type M, N;
+    real_type thesign = 1.0;
+
+    if (D > 0.0) {          // 1 real and 2 complex roots
+      if (B > 0.0) {
+        B = -B;
+        thesign = -1.0;
+      }
+      M = thesign*ats<real_type>::pow((-B/2.0) + ats<real_type>::sqrt(D), third);
+      N = thesign*ats<real_type>::pow((-B/2.0) - ats<real_type>::sqrt(D), third);
+      result = M + N - (p/3.0);
+
+    } else if (D == 0.0) {  // 3 real roots, at least 2 identical
+      if (B > 0.0) {
+        B = -B;
+        thesign = -1.0;
+      }
+      M = thesign*ats<real_type>::pow(-B/2.0, third);
+      N = M;
+      x[0] = M + N - (p/3.0);
+      x[1] = (-M/2.0) + (-N/2.0) - (p/3.0);
+      // The Fortran assigns x(2) twice and never sets x(3); its intent is
+      // a double root, so x[2] = x[1].
+      x[2] = x[1];
+      result = 0.0;
+      for (ordinal_type kk = 0; kk < 3; ++kk)
+        if (x[kk] > result) result = x[kk];
+
+    } else {                // D < 0: 3 distinct real roots
+      // The Fortran leaves thesign unset when B == 0; it is unused then
+      // (sqrt(0) = 0), so the default +1 is harmless.
+      if (B > 0.0) thesign = -1.0;
+      else if (B < 0.0) thesign = 1.0;
+
+      // keep the acos argument within +/-1
+      real_type duma = thesign*ats<real_type>::sqrt((B*B/4.0)/(-A*A*A/27.0));
+      duma = min(duma,  1.0);
+      duma = max(duma, -1.0);
+      const real_type phi = Kokkos::acos(duma);
+
+      result = 0.0;
+      for (ordinal_type kk = 0; kk < 3; ++kk) {
+        const real_type k = static_cast<real_type>(kk);
+        const real_type y = 2.0*ats<real_type>::sqrt(-A/3.0)*Kokkos::cos(phi + 120.0*k*0.017453293);
+        x[kk] = y - (p/3.0);
+        if (x[kk] > result) result = x[kk];
+      }
+    }
+  } // cubic
+
 #endif

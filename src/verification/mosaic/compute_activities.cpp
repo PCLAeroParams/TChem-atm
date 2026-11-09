@@ -93,29 +93,28 @@ void compute_activities(Ensemble *ensemble) {
     profile_name,
     policy,
     KOKKOS_LAMBDA(const typename policy_type::member_type& member) {
-      Kokkos::single(Kokkos::PerTeam(member), [&]() {
-
-      TChem::Impl::MOSAIC<real_type, device_type>::compute_activities(
-        mmd,
-        molalities,
-        xmol,
-        aer,
-        ma,
-        mc,
-        Keq_ll,
-        electrolyte_solid, 
-        electrolyte_liquid,
-        electrolyte_total,
-        log_gam,
-        log_gamZ,
-        gam,
-        activity,
-        jaerosolstate(0),
-        jphase(0),
-        jhyst_leg(0),
-        aH2O_a(0),
-        water_a(0));
-      });
+    real_type gam_ratio = 0.0; // not part of this test's data
+    TChem::Impl::MOSAIC<real_type, device_type>::compute_activities(
+      mmd,
+      molalities,
+      xmol,
+      aer,
+      ma,
+      mc,
+      Keq_ll,
+      electrolyte_solid, 
+      electrolyte_liquid,
+      electrolyte_total,
+      log_gam,
+      log_gamZ,
+      gam,
+      activity,
+      jaerosolstate(0),
+      jphase(0),
+      jhyst_leg(0),
+      aH2O_a(0),
+      water_a(0),
+      gam_ratio);
     });
 
     verification::convert_1d_view_device_to_1d_vector(jaerosolstate, jaerosolstate_arr);

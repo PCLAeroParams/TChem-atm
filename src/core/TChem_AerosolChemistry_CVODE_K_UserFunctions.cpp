@@ -157,4 +157,110 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
 
 }
 
+
+int AerosolChemistry_CVODE_K::psetup(sunrealtype t, N_Vector y, N_Vector fy, 
+  sunbooleantype jok, sunbooleantype* jcurPtr, sunrealtype gamma, void* user_data)
+{
+
+  auto udata = static_cast<UserData*>(user_data);
+
+  const auto n_systems  = udata->n_systems;
+  const auto policy = udata->policy;
+  const auto kmcd = udata->kmcd;
+  const auto amcd = udata->amcd;
+  const auto system_size = udata->system_size;
+  const auto aero_num_conc = udata->aero_num_conc;
+  const auto temperature= udata->temperature;
+  const auto pressure= udata->pressure;
+  const auto const_tracers= udata->const_tracers;
+  const auto n_particles_track = udata->n_particles_track;
+
+  // preconditioner data structures
+  const auto Jgg = udata->Jgg;
+  const auto Jgp = udata->Jgp;
+  const auto Jpg = udata->Jpg;
+  const auto Jpp = udata->Jpp;
+  const auto D = udata->D;
+  const auto S = udata->S;
+  const auto W = udata->W;
+  const auto aero_f_2d = udata->aero_f_2d;
+  const auto gas_f_3d = udata->gas_f_3d;
+  const auto y_perturb_2d = udata->y_perturb_2d; 
+  const auto f_perturb_2d = udata->f_perturb_2d;
+  const auto aero_f_perturb_2d = udata->aero_f_perturb_2d;
+  const auto gas_f_perturb_3d = udata->gas_f_perturb_3d;
+  const auto f_gasonly_2d = udata->f_gasonly_2d;
+  //const auto gamma = udata->gamma; // TODO remove from userdata?
+  const auto cvode_mem = udata->cvode_mem;
+
+  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), n_systems, system_size);
+  real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(fy), n_systems, system_size);
+
+  //const ordinal_type level = 1;
+  //const ordinal_type per_team_extent = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
+
+  N_Vector ewt_nvec = N_VClone(y);
+  CVodeGetErrWeights(cvode_mem, ewt_nvec);
+  real_type_2d_view_type ewt(N_VGetDeviceArrayPointer(ewt_nvec), n_systems, system_size);
+
+  SchurPrecon preconditioner(rhs, vals, aero_num_conc, const_tracers, temperature, 
+    pressure, kmcd, amcd, n_particles_track, Jgg, Jgp, Jpg, Jpp, D, S, W, gamma);
+
+  // initialize y_perturb_2d with vals if stale jacobian
+  if (!jok){
+    Kokkos::parallel_for(policy, 
+      KOKKOS_LAMBDA(const typename policy_type::member_type& member){
+        const ordinal_type i_sys = member.league_rank();
+        Kokkos::parallel_for(Kokkos::TeamVectorRange(member, system_size), 
+          [&] (const ordinal_type& i_spec){
+            y_perturb_2d(i_sys, i_spec) = vals(i_sys, i_spec);
+        });
+    });
+    *jcurPtr = SUNTRUE;
+  } else {
+    *jcurPtr = SUNFALSE;
+  }
+  
+  const std::string profile_name = "TChem::AerosolChemistry_CVODE_K::psetup";
+  
+  Kokkos::Profiling::pushRegion(profile_name);
+  Kokkos::parallel_for(profile_name, policy, 
+    KOKKOS_LAMBDA(const typename policy_type::member_type& member){
+
+      const ordinal_type i_sys = member.league_rank();
+
+      // team-level subviews
+      real_type_1d_view_type ewt_isys = Kokkos::subview(ewt, i_sys, Kokkos::ALL());
+      real_type_1d_view_type y_perturb = Kokkos::subview(y_perturb_2d, i_sys, Kokkos::ALL());
+      real_type_1d_view_type f_perturb = Kokkos::subview(f_perturb_2d, i_sys, Kokkos::ALL());
+      real_type_1d_view_type f_gasonly = Kokkos::subview(f_gasonly_2d, i_sys, Kokkos::ALL());
+      real_type_1d_view_type aero_f = Kokkos::subview(aero_f_2d, i_sys, Kokkos::ALL());
+      real_type_2d_view_type gas_f = Kokkos::subview(gas_f_3d, i_sys, Kokkos::ALL(), Kokkos::ALL());
+      real_type_1d_view_type aero_f_perturb = Kokkos::subview(aero_f_perturb_2d, i_sys, Kokkos::ALL());
+      real_type_2d_view_type gas_f_perturb = Kokkos::subview(gas_f_perturb_3d, i_sys, Kokkos::ALL(), Kokkos::ALL());
+
+      preconditioner.team_setup(member, ewt_isys, aero_f, gas_f, y_perturb, 
+          f_perturb, f_gasonly, aero_f_perturb, gas_f_perturb, jok);
+
+  });
+  Kokkos::fence();
+  Kokkos::Profiling::popRegion();
+  
+
+  N_VDestroy(ewt_nvec);
+  return 0;
+
+}
+
+
+int AerosolChemistry_CVODE_K::psolve(sunrealtype t, N_Vector y, N_Vector fy, 
+  N_Vector r, N_Vector z, sunrealtype gamma, sunrealtype delta, int lr, void* user_data)
+{
+
+  auto udata = static_cast<UserData*>(user_data);
+
+  return 0;
+
+}
+
 }// namespace TChem

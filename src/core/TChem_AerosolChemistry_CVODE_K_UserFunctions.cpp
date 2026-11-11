@@ -30,27 +30,27 @@ int AerosolChemistry_CVODE_K::f(sunrealtype t, N_Vector y, N_Vector ydot, void* 
 {
   auto udata = static_cast<UserData*>(user_data);
 
-  const auto nbatches  = udata->nbatches;
+  const auto n_systems  = udata->n_systems;
   const auto policy = udata->policy;
   const auto kmcd = udata->kmcd;
   const auto amcd = udata->amcd;
-  const auto batchSize = udata->batchSize;
-  const auto num_concentration = udata->num_concentration;
+  const auto system_size = udata->system_size;
+  const auto aero_num_conc = udata->aero_num_conc;
   const auto temperature= udata->temperature;
   const auto pressure= udata->pressure;
   const auto const_tracers= udata->const_tracers;
 
-  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
-  real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(ydot), nbatches, batchSize);
+  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), n_systems, system_size);
+  real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(ydot), n_systems, system_size);
 
   const ordinal_type level = 1;
-  // const ordinal_type number_of_equations = batchSize;
+  // const ordinal_type number_of_equations = system_size;
   const ordinal_type per_team_extent
          = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
   const std::string profile_name = "TChem::AerosolChemistry::RHS_evaluation";
 
   const auto n_particles_track = udata->n_particles_track;
-  TChemAerosolChemistryRHS rhs_tchem(rhs, vals, num_concentration,
+  TChemAerosolChemistryRHS rhs_tchem(rhs, vals, aero_num_conc,
      const_tracers, temperature, pressure, kmcd, amcd, n_particles_track);
 
   Kokkos::Profiling::pushRegion(profile_name);
@@ -65,29 +65,30 @@ int AerosolChemistry_CVODE_K::f(sunrealtype t, N_Vector y, N_Vector ydot, void* 
  return 0;
 }
 
+
 // Jacobian of f(t,y)
 int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J, void* user_data
 , N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
 {
   auto udata = static_cast<UserData*>(user_data);
 
-  const auto nbatches  = udata->nbatches;
+  const auto n_systems  = udata->n_systems;
   const auto policy = udata->policy;
   const auto kmcd = udata->kmcd;
   const auto amcd = udata->amcd;
-  const auto num_concentration = udata->num_concentration;
+  const auto aero_num_conc = udata->aero_num_conc;
   const auto temperature= udata->temperature;
   const auto pressure= udata->pressure;
   const auto const_tracers= udata->const_tracers;
-  const auto batchSize = udata->batchSize;
+  const auto system_size = udata->system_size;
   const auto fac= udata->fac;
 #if defined(TCHEM_ATM_ENABLE_GPU)
   const auto JacRL= udata->JacRL;
 #endif
   auto J_data = sundials::kokkos::GetDenseMat<MatType>(J)->View();
 
-  real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
-  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), nbatches, batchSize);
+  real_type_2d_view_type y2d(N_VGetDeviceArrayPointer(y), n_systems, system_size);
+  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), n_systems, system_size);
 
   const ordinal_type level = 1;
   const ordinal_type number_of_equations = problem_type::getNumberOfTimeODEs(kmcd, amcd);
@@ -113,7 +114,7 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
 #endif
 
     const real_type_1d_view_type number_conc_at_i =
-    Kokkos::subview(num_concentration, i, Kokkos::ALL());
+    Kokkos::subview(aero_num_conc, i, Kokkos::ALL());
 
     TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level),
                                    per_team_extent);
@@ -139,8 +140,8 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
 #if defined(TCHEM_ATM_ENABLE_GPU)
     //NOTE: Sundials uses a left layout on the device, while we are using a right layout.
     // This incompatible layouts is producing a runtime error.
-    for (int k=0;k<batchSize;++k)
-      for (int j=0;j<batchSize;++j)
+    for (int k=0;k<system_size;++k)
+      for (int j=0;j<system_size;++j)
        J_data(i, k, j) = jacobian_at_i(k,j);
 #endif
     };

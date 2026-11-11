@@ -36,6 +36,8 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include <sunlinsol/sunlinsol_spgmr.h>
 #include <sunmatrix/sunmatrix_kokkosdense.hpp>
 #include <vector>
+#include <KokkosBatched_LU_Decl.hpp>
+#include <KokkosBatched_SolveLU_Decl.hpp>
 
 namespace TChem {
 
@@ -116,6 +118,7 @@ struct TChemAerosolChemistryRHS {
     rhs_at_i, pw, kmcd, amcd, n_part_i);
   }
 };
+
 struct UserData
 {
   using host_device_type = typename Tines::UseThisDevice<host_exec_space>::type;
@@ -124,6 +127,7 @@ struct UserData
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
   using real_type_3d_view_type = Tines::value_type_3d_view<real_type,device_type>;
+  using real_type_4d_view_type = Tines::value_type_4d_view<real_type,device_type>;
   using ordinal_type_1d_view_type = Tines::value_type_1d_view<ordinal_type,device_type>;
   using policy_type = typename UseThisTeamPolicy<exec_space>::type;
 
@@ -147,7 +151,525 @@ struct UserData
   TChem::AerosolModel_ConstData<device_type> amcd;
   // Per-batch number of particles for RHS eval (length nBatch; entry -1 = all)
   ordinal_type_1d_view_type n_particles_track;
+
+  // ---- Preconditioner data structures ----
+  // TODO: will need to allocate these views in TChem_Driver.cpp when UserData is populated
+
+  // Views for Jacobian blocks 
+  real_type_3d_view_type Jgg;     // upper left    (gas-gas)
+  real_type_4d_view_type Jgp;     // upper right   (gas-particle) [TODO allocate only first m rows!]
+  real_type_4d_view_type Jpg;     // bottom left   (particle-gas) [TODO allocate only first m columns!]
+  real_type_4d_view_type Jpp;     // bottom right  (within-particle)
+
+  // LU factor views 
+  real_type_4d_view_type D; // [batch, i_part, aero_sp_idx, aero_sp_idx]
+  real_type_3d_view_type S;       // [batch, gas_sp_idx, gas_sp_idx]
+
+  // W = D^{-1} * Jpg (block for each particle i); Programming note: Jpg = C / -gamma, so 
+  // to solve D*W_true=C for W_true, need to carry -gamma*W
+  real_type_4d_view_type W; // [batch, i_part, aero_sp_idx, gas_sp_idx] [TODO allocate only first m columns!]
+
+  // state, RHS views with expanded particle contrib to gas tendency
+  real_type_2d_view_type aero_f_2d; 
+  real_type_3d_view_type gas_f_3d;
+  real_type_2d_view_type y_perturb_2d; // TODO deep copy from y2d (vals) in psetup if !jok
+  real_type_2d_view_type f_perturb_2d;
+  real_type_2d_view_type aero_f_perturb_2d;
+  real_type_3d_view_type gas_f_perturb_3d;
+  real_type_2d_view_type f_gasonly_2d;
+
+  // CVODE memory needed for accessing error weights
+  void* cvode_mem;
+
+  sunrealtype gamma;
+
 };
+
+
+struct SchurPrecon {
+
+  // typedefs
+  using device_type            = typename Tines::UseThisDevice<exec_space>::type;
+  using problem_type = TChem::Impl::AerosolChemistry_Problem<real_type,device_type>;
+  using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
+  using real_type_2d_view_type = Tines::value_type_2d_view<real_type,device_type>;
+  using real_type_3d_view_type = Tines::value_type_3d_view<real_type,device_type>;
+  using real_type_4d_view_type = Tines::value_type_4d_view<real_type,device_type>;
+  using ordinal_type_1d_view_type = Tines::value_type_1d_view<ordinal_type,device_type>;
+  using AT = Kokkos::ArithTraits<real_type>;
+  using range_type = Kokkos::pair<ordinal_type, ordinal_type>;
+
+  // members
+  // Batched state
+  real_type_2d_view_type rhs;
+  real_type_2d_view_type vals;
+  real_type_2d_view_type num_conc;
+  real_type_2d_view_type const_tracers;
+  real_type_1d_view_type temperature;
+  real_type_1d_view_type pressure;
+  KineticModelNCAR_ConstData<device_type> kmcd;
+  AerosolModel_ConstData<device_type> amcd;
+  ordinal_type_1d_view_type n_particles_track;
+
+  // Views for Jacobian blocks 
+  real_type_3d_view_type Jgg;     // upper left    (gas-gas)
+  real_type_4d_view_type Jgp;     // upper right   (gas-particle)
+  real_type_4d_view_type Jpg;     // bottom left   (particle-gas)
+  real_type_4d_view_type Jpp;     // bottom right  (within-particle)
+
+  // LU factor views (not including pivots!)
+  real_type_4d_view_type D; // [batch, i_part, aero_sp_idx, aero_sp_idx]
+  real_type_3d_view_type S;       // [batch, gas_sp_idx, gas_sp_idx]
+
+  // W_ipart = D^{-1}_ipart * Jpg_ipart
+  real_type_4d_view_type W; // [batch, i_part, aero_sp_idx, gas_sp_idx]
+
+  const sunrealtype gamma;
+  ordinal_type nBatch;
+  ordinal_type n_active_gas_species;
+  ordinal_type n_total_species;
+  ordinal_type n_equations;
+  ordinal_type per_team_extent;
+  ordinal_type n_condensible_gases;
+  const ordinal_type level = 1;
+
+  // construct/destructor
+  SchurPrecon(const real_type_2d_view_type& rhs_in,
+              const real_type_2d_view_type& vals_in,
+              const real_type_2d_view_type& num_conc_in,
+              const real_type_2d_view_type& const_tracers_in,
+              const real_type_1d_view_type& temperature_in,
+              const real_type_1d_view_type& pressure_in,
+              const KineticModelNCAR_ConstData<device_type>& kmcd_in,
+              const AerosolModel_ConstData<device_type>& amcd_in,
+              const ordinal_type_1d_view_type& n_particles_track_in,
+              const real_type_3d_view_type& Jgg_in,
+              const real_type_4d_view_type& Jgp_in,
+              const real_type_4d_view_type& Jpg_in,
+              const real_type_4d_view_type& Jpp_in,
+              const real_type_4d_view_type& D_in,
+              const real_type_3d_view_type& S_in,
+              const real_type_4d_view_type& W_in,
+              const sunrealtype gamma_in
+            )
+   : rhs(rhs_in),
+     vals(vals_in),
+     num_conc(num_conc_in),
+     const_tracers(const_tracers_in),
+     temperature(temperature_in),
+     pressure(pressure_in),
+     kmcd(kmcd_in),
+     amcd(amcd_in),
+     n_particles_track(n_particles_track_in),
+     Jgg(Jgg_in),
+     Jgp(Jgp_in),
+     Jpg(Jpg_in),
+     Jpp(Jpp_in),
+     D(D_in),
+     S(S_in),
+     W(W_in),
+     gamma(gamma_in) {
+
+      nBatch = rhs.extent(0); 
+      n_active_gas_species = kmcd.nSpec - kmcd.nConstSpec;
+      n_total_species = kmcd.nSpec + amcd.nParticles*amcd.nSpec;
+      n_equations = problem_type::getNumberOfTimeODEs(kmcd, amcd);
+      n_condensible_gases = amcd.nSimpol_tran; // NOTE this currently gives the # of condensible species for the SIMPOL mechanism, should replace with general condensible species count 
+
+      // TODO this is just for the RHS.. need to figure out workspace sizing and where to put it
+      per_team_extent
+         = Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
+
+     }
+
+
+  // TODO add workspace sizing
+  static inline ordinal_type getWorkSpaceSize(){
+    return 0;
+  }
+
+
+  template<typename MemberType>
+  KOKKOS_INLINE_FUNCTION
+  void team_setup(const MemberType &member, real_type_1d_view_type ewt_at_i, // thinking of using CVodeGetErrWeights,N_VGetDeviceArrayPointer to get 2d view of ewt and subview to per-system level for passing to team_setup 
+    // views for state and per-particle RHS contribution to gas tendencies
+    real_type_2d_view_type aero_f_2d, real_type_3d_view_type gas_f_3d,
+    real_type_2d_view_type y_perturb_2d, real_type_2d_view_type f_perturb_2d,
+    real_type_2d_view_type f_gasonly_2d, real_type_2d_view_type aero_f_perturb_2d, 
+    real_type_3d_view_type gas_f_perturb_3d, sunbooleantype jok) const {
+
+    const ordinal_type i = member.league_rank();
+
+    // system-level Jacobian blocks
+    real_type_2d_view_type Jgg_i = Kokkos::subview(Jgg, i, Kokkos::ALL(), Kokkos::ALL());
+    real_type_3d_view_type Jgp_i = Kokkos::subview(Jgp, i, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+    real_type_3d_view_type Jpg_i = Kokkos::subview(Jpg, i, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+    real_type_3d_view_type Jpp_i = Kokkos::subview(Jpp, i, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+
+    // per-team subview of rhs, state, y, number conc., etc.
+    const real_type_1d_view_type rhs_at_i = Kokkos::subview(rhs, i, Kokkos::ALL());
+    const real_type_1d_view_type vals_at_i = Kokkos::subview(vals, i, Kokkos::ALL()); 
+    const real_type_1d_view_type num_conc_at_i = Kokkos::subview(num_conc, i, Kokkos::ALL());
+    const ordinal_type n_part_i =
+      (n_particles_track.span() == 0 || n_particles_track(i) < 0) 
+      ? amcd.nParticles : n_particles_track(i);
+    const real_type_1d_view_type constYs = Kokkos::subview(const_tracers, i, Kokkos::ALL());
+    const real_type temperature_at_i = temperature(i);
+    const real_type pressure_at_i = pressure(i);
+
+    // Construct Jacobian blocks if CVODE determines Jacobian stale
+    if (!jok){
+
+      real_type_1d_view_type y_perturb = Kokkos::subview(y_perturb_2d, i, Kokkos::ALL());
+      real_type_1d_view_type f_yhat = Kokkos::subview(f_perturb_2d, i, Kokkos::ALL());
+      real_type_1d_view_type f_gasonly = Kokkos::subview(f_gasonly_2d, i, Kokkos::ALL());
+
+      // per-team subviews for RHS views with expanded particle contrib to gas tendency
+      real_type_1d_view_type aero_f = Kokkos::subview(aero_f_2d, i, Kokkos::ALL());
+      real_type_2d_view_type gas_f = Kokkos::subview(gas_f_3d, i, Kokkos::ALL(), Kokkos::ALL());
+      real_type_1d_view_type aero_f_perturb = Kokkos::subview(aero_f_perturb_2d, i, Kokkos::ALL());
+      real_type_2d_view_type gas_f_perturb = Kokkos::subview(gas_f_perturb_3d, i, Kokkos::ALL(), Kokkos::ALL());
+
+      // work for gas RHS
+      TChem::Scratch<real_type_1d_view_type> work(member.team_scratch(level), per_team_extent);
+      auto wptr = work.data();
+      const ordinal_type problem_workspace_size = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
+      auto pw = real_type_1d_view_type(wptr, problem_workspace_size);
+      wptr +=problem_workspace_size;
+
+      // fill unperturbed RHS for per particle contrib to gas tendencies
+      TChem::Impl::Aerosol_RHS<real_type, device_type>::team_invoke_per_particle_gas_contrib(
+        member, temperature_at_i, pressure_at_i, num_conc_at_i, vals_at_i, aero_f, gas_f, 
+        amcd, n_part_i
+      );
+      member.team_barrier();
+
+      // fill unperturbed gas-only RHS
+      TChem::Impl::Aerosol_RHS<real_type, device_type>::team_invoke_gas(
+        member, temperature_at_i, pressure_at_i, num_conc_at_i, vals_at_i, constYs,
+        f_gasonly, pw, kmcd, amcd, n_part_i
+      );
+      member.team_barrier();
+
+      // Fill the Jgg, Jpg columns for each active gas species
+      for (int gas_sp_idx = 0; gas_sp_idx < n_active_gas_species; gas_sp_idx++){
+
+          // compute sigma for species i
+          //real_type weight = 1 / (reltol*AT::abs(vals_at_i(gas_sp_idx)) + abstol_gas);
+          real_type sigma = 1 / ewt_at_i(gas_sp_idx);
+
+          // create perturbed system state y_perturb with y_i + sigma_i
+          Kokkos::single(Kokkos::PerTeam(member), [&]() {
+            y_perturb(gas_sp_idx) = vals_at_i(gas_sp_idx) + sigma;
+          });
+          member.team_barrier();
+
+          if (gas_sp_idx < n_condensible_gases){
+            // call regular rhs function with y_perturb
+            TChem::Impl::Aerosol_RHS<real_type, device_type>::team_invoke( 
+              member, temperature_at_i, pressure_at_i, num_conc_at_i, y_perturb, constYs, 
+              f_yhat, pw, kmcd, amcd, n_part_i);
+            member.team_barrier();
+
+            // fill Jpg_i (per-particle) blocks for column gas_sp_idx
+            Kokkos::parallel_for(Kokkos::TeamVectorMDRange(member, n_part_i, amcd.nSpec), 
+              [&] (const ordinal_type& part_idx, const ordinal_type& aero_sp_idx){
+                ordinal_type i_row = n_active_gas_species + part_idx*amcd.nSpec + aero_sp_idx;
+                Jpg_i(part_idx, aero_sp_idx, gas_sp_idx) = (f_yhat(i_row) - rhs_at_i(i_row)) / sigma;
+            });
+            member.team_barrier();
+
+            // Difference quotient calculations
+            // fill Jgg_i for column gas_sp_idx
+            Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_active_gas_species), 
+              [&](const ordinal_type& i_gas){
+                Jgg_i(i_gas, gas_sp_idx) = (f_yhat(i_gas) - rhs_at_i(i_gas)) / sigma;
+            });
+            member.team_barrier();
+            
+          } else {
+            // call gas-only rhs function with y_perturb
+            TChem::Impl::Aerosol_RHS<real_type, device_type>::team_invoke_gas( 
+              member, temperature_at_i, pressure_at_i, num_conc_at_i, y_perturb, constYs, 
+              f_yhat, pw, kmcd, amcd, n_part_i);
+            member.team_barrier();
+
+            // Difference quotient calculations
+            // fill Jgg_i for column gas_sp_idx
+            Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_active_gas_species), 
+              [&](const ordinal_type& i_gas){
+                Jgg_i(i_gas, gas_sp_idx) = (f_yhat(i_gas) - f_gasonly(i_gas)) / sigma;
+            });
+            member.team_barrier();
+            
+          }
+
+          // restore y_perturb
+          Kokkos::single(Kokkos::PerTeam(member), [&]() {
+            y_perturb(gas_sp_idx) = vals_at_i(gas_sp_idx);
+          });
+          member.team_barrier();
+
+      }
+
+      // Fill in the Jpp, Jgp columns in parallel over number of aerosol species
+      for (int aero_sp_idx = 0; aero_sp_idx < amcd.nSpec; aero_sp_idx++){
+
+          Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_i),
+            [&](const ordinal_type& i_part) {
+                // compute sigma for species aero_sp_idx in particle i_part (different val for each particle)
+                ordinal_type part_spec_idx = n_active_gas_species + i_part*amcd.nSpec + aero_sp_idx;
+                //real_type weight = 1 / (reltol*AT::abs(vals_at_i(part_spec_idx)) + abstol_aero);
+                real_type sigma = 1 / ewt_at_i(part_spec_idx);
+                
+                // perturbed system state y_perturb where y_particleidx^j  + sigma_particleidx
+                y_perturb(part_spec_idx) += sigma; 
+          });
+          member.team_barrier(); // need to fill perturbed state before calling RHS
+
+          // pass perturbed state to modified RHS function, fmod(y_perturb)
+          TChem::Impl::Aerosol_RHS<real_type, device_type>::team_invoke_per_particle_gas_contrib(
+            member, temperature_at_i, pressure_at_i, num_conc_at_i, y_perturb, aero_f_perturb, gas_f_perturb, 
+            amcd, n_part_i
+          );
+          member.team_barrier();
+
+          // difference quotient, store in Jpp_i, Jgp_i blocks
+          Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_i),
+            [&](const ordinal_type& i_part) {
+              ordinal_type part_spec_idx = n_active_gas_species + i_part*amcd.nSpec + aero_sp_idx;
+              //real_type weight = 1 / (reltol*AT::abs(vals_at_i(part_spec_idx)) + abstol_aero);
+              real_type sigma = 1 / ewt_at_i(part_spec_idx); 
+              
+              // Jgp_i, loop for each condensible gas species in current aero_species column
+              for (int gas_sp_idx = 0; gas_sp_idx < n_condensible_gases; gas_sp_idx++){
+                Jgp_i(i_part, gas_sp_idx, aero_sp_idx) = (gas_f_perturb(i_part, gas_sp_idx) - gas_f(i_part, gas_sp_idx)) / sigma;
+              }
+              
+              // Jpp_i, loop over jth aerosol species row for current aero_species column
+              for (int aero_sp_j = 0; aero_sp_j < amcd.nSpec; aero_sp_j++){
+                ordinal_type part_spec_j = n_active_gas_species + i_part*amcd.nSpec + aero_sp_j;
+                Jpp_i(i_part, aero_sp_j, aero_sp_idx) = (aero_f_perturb(part_spec_j) - aero_f(part_spec_j)) / sigma;
+              }
+                
+          });
+          member.team_barrier();
+
+          // restore yhat (TeamVectorRange since need to restore strided per-particle species to non-perturbed values)
+          Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_i),
+            [&](const ordinal_type& i_part) {
+                ordinal_type part_spec_idx = n_active_gas_species + i_part*amcd.nSpec + aero_sp_idx; 
+                y_perturb(part_spec_idx) = vals_at_i(part_spec_idx); 
+          });
+          member.team_barrier();
+
+      }
+
+    } // if !jok
+
+    // Subview D, W, S at the system level
+    // D [batch, i_part, aero_sp_idx, aero_sp_idx]
+    // W [batch, i_part, aero_sp_idx, gas_sp_idx]
+    // S [batch, gas_sp_idx, gas_sp_idx]
+    real_type_3d_view_type D_at_i = Kokkos::subview(D, i, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()); 
+    real_type_3d_view_type W_at_i = Kokkos::subview(W, i, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()); 
+    real_type_2d_view_type S_at_i = Kokkos::subview(S, i, Kokkos::ALL(), Kokkos::ALL()); 
+
+    // construct D for each particle (store I-gamma*Jpp_ipart and LU factor in place)
+    // Use linear index with aero species column index varying fastest for coalesced accesses
+    // Tines uses layout right for views, so the rightmost index (column) has stride 1 in memory
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_i*amcd.nSpec*amcd.nSpec),
+      [&](const ordinal_type& k) {
+        int i_part = k / (amcd.nSpec*amcd.nSpec); // rounds down to int
+        int aero_sp_i = (k - i_part*amcd.nSpec*amcd.nSpec) / amcd.nSpec;
+        int aero_sp_j = (k - i_part*amcd.nSpec*amcd.nSpec) % amcd.nSpec;
+        if (aero_sp_i == aero_sp_j){
+          D_at_i(i_part, aero_sp_i, aero_sp_j) = 1 - gamma*Jpp_i(i_part, aero_sp_i, aero_sp_j);
+        } else{
+          D_at_i(i_part, aero_sp_i, aero_sp_j) = -1*gamma*Jpp_i(i_part, aero_sp_i, aero_sp_j);
+        }           
+    });
+    member.team_barrier();
+    
+    // Performance note: since the particle index is the slowest index in the D system subviews,
+    // memory accesses for adjacent threads (which are handling adjacent D_i blocks) are 
+    // *not* coalesced. In order to do so, the particle index would need to be the right-most
+    // index (assuming LayoutRight views)
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_i),
+      [&](const ordinal_type& i_part) {
+
+        // LU factor D_at_i(i_part, :, :) in place
+        real_type_2d_view_type D_ipart = Kokkos::subview(D_at_i, i_part, 
+          Kokkos::ALL(), Kokkos::ALL());  
+        real_type tiny = 1e-8; // boost diagonal by small amount to move pivots off zero
+        KokkosBatched::SerialLU<KokkosBatched::Algo::LU::Unblocked>::invoke(D_ipart, tiny);
+
+        // place Jpg (linear system RHS) into W, pass to LU solve for all columns of W
+        real_type_2d_view_type W_ipart = Kokkos::subview(W_at_i, i_part, 
+          Kokkos::ALL(), Kokkos::ALL());
+        for (int a=0; a < amcd.nSpec; a++){
+          for (int g=0; g < n_condensible_gases; g++){
+            W_ipart(a, g) = Jpg_i(i_part, a, g);
+          }
+        }
+        // solve D_ipart*W_ipart = J_pg(i_part)
+        KokkosBatched::SerialSolveLU
+          <KokkosBatched::Trans::NoTranspose, KokkosBatched::Algo::Trsm::Unblocked>
+            ::invoke(D_ipart, W_ipart);
+
+    });
+    member.team_barrier();
+
+    // construct S = (I-gamma*Jgg) - gamma^2*sum(Jgp_ipart*W_ipart) (ipart=0, n_part_i)
+    // S <- I-gamma*Jgg
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_active_gas_species*n_active_gas_species),
+      [&](const ordinal_type& k) {
+        int gas_sp_i = k / n_active_gas_species;
+        int gas_sp_j = k % n_active_gas_species;
+        if (gas_sp_i == gas_sp_j){
+          S_at_i(gas_sp_i, gas_sp_j) = 1 - gamma*Jgg_i(gas_sp_i, gas_sp_j);
+        } else{
+          S_at_i(gas_sp_i, gas_sp_j) = -1*gamma*Jgg_i(gas_sp_i, gas_sp_j);
+        }           
+    });
+    member.team_barrier();
+
+    // S += -gamma**2(Jgp_ipart*W_ipart) [ipart=0,..., n_part_i]
+    /*
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_i*n_condensible_gases*n_condensible_gases),
+      [&](const ordinal_type& k) {
+        int i_part = k / (n_condensible_gases*n_condensible_gases); // rounds down to int
+        int gas_sp_i = (k - i_part*n_condensible_gases*n_condensible_gases) / n_condensible_gases;
+        int gas_sp_j = (k - i_part*n_condensible_gases*n_condensible_gases) % n_condensible_gases;    
+        
+        real_type sum = 0.0;
+        for (int m = 0; m < amcd.nSpec; m++){
+          sum += -1*gamma*gamma*Jgp_i(i_part, gas_sp_i, m)*W_at_i(i_part, m, gas_sp_j);
+        }
+        // atomic since each threads modifying same memory address
+        Kokkos::atomic_add(&S_at_i(gas_sp_i, gas_sp_j), sum);
+    });
+    member.team_barrier();
+     */
+    // Test heirarchical reduction version of S += -gamma**2(Jgp_ipart*W_ipart)
+    Kokkos::parallel_for(Kokkos::TeamThreadRange(member, n_condensible_gases*n_condensible_gases),
+      [&](const ordinal_type& k) {
+
+        int gas_sp_i = k / n_condensible_gases;
+        int gas_sp_j = k % n_condensible_gases;
+
+        // sum matrix-matrix products at element (i,j) for Jpg*W from particle 0,...,n_part_i
+        real_type sum_JpgW_ij = 0.0;
+        Kokkos::parallel_reduce(Kokkos::ThreadVectorRange(member, n_part_i*amcd.nSpec),
+          [&](const ordinal_type& l, real_type& sum) {  
+            
+            int i_part = l / amcd.nSpec;
+            int m = l % amcd.nSpec;
+
+            sum += -1*gamma*gamma*Jgp_i(i_part, gas_sp_i, m)*W_at_i(i_part, m, gas_sp_j);
+        }, sum_JpgW_ij);
+
+        // use thread 0 in each team thread's vector lane to add to S
+        Kokkos::single(Kokkos::PerThread(member), [&]() {
+            S_at_i(gas_sp_i, gas_sp_j) += sum_JpgW_ij;
+        });        
+    });
+    member.team_barrier();
+
+    // LU factor S in place
+    Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      real_type tiny = 1e-8; // boost diagonal by small amount to move pivots off zero
+      KokkosBatched::SerialLU<KokkosBatched::Algo::LU::Unblocked>::invoke(S_at_i, tiny);
+    });    
+    
+  }
+
+
+  template<typename MemberType>
+  KOKKOS_INLINE_FUNCTION
+  void team_solve(const MemberType &member, real_type_1d_view_type x) const {
+
+    // Solve the preconditioned system Px = b for x
+    // Input linear system rhs b to x; return solution in place
+
+    // system index
+    const ordinal_type i_sys = member.league_rank();
+    
+    // number of active computational particles for the current system
+    const ordinal_type n_part_isys =
+      (n_particles_track.span() == 0 || n_particles_track(i_sys) < 0) 
+      ? amcd.nParticles : n_particles_track(i_sys);
+
+    // subview b -> b_gas, b_part (subviewing on x which contains the input, and since 
+    // solves modify the view in-place, it also will carry the output)
+    real_type_1d_view_type b_gas = Kokkos::subview(x, range_type(0, n_active_gas_species));
+    real_type_1d_view_type b_part = Kokkos::subview(x, 
+      range_type(n_active_gas_species, n_active_gas_species + n_part_isys*amcd.nSpec));
+      
+    // subview S, D, W, Jgp at isys
+    real_type_2d_view_type S_isys = Kokkos::subview(S, i_sys, Kokkos::ALL(), Kokkos::ALL()); 
+    real_type_3d_view_type D_isys = Kokkos::subview(D, i_sys, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+    real_type_3d_view_type W_isys = Kokkos::subview(W, i_sys, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()); 
+    real_type_3d_view_type Jgp_isys = Kokkos::subview(Jgp, i_sys, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+
+    // Solve D_i*t_i = b_ipart (SolveLU places t_i in b_ipart, no explicit t required)
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_isys),
+      [&](const ordinal_type& ipart) {
+        real_type_2d_view_type D_ipart = Kokkos::subview(D_isys, ipart, 
+          Kokkos::ALL(), Kokkos::ALL());
+        real_type_1d_view_type b_ipart = Kokkos::subview(b_part, 
+          range_type(ipart*amcd.nSpec, amcd.nSpec*(ipart+1)));
+        
+        KokkosBatched::SerialSolveLU
+          <KokkosBatched::Trans::NoTranspose, KokkosBatched::Algo::Trsm::Unblocked>
+            ::invoke(D_ipart, b_ipart);
+    });
+    member.team_barrier();
+
+    // b_gas <- b_gas + gamma*sum(Jgp_isys*t_i)
+    for (int m = 0; m < n_condensible_gases; m++){ // accumulate to first m entries of b_gas
+
+      // sum mth index of matrix-vector product Jgp*t_i from particle 0,...,n_part_isys
+      real_type sum_matvec = 0.0;
+      Kokkos::parallel_reduce(Kokkos::TeamVectorRange(member, n_part_isys*amcd.nSpec),
+        [&](const ordinal_type& l, real_type& accum) {  
+          
+          int i_part = l / amcd.nSpec;
+          int a = l % amcd.nSpec;
+
+          accum += gamma*Jgp_isys(i_part, m, a)*b_part(i_part*amcd.nSpec + a);
+      }, sum_matvec);
+
+      Kokkos::single(Kokkos::PerTeam(member), [&]() {
+        b_gas(m) += sum_matvec;
+      });
+    }
+
+    // Solve S*x_gas=b_gas
+    Kokkos::single(Kokkos::PerTeam(member), [&]() {
+      // performance note: would be nice to replace with a teamvector solve LU!!!
+      KokkosBatched::SerialSolveLU
+            <KokkosBatched::Trans::NoTranspose, KokkosBatched::Algo::Trsm::Unblocked>
+              ::invoke(S_isys, b_gas); // result stored in b_gas
+    });
+    member.team_barrier();
+
+    // solve x_ipart = t_ipart + gamma*W_ipart*x_gas[:n_condensible_species]
+    // note that W was solved as D*W=Jpg (note the RHS is the jacobian block instead of 
+    // C, -gamma*Jpg, so we need to multiply resulting W by -gamma, hence the +gamma*W...)
+    Kokkos::parallel_for(Kokkos::TeamVectorRange(member, n_part_isys*amcd.nSpec),
+    [&](const ordinal_type& k) {
+      int i_part = k / amcd.nSpec;
+      int a = k % amcd.nSpec;
+
+      for (int m = 0; m < n_condensible_gases; m++){
+        b_part(i_part*amcd.nSpec+a) +=  gamma*W_isys(i_part, a, m)*b_gas(m);
+      }
+    });
+    
+  } // team_solve
+};
+
 
 struct AerosolChemistry_CVODE_K
 {

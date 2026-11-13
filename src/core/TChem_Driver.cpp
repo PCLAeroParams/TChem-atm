@@ -573,10 +573,10 @@ void TChem::Driver::doTimestep(const double del_t){
     Kokkos::deep_copy(_n_particles_track_device, _n_particles_track);
   }
 
-  udata.nbatches = _nBatch;
+  udata.n_systems = _nBatch;
   Kokkos::deep_copy(_number_conc_device, _number_concentration);
-  udata.num_concentration = _number_conc_device;
-  udata.batchSize = number_of_equations;
+  udata.aero_num_conc = _number_conc_device;
+  udata.system_size = number_of_equations;
   udata.kmcd = _kmcd_device;
   udata.amcd = _amcd_device;
   udata.n_particles_track = _n_particles_track_device;

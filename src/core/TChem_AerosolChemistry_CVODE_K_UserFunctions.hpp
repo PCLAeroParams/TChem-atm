@@ -661,6 +661,27 @@ struct SchurPrecon {
     });
     
   } // team_solve
+}; // SchurPrecon
+
+
+// struct for preconditioning Krylov solver attached to CVODE with identity matrix,
+// acts as no-op. NOTE: this method is only intended for the Kokkos-Kernels Batched 
+// GMRES linear solver, as the custom functor MatrixFreeBatchedGMRESTeamFunctor and 
+// its Matrix-free operator JacvecFDTeam template on the preconditioner type.
+struct IdentityPrecon{
+
+  using device_type            = typename Tines::UseThisDevice<exec_space>::type;
+  using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
+
+  IdentityPrecon() = default;
+  ~IdentityPrecon() = default;
+
+  template<typename MemberType>
+  KOKKOS_INLINE_FUNCTION
+  void team_solve(const MemberType &member, real_type_1d_view_type x) const {
+
+  }
+
 };
 
 

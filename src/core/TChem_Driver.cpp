@@ -689,6 +689,7 @@ void TChem::Driver::doTimestep(const double del_t){
   retval = CVodeSetMaxNumSteps(cvode_mem, _max_num_time_iterations);
   retval = CVodeSetMinStep(cvode_mem, _dtmin);
   // Attach the user data structure
+  udata.cvode_mem = cvode_mem;
   retval = CVodeSetUserData(cvode_mem, &udata);
 
   // Specify the scalar relative tolerance and vector absolute tolerances
@@ -758,7 +759,7 @@ void TChem::Driver::doTimestep(const double del_t){
   sundials::kokkos::CopyFromDevice(y);
   Kokkos::fence();
 
-  real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
+  real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.n_systems, udata.system_size);
 
   // Copy results back.
   // ENV_OFFSET skips the 3 environmental scalars (Temperature, Pressure, Density)

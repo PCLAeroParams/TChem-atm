@@ -201,8 +201,8 @@ struct MosaicModelData {
 
     // salt index tracking and sulfate regimes
     real_type_1d_dual_view jsalt_index; // ("jsalt_index_", nsalt)
-    real_type_1d_dual_view jsulf_rich;  // ("jsulf_rich_", 71)
-    real_type_1d_dual_view jsulf_poor;  // ("jsulf_poor_", 211)
+    real_type_1d_dual_view jsulf_rich;  // ("jsulf_rich_", 72); 1-based, entry 0 unused
+    real_type_1d_dual_view jsulf_poor;  // ("jsulf_poor_", 212); 1-based, entry 0 unused
 
     real_type_1d_dual_view partial_molar_vol; // ("partial_molar_vol_", ngas_volatile)
 
@@ -221,15 +221,15 @@ struct MosaicModelData {
         dens_aer_mac = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::dens_aer_mac"), naer);
         mw_electrolyte = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_electrolyte"), nelectrolyte);
         zc = ordinal_type_1d_dual_view(do_not_init_tag("MosaicModelData::zc"), ncation);
-        za = ordinal_type_1d_dual_view(do_not_init_tag("MosaicModelData::za"), ncation);
+        za = ordinal_type_1d_dual_view(do_not_init_tag("MosaicModelData::za"), nanion);
         mw_c = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_c"), ncation);
         mw_a = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_a"), nanion);
         mw_vol_g  = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_vol_g"),  ngas_volatile);
         v_molar_g = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::v_molar_g"), ngas_volatile);
         accom_g   = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::accom_g"),   ngas_volatile);
         jsalt_index = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::mw_a"), nsalt);
-        jsulf_rich = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_rich"), 71);
-        jsulf_poor = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_poor"), 211);
+        jsulf_rich = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_rich"), 72);
+        jsulf_poor = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::jsulf_poor"), 212);
         partial_molar_vol = real_type_1d_dual_view(do_not_init_tag("MosaicModelData::partial_molar_vol"), ngas_volatile);
 
         auto a_zsr_host = a_zsr.view_host();

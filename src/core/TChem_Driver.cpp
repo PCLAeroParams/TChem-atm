@@ -26,6 +26,8 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem.hpp"
 #include "TChem_KineticModelNCAR_ConstData.hpp"
 #include "TChem_CommandLineParser.hpp"
+#include "TChem_Impl_AerosolChemistryRHS.hpp" // AerosolChemistryRHS
+#include "TChem_AerosolChemistry_CVODE_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
 
 using real_type = TChem::real_type;
 using ordinal_type = TChem::ordinal_type;
@@ -142,6 +144,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   YAML::Node root = YAML::LoadFile(numerics_file);
   YAML::Node solver_info = root["solver_info"];
 
+  auto linear_solver = solver_info["linear_solver"];
   auto atol_newton = solver_info["atol_newton"];
   auto rtol_newton = solver_info["rtol_newton"];
   auto dtmin = solver_info["dtmin"];
@@ -156,6 +159,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   auto verbose = solver_info["verbose"];
   auto krylov_dimension = solver_info["krylov_dimension"];
 
+  _linear_solver = linear_solver.as<ordinal_type>(1);
   _atol_newton = atol_newton.as<real_type>(1e-10);
   _rtol_newton = rtol_newton.as<real_type>(1e-6);
   _dtmin = dtmin.as<real_type>(1e-8);
@@ -168,7 +172,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   _atol_aero = atol_aero.as<real_type>(_atol_time);
   _max_num_newton_iterations = max_num_newton_iterations.as<ordinal_type>(100);
   _max_num_time_iterations = max_num_time_iterations.as<ordinal_type>(1e3);
-  _krylov_dimension = krylov_dimension.as<ordinal_type>(0);
+  _krylov_dimension = krylov_dimension.as<ordinal_type>(20);
 
   // If team_size and vector_size are not specified, default to -1
   _team_size = team_size.as<ordinal_type>(-1);
@@ -535,6 +539,8 @@ void TChem::Driver::doTimestep(const double del_t){
       typename Tines::UseThisDevice<TChem::host_exec_space>::type;
   using problem_type =
       TChem::Impl::AerosolChemistry_Problem<real_type, interf_host_device_type>;
+  using problem_type_device = 
+      TChem::Impl::AerosolChemistry_Problem<real_type, device_type>;
   using policy_type =
       typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
 
@@ -694,10 +700,44 @@ void TChem::Driver::doTimestep(const double del_t){
 
   ordinal_type per_team_extent = 0;
 
-  // Create matrix-free GMRES linear solver
+  // Select linear solver to attach to CVODE
+  if (_linear_solver == 1){
+    // SUNDIALS Sparse GMRES (unbatched)
+    printf("TChem solver configuration:\n");
+    printf("..Integrator: SUNDIALS CVODE\n");
+    printf("..Linear Solver: SUNDIALS SPGMR (unbatched)\n");
   LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
       SUNLinSol_SPGMR(y, SUN_PREC_NONE, _krylov_dimension, sunctx));
+  } else if (_linear_solver == 2){
+    // Kokkos-Kernels Batched GMRES 
+    printf("TChem solver configuration:\n");
+    printf("..Integrator: SUNDIALS CVODE\n");
+    printf("..Linear Solver: Kokkos Kernels Batched GMRES\n");
+    // Create a AerosolChemistryRHS object for the batch of teams
+    using AerosolRHS = TChem::Impl::AerosolChemistryRHS<problem_type_device>;
+    AerosolRHS rhs_object(_number_conc_device, _const_tracers_device,
+      _temperature_device, _pressure_device, _kmcd_device, _amcd_device,
+      _n_particles_track_device);
 
+    ordinal_type system_size = number_of_equations;
+    ordinal_type n_systems = static_cast<ordinal_type>(_nBatch);
+
+    // Create linear solver
+    SUNLinearSolver bgmr = TChem::SUNLinSol_BatchedGMRES(
+      y, rhs_object, system_size, n_systems, _krylov_dimension, policy, sunctx);
+    //if (check_ptr(bgmr, "SUNLinSol_BatchedGMRES")) { return 1; }
+    // Diagnostic printing (once per Newton solve, turn off/on with --verbose)
+    //TChem::SUNLinSol_BatchedGMRESSetVerbose(bgmr, verbose);
+    // std::move hands custody of the solver to LS so it automatically 
+    // gets freed when LS is destroyed (only needed bc we define the lvalue bgmr, 
+    // could pass in SUNLinSol_BatchedGMRES directly to LS like for spgmr 
+    // if we didn't care about checking if solver returns null pointer)
+    LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(std::move(bgmr));
+  } else { // catch for solver type not in (1, 2)
+      fprintf(stderr, "TChem error: Invalid linear solver type %d\n", _linear_solver);
+      exit(1);
+  }
+  
   // Attach the linear solver to CVODE
   retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
 

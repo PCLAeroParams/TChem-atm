@@ -187,7 +187,8 @@ struct UserData
 
 };
 
-
+// struct for preconditioning krylov solver attached to CVODE with Schur-complement 
+// based preconditioning matrix, P where P = (I-gamma*J)v
 struct SchurPrecon {
 
   // typedefs

@@ -120,6 +120,44 @@ struct Aerosol_RHS
 
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static
+  void team_invoke_gas(const MemberType& member,
+    const real_type& t,
+    const real_type& p,
+    const real_type_1d_view_type& number_conc,
+    const real_type_1d_view_type& state,
+    const real_type_1d_view_type& const_X,
+    const real_type_1d_view_type& omega,
+    const real_type_1d_view_type& work,
+    const kinetic_model_data_type& kmcd,
+    const aerosol_model_data_type& amcd,
+    const ordinal_type n_particles_rhs
+    )
+  {
+    if (n_particles_rhs > amcd.nParticles) {
+      Kokkos::abort("n_particles_rhs exceeds amcd.nParticles");
+    }
+   // set omega(rhs) to zero, because we are using Kokkos::atomic_add.
+    Kokkos::parallel_for(
+      Kokkos::TeamVectorRange(member, omega.extent(0)),
+       [&](const ordinal_type& i) {
+      omega(i) = 0.0;
+    });
+    // RHS of gas species
+    using reaction_rates_gas = TChem::Impl::ReactionRatesAerosol<real_type, device_type >;
+    reaction_rates_gas::team_invoke(member,
+                         t,
+                         p,
+                         state,
+                         const_X,
+                         omega,
+                         // work arrays
+                         work,
+                         kmcd);
+  }
+
+
+  template<typename MemberType>
+  KOKKOS_INLINE_FUNCTION static
   void team_invoke_per_particle_gas_contrib(
     const MemberType& member,
     const real_type& t,

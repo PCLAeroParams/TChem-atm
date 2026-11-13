@@ -260,6 +260,62 @@ int AerosolChemistry_CVODE_K::psolve(sunrealtype t, N_Vector y, N_Vector fy,
 
   auto udata = static_cast<UserData*>(user_data);
 
+  const auto n_systems  = udata->n_systems;
+  const auto policy = udata->policy;
+  const auto kmcd = udata->kmcd;
+  const auto amcd = udata->amcd;
+  const auto system_size = udata->system_size;
+  const auto aero_num_conc = udata->aero_num_conc;
+  const auto temperature= udata->temperature;
+  const auto pressure= udata->pressure;
+  const auto const_tracers= udata->const_tracers;
+  const auto n_particles_track = udata->n_particles_track;
+
+  // preconditioner data structures
+  const auto Jgg = udata->Jgg;
+  const auto Jgp = udata->Jgp;
+  const auto Jpg = udata->Jpg;
+  const auto Jpp = udata->Jpp;
+  const auto D = udata->D;
+  const auto S = udata->S;
+  const auto W = udata->W;
+  const auto gamma_setup = udata->gamma; // gamma used for setup, not current CVODE gamma
+
+  real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), n_systems, system_size);
+  real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(fy), n_systems, system_size);
+  real_type_2d_view_type b(N_VGetDeviceArrayPointer(r), n_systems, system_size);
+  real_type_2d_view_type x(N_VGetDeviceArrayPointer(z), n_systems, system_size);
+
+  //const ordinal_type level = 1;
+  //const ordinal_type per_team_extent = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
+
+  SchurPrecon preconditioner(rhs, vals, aero_num_conc, const_tracers, temperature, 
+    pressure, kmcd, amcd, n_particles_track, Jgg, Jgp, Jpg, Jpp, D, S, W, gamma_setup);
+
+  const std::string profile_name = "TChem::AerosolChemistry_CVODE_K::schur_psolve";
+  
+  Kokkos::Profiling::pushRegion(profile_name);
+  Kokkos::parallel_for(profile_name, policy, 
+    KOKKOS_LAMBDA(const typename policy_type::member_type& member){
+
+      const ordinal_type i_sys = member.league_rank();
+      
+      // place b into x
+      Kokkos::parallel_for(Kokkos::TeamVectorRange(member, system_size), 
+        [&] (const ordinal_type& i_spec){
+          x(i_sys, i_spec) = b(i_sys, i_spec);
+      });
+      member.team_barrier();
+
+      real_type_1d_view_type x_isys = Kokkos::subview(x, i_sys, Kokkos::ALL());
+
+      // return solution in-place in x
+      preconditioner.team_solve(member, x_isys);
+
+  });
+  Kokkos::fence();
+  Kokkos::Profiling::popRegion();
+
   return 0;
 
 }

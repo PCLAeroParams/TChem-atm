@@ -159,7 +159,7 @@ int AerosolChemistry_CVODE_K::Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMat
 }
 
 
-int AerosolChemistry_CVODE_K::psetup(sunrealtype t, N_Vector y, N_Vector fy, 
+int AerosolChemistry_CVODE_K::schur_psetup(sunrealtype t, N_Vector y, N_Vector fy, 
   sunbooleantype jok, sunbooleantype* jcurPtr, sunrealtype gamma, void* user_data)
 {
 
@@ -191,8 +191,9 @@ int AerosolChemistry_CVODE_K::psetup(sunrealtype t, N_Vector y, N_Vector fy,
   const auto aero_f_perturb_2d = udata->aero_f_perturb_2d;
   const auto gas_f_perturb_3d = udata->gas_f_perturb_3d;
   const auto f_gasonly_2d = udata->f_gasonly_2d;
-  //const auto gamma = udata->gamma; // TODO remove from userdata?
   const auto cvode_mem = udata->cvode_mem;
+
+  udata->gamma = gamma;
 
   real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), n_systems, system_size);
   real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(fy), n_systems, system_size);
@@ -222,7 +223,7 @@ int AerosolChemistry_CVODE_K::psetup(sunrealtype t, N_Vector y, N_Vector fy,
     *jcurPtr = SUNFALSE;
   }
   
-  const std::string profile_name = "TChem::AerosolChemistry_CVODE_K::psetup";
+  const std::string profile_name = "TChem::AerosolChemistry_CVODE_K::schur_psetup";
   
   Kokkos::Profiling::pushRegion(profile_name);
   Kokkos::parallel_for(profile_name, policy, 
@@ -254,7 +255,7 @@ int AerosolChemistry_CVODE_K::psetup(sunrealtype t, N_Vector y, N_Vector fy,
 }
 
 
-int AerosolChemistry_CVODE_K::psolve(sunrealtype t, N_Vector y, N_Vector fy, 
+int AerosolChemistry_CVODE_K::schur_psolve(sunrealtype t, N_Vector y, N_Vector fy, 
   N_Vector r, N_Vector z, sunrealtype gamma, sunrealtype delta, int lr, void* user_data)
 {
 

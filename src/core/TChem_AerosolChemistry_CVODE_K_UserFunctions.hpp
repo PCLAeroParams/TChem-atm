@@ -700,10 +700,10 @@ struct AerosolChemistry_CVODE_K
   static int Jac(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix J,
                  void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
   
-  static int psetup(sunrealtype t, N_Vector y, N_Vector fy, sunbooleantype jok,
+  static int schur_psetup(sunrealtype t, N_Vector y, N_Vector fy, sunbooleantype jok,
                     sunbooleantype* jcurPtr, sunrealtype gamma, void* user_data);
 
-  static int psolve(sunrealtype t, N_Vector y, N_Vector fy, N_Vector r, 
+  static int schur_psolve(sunrealtype t, N_Vector y, N_Vector fy, N_Vector r, 
                     N_Vector z, sunrealtype gamma, sunrealtype delta, int lr, 
                     void* user_data);
 

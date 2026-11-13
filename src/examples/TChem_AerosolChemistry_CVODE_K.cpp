@@ -311,9 +311,9 @@ int main(int argc, char *argv[]) {
     // Create UserData
     TChem::UserData udata;
 
-    udata.nbatches = nBatch;
-    udata.num_concentration = num_concentration;
-    udata.batchSize=number_of_equations;
+    udata.n_systems = nBatch;
+    udata.aero_num_conc = num_concentration;
+    udata.system_size =number_of_equations;
     udata.kmcd=kmcd;
     udata.amcd=amcd;
 
@@ -426,7 +426,7 @@ int main(int argc, char *argv[]) {
     if (solver_type == 0) // Kokkos Batched Dense (LU-based solver)
     {
       // Create Kokkos dense block diagonal matrix
-      A = std::make_unique<MatType>(udata.nbatches, udata.batchSize, udata.batchSize, sunctx);
+      A = std::make_unique<MatType>(udata.n_systems, udata.system_size, udata.system_size, sunctx);
 
       // Create Kokkos batched dense linear solver
       LS = std::make_unique<LSType>(sunctx);
@@ -511,7 +511,7 @@ int main(int argc, char *argv[]) {
     sunrealtype tout = T0 + dTout;
 
     // Initial output
-    real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
+    real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.n_systems, udata.system_size);
     sundials::kokkos::CopyFromDevice(y);
     Kokkos::fence();
 

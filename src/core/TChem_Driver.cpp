@@ -27,7 +27,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include "TChem_KineticModelNCAR_ConstData.hpp"
 #include "TChem_CommandLineParser.hpp"
 #include "TChem_Impl_AerosolChemistryRHS.hpp" // AerosolChemistryRHS
-#include "TChem_AerosolChemistry_CVODE_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
+#include "TChem_AerosolChemistry_CVODE_K_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
 
 using real_type = TChem::real_type;
 using ordinal_type = TChem::ordinal_type;
@@ -573,10 +573,10 @@ void TChem::Driver::doTimestep(const double del_t){
     Kokkos::deep_copy(_n_particles_track_device, _n_particles_track);
   }
 
-  udata.nbatches = _nBatch;
+  udata.n_systems = _nBatch;
   Kokkos::deep_copy(_number_conc_device, _number_concentration);
-  udata.num_concentration = _number_conc_device;
-  udata.batchSize = number_of_equations;
+  udata.aero_num_conc = _number_conc_device;
+  udata.system_size = number_of_equations;
   udata.kmcd = _kmcd_device;
   udata.amcd = _amcd_device;
   udata.n_particles_track = _n_particles_track_device;
@@ -689,6 +689,7 @@ void TChem::Driver::doTimestep(const double del_t){
   retval = CVodeSetMaxNumSteps(cvode_mem, _max_num_time_iterations);
   retval = CVodeSetMinStep(cvode_mem, _dtmin);
   // Attach the user data structure
+  udata.cvode_mem = cvode_mem;
   retval = CVodeSetUserData(cvode_mem, &udata);
 
   // Specify the scalar relative tolerance and vector absolute tolerances
@@ -703,16 +704,16 @@ void TChem::Driver::doTimestep(const double del_t){
   // Select linear solver to attach to CVODE
   if (_linear_solver == 1){
     // SUNDIALS Sparse GMRES (unbatched)
-    printf("TChem solver configuration:\n");
-    printf("..Integrator: SUNDIALS CVODE\n");
-    printf("..Linear Solver: SUNDIALS SPGMR (unbatched)\n");
-  LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
+    //printf("TChem solver configuration:\n");
+    //printf("..Integrator: SUNDIALS CVODE\n");
+    //printf("..Linear Solver: SUNDIALS SPGMR (unbatched)\n");
+    LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
       SUNLinSol_SPGMR(y, SUN_PREC_NONE, _krylov_dimension, sunctx));
   } else if (_linear_solver == 2){
     // Kokkos-Kernels Batched GMRES 
-    printf("TChem solver configuration:\n");
-    printf("..Integrator: SUNDIALS CVODE\n");
-    printf("..Linear Solver: Kokkos Kernels Batched GMRES\n");
+    //printf("TChem solver configuration:\n");
+    //printf("..Integrator: SUNDIALS CVODE\n");
+    //printf("..Linear Solver: Kokkos Kernels Batched GMRES\n");
     // Create a AerosolChemistryRHS object for the batch of teams
     using AerosolRHS = TChem::Impl::AerosolChemistryRHS<problem_type_device>;
     AerosolRHS rhs_object(_number_conc_device, _const_tracers_device,
@@ -758,7 +759,7 @@ void TChem::Driver::doTimestep(const double del_t){
   sundials::kokkos::CopyFromDevice(y);
   Kokkos::fence();
 
-  real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
+  real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.n_systems, udata.system_size);
 
   // Copy results back.
   // ENV_OFFSET skips the 3 environmental scalars (Temperature, Pressure, Density)
@@ -775,7 +776,8 @@ void TChem::Driver::doTimestep(const double del_t){
   }
 
   if (_verbose) {
-    print_cvode_statistics(cvode_mem);
+    //print_cvode_statistics(cvode_mem);
+    CVodePrintAllStats(cvode_mem, stdout, SUN_OUTPUTFORMAT_CSV);
   };
 
   CVodeFree(&cvode_mem);

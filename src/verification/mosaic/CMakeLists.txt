@@ -67,19 +67,6 @@ add_executable(${DRIVER_NAME}.x
                MESA_flux_salt.cpp
                aerosol_phase_state.cpp
                calculate_kelvin.cpp
-               absorb_tiny_hcl.cpp
-               absorb_tiny_hno3.cpp
-               equilibrate_hcl.cpp
-               equilibrate_hno3.cpp
-               equilibrate_hcl_and_hno3.cpp
-               equilibrate_acids.cpp
-               ASTEM_flux_wet_case1.cpp
-               ASTEM_flux_wet_case2.cpp
-               ASTEM_flux_wet_case3.cpp
-               ASTEM_flux_wet_case3a.cpp
-               ASTEM_flux_wet_case3b.cpp
-               ASTEM_flux_wet_case4.cpp
-               ASTEM_flux_wet.cpp
                ASTEM_non_volatiles.cpp
                cubic.cpp
                ASTEM_flux_dry_case1.cpp

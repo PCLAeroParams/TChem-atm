@@ -55,6 +55,8 @@ struct MOSAIC{
 
   #include "TChem_Impl_MOSAIC_ASTEM_flux_dry.hpp"
 
+  #include "TChem_Impl_MOSAIC_ASTEM_flux_wet.hpp"
+
 };
 
 } // namespace Impl

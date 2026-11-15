@@ -187,6 +187,32 @@ void ASTEM_flux_dry_case4ab(Ensemble *ensemble);
 
 void ASTEM_flux_dry(Ensemble *ensemble);
 
+void absorb_tiny_hcl(Ensemble *ensemble);
+
+void absorb_tiny_hno3(Ensemble *ensemble);
+
+void equilibrate_hcl(Ensemble *ensemble);
+
+void equilibrate_hno3(Ensemble *ensemble);
+
+void equilibrate_hcl_and_hno3(Ensemble *ensemble);
+
+void equilibrate_acids(Ensemble *ensemble);
+
+void ASTEM_flux_wet_case1(Ensemble *ensemble);
+
+void ASTEM_flux_wet_case2(Ensemble *ensemble);
+
+void ASTEM_flux_wet_case3(Ensemble *ensemble);
+
+void ASTEM_flux_wet_case3a(Ensemble *ensemble);
+
+void ASTEM_flux_wet_case3b(Ensemble *ensemble);
+
+void ASTEM_flux_wet_case4(Ensemble *ensemble);
+
+void ASTEM_flux_wet(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -362,6 +388,32 @@ int main(int argc, char **argv) {
       ASTEM_flux_dry_case4ab(ensemble);
     } else if (func_name == "ASTEM_flux_dry") {
       ASTEM_flux_dry(ensemble);
+    } else if (func_name == "absorb_tiny_hcl") {
+      absorb_tiny_hcl(ensemble);
+    } else if (func_name == "absorb_tiny_hno3") {
+      absorb_tiny_hno3(ensemble);
+    } else if (func_name == "equilibrate_hcl") {
+      equilibrate_hcl(ensemble);
+    } else if (func_name == "equilibrate_hno3") {
+      equilibrate_hno3(ensemble);
+    } else if (func_name == "equilibrate_hcl_and_hno3") {
+      equilibrate_hcl_and_hno3(ensemble);
+    } else if (func_name == "equilibrate_acids") {
+      equilibrate_acids(ensemble);
+    } else if (func_name == "ASTEM_flux_wet_case1") {
+      ASTEM_flux_wet_case1(ensemble);
+    } else if (func_name == "ASTEM_flux_wet_case2") {
+      ASTEM_flux_wet_case2(ensemble);
+    } else if (func_name == "ASTEM_flux_wet_case3") {
+      ASTEM_flux_wet_case3(ensemble);
+    } else if (func_name == "ASTEM_flux_wet_case3a") {
+      ASTEM_flux_wet_case3a(ensemble);
+    } else if (func_name == "ASTEM_flux_wet_case3b") {
+      ASTEM_flux_wet_case3b(ensemble);
+    } else if (func_name == "ASTEM_flux_wet_case4") {
+      ASTEM_flux_wet_case4(ensemble);
+    } else if (func_name == "ASTEM_flux_wet") {
+      ASTEM_flux_wet(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

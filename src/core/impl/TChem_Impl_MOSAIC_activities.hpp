@@ -482,6 +482,8 @@
         activity(mosaic.jnacl)   = 0.0;
         activity(mosaic.jcano3)  = 0.0;
         activity(mosaic.jcacl2)  = 0.0;
+
+        return;
       }
 
       xmol(mosaic.jh2so4)   = 3. * electrolyte_liquid(mosaic.jh2so4)   / sum_elec;

@@ -487,6 +487,54 @@
   } // absorb_tiny_nh4no3
 
   KOKKOS_INLINE_FUNCTION static
+  void degas_tiny_nh4no3(const MosaicModelData<DeviceType>& mosaic,
+                         const real_type_1d_view_type& aer_solid,
+                         const real_type_1d_view_type& aer_liquid,
+                         const real_type_1d_view_type& aer_total,
+                         const real_type_1d_view_type& gas,
+                         const real_type_1d_view_type& electrolyte_liquid) {
+
+    real_type small_amt = 0.01 * electrolyte_liquid(mosaic.jnh4no3);
+
+    aer_liquid(mosaic.inh4_a) = aer_liquid(mosaic.inh4_a) - small_amt;
+    aer_liquid(mosaic.ino3_a) = aer_liquid(mosaic.ino3_a) - small_amt;
+
+    // update jtotal
+    aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+
+    // update gas
+    gas(mosaic.inh3_g)  = gas(mosaic.inh3_g)  + small_amt;
+    gas(mosaic.ihno3_g) = gas(mosaic.ihno3_g) + small_amt;
+
+    return;
+  } // degas_tiny_nh4no3
+
+  KOKKOS_INLINE_FUNCTION static
+  void degas_tiny_nh4cl(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& aer_solid,
+                        const real_type_1d_view_type& aer_liquid,
+                        const real_type_1d_view_type& aer_total,
+                        const real_type_1d_view_type& gas,
+                        const real_type_1d_view_type& electrolyte_liquid) {
+
+    real_type small_amt = 0.01 * electrolyte_liquid(mosaic.jnh4cl);
+
+    aer_liquid(mosaic.inh4_a) = aer_liquid(mosaic.inh4_a) - small_amt;
+    aer_liquid(mosaic.icl_a)  = aer_liquid(mosaic.icl_a)  - small_amt;
+
+    // update jtotal
+    aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    aer_total(mosaic.icl_a)  = aer_solid(mosaic.icl_a)  + aer_liquid(mosaic.icl_a);
+
+    // update gas
+    gas(mosaic.inh3_g) = gas(mosaic.inh3_g) + small_amt;
+    gas(mosaic.ihcl_g) = gas(mosaic.ihcl_g) + small_amt;
+
+    return;
+  } // degas_tiny_nh4cl
+
+  KOKKOS_INLINE_FUNCTION static
   void absorb_tiny_hno3(const MosaicModelData<DeviceType>& mosaic,
                         const real_type_1d_view_type& aer_solid,
                         const real_type_1d_view_type& aer_liquid,

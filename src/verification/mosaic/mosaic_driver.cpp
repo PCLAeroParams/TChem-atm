@@ -213,6 +213,16 @@ void ASTEM_flux_wet_case4(Ensemble *ensemble);
 
 void ASTEM_flux_wet(Ensemble *ensemble);
 
+void degas_tiny_nh4no3(Ensemble *ensemble);
+
+void degas_tiny_nh4cl(Ensemble *ensemble);
+
+void ASTEM_flux_mix_case4a(Ensemble *ensemble);
+
+void ASTEM_flux_mix_case4b(Ensemble *ensemble);
+
+void ASTEM_flux_mix(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -414,6 +424,16 @@ int main(int argc, char **argv) {
       ASTEM_flux_wet_case4(ensemble);
     } else if (func_name == "ASTEM_flux_wet") {
       ASTEM_flux_wet(ensemble);
+    } else if (func_name == "degas_tiny_nh4no3") {
+      degas_tiny_nh4no3(ensemble);
+    } else if (func_name == "degas_tiny_nh4cl") {
+      degas_tiny_nh4cl(ensemble);
+    } else if (func_name == "ASTEM_flux_mix_case4a") {
+      ASTEM_flux_mix_case4a(ensemble);
+    } else if (func_name == "ASTEM_flux_mix_case4b") {
+      ASTEM_flux_mix_case4b(ensemble);
+    } else if (func_name == "ASTEM_flux_mix") {
+      ASTEM_flux_mix(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

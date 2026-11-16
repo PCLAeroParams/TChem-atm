@@ -104,6 +104,11 @@ add_executable(${DRIVER_NAME}.x
                ASTEM_flux_wet_case3b.cpp
                ASTEM_flux_wet_case4.cpp
                ASTEM_flux_wet.cpp
+               degas_tiny_nh4no3.cpp
+               degas_tiny_nh4cl.cpp
+               ASTEM_flux_mix_case4a.cpp
+               ASTEM_flux_mix_case4b.cpp
+               ASTEM_flux_mix.cpp
 )
 
 

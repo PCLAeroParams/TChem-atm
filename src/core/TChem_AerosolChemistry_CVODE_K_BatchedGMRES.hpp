@@ -3,7 +3,7 @@ NOTE: The Batched GMRES solver specifically interfaces with CVODE's memory, so i
 not work with other SUNDIALS solvers. 
 */
 #pragma once
-//#include <cstdlib> // std::getenv, std::atol, std::atoi (For diagnostics)
+#include <cstdlib> // std::getenv, std::atol, std::atoi (For diagnostics)
 #include <KokkosBatched_GMRES.hpp>
 #include "TChem.hpp"
 #include "TChem_Impl_Jacvec_FD.hpp"
@@ -46,8 +46,8 @@ struct BGMRTeamFunctor {
   real_type_2d_view_type ewt;         // error weights for calculating the WRMS-scaled difference quotient Jv size(nBatch, m)
   KrylovHandleType handle;            // Kokkos Kernels Krylov attributes 
   ordinal_type team_scratch_work_size;// team-level workspace size (in count of reals) to be carved up in the functor operator()
-  //bool verbose;                       // diagnostic: recompute f(y0) and compare against the passed f_y0
-  //long nsolves;                       // diagnostic: solve index, for labelling the print
+  long nsolves;                       // diagnostic: solve index, for labelling the print
+  int diag_system;                    // diagnostic: league rank whose apply() calls print a Jv breakdown; -1 = none
 
   // constructor
   BGMRTeamFunctor(RHSType f_,
@@ -59,7 +59,9 @@ struct BGMRTeamFunctor {
                 real_type gamma_,
                 real_type_2d_view_type ewt_,
                 KrylovHandleType handle_,
-                ordinal_type team_scratch_work_size_
+                ordinal_type team_scratch_work_size_,
+                long nsolves_ = 0,
+                int diag_system_ = -1
             ) :
             f(f_),
             precon(precon_), 
@@ -70,7 +72,8 @@ struct BGMRTeamFunctor {
             gamma(gamma_), 
             ewt(ewt_), 
             handle(handle_), 
-            team_scratch_work_size(team_scratch_work_size_) {}
+            team_scratch_work_size(team_scratch_work_size_),
+            nsolves(nsolves_), diag_system(diag_system_) {}
 
   template <typename MemberType>
   KOKKOS_INLINE_FUNCTION void operator()(const MemberType &member) const{ 
@@ -112,7 +115,8 @@ struct BGMRTeamFunctor {
 
     // declare operator for Matrix-free operations on the linear system
     using Operator = Impl::JacvecFDTeam<RHSType, PreconType>;
-    Operator A(f_slice, precon, y0_i, f_y0_i, gamma, ewt_i, y_shift, f_shift, u);
+    Operator A(f_slice, precon, y0_i, f_y0_i, gamma, ewt_i, y_shift, f_shift, u,
+                i_sys == diag_system, nsolves);
         
     // GMRES expects the 2D array versions
     KokkosBatched::TeamVectorGMRES<MemberType>::template invoke<Operator, real_type_2d_view_type>(
@@ -153,15 +157,15 @@ struct SUNLinearSolverContent_BatchedGMRES
     ordinal_type team_scratch_work_size = 0;
     ordinal_type last_flag;
     real_type resnorm;
-
-    /*
+    
     // Diagnostic parameters for dumping state at a given solve
     long nsolves = 0;        
+    bool verbose = false;    // diagnostic printing; off by default, set from the driver
+    /*
     std::string dump_file = "";
     long        dump_solve = -1;      // which solve index to capture, <0 disables
     real_type   dump_rtol = 0, dump_atol = 0;
     bool        dumped = false;
-    bool verbose = false;    // diagnostic printing; off by default, set from the driver
     */
 
     void* cvode_mem;
@@ -378,12 +382,11 @@ struct SUNLinearSolverContent_BatchedGMRES
         handle.set_tolerance(tol/bnorm_max);
         handle.reset(); // reset the iteration numbers and residual norms
 
-        /*
+        
         // Diagnostic 
         static const long diag_solve  = std::getenv("BGMR_DIAG_SOLVE")  ? std::atol(std::getenv("BGMR_DIAG_SOLVE"))  : -1;
         static const int  diag_system = std::getenv("BGMR_DIAG_SYSTEM") ? std::atoi(std::getenv("BGMR_DIAG_SYSTEM")) : 0;
         const int diag_sys = (nsolves == diag_solve) ? diag_system : -1;
-        */
 
         // Branch solve approach on the appropriate preconditioner 
         if (pretype == SUN_PREC_RIGHT){
@@ -398,7 +401,7 @@ struct SUNLinearSolverContent_BatchedGMRES
             // Create GMRES functor
             BGMRTeamFunctor<Impl::AerosolChemistryRHS<problem_type>, PreconType> functor(
                 rhs_object, precon_object, y0_2d, delta_2d, fy0_2d, b_2d, gamma, ewt_2d, 
-                handle, team_scratch_work_size, verbose, nsolves, diag_sys);
+                handle, team_scratch_work_size, nsolves, diag_sys);
             
             // GMRES solve in parallel over teams
             Kokkos::parallel_for(policy, functor);
@@ -410,7 +413,7 @@ struct SUNLinearSolverContent_BatchedGMRES
             // Create GMRES functor
             BGMRTeamFunctor<Impl::AerosolChemistryRHS<problem_type>, PreconType> functor(
                 rhs_object, precon_object, y0_2d, delta_2d, fy0_2d, b_2d, gamma, ewt_2d, 
-                handle, team_scratch_work_size, verbose, nsolves, diag_sys);
+                handle, team_scratch_work_size, nsolves, diag_sys);
             
             // GMRES solve in parallel over teams
             Kokkos::parallel_for(policy, functor);

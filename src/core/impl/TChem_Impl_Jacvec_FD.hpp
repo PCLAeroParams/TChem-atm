@@ -6,7 +6,16 @@
 namespace TChem {
 namespace Impl {
 
-template <typename RHSFunctor>
+// Struct for computing the linear system solved by Kokkos Kernels Batched GMRES
+// via matrix-free difference quotient evaluation of the Jacobian-vector product.
+// The struct apply() operates on individual system slices of the batch that KK BGMR 
+// solves. To compute the difference quotient, the perturbation step size sigma is determined 
+// in the same manner as SUNDIALS, whereby sigma = 1 / || u ||_WRMS where the WRMS norm 
+// weights u by the error weights of x provided by CVODE. 
+// The system is first unscaled and then preconditioned by the templated preconditioner 
+// before computing the Jacobian-vector product and returning the re-scaled linear system
+// LHS I-gamma*Ju in Y.  
+template <typename RHSType, typename PreconType>
 struct JacvecFDTeam{
 
     // typedefs

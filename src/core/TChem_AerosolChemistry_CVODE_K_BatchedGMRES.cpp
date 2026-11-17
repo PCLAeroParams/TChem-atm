@@ -10,6 +10,7 @@ SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y,
                                        Impl::AerosolChemistryRHS<SUNLinearSolverContent_BatchedGMRES::problem_type> rhs_object,
                                        ordinal_type system_size, 
                                        ordinal_type n_systems,
+                                       int pretype,
                                        ordinal_type gmres_max_iter,
                                        SUNLinearSolverContent_BatchedGMRES::policy_type policy,
                                        SUNContext sunctx)
@@ -23,6 +24,12 @@ SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y,
     return nullptr; 
   }
 
+  /* check for legal pretype; if illegal use defaults */
+  if ((pretype != SUN_PREC_NONE) && (pretype != SUN_PREC_RIGHT))
+  {
+    pretype = SUN_PREC_NONE;
+  }
+
   if (gmres_max_iter <= 0) { 
     gmres_max_iter = BGMR_MAXITER_DEFAULT; 
   }
@@ -30,10 +37,7 @@ SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y,
   // Create content
   SUNLinearSolverContent_BatchedGMRES* content;
   content = new SUNLinearSolverContent_BatchedGMRES(rhs_object, 
-                                                    system_size, 
-                                                    n_systems,
-                                                    gmres_max_iter,
-                                                    policy);
+    system_size, n_systems, gmres_max_iter, pretype, policy);
 
 
   /* Create linear solver */
@@ -47,11 +51,11 @@ SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y,
   S->ops->gettype           = SUNLinSolGetType_BGMR;
   S->ops->getid             = SUNLinSolGetID_BGMR;
   S->ops->setatimes         = SUNLinSolSetATimes_BGMR;              // using to set cvode_mem off AData
-  S->ops->setpreconditioner = NULL;                                 // not supported yet
+  S->ops->setpreconditioner = SUNLinSolSetPreconditioner_BGMR;      // set pointers for Psetup, PSolve, Pdata
   S->ops->setscalingvectors = SUNLinSolSetScalingVectors_BGMR;      // just uses s1
   S->ops->setzeroguess      = SUNLinSolSetZeroGuess_BGMR;           // no-op shim, return success
   S->ops->initialize        = SUNLinSolInitialize_BGMR;             // calls SUNLinearSolverContent_BatchedGMRES::init()
-  S->ops->setup             = SUNLinSolSetup_BGMR;                  // no-op shim, return success
+  S->ops->setup             = SUNLinSolSetup_BGMR;                  // setup the preconditioner if user psetup routine passed to CVODE
   S->ops->solve             = SUNLinSolSolve_BGMR;                  // calls SUNLinearSolverContent_BatchedGMRES::solve()
   S->ops->numiters          = SUNLinSolNumIters_BGMR;               // return SUNLinearSolverContent_BatchedGMRES::numiters
   S->ops->resnorm           = SUNLinSolResNorm_BGMR;                // return SUNLinearSolverContent_BatchedGMRES::resnorm
@@ -129,8 +133,40 @@ SUNErrCode SUNLinSolInitialize_BGMR(SUNLinearSolver S)
   return content->init();
 }
 
-int SUNLinSolSetup_BGMR([[maybe_unused]] SUNLinearSolver S, [[maybe_unused]] SUNMatrix A)
+SUNErrCode SUNLinSolSetPreconditioner_BGMR(SUNLinearSolver S, void* PData,
+                                           SUNPSetupFn Psetup,
+                                           SUNPSolveFn Psolve)
 {
+  /* set function pointers to integrator-supplied Psetup and PSolve
+     routines and data, and return with success */
+  BGMR_CONTENT(S)->Psetup = Psetup;
+  BGMR_CONTENT(S)->Psolve = Psolve;
+  BGMR_CONTENT(S)->PData  = PData;
+  return SUN_SUCCESS;
+}
+
+int SUNLinSolSetup_BGMR(SUNLinearSolver S, [[maybe_unused]] SUNMatrix A)
+{
+  int status = SUN_SUCCESS;
+
+  /* Set shortcuts to BGMR memory structures */
+  SUNPSetupFn Psetup = BGMR_CONTENT(S)->Psetup;
+  void* PData        = BGMR_CONTENT(S)->PData;
+
+  /* no solver-specific setup is required, but if user-supplied
+     Psetup routine exists, call that here */
+  if (Psetup != NULL)
+  {
+    status = Psetup(PData);
+    if (status != 0)
+    {
+      // options, SUNLS_PSET_FAIL_UNREC or SUNLS_PSET_FAIL_REC
+      // NOTE: schur_psetup only returns 0 so this isnt a possible branch currently
+      return (SUNLS_PSET_FAIL_UNREC);
+    }
+  }
+
+  /* return with success */
   return SUN_SUCCESS;
 }
 

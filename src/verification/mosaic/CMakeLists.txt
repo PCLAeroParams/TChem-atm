@@ -205,6 +205,11 @@ SET(TEST_LIST
     ASTEM_flux_wet_case3b_input_ts_0
     ASTEM_flux_wet_case4_input_ts_0
     ASTEM_flux_wet_input_ts_0
+    degas_tiny_nh4no3_input_ts_0
+    degas_tiny_nh4cl_input_ts_0
+    ASTEM_flux_mix_case4a_input_ts_0
+    ASTEM_flux_mix_case4b_input_ts_0
+    ASTEM_flux_mix_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -296,6 +301,11 @@ SET(TEST_BASELINE
     ASTEM_flux_wet_case3b_output_ts_0
     ASTEM_flux_wet_case4_output_ts_0
     ASTEM_flux_wet_output_ts_0
+    degas_tiny_nh4no3_output_ts_0
+    degas_tiny_nh4cl_output_ts_0
+    ASTEM_flux_mix_case4a_output_ts_0
+    ASTEM_flux_mix_case4b_output_ts_0
+    ASTEM_flux_mix_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -388,6 +398,11 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # ASTEM_flux_wet_case3b_output_ts_0
     ${DEFAULT_TOL} # ASTEM_flux_wet_case4_output_ts_0
     ${DEFAULT_TOL} # ASTEM_flux_wet_output_ts_0
+    ${DEFAULT_TOL} # degas_tiny_nh4no3_output_ts_0
+    ${DEFAULT_TOL} # degas_tiny_nh4cl_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_mix_case4a_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_mix_case4b_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_mix_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

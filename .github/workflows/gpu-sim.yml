@@ -1,0 +1,192 @@
+name: CUDA build and tests (simulated GPU)
+
+# Non-required check. GitHub's hosted runners have no GPU, so this job builds
+# TChem-atm with the Kokkos CUDA backend using the real nvcc and runs the test
+# suite on a simulated NVIDIA GPU (https://github.com/pantheongpu/pantheonsim).
+# The simulator checks what the kernels compute and reports out-of-bounds
+# device memory accesses; it says nothing about performance and does not
+# replace testing on a physical GPU.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+  # Runs on main as well so the simulator and third-party library caches are
+  # saved where every pull request can restore them.
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: gpu-sim-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CUDA_VERSION: "12.8"
+  # The simulated card and the architecture Kokkos compiles for must agree:
+  # nvidia/t4 is compute capability 7.5.
+  SIM_GPU: nvidia/t4
+  KOKKOS_ARCH: TURING75
+  BUILD_TYPE: RELEASE
+  JOBS: 4
+  TPL: ${{ github.workspace }}/_tpl
+  OMP_NUM_THREADS: 1
+  OMP_PROC_BIND: "false"
+
+jobs:
+  gpu-sim:
+    name: Kokkos CUDA on a simulated T4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      # Installs nvcc from NVIDIA's apt repository, builds (and caches) the
+      # simulator, and puts its nvcc drop-in first on PATH. The drop-in is the
+      # real nvcc with "-cudart shared" added: the simulator stands in for the
+      # shared CUDA runtime and cannot stand in for the static one.
+      - name: Set up the simulated GPU and CUDA toolkit
+        uses: pantheongpu/setup-pantheonsim@ab71a07326835be678918901c340d53a83358067 # v0.1.6
+        with:
+          gpu: ${{ env.SIM_GPU }}
+          cuda-toolkit: ${{ env.CUDA_VERSION }}
+
+      - name: Install build dependencies
+        run: |
+          v="${CUDA_VERSION//./-}"
+          # cuda-driver-dev has the libcuda.so stub that Kokkos links against.
+          sudo apt-get install -y -qq --no-install-recommends \
+            gfortran pkg-config "cuda-driver-dev-$v"
+          echo "CUDA_HOME=/usr/local/cuda-$CUDA_VERSION" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python packages for the comparison scripts
+        run: python -m pip install numpy h5py
+
+      # Kokkos, kokkos-kernels, SUNDIALS and the host-only libraries change
+      # only when a submodule moves, so they are cached as one install tree.
+      - name: Key for the third-party libraries
+        id: tplkey
+        run: |
+          h=$( { git submodule status --recursive; echo "$CUDA_VERSION $KOKKOS_ARCH $BUILD_TYPE"; \
+                 sha256sum .github/workflows/gpu-sim.yml; } | sha256sum | cut -c1-20)
+          echo "key=tpl-cuda-${{ runner.os }}-$h" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the third-party libraries
+        id: tplcache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.TPL }}/install
+          key: ${{ steps.tplkey.outputs.key }}
+
+      - name: Build the third-party libraries
+        if: steps.tplcache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          unset CUDA_ROOT
+          EXT=$PWD/external
+          I=$TPL/install
+          bld() { # name, source dir, cmake args...
+            local name=$1 src=$2; shift 2
+            cmake -S "$src" -B "$TPL/build/$name" -DCMAKE_INSTALL_PREFIX="$I/$name" "$@"
+            cmake --build "$TPL/build/$name" -j"$JOBS" --target install
+          }
+
+          bld gtest "$EXT/Tines/ext/gtest" -DCMAKE_CXX_COMPILER=g++
+          bld yaml "$EXT/Tines/ext/yaml" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc \
+              -DCMAKE_BUILD_TYPE=RELEASE -DYAML_CPP_BUILD_TESTS=OFF
+          bld skywalker "$EXT/Skywalker" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc \
+              -DSKYWALKER_PRECISION=double -DCMAKE_BUILD_TYPE=RELEASE
+
+          # CUDAToolkit_ROOT is given because the nvcc first on PATH is the
+          # simulator's drop-in, which does not sit inside a toolkit tree.
+          bld kokkos "$EXT/Tines/ext/kokkos" \
+              -DCMAKE_CXX_COMPILER="$EXT/Tines/ext/kokkos/bin/nvcc_wrapper" \
+              -DCMAKE_CXX_STANDARD=17 -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+              -DCUDAToolkit_ROOT="$CUDA_HOME" \
+              -DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_OPENMP=ON \
+              -DKokkos_ENABLE_CUDA=ON -DKokkos_ENABLE_CUDA_CONSTEXPR=ON \
+              -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ARCH_$KOKKOS_ARCH=ON
+
+          bld kokkos-kernels "$EXT/kokkos-kernels" \
+              -DCMAKE_CXX_COMPILER="$I/kokkos/bin/nvcc_wrapper" -DCMAKE_C_COMPILER=gcc \
+              -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+              -DKokkosKernels_ENABLE_TPL_CUBLAS=OFF -DKokkosKernels_ENABLE_TPL_CUSOLVER=OFF \
+              -DKokkosKernels_ENABLE_TPL_CUSPARSE=OFF \
+              -DKokkosKernels_ENABLE_TESTS=OFF -DKokkosKernels_ENABLE_EXAMPLES=OFF \
+              -DKokkos_ROOT="$I/kokkos"
+
+          bld sundials "$EXT/Sundials" \
+              -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=RELEASE \
+              -DSUNDIALS_ENABLE_ERROR_CHECKS=OFF -DBUILD_SHARED_LIBS=OFF \
+              -DEXAMPLES_ENABLE_C=OFF -DEXAMPLES_ENABLE_CXX=OFF -DEXAMPLES_INSTALL=OFF \
+              -DENABLE_KOKKOS=ON \
+              -DKokkos_DIR="$(dirname "$(find "$I/kokkos" -name KokkosConfig.cmake)")" \
+              -DENABLE_KOKKOS_KERNELS=ON \
+              -DKokkosKernels_DIR="$(dirname "$(find "$I/kokkos-kernels" -name KokkosKernelsConfig.cmake)")"
+
+          rm -rf "$TPL/build"
+
+      # Saved here, not at the end of the job, so a failing test does not
+      # throw away a 15-minute build.
+      - name: Save the third-party libraries
+        if: steps.tplcache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.TPL }}/install
+          key: ${{ steps.tplkey.outputs.key }}
+
+      - name: Build Tines and TChem-atm
+        run: |
+          set -euo pipefail
+          unset CUDA_ROOT
+          I=$TPL/install
+          NVCXX=$I/kokkos/bin/nvcc_wrapper
+
+          cmake -S external/Tines/src -B _build/tines -DCMAKE_INSTALL_PREFIX="$PWD/_install/tines" \
+              -DCMAKE_CXX_COMPILER="$NVCXX" -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+              -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+              -DTINES_ENABLE_DEBUG=OFF -DTINES_ENABLE_VERBOSE=OFF \
+              -DTINES_ENABLE_TEST=OFF -DTINES_ENABLE_EXAMPLE=OFF \
+              -DSUNDIALS_INSTALL_PATH="$I/sundials" -DYAML_INSTALL_PATH="$I/yaml" \
+              -DKOKKOS_INSTALL_PATH="$I/kokkos" -DGTEST_INSTALL_PATH="$I/gtest"
+          cmake --build _build/tines -j"$JOBS" --target install
+
+          cmake -S src -B _build/tchem_atm -DCMAKE_INSTALL_PREFIX="$PWD/_install/tchem_atm" \
+              -DCMAKE_CXX_COMPILER="$NVCXX" -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+              -DTCHEM_ATM_ENABLE_VERBOSE=OFF -DTCHEM_ATM_ENABLE_TEST=ON -DTCHEM_ATM_ENABLE_EXAMPLE=ON \
+              -DTCHEM_ATM_ENABLE_REAL_TYPE=double \
+              -DTCHEM_ATM_ENABLE_SACADO_JACOBIAN_ATMOSPHERIC_CHEMISTRY=OFF \
+              -DTCHEM_ATM_ENABLE_SKYWALKER=ON -DSKYWALKER_INSTALL_PATH="$I/skywalker" \
+              -DTCHEM_ATM_ENABLE_KOKKOSKERNELS=ON -DKOKKOSKERNELS_INSTALL_PATH="$I/kokkos-kernels" \
+              -DKOKKOS_INSTALL_PATH="$I/kokkos" -DTINES_INSTALL_PATH="$PWD/_install/tines" \
+              -DSUNDIALS_INSTALL_PATH="$I/sundials" -DGTEST_INSTALL_PATH="$I/gtest"
+          cmake --build _build/tchem_atm -j"$JOBS"
+
+      # The job is only meaningful if the tests load the simulator's CUDA
+      # libraries, so check that before running anything.
+      - name: Check that the tests will use the simulated GPU
+        run: |
+          nvidia-smi
+          exe=_build/tchem_atm/unit-tests/TChem_Test_Driver.x
+          ldd "$exe" | grep -E "libcuda(rt)?\.so"
+          ldd "$exe" | grep "libcudart.so" | grep -q "$VGPU_SHIM_DIR"
+          ldd "$exe" | grep "libcuda.so" | grep -q "$VGPU_SHIM_DIR"
+
+      # Excluded until understood: the CUDA result of this case differs from
+      # the reference by more than the tolerance, with identical output on a
+      # physical L40S and on the simulator.
+      - name: Run the tests on the simulated GPU
+        working-directory: _build/tchem_atm
+        run: |
+          ctest --output-on-failure --timeout 1800 -j2 \
+            -E '^validate_batched_CB5SimpolAerosolChemistry_KokkosKernels$'

@@ -223,6 +223,8 @@ void ASTEM_flux_mix_case4b(Ensemble *ensemble);
 
 void ASTEM_flux_mix(Ensemble *ensemble);
 
+void ASTEM_flux_soa(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -434,6 +436,8 @@ int main(int argc, char **argv) {
       ASTEM_flux_mix_case4b(ensemble);
     } else if (func_name == "ASTEM_flux_mix") {
       ASTEM_flux_mix(ensemble);
+    } else if (func_name == "ASTEM_flux_soa") {
+      ASTEM_flux_soa(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

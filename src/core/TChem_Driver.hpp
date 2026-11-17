@@ -97,6 +97,7 @@ public:
    void doTimestep(const double del_t);
 
    // Time integration information
+   ordinal_type _linear_solver; // Linear solver attached to CVODE
    real_type _atol_newton; // Absolute tolerance used in Newton solver
    real_type _rtol_newton; // Relative tolerance used in Newton solver
    real_type _dtmin; // Minimum time step size (s).

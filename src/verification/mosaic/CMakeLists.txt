@@ -198,8 +198,8 @@ SET(TEST_BASELINE
     form_namsa_output_ts_0
     form_nano3_output_ts_0
     degas_nh3_output_ts_0
-    degas_hcl_output_ts_0
     degas_hno3_output_ts_0
+    degas_hcl_output_ts_0
     form_hcl_output_ts_0
     form_hno3_output_ts_0
     form_msa_output_ts_0
@@ -277,8 +277,8 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_namsa_output_ts_0
     ${DEFAULT_TOL} # form_nano3_output_ts_0
     ${DEFAULT_TOL} # degas_nh3_output_ts_0
-    ${DEFAULT_TOL} # degas_hcl_output_ts_0
     ${DEFAULT_TOL} # degas_hno3_output_ts_0
+    ${DEFAULT_TOL} # degas_hcl_output_ts_0
     ${DEFAULT_TOL} # form_hcl_output_ts_0
     ${DEFAULT_TOL} # form_hno3_output_ts_0
     ${DEFAULT_TOL} # form_msa_output_ts_0

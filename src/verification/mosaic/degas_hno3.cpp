@@ -15,7 +15,6 @@ void degas_hno3(Ensemble *ensemble) {
     const auto jp_arr = input.get_array("jp");
     const auto electrolyte_arr = input.get_array("electrolyte");
     const auto store_arr = input.get_array("store");
-    const auto aer_curr_arr = input.get_array("aer_curr");
     const auto aer_arr = input.get_array("aer");
     const auto gas_arr = input.get_array("gas");
 
@@ -29,9 +28,6 @@ void degas_hno3(Ensemble *ensemble) {
 
     real_type_1d_view electrolyte("electrolyte", mmd.nelectrolyte);
     verification::convert_1d_vector_to_1d_view_device(electrolyte_arr, electrolyte);
-
-    real_type_1d_view aer_curr("aer_curr", mmd.naer);
-    verification::convert_1d_vector_to_1d_view_device(aer_curr_arr, aer_curr);
 
     real_type_1d_view aer_solid("aer_solid", mmd.naer);
     real_type_1d_view aer_liquid("aer_liquid", mmd.naer);
@@ -47,10 +43,16 @@ void degas_hno3(Ensemble *ensemble) {
     verification::convert_1d_vector_to_1d_view_device(aer_arr_2d[1], aer_liquid);
     verification::convert_1d_vector_to_1d_view_device(aer_arr_2d[2], aer_total);
 
+    // aer_curr is aer(:,jp,ibin) in MOSAIC, i.e. the same memory as the jp phase,
+    // as in the callers (form_electrolytes, conform_electrolytes)
+    const ordinal_type jp_phase = static_cast<ordinal_type>(jp_arr[0]);
+    const real_type_1d_view aer_curr = jp_phase == mmd.jsolid  ? aer_solid  :
+                                       jp_phase == mmd.jliquid ? aer_liquid : aer_total;
+
     real_type_1d_view gas("gas", mmd.ngas_volatile);
     verification::convert_1d_vector_to_1d_view_device(gas_arr, gas);
 
-    std::string profile_name ="Verification_test_form_nacl";
+    std::string profile_name ="Verification_test_degas_hno3";
     using policy_type =
           typename TChem::UseThisTeamPolicy<TChem::exec_space>::type;
     const auto exec_space_instance = TChem::exec_space();

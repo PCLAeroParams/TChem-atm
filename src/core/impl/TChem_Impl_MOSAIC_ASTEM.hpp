@@ -64,7 +64,7 @@
 
     // also do it for jtotal
     if(jp != mosaic.jtotal) {
-      aer_curr(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+      aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
     }
 
     electrolyte(mosaic.jhcl) = 0.0;

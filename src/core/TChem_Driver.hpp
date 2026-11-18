@@ -32,6 +32,8 @@ public:
    using real_type_2d_view_host = TChem::real_type_2d_view_host;
    using real_type_1d_view_device = TChem::real_type_1d_view;
    using real_type_2d_view_device = TChem::real_type_2d_view;
+   using real_type_3d_view_device = TChem::real_type_3d_view;
+   using real_type_4d_view_device = TChem::real_type_4d_view;
    using ordinal_type_1d_view_host = TChem::ordinal_type_1d_view_host;
    using ordinal_type_1d_view_device = TChem::ordinal_type_1d_view;
    using host_exec_space = Kokkos::DefaultHostExecutionSpace;

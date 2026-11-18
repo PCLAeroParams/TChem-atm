@@ -110,6 +110,7 @@ add_executable(${DRIVER_NAME}.x
                ASTEM_flux_mix_case4b.cpp
                ASTEM_flux_mix.cpp
                ASTEM_flux_soa.cpp
+               ASTEM_update_phase_eqblm.cpp
 )
 
 

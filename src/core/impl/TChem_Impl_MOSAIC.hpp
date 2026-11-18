@@ -61,6 +61,8 @@ struct MOSAIC{
 
   #include "TChem_Impl_MOSAIC_ASTEM_flux_soa.hpp"
 
+  #include "TChem_Impl_MOSAIC_ASTEM_semi_volatiles.hpp"
+
 };
 
 } // namespace Impl

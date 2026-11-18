@@ -269,6 +269,22 @@ void TChem::Driver::createDeviceWorkViews() {
   _pressure_device = real_type_1d_view_device("pressure_device", _nBatch);
   _n_particles_track_device =
       ordinal_type_1d_view_device("n_particles_track_device", _nBatch);
+
+  // Preconditioner-related views
+  // TODO declare these views in the driver hpp
+  const ordinal_type n_active_gas_species = _kmcd_host.nSpec - _kmcd_host.nConstSpec;
+  const ordinal_type n_condensible_gas_species = _amcd_host.nSimpol_tran; // TODO this currently gives the # of condensible species for the SIMPOL mechanism, should replace with general condensible species count
+  // Jacobian blocks
+  _Jgg_device = real_type_3d_view_device("Jgg_device", _nBatch, n_active_gas_species, n_active_gas_species);
+  _Jgp_device = real_type_4d_view_device("Jgp_device", _nBatch, _amcd_host.nParticles, n_condensible_gas_species, _amcd_host.nSpec);
+  _Jpg_device = real_type_4d_view_device("Jpg_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, n_condensible_gas_species);
+  _Jpp_device = real_type_4d_view_device("Jpp_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, _amcd_host.nSpec);
+  // LU factor views 
+  _D_device = real_type_4d_view_device("D_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, _amcd_host.nSpec);
+  _S_device = real_type_3d_view_device("S_device", _nBatch, n_active_gas_species, n_active_gas_species);
+  // Buffer for intermediate matrix-product in Schur-complement calculation
+  _W_device = real_type_4d_view_device("W_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, n_condensible_gas_species);
+  
 }
 
 /**

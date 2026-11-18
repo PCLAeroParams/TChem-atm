@@ -166,7 +166,7 @@ int AerosolChemistry_CVODE_K::schur_psetup(sunrealtype t, N_Vector y, N_Vector f
   auto udata = static_cast<UserData*>(user_data);
 
   const auto n_systems  = udata->n_systems;
-  const auto policy = udata->policy;
+  auto policy = udata->policy; // non-const needed for policy.set_scratch_size
   const auto kmcd = udata->kmcd;
   const auto amcd = udata->amcd;
   const auto system_size = udata->system_size;
@@ -184,22 +184,12 @@ int AerosolChemistry_CVODE_K::schur_psetup(sunrealtype t, N_Vector y, N_Vector f
   const auto D = udata->D;
   const auto S = udata->S;
   const auto W = udata->W;
-  const auto aero_f_2d = udata->aero_f_2d;
-  const auto gas_f_3d = udata->gas_f_3d;
-  const auto y_perturb_2d = udata->y_perturb_2d; 
-  const auto f_perturb_2d = udata->f_perturb_2d;
-  const auto aero_f_perturb_2d = udata->aero_f_perturb_2d;
-  const auto gas_f_perturb_3d = udata->gas_f_perturb_3d;
-  const auto f_gasonly_2d = udata->f_gasonly_2d;
   const auto cvode_mem = udata->cvode_mem;
 
   udata->gamma = gamma;
 
   real_type_2d_view_type vals(N_VGetDeviceArrayPointer(y), n_systems, system_size);
   real_type_2d_view_type rhs(N_VGetDeviceArrayPointer(fy), n_systems, system_size);
-
-  //const ordinal_type level = 1;
-  //const ordinal_type per_team_extent = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(kmcd, amcd);
 
   N_Vector ewt_nvec = N_VClone(y);
   CVodeGetErrWeights(cvode_mem, ewt_nvec);
@@ -208,41 +198,45 @@ int AerosolChemistry_CVODE_K::schur_psetup(sunrealtype t, N_Vector y, N_Vector f
   SchurPrecon preconditioner(rhs, vals, aero_num_conc, const_tracers, temperature, 
     pressure, kmcd, amcd, n_particles_track, Jgg, Jgp, Jpg, Jpp, D, S, W, gamma);
 
-  // initialize y_perturb_2d with vals if stale jacobian
+  // Reserve scratch memory for state and RHS views
+  ordinal_type scratch_level = 1;
+  // [ regular rhs, just gas work | y_perturb | f_perturb | f_gasonly | aero_f | 
+  //   aero_f_perturb | gas_f | gas_f_perturb]
+  ordinal_type gas_rhs_work_size = 0;
+  ordinal_type y_perturb_size = 0; 
+  ordinal_type f_perturb_size = 0; 
+  ordinal_type f_gasonly_size = 0;
+  ordinal_type aero_f_size = 0; 
+  ordinal_type aero_f_perturb_size = 0;
+  ordinal_type gas_f_size_dim1 = 0;
+  ordinal_type gas_f_size_dim2 = 0;
+  ordinal_type gas_f_perturb_size_dim1 = 0;
+  ordinal_type gas_f_perturb_size_dim2 = 0;
+  ordinal_type team_scratch_work_size = 0; // total scratch size needed
+
+  preconditioner.getWorkSpaceSize(gas_rhs_work_size, y_perturb_size, f_perturb_size, 
+    f_gasonly_size, aero_f_size, aero_f_perturb_size, gas_f_size_dim1, gas_f_size_dim2,
+    gas_f_perturb_size_dim1, gas_f_perturb_size_dim2, team_scratch_work_size);
+
+  const size_t team_scratch_work_bytes =
+        TChem::Scratch<real_type_1d_view_type>::shmem_size(team_scratch_work_size);
+  policy.set_scratch_size(scratch_level, Kokkos::PerTeam(team_scratch_work_bytes));
+  
   if (!jok){
-    Kokkos::parallel_for(policy, 
-      KOKKOS_LAMBDA(const typename policy_type::member_type& member){
-        const ordinal_type i_sys = member.league_rank();
-        Kokkos::parallel_for(Kokkos::TeamVectorRange(member, system_size), 
-          [&] (const ordinal_type& i_spec){
-            y_perturb_2d(i_sys, i_spec) = vals(i_sys, i_spec);
-        });
-    });
     *jcurPtr = SUNTRUE;
   } else {
     *jcurPtr = SUNFALSE;
   }
   
   const std::string profile_name = "TChem::AerosolChemistry_CVODE_K::schur_psetup";
-  
   Kokkos::Profiling::pushRegion(profile_name);
   Kokkos::parallel_for(profile_name, policy, 
     KOKKOS_LAMBDA(const typename policy_type::member_type& member){
 
       const ordinal_type i_sys = member.league_rank();
-
-      // team-level subviews
       real_type_1d_view_type ewt_isys = Kokkos::subview(ewt, i_sys, Kokkos::ALL());
-      real_type_1d_view_type y_perturb = Kokkos::subview(y_perturb_2d, i_sys, Kokkos::ALL());
-      real_type_1d_view_type f_perturb = Kokkos::subview(f_perturb_2d, i_sys, Kokkos::ALL());
-      real_type_1d_view_type f_gasonly = Kokkos::subview(f_gasonly_2d, i_sys, Kokkos::ALL());
-      real_type_1d_view_type aero_f = Kokkos::subview(aero_f_2d, i_sys, Kokkos::ALL());
-      real_type_2d_view_type gas_f = Kokkos::subview(gas_f_3d, i_sys, Kokkos::ALL(), Kokkos::ALL());
-      real_type_1d_view_type aero_f_perturb = Kokkos::subview(aero_f_perturb_2d, i_sys, Kokkos::ALL());
-      real_type_2d_view_type gas_f_perturb = Kokkos::subview(gas_f_perturb_3d, i_sys, Kokkos::ALL(), Kokkos::ALL());
 
-      preconditioner.team_setup(member, ewt_isys, aero_f, gas_f, y_perturb, 
-          f_perturb, f_gasonly, aero_f_perturb, gas_f_perturb, jok);
+      preconditioner.team_setup(member, ewt_isys, jok);
 
   });
   Kokkos::fence();

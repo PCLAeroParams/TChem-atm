@@ -58,14 +58,11 @@ void ASTEM_update_phase_eqblm(Ensemble *ensemble) {
     const auto phi_salt = read_view("phi_salt", mmd.nsalt);
     const auto flux_sl = read_view("flux_sl", mmd.nsalt);
     const auto sat_ratio = read_view("sat_ratio", mmd.nsalt);
-    // per-bin in MOSAIC (ma(:,ibin) etc.): compute_activities only sets gam and activity
-    // for the electrolytes present, so the others keep their earlier values
     const auto ma = read_view("ma", mmd.nanion);
     const auto mc_view = read_view("mc", mmd.ncation);
     const auto gam = read_view("gam", mmd.nelectrolyte);
     const auto activity = read_view("activity", mmd.nelectrolyte);
 
-    // work arrays (local or recomputed before use in MOSAIC)
     real_type_1d_view hsalt("hsalt", mmd.nsalt);
     real_type_1d_view phi_bar("phi_bar", mmd.nsalt);
     real_type_1d_view frac_salt_solid("frac_salt_solid", mmd.nsalt);

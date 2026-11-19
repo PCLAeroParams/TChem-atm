@@ -222,6 +222,7 @@ SET(TEST_LIST
     form_electrolytes_xt_one_input_ts_0
     conform_electrolytes_solid_phase_input_ts_0
     conform_electrolytes_xt_one_input_ts_0
+    ASTEM_semi_volatiles_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -326,6 +327,7 @@ SET(TEST_BASELINE
     form_electrolytes_xt_one_output_ts_0
     conform_electrolytes_solid_phase_output_ts_0
     conform_electrolytes_xt_one_output_ts_0
+    ASTEM_semi_volatiles_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -431,6 +433,7 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # form_electrolytes_xt_one_output_ts_0
     ${DEFAULT_TOL} # conform_electrolytes_solid_phase_output_ts_0
     ${DEFAULT_TOL} # conform_electrolytes_xt_one_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_semi_volatiles_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

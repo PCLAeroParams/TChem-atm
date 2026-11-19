@@ -6,14 +6,10 @@
 
 namespace TChem{
 
-SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y, 
-                                       Impl::AerosolChemistryRHS<SUNLinearSolverContent_BatchedGMRES::problem_type> rhs_object,
-                                       ordinal_type system_size, 
-                                       ordinal_type n_systems,
-                                       int pretype,
-                                       ordinal_type gmres_max_iter,
-                                       SUNLinearSolverContent_BatchedGMRES::policy_type policy,
-                                       SUNContext sunctx)
+SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y, int pretype, 
+  ordinal_type gmres_max_iter, ordinal_type system_size,  ordinal_type n_systems,
+  Impl::AerosolChemistryRHS<SUNLinearSolverContent_BatchedGMRES::problem_type> rhs_object,
+  SUNLinearSolverContent_BatchedGMRES::policy_type policy, SUNContext sunctx)
 {
   /* check that the supplied N_Vector supports all requisite operations */
   if (y == nullptr || y->ops->nvgetdevicearraypointer == nullptr || y->ops->nvgetlength == nullptr) {

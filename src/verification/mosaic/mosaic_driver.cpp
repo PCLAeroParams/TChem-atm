@@ -229,6 +229,8 @@ void ASTEM_update_phase_eqblm(Ensemble *ensemble);
 
 void ASTEM_calculate_dtmax(Ensemble *ensemble);
 
+void ASTEM_semi_volatiles(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -446,6 +448,8 @@ int main(int argc, char **argv) {
       ASTEM_update_phase_eqblm(ensemble);
     } else if (func_name == "ASTEM_calculate_dtmax") {
       ASTEM_calculate_dtmax(ensemble);
+    } else if (func_name == "ASTEM_semi_volatiles") {
+      ASTEM_semi_volatiles(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

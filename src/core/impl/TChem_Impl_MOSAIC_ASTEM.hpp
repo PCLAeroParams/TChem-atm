@@ -487,6 +487,446 @@
   } // absorb_tiny_nh4no3
 
   KOKKOS_INLINE_FUNCTION static
+  void degas_tiny_nh4no3(const MosaicModelData<DeviceType>& mosaic,
+                         const real_type_1d_view_type& aer_solid,
+                         const real_type_1d_view_type& aer_liquid,
+                         const real_type_1d_view_type& aer_total,
+                         const real_type_1d_view_type& gas,
+                         const real_type_1d_view_type& electrolyte_liquid) {
+
+    real_type small_amt = 0.01 * electrolyte_liquid(mosaic.jnh4no3);
+
+    aer_liquid(mosaic.inh4_a) = aer_liquid(mosaic.inh4_a) - small_amt;
+    aer_liquid(mosaic.ino3_a) = aer_liquid(mosaic.ino3_a) - small_amt;
+
+    // update jtotal
+    aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    aer_total(mosaic.ino3_a) = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+
+    // update gas
+    gas(mosaic.inh3_g)  = gas(mosaic.inh3_g)  + small_amt;
+    gas(mosaic.ihno3_g) = gas(mosaic.ihno3_g) + small_amt;
+
+    return;
+  } // degas_tiny_nh4no3
+
+  KOKKOS_INLINE_FUNCTION static
+  void degas_tiny_nh4cl(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& aer_solid,
+                        const real_type_1d_view_type& aer_liquid,
+                        const real_type_1d_view_type& aer_total,
+                        const real_type_1d_view_type& gas,
+                        const real_type_1d_view_type& electrolyte_liquid) {
+
+    real_type small_amt = 0.01 * electrolyte_liquid(mosaic.jnh4cl);
+
+    aer_liquid(mosaic.inh4_a) = aer_liquid(mosaic.inh4_a) - small_amt;
+    aer_liquid(mosaic.icl_a)  = aer_liquid(mosaic.icl_a)  - small_amt;
+
+    // update jtotal
+    aer_total(mosaic.inh4_a) = aer_solid(mosaic.inh4_a) + aer_liquid(mosaic.inh4_a);
+    aer_total(mosaic.icl_a)  = aer_solid(mosaic.icl_a)  + aer_liquid(mosaic.icl_a);
+
+    // update gas
+    gas(mosaic.inh3_g) = gas(mosaic.inh3_g) + small_amt;
+    gas(mosaic.ihcl_g) = gas(mosaic.ihcl_g) + small_amt;
+
+    return;
+  } // degas_tiny_nh4cl
+
+  KOKKOS_INLINE_FUNCTION static
+  void absorb_tiny_hno3(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& aer_solid,
+                        const real_type_1d_view_type& aer_liquid,
+                        const real_type_1d_view_type& aer_total,
+                        const real_type_1d_view_type& gas,
+                        const real_type& delta_hno3_max) {
+
+    real_type small_aer, small_amt, small_gas;
+
+    small_gas = 0.01 * delta_hno3_max;
+    small_aer = 0.01 * aer_liquid(mosaic.icl_a);
+
+    small_amt = min(small_gas, small_aer);
+
+    // absorb tiny hno3
+    aer_liquid(mosaic.ino3_a) = aer_liquid(mosaic.ino3_a) + small_amt;
+    aer_total(mosaic.ino3_a)  = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+    gas(mosaic.ihno3_g) = gas(mosaic.ihno3_g) - small_amt;
+
+    // degas tiny hcl
+    aer_liquid(mosaic.icl_a) = aer_liquid(mosaic.icl_a) - small_amt;
+    aer_total(mosaic.icl_a)  = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+
+    // update gas
+    gas(mosaic.ihcl_g) = gas(mosaic.ihcl_g) + small_amt;
+
+    return;
+  } // absorb_tiny_hno3
+
+  KOKKOS_INLINE_FUNCTION static
+  void absorb_tiny_hcl(const MosaicModelData<DeviceType>& mosaic,
+                       const real_type_1d_view_type& aer_solid,
+                       const real_type_1d_view_type& aer_liquid,
+                       const real_type_1d_view_type& aer_total,
+                       const real_type_1d_view_type& gas,
+                       const real_type& delta_hcl_max) {
+
+    real_type small_aer, small_amt, small_gas;
+
+    small_gas = 0.01 * delta_hcl_max;
+    small_aer = 0.01 * aer_liquid(mosaic.ino3_a);
+
+    small_amt = min(small_gas, small_aer);
+
+    // absorb tiny hcl
+    aer_liquid(mosaic.icl_a) = aer_liquid(mosaic.icl_a) + small_amt;
+    aer_total(mosaic.icl_a)  = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+    gas(mosaic.ihcl_g) = gas(mosaic.ihcl_g) - small_amt;
+
+    // degas tiny hno3
+    aer_liquid(mosaic.ino3_a) = aer_liquid(mosaic.ino3_a) - small_amt;
+    aer_total(mosaic.ino3_a)  = aer_solid(mosaic.ino3_a) + aer_liquid(mosaic.ino3_a);
+
+    // update gas
+    gas(mosaic.ihno3_g) = gas(mosaic.ihno3_g) + small_amt;
+
+    return;
+  } // absorb_tiny_hcl
+
+  KOKKOS_INLINE_FUNCTION static
+  void equilibrate_acids(const MosaicModelData<DeviceType>& mosaic,
+                         const real_type_1d_view_type& Keq_ll,
+                         const real_type_1d_view_type& Keq_gl,
+                         const real_type& water_a,
+                         const real_type_1d_view_type& gam,
+                         const real_type_1d_view_type& aer_solid,
+                         const real_type_1d_view_type& aer_liquid,
+                         const real_type_1d_view_type& aer_total,
+                         const real_type_1d_view_type& gas,
+                         const real_type_1d_view_type& total_species,
+                         real_type& tot_cl_in,
+                         const real_type_1d_view_type& electrolyte_liquid,
+                         const real_type_1d_view_type& electrolyte_total,
+                         real_type& electrolyte_sum_liquid,
+                         const real_type_1d_view_type& epercent_liquid,
+                         real_type& aer_sum_liquid,
+                         const real_type_1d_view_type& aer_percent_liquid,
+                         const real_type_1d_view_type& ma,
+                         const real_type_1d_view_type& mc,
+                         const real_type_1d_view_type& activity,
+                         const real_type_1d_view_type& store) {
+
+    if (gas(mosaic.ihcl_g)*gas(mosaic.ihno3_g) > 0.0) {
+      equilibrate_hcl_and_hno3(mosaic, Keq_ll, Keq_gl, water_a, gam,
+                               aer_solid, aer_liquid, aer_total, gas, total_species, tot_cl_in,
+                               electrolyte_liquid, electrolyte_total, electrolyte_sum_liquid,
+                               epercent_liquid, aer_sum_liquid, aer_percent_liquid,
+                               ma, mc, activity, store);
+    } else if (gas(mosaic.ihcl_g) > 0.0) {
+      equilibrate_hcl(mosaic, Keq_ll, Keq_gl, water_a, gam,
+                      aer_solid, aer_liquid, aer_total, gas, total_species, tot_cl_in,
+                      electrolyte_liquid, electrolyte_total, electrolyte_sum_liquid,
+                      epercent_liquid, aer_sum_liquid, aer_percent_liquid,
+                      ma, mc, activity, store);
+    } else if (gas(mosaic.ihno3_g) > 0.0) {
+      equilibrate_hno3(mosaic, Keq_ll, Keq_gl, water_a, gam,
+                       aer_solid, aer_liquid, aer_total, gas, total_species, tot_cl_in,
+                       electrolyte_liquid, electrolyte_total, electrolyte_sum_liquid,
+                       epercent_liquid, aer_sum_liquid, aer_percent_liquid,
+                       ma, mc, activity, store);
+    }
+
+    return;
+  } // equilibrate_acids
+
+  KOKKOS_INLINE_FUNCTION static
+  void equilibrate_hcl(const MosaicModelData<DeviceType>& mosaic,
+                       const real_type_1d_view_type& Keq_ll,
+                       const real_type_1d_view_type& Keq_gl,
+                       const real_type& water_a,
+                       const real_type_1d_view_type& gam,
+                       const real_type_1d_view_type& aer_solid,
+                       const real_type_1d_view_type& aer_liquid,
+                       const real_type_1d_view_type& aer_total,
+                       const real_type_1d_view_type& gas,
+                       const real_type_1d_view_type& total_species,
+                       real_type& tot_cl_in,
+                       const real_type_1d_view_type& electrolyte_liquid,
+                       const real_type_1d_view_type& electrolyte_total,
+                       real_type& electrolyte_sum_liquid,
+                       const real_type_1d_view_type& epercent_liquid,
+                       real_type& aer_sum_liquid,
+                       const real_type_1d_view_type& aer_percent_liquid,
+                       const real_type_1d_view_type& ma,
+                       const real_type_1d_view_type& mc,
+                       const real_type_1d_view_type& activity,
+                       const real_type_1d_view_type& store) {
+
+    real_type a, aerH, aerHSO4, aerSO4, b, c, dum, Kdash_hcl, mH, Tcl, W, Z;
+
+    aerSO4  = ma(mosaic.ja_so4) *water_a*1.e+9;
+    aerHSO4 = ma(mosaic.ja_hso4)*water_a*1.e+9;
+
+    Tcl = aer_liquid(mosaic.icl_a) + gas(mosaic.ihcl_g); // nmol/m^3(air)
+    Kdash_hcl = Keq_gl(3)*1.e+18/ats<real_type>::pow(gam(mosaic.jhcl), 2.); // (nmol^2/kg^2)/(nmol/m^3(air))
+    Z = (    aer_liquid(mosaic.ina_a)  +   // nmol/m^3(air)
+             aer_liquid(mosaic.inh4_a) +
+         2.0*aer_liquid(mosaic.ica_a) ) -
+        (2.0*aerSO4  +
+             aerHSO4 +
+             aer_liquid(mosaic.ino3_a) );
+
+    W = water_a; // kg/m^3(air)
+
+    Kdash_hcl = Keq_gl(3)*1.e+18/ats<real_type>::pow(gam(mosaic.jhcl), 2.); // (nmol^2/kg^2)/(nmol/m^3(air))
+    a = 1.0;
+    b = ((Kdash_hcl*W) + (Z/W))*1.e-9;
+    c = Kdash_hcl*(Z - Tcl)*1.e-18;
+
+    dum = ((b*b) - (4.0*a*c));
+    if (dum < 0.0) return; // no real root
+
+    if (c < 0.0) {
+      quadratic(a, b, c, mH); // mol/kg(water)
+      aerH = mH*W*1.e+9;
+      aer_liquid(mosaic.icl_a) = ((aerH) + (Z));
+    } else {
+      mH = ats<real_type>::sqrt(Keq_ll(2));
+    }
+
+    form_electrolytes(mosaic, mosaic.jliquid,
+                      aer_liquid, aer_solid, aer_liquid, aer_total, gas, store,
+                      electrolyte_liquid, total_species, tot_cl_in,
+                      electrolyte_sum_liquid, epercent_liquid, aer_sum_liquid, aer_percent_liquid);
+
+    // update gas phase concentration
+    gas(mosaic.ihcl_g) = ((Tcl) - (aer_liquid(mosaic.icl_a)));
+
+    // update the following molalities
+    ma(mosaic.ja_so4)  = 1.e-9*aerSO4/water_a;
+    ma(mosaic.ja_hso4) = 1.e-9*aerHSO4/water_a;
+    ma(mosaic.ja_no3)  = 1.e-9*aer_liquid(mosaic.ino3_a)/water_a;
+    ma(mosaic.ja_cl)   = 1.e-9*aer_liquid(mosaic.icl_a) /water_a;
+
+    mc(mosaic.jc_h)    = mH;
+    mc(mosaic.jc_ca)   = 1.e-9*aer_liquid(mosaic.ica_a) /water_a;
+    mc(mosaic.jc_nh4)  = 1.e-9*aer_liquid(mosaic.inh4_a)/water_a;
+    mc(mosaic.jc_na)   = 1.e-9*aer_liquid(mosaic.ina_a) /water_a;
+
+    // update the following activities
+    activity(mosaic.jhcl)   = mc(mosaic.jc_h)  *ma(mosaic.ja_cl) *
+                              ats<real_type>::pow(gam(mosaic.jhcl), 2.);
+    activity(mosaic.jhno3)  = mc(mosaic.jc_h)  *ma(mosaic.ja_no3)*
+                              ats<real_type>::pow(gam(mosaic.jhno3), 2.);
+    activity(mosaic.jnh4cl) = mc(mosaic.jc_nh4)*ma(mosaic.ja_cl) *
+                              ats<real_type>::pow(gam(mosaic.jnh4cl), 2.);
+
+    // also update xyz(jtotal)
+    aer_total(mosaic.icl_a) = aer_liquid(mosaic.icl_a) + aer_solid(mosaic.icl_a);
+
+    electrolyte_total(mosaic.jhcl) = electrolyte_liquid(mosaic.jhcl);
+
+    return;
+  } // equilibrate_hcl
+
+  KOKKOS_INLINE_FUNCTION static
+  void equilibrate_hno3(const MosaicModelData<DeviceType>& mosaic,
+                        const real_type_1d_view_type& Keq_ll,
+                        const real_type_1d_view_type& Keq_gl,
+                        const real_type& water_a,
+                        const real_type_1d_view_type& gam,
+                        const real_type_1d_view_type& aer_solid,
+                        const real_type_1d_view_type& aer_liquid,
+                        const real_type_1d_view_type& aer_total,
+                        const real_type_1d_view_type& gas,
+                        const real_type_1d_view_type& total_species,
+                        real_type& tot_cl_in,
+                        const real_type_1d_view_type& electrolyte_liquid,
+                        const real_type_1d_view_type& electrolyte_total,
+                        real_type& electrolyte_sum_liquid,
+                        const real_type_1d_view_type& epercent_liquid,
+                        real_type& aer_sum_liquid,
+                        const real_type_1d_view_type& aer_percent_liquid,
+                        const real_type_1d_view_type& ma,
+                        const real_type_1d_view_type& mc,
+                        const real_type_1d_view_type& activity,
+                        const real_type_1d_view_type& store) {
+
+    real_type a, aerH, aerHSO4, aerSO4, b, c, dum, Kdash_hno3, mH, Tno3, W, Z;
+
+    aerSO4  = ma(mosaic.ja_so4) *water_a*1.e+9;
+    aerHSO4 = ma(mosaic.ja_hso4)*water_a*1.e+9;
+
+    Tno3 = aer_liquid(mosaic.ino3_a) + gas(mosaic.ihno3_g); // nmol/m^3(air)
+    Kdash_hno3 = Keq_gl(2)*1.e+18/ats<real_type>::pow(gam(mosaic.jhno3), 2.); // (nmol^2/kg^2)/(nmol/m^3(air))
+    Z = (    aer_liquid(mosaic.ina_a)  +   // nmol/m^3(air)
+             aer_liquid(mosaic.inh4_a) +
+         2.0*aer_liquid(mosaic.ica_a) ) -
+        (2.0*aerSO4  +
+             aerHSO4 +
+             aer_liquid(mosaic.icl_a) );
+
+    W = water_a; // kg/m^3(air)
+
+    Kdash_hno3 = Keq_gl(2)*1.e+18/ats<real_type>::pow(gam(mosaic.jhno3), 2.); // (nmol^2/kg^2)/(nmol/m^3(air))
+    a = 1.0;
+    b = ((Kdash_hno3*W) + (Z/W))*1.e-9;
+    c = Kdash_hno3*(Z - Tno3)*1.e-18;
+
+    dum = ((b*b) - (4.0*a*c));
+    if (dum < 0.0) return; // no real root
+
+    if (c < 0.0) {
+      quadratic(a, b, c, mH); // mol/kg(water)
+      aerH = mH*W*1.e+9;
+      aer_liquid(mosaic.ino3_a) = ((aerH) + (Z));
+    } else {
+      mH = ats<real_type>::sqrt(Keq_ll(2));
+    }
+
+    form_electrolytes(mosaic, mosaic.jliquid,
+                      aer_liquid, aer_solid, aer_liquid, aer_total, gas, store,
+                      electrolyte_liquid, total_species, tot_cl_in,
+                      electrolyte_sum_liquid, epercent_liquid, aer_sum_liquid, aer_percent_liquid);
+
+    // update gas phase concentration
+    gas(mosaic.ihno3_g) = ((Tno3) - (aer_liquid(mosaic.ino3_a)));
+
+    // update the following molalities
+    ma(mosaic.ja_so4)  = 1.e-9*aerSO4/water_a;
+    ma(mosaic.ja_hso4) = 1.e-9*aerHSO4/water_a;
+    ma(mosaic.ja_no3)  = 1.e-9*aer_liquid(mosaic.ino3_a)/water_a;
+    ma(mosaic.ja_cl)   = 1.e-9*aer_liquid(mosaic.icl_a) /water_a;
+
+    mc(mosaic.jc_h)    = mH;
+    mc(mosaic.jc_ca)   = 1.e-9*aer_liquid(mosaic.ica_a) /water_a;
+    mc(mosaic.jc_nh4)  = 1.e-9*aer_liquid(mosaic.inh4_a)/water_a;
+    mc(mosaic.jc_na)   = 1.e-9*aer_liquid(mosaic.ina_a) /water_a;
+
+    // update the following activities
+    activity(mosaic.jhcl)    = mc(mosaic.jc_h)  *ma(mosaic.ja_cl) *
+                               ats<real_type>::pow(gam(mosaic.jhcl), 2.);
+    activity(mosaic.jhno3)   = mc(mosaic.jc_h)  *ma(mosaic.ja_no3)*
+                               ats<real_type>::pow(gam(mosaic.jhno3), 2.);
+    activity(mosaic.jnh4no3) = mc(mosaic.jc_nh4)*ma(mosaic.ja_no3)*
+                               ats<real_type>::pow(gam(mosaic.jnh4no3), 2.);
+
+    // also update xyz(jtotal)
+    aer_total(mosaic.ino3_a) = aer_liquid(mosaic.ino3_a) + aer_solid(mosaic.ino3_a);
+
+    electrolyte_total(mosaic.jhno3) = electrolyte_liquid(mosaic.jhno3);
+
+    return;
+  } // equilibrate_hno3
+
+  KOKKOS_INLINE_FUNCTION static
+  void equilibrate_hcl_and_hno3(const MosaicModelData<DeviceType>& mosaic,
+                                const real_type_1d_view_type& Keq_ll,
+                                const real_type_1d_view_type& Keq_gl,
+                                const real_type& water_a,
+                                const real_type_1d_view_type& gam,
+                                const real_type_1d_view_type& aer_solid,
+                                const real_type_1d_view_type& aer_liquid,
+                                const real_type_1d_view_type& aer_total,
+                                const real_type_1d_view_type& gas,
+                                const real_type_1d_view_type& total_species,
+                                real_type& tot_cl_in,
+                                const real_type_1d_view_type& electrolyte_liquid,
+                                const real_type_1d_view_type& electrolyte_total,
+                                real_type& electrolyte_sum_liquid,
+                                const real_type_1d_view_type& epercent_liquid,
+                                real_type& aer_sum_liquid,
+                                const real_type_1d_view_type& aer_percent_liquid,
+                                const real_type_1d_view_type& ma,
+                                const real_type_1d_view_type& mc,
+                                const real_type_1d_view_type& activity,
+                                const real_type_1d_view_type& store) {
+
+    real_type aerH, aerHSO4, aerSO4, Kdash_hcl, Kdash_hno3,
+              mH, p, q, r, Tcl, Tno3, W, Z;
+
+    aerSO4  = ma(mosaic.ja_so4) *water_a*1.e+9;
+    aerHSO4 = ma(mosaic.ja_hso4)*water_a*1.e+9;
+
+    Tcl  = aer_liquid(mosaic.icl_a)  + gas(mosaic.ihcl_g);  // nmol/m^3(air)
+    Tno3 = aer_liquid(mosaic.ino3_a) + gas(mosaic.ihno3_g); // nmol/m^3(air)
+
+    Kdash_hcl  = Keq_gl(3)*1.e+18/ats<real_type>::pow(gam(mosaic.jhcl), 2.);  // (nmol^2/kg^2)/(nmol/m^3(air))
+    Kdash_hno3 = Keq_gl(2)*1.e+18/ats<real_type>::pow(gam(mosaic.jhno3), 2.); // (nmol^2/kg^2)/(nmol/m^3(air))
+
+    Z = (    aer_liquid(mosaic.ina_a)  +   // nmol/m^3(air)
+             aer_liquid(mosaic.inh4_a) +
+         2.0*aer_liquid(mosaic.ica_a) ) -
+        (2.0*aerSO4 + aerHSO4 );
+
+    W = water_a;
+
+    Kdash_hcl  = Keq_gl(3)*1.e+18/ats<real_type>::pow(gam(mosaic.jhcl), 2.);  // (nmol^2/kg^2)/(nmol/m^3(air))
+    Kdash_hno3 = Keq_gl(2)*1.e+18/ats<real_type>::pow(gam(mosaic.jhno3), 2.); // (nmol^2/kg^2)/(nmol/m^3(air))
+
+    p = (Z/W + W*(Kdash_hcl + Kdash_hno3))*1.e-9;
+
+    q = 1.e-18*Kdash_hcl*Kdash_hno3*ats<real_type>::pow(W, 2.) +
+        1.e-18*Z*(Kdash_hcl + Kdash_hno3) -
+        1.e-18*Kdash_hcl*Tcl -
+        1.e-18*Kdash_hno3*Tno3;
+
+    r = 1.e-18*Kdash_hcl*Kdash_hno3*W*(Z - Tcl - Tno3)*1.e-9;
+
+    cubic(p, q, r, mH);
+
+    if (mH > 0.0) {
+      aerH = mH*W*1.e+9;
+      aer_liquid(mosaic.ino3_a) = Kdash_hno3*W*W*Tno3/
+                                  (aerH + Kdash_hno3*W*W);
+      aer_liquid(mosaic.icl_a)  = Kdash_hcl*W*W*Tcl/
+                                  (aerH + Kdash_hcl*W*W);
+    } else {
+      mH = ats<real_type>::sqrt(Keq_ll(2));
+    }
+
+    form_electrolytes(mosaic, mosaic.jliquid,
+                      aer_liquid, aer_solid, aer_liquid, aer_total, gas, store,
+                      electrolyte_liquid, total_species, tot_cl_in,
+                      electrolyte_sum_liquid, epercent_liquid, aer_sum_liquid, aer_percent_liquid);
+
+    // update gas phase concentration
+    gas(mosaic.ihno3_g) = ((Tno3) - (aer_liquid(mosaic.ino3_a)));
+    gas(mosaic.ihcl_g)  = ((Tcl)  - (aer_liquid(mosaic.icl_a)));
+
+    // update the following molalities
+    ma(mosaic.ja_so4)  = 1.e-9*aerSO4/water_a;
+    ma(mosaic.ja_hso4) = 1.e-9*aerHSO4/water_a;
+    ma(mosaic.ja_no3)  = 1.e-9*aer_liquid(mosaic.ino3_a)/water_a;
+    ma(mosaic.ja_cl)   = 1.e-9*aer_liquid(mosaic.icl_a) /water_a;
+
+    mc(mosaic.jc_h)    = mH;
+    mc(mosaic.jc_ca)   = 1.e-9*aer_liquid(mosaic.ica_a) /water_a;
+    mc(mosaic.jc_nh4)  = 1.e-9*aer_liquid(mosaic.inh4_a)/water_a;
+    mc(mosaic.jc_na)   = 1.e-9*aer_liquid(mosaic.ina_a) /water_a;
+
+    // update the following activities
+    activity(mosaic.jhcl)    = mc(mosaic.jc_h)  *ma(mosaic.ja_cl) *
+                               ats<real_type>::pow(gam(mosaic.jhcl), 2.);
+    activity(mosaic.jhno3)   = mc(mosaic.jc_h)  *ma(mosaic.ja_no3)*
+                               ats<real_type>::pow(gam(mosaic.jhno3), 2.);
+    activity(mosaic.jnh4no3) = mc(mosaic.jc_nh4)*ma(mosaic.ja_no3)*
+                               ats<real_type>::pow(gam(mosaic.jnh4no3), 2.);
+    activity(mosaic.jnh4cl)  = mc(mosaic.jc_nh4)*ma(mosaic.ja_cl) *
+                               ats<real_type>::pow(gam(mosaic.jnh4cl), 2.);
+
+    // also update xyz(jtotal)
+    aer_total(mosaic.icl_a)  = aer_liquid(mosaic.icl_a)  + aer_solid(mosaic.icl_a);
+    aer_total(mosaic.ino3_a) = aer_liquid(mosaic.ino3_a) + aer_solid(mosaic.ino3_a);
+
+    electrolyte_total(mosaic.jhno3) = electrolyte_liquid(mosaic.jhno3);
+    electrolyte_total(mosaic.jhcl)  = electrolyte_liquid(mosaic.jhcl);
+
+    return;
+  } // equilibrate_hcl_and_hno3
+
+  KOKKOS_INLINE_FUNCTION static
   void degas_solid_nh4no3(const MosaicModelData<DeviceType>& mosaic,
                           const real_type_1d_view_type& gas,
                           const real_type_1d_view_type& Keq_sg,

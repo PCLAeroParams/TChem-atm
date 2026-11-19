@@ -67,6 +67,19 @@ add_executable(${DRIVER_NAME}.x
                MESA_flux_salt.cpp
                aerosol_phase_state.cpp
                calculate_kelvin.cpp
+               absorb_tiny_hcl.cpp
+               absorb_tiny_hno3.cpp
+               equilibrate_hcl.cpp
+               equilibrate_hno3.cpp
+               equilibrate_hcl_and_hno3.cpp
+               equilibrate_acids.cpp
+               ASTEM_flux_wet_case1.cpp
+               ASTEM_flux_wet_case2.cpp
+               ASTEM_flux_wet_case3.cpp
+               ASTEM_flux_wet_case3a.cpp
+               ASTEM_flux_wet_case3b.cpp
+               ASTEM_flux_wet_case4.cpp
+               ASTEM_flux_wet.cpp
                ASTEM_non_volatiles.cpp
                cubic.cpp
                ASTEM_flux_dry_case1.cpp
@@ -78,6 +91,27 @@ add_executable(${DRIVER_NAME}.x
                ASTEM_flux_dry_case4b.cpp
                ASTEM_flux_dry_case4ab.cpp
                ASTEM_flux_dry.cpp
+               absorb_tiny_hcl.cpp
+               absorb_tiny_hno3.cpp
+               equilibrate_hcl.cpp
+               equilibrate_hno3.cpp
+               equilibrate_hcl_and_hno3.cpp
+               equilibrate_acids.cpp
+               ASTEM_flux_wet_case1.cpp
+               ASTEM_flux_wet_case2.cpp
+               ASTEM_flux_wet_case3.cpp
+               ASTEM_flux_wet_case3a.cpp
+               ASTEM_flux_wet_case3b.cpp
+               ASTEM_flux_wet_case4.cpp
+               ASTEM_flux_wet.cpp
+               degas_tiny_nh4no3.cpp
+               degas_tiny_nh4cl.cpp
+               ASTEM_flux_mix_case4a.cpp
+               ASTEM_flux_mix_case4b.cpp
+               ASTEM_flux_mix.cpp
+               ASTEM_flux_soa.cpp
+               ASTEM_update_phase_eqblm.cpp
+               ASTEM_calculate_dtmax.cpp
 )
 
 
@@ -161,6 +195,27 @@ SET(TEST_LIST
     ASTEM_flux_dry_case4b_input_ts_0
     ASTEM_flux_dry_case4ab_input_ts_0
     ASTEM_flux_dry_input_ts_0
+    absorb_tiny_hcl_input_ts_0
+    absorb_tiny_hno3_input_ts_0
+    equilibrate_hcl_input_ts_0
+    equilibrate_hno3_input_ts_0
+    equilibrate_hcl_and_hno3_input_ts_0
+    equilibrate_acids_input_ts_0
+    ASTEM_flux_wet_case1_input_ts_0
+    ASTEM_flux_wet_case2_input_ts_0
+    ASTEM_flux_wet_case3_input_ts_0
+    ASTEM_flux_wet_case3a_input_ts_0
+    ASTEM_flux_wet_case3b_input_ts_0
+    ASTEM_flux_wet_case4_input_ts_0
+    ASTEM_flux_wet_input_ts_0
+    degas_tiny_nh4no3_input_ts_0
+    degas_tiny_nh4cl_input_ts_0
+    ASTEM_flux_mix_case4a_input_ts_0
+    ASTEM_flux_mix_case4b_input_ts_0
+    ASTEM_flux_mix_input_ts_0
+    ASTEM_flux_soa_input_ts_0
+    ASTEM_update_phase_eqblm_input_ts_0
+    ASTEM_calculate_dtmax_input_ts_0
 )
 
 SET(TEST_BASELINE
@@ -239,6 +294,27 @@ SET(TEST_BASELINE
     ASTEM_flux_dry_case4b_output_ts_0
     ASTEM_flux_dry_case4ab_output_ts_0
     ASTEM_flux_dry_output_ts_0
+    absorb_tiny_hcl_output_ts_0
+    absorb_tiny_hno3_output_ts_0
+    equilibrate_hcl_output_ts_0
+    equilibrate_hno3_output_ts_0
+    equilibrate_hcl_and_hno3_output_ts_0
+    equilibrate_acids_output_ts_0
+    ASTEM_flux_wet_case1_output_ts_0
+    ASTEM_flux_wet_case2_output_ts_0
+    ASTEM_flux_wet_case3_output_ts_0
+    ASTEM_flux_wet_case3a_output_ts_0
+    ASTEM_flux_wet_case3b_output_ts_0
+    ASTEM_flux_wet_case4_output_ts_0
+    ASTEM_flux_wet_output_ts_0
+    degas_tiny_nh4no3_output_ts_0
+    degas_tiny_nh4cl_output_ts_0
+    ASTEM_flux_mix_case4a_output_ts_0
+    ASTEM_flux_mix_case4b_output_ts_0
+    ASTEM_flux_mix_output_ts_0
+    ASTEM_flux_soa_output_ts_0
+    ASTEM_update_phase_eqblm_output_ts_0
+    ASTEM_calculate_dtmax_output_ts_0
 )
 
 SET(DEFAULT_TOL 1e-8)
@@ -318,6 +394,27 @@ set(ERROR_THRESHOLDS
     ${DEFAULT_TOL} # ASTEM_flux_dry_case4b_output_ts_0
     ${DEFAULT_TOL} # ASTEM_flux_dry_case4ab_output_ts_0
     ${DEFAULT_TOL} # ASTEM_flux_dry_output_ts_0
+    ${DEFAULT_TOL} # absorb_tiny_hcl_output_ts_0
+    ${DEFAULT_TOL} # absorb_tiny_hno3_output_ts_0
+    ${DEFAULT_TOL} # equilibrate_hcl_output_ts_0
+    ${DEFAULT_TOL} # equilibrate_hno3_output_ts_0
+    ${DEFAULT_TOL} # equilibrate_hcl_and_hno3_output_ts_0
+    ${DEFAULT_TOL} # equilibrate_acids_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_wet_case1_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_wet_case2_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_wet_case3_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_wet_case3a_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_wet_case3b_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_wet_case4_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_wet_output_ts_0
+    ${DEFAULT_TOL} # degas_tiny_nh4no3_output_ts_0
+    ${DEFAULT_TOL} # degas_tiny_nh4cl_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_mix_case4a_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_mix_case4b_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_mix_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_flux_soa_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_update_phase_eqblm_output_ts_0
+    ${DEFAULT_TOL} # ASTEM_calculate_dtmax_output_ts_0
 )
 
 foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE)

@@ -473,8 +473,11 @@ int main(int argc, char *argv[]) {
       ordinal_type system_size = number_of_equations;
       ordinal_type n_systems = static_cast<ordinal_type>(nBatch); // nBatch was defined int so need to convert to ordinal_type to ensure correct type passed to linear solver
 
+      // turn preconditioning off (TODO could pass this as a command line arg)
+      int pretype = SUN_PREC_NONE;
       // Create linear solver
-      SUNLinearSolver bgmr = TChem::SUNLinSol_BatchedGMRES(y, rhs_object, system_size, n_systems, bgmr_max_iter, policy, sunctx);
+      SUNLinearSolver bgmr = TChem::SUNLinSol_BatchedGMRES(
+        y, pretype, bgmr_max_iter, system_size, n_systems, rhs_object, policy, sunctx);
       if (check_ptr(bgmr, "SUNLinSol_BatchedGMRES")) { return 1; }
       // Diagnostic printing (once per Newton solve, turn off/on with --verbose)
       TChem::SUNLinSol_BatchedGMRESSetVerbose(bgmr, verbose);

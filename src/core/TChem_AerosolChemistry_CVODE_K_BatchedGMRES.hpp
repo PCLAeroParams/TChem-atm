@@ -161,17 +161,16 @@ struct SUNLinearSolverContent_BatchedGMRES
     // Diagnostic parameters for dumping state at a given solve
     long nsolves = 0;        
     bool verbose = false;    // diagnostic printing; off by default, set from the driver
-    /*
     std::string dump_file = "";
     long        dump_solve = -1;      // which solve index to capture, <0 disables
     real_type   dump_rtol = 0, dump_atol = 0;
     bool        dumped = false;
-    */
 
-    void* cvode_mem;
-    SUNPSetupFn Psetup;
-    SUNPSolveFn Psolve;
-    void* PData;
+
+    void* cvode_mem = nullptr;
+    SUNPSetupFn Psetup = nullptr;
+    SUNPSolveFn Psolve = nullptr;
+    void* PData = nullptr;
     int pretype;
     N_Vector s1 = nullptr;
 
@@ -484,11 +483,10 @@ struct SUNLinearSolverContent_BatchedGMRES
 
 };
 
-SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y, 
-    Impl::AerosolChemistryRHS<SUNLinearSolverContent_BatchedGMRES::problem_type> rhs_object,
-    ordinal_type system_size, ordinal_type n_systems, int pretype,
-    ordinal_type gmres_max_iter, SUNLinearSolverContent_BatchedGMRES::policy_type policy,
-    SUNContext sunctx);
+SUNLinearSolver SUNLinSol_BatchedGMRES(N_Vector y, int pretype, 
+  ordinal_type gmres_max_iter, ordinal_type system_size,  ordinal_type n_systems,
+  Impl::AerosolChemistryRHS<SUNLinearSolverContent_BatchedGMRES::problem_type> rhs_object,
+  SUNLinearSolverContent_BatchedGMRES::policy_type policy, SUNContext sunctx);
 SUNErrCode SUNLinSol_BatchedGMRESSetVerbose(SUNLinearSolver S, bool onoff);
 SUNErrCode SUNLinSol_BatchedGMRESSetStateDump(SUNLinearSolver S, const char* filename,
                                               long solve_index, sunrealtype rtol, sunrealtype atol);

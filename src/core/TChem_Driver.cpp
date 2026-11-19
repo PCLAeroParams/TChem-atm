@@ -145,6 +145,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   YAML::Node solver_info = root["solver_info"];
 
   auto linear_solver = solver_info["linear_solver"];
+  auto ls_precon = solver_info["linear_solver_preconditioning"];
   auto atol_newton = solver_info["atol_newton"];
   auto rtol_newton = solver_info["rtol_newton"];
   auto dtmin = solver_info["dtmin"];
@@ -160,6 +161,7 @@ void TChem::Driver::createNumerics(const std::string &numerics_file) {
   auto krylov_dimension = solver_info["krylov_dimension"];
 
   _linear_solver = linear_solver.as<ordinal_type>(1);
+  _ls_precon = ls_precon.as<bool>(false);
   _atol_newton = atol_newton.as<real_type>(1e-10);
   _rtol_newton = rtol_newton.as<real_type>(1e-6);
   _dtmin = dtmin.as<real_type>(1e-8);
@@ -271,20 +273,20 @@ void TChem::Driver::createDeviceWorkViews() {
       ordinal_type_1d_view_device("n_particles_track_device", _nBatch);
 
   // Preconditioner-related views
-  // TODO declare these views in the driver hpp
-  const ordinal_type n_active_gas_species = _kmcd_host.nSpec - _kmcd_host.nConstSpec;
-  const ordinal_type n_condensible_gas_species = _amcd_host.nSimpol_tran; // TODO this currently gives the # of condensible species for the SIMPOL mechanism, should replace with general condensible species count
-  // Jacobian blocks
-  _Jgg_device = real_type_3d_view_device("Jgg_device", _nBatch, n_active_gas_species, n_active_gas_species);
-  _Jgp_device = real_type_4d_view_device("Jgp_device", _nBatch, _amcd_host.nParticles, n_condensible_gas_species, _amcd_host.nSpec);
-  _Jpg_device = real_type_4d_view_device("Jpg_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, n_condensible_gas_species);
-  _Jpp_device = real_type_4d_view_device("Jpp_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, _amcd_host.nSpec);
-  // LU factor views 
-  _D_device = real_type_4d_view_device("D_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, _amcd_host.nSpec);
-  _S_device = real_type_3d_view_device("S_device", _nBatch, n_active_gas_species, n_active_gas_species);
-  // Buffer for intermediate matrix-product in Schur-complement calculation
-  _W_device = real_type_4d_view_device("W_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, n_condensible_gas_species);
-  
+  if (_ls_precon) {
+    const ordinal_type n_active_gas_species = _kmcd_host.nSpec - _kmcd_host.nConstSpec;
+    const ordinal_type n_condensible_gas_species = _amcd_host.nSimpol_tran; // TODO this currently gives the # of condensible species for the SIMPOL mechanism, should replace with general condensible species count
+    // Jacobian blocks
+    _Jgg_device = real_type_3d_view_device("Jgg_device", _nBatch, n_active_gas_species, n_active_gas_species);
+    _Jgp_device = real_type_4d_view_device("Jgp_device", _nBatch, _amcd_host.nParticles, n_condensible_gas_species, _amcd_host.nSpec);
+    _Jpg_device = real_type_4d_view_device("Jpg_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, n_condensible_gas_species);
+    _Jpp_device = real_type_4d_view_device("Jpp_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, _amcd_host.nSpec);
+    // LU factor views 
+    _D_device = real_type_4d_view_device("D_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, _amcd_host.nSpec);
+    _S_device = real_type_3d_view_device("S_device", _nBatch, n_active_gas_species, n_active_gas_species);
+    // Buffer for intermediate matrix-product in Schur-complement calculation
+    _W_device = real_type_4d_view_device("W_device", _nBatch, _amcd_host.nParticles, _amcd_host.nSpec, n_condensible_gas_species);
+  }
 }
 
 /**
@@ -596,6 +598,13 @@ void TChem::Driver::doTimestep(const double del_t){
   udata.kmcd = _kmcd_device;
   udata.amcd = _amcd_device;
   udata.n_particles_track = _n_particles_track_device;
+  udata.Jgg = _Jgg_device;
+  udata.Jgp = _Jgp_device;
+  udata.Jpg = _Jpg_device;
+  udata.Jpp = _Jpp_device;
+  udata.D = _D_device;
+  udata.S = _S_device;
+  udata.W = _W_device;
 
   // Create the SUNDIALS context
   sundials::Context sunctx;
@@ -717,6 +726,13 @@ void TChem::Driver::doTimestep(const double del_t){
 
   ordinal_type per_team_extent = 0;
 
+  int pretype; 
+  if (_ls_precon){
+    pretype = SUN_PREC_RIGHT; // precondition krylov solvers on the right
+  } else {
+    pretype = SUN_PREC_NONE;
+  }
+
   // Select linear solver to attach to CVODE
   if (_linear_solver == 1){
     // SUNDIALS Sparse GMRES (unbatched)
@@ -724,7 +740,7 @@ void TChem::Driver::doTimestep(const double del_t){
     //printf("..Integrator: SUNDIALS CVODE\n");
     //printf("..Linear Solver: SUNDIALS SPGMR (unbatched)\n");
     LS = std::make_unique<sundials::experimental::SUNLinearSolverView>(
-      SUNLinSol_SPGMR(y, SUN_PREC_NONE, _krylov_dimension, sunctx));
+      SUNLinSol_SPGMR(y, pretype, _krylov_dimension, sunctx));
   } else if (_linear_solver == 2){
     // Kokkos-Kernels Batched GMRES 
     //printf("TChem solver configuration:\n");
@@ -741,7 +757,8 @@ void TChem::Driver::doTimestep(const double del_t){
 
     // Create linear solver
     SUNLinearSolver bgmr = TChem::SUNLinSol_BatchedGMRES(
-      y, rhs_object, system_size, n_systems, _krylov_dimension, policy, sunctx);
+      y, pretype, _krylov_dimension, system_size, n_systems, rhs_object, policy, sunctx);
+
     //if (check_ptr(bgmr, "SUNLinSol_BatchedGMRES")) { return 1; }
     // Diagnostic printing (once per Newton solve, turn off/on with --verbose)
     //TChem::SUNLinSol_BatchedGMRESSetVerbose(bgmr, verbose);
@@ -757,6 +774,17 @@ void TChem::Driver::doTimestep(const double del_t){
   
   // Attach the linear solver to CVODE
   retval = CVodeSetLinearSolver(cvode_mem, LS->Convert(), nullptr);
+  check_flag(retval, "CVodeSetLinearSolver");
+
+  // Attach preconditioning functions to CVODE
+  if (_ls_precon) {
+    // only SPGMR uses the batch-level psolve routine, BGMR ignores it and instead 
+    // calls the team-level SchurPrecon.team_solve within the BGMR functor. 
+    retval = CVodeSetPreconditioner(cvode_mem, 
+      TChem::AerosolChemistry_CVODE_K::schur_psetup, 
+      TChem::AerosolChemistry_CVODE_K::schur_psolve);
+    check_flag(retval, "CVodeSetPreconditioner");
+  }
 
   per_team_extent
        = TChem::Impl::Aerosol_RHS<real_type, device_type>::getWorkSpaceSize(_kmcd_device, _amcd_device);

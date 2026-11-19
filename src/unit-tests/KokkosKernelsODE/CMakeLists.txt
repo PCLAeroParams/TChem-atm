@@ -36,6 +36,10 @@ ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
     -check_norms=True
     -error=${PASSING_ERROR})
 
+# The validation reads the run's output: run it only after the run succeeds
+SET_TESTS_PROPERTIES(run_${TEST_NAME} PROPERTIES FIXTURES_SETUP run_${TEST_NAME})
+SET_TESTS_PROPERTIES(validate_${TEST_NAME} PROPERTIES FIXTURES_REQUIRED run_${TEST_NAME})
+
 
 ## Unit test with batched test
 
@@ -62,6 +66,9 @@ ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
     -t_file=${OUTPUT_NAME_TEST}
     -check_norms=True
     -error=${PASSING_ERROR})
+
+SET_TESTS_PROPERTIES(run_${TEST_NAME} PROPERTIES FIXTURES_SETUP run_${TEST_NAME})
+SET_TESTS_PROPERTIES(validate_${TEST_NAME} PROPERTIES FIXTURES_REQUIRED run_${TEST_NAME})
 
 
 # 
@@ -93,4 +100,7 @@ ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
     -t_file=${OUTPUT_NAME_TEST}
     -check_norms=True
     -error=${PASSING_ERROR})
+
+SET_TESTS_PROPERTIES(run_${TEST_NAME} PROPERTIES FIXTURES_SETUP run_${TEST_NAME})
+SET_TESTS_PROPERTIES(validate_${TEST_NAME} PROPERTIES FIXTURES_REQUIRED run_${TEST_NAME})
 

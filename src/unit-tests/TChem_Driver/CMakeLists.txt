@@ -40,3 +40,7 @@ ADD_TEST(run_${TEST_NAME} ${EXE_NAME}
 
 # Add a test to validate the output data with the reference data
 ADD_TEST(validate_${TEST_NAME} python3 ${VALIDATION_SCRIPT})
+
+# The validation reads the run's output: run it only after the run succeeds
+SET_TESTS_PROPERTIES(run_${TEST_NAME} PROPERTIES FIXTURES_SETUP run_${TEST_NAME})
+SET_TESTS_PROPERTIES(validate_${TEST_NAME} PROPERTIES FIXTURES_REQUIRED run_${TEST_NAME})

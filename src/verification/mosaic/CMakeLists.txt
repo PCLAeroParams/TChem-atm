@@ -337,4 +337,8 @@ foreach(input tol baseline IN ZIP_LISTS TEST_LIST ERROR_THRESHOLDS TEST_BASELINE
             ${tol}
             )
 
+  # The validation reads the run's output: run it only after the run succeeds
+  SET_TESTS_PROPERTIES(run_${input} PROPERTIES FIXTURES_SETUP run_${input})
+  SET_TESTS_PROPERTIES(validate_${input} PROPERTIES FIXTURES_REQUIRED run_${input})
+
 endforeach()

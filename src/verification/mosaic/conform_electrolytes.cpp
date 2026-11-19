@@ -13,7 +13,6 @@ void conform_electrolytes(Ensemble *ensemble) {
   ensemble->process([=](const Input &input, Output &output) {
 
     const auto jp_arr = input.get_array("jp");
-    const auto aer_curr_arr = input.get_array("aer_curr");
     const auto aer_solid_arr = input.get_array("aer_solid");
     const auto aer_liquid_arr = input.get_array("aer_liquid");
     const auto aer_total_arr = input.get_array("aer_total");
@@ -32,9 +31,6 @@ void conform_electrolytes(Ensemble *ensemble) {
     real_type_1d_view jp("jp", 1);
     verification::convert_1d_vector_to_1d_view_device(jp_arr, jp);
 
-    real_type_1d_view aer_curr("aer_curr", mmd.naer);
-    verification::convert_1d_vector_to_1d_view_device(aer_curr_arr, aer_curr);
-
     real_type_1d_view aer_solid("aer_solid", mmd.naer);
     verification::convert_1d_vector_to_1d_view_device(aer_solid_arr, aer_solid);
 
@@ -43,6 +39,11 @@ void conform_electrolytes(Ensemble *ensemble) {
 
     real_type_1d_view aer_total("aer_total", mmd.naer);
     verification::convert_1d_vector_to_1d_view_device(aer_total_arr, aer_total);
+
+    // aer_curr is the jp phase of aer, as in MOSAIC
+    const ordinal_type jp_phase = static_cast<ordinal_type>(jp_arr[0]);
+    const real_type_1d_view aer_curr = jp_phase == mmd.jsolid  ? aer_solid :
+                                       jp_phase == mmd.jliquid ? aer_liquid : aer_total;
 
     real_type_1d_view gas("gas", mmd.ngas_volatile);
     verification::convert_1d_vector_to_1d_view_device(gas_arr, gas);

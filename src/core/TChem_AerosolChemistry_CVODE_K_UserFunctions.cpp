@@ -166,7 +166,9 @@ int AerosolChemistry_CVODE_K::schur_psetup(sunrealtype t, N_Vector y, N_Vector f
   auto udata = static_cast<UserData*>(user_data);
 
   const auto n_systems  = udata->n_systems;
-  auto policy = udata->policy; // non-const needed for policy.set_scratch_size
+  // non-const needed for policy.set_scratch_size since we need to modify the 
+  // policy scratch size (set in driver for just rhs), hence we have a local policy copy
+  auto policy = udata->policy; 
   const auto kmcd = udata->kmcd;
   const auto amcd = udata->amcd;
   const auto system_size = udata->system_size;

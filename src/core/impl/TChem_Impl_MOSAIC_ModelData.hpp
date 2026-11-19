@@ -162,6 +162,7 @@ struct MosaicModelData {
     // ASTEM parameters
     const real_type ptol_mol_astem = 0.01;
     const real_type rtol_eqb_astem = 0.01;
+    const real_type alpha_astem    = 0.5;  // value set by PartMC (mosaic.F90). range: 0.01 - 1.0
 
     // Temperature-dependent thermodynamic parameters
     // liquid-liquid

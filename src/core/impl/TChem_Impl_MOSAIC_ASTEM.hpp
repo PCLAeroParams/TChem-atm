@@ -64,7 +64,7 @@
 
     // also do it for jtotal
     if(jp != mosaic.jtotal) {
-      aer_curr(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
+      aer_total(mosaic.icl_a) = aer_solid(mosaic.icl_a) + aer_liquid(mosaic.icl_a);
     }
 
     electrolyte(mosaic.jhcl) = 0.0;
@@ -121,7 +121,7 @@
     }
 
     real_type XT = 0.0;
-    calculate_XT(mosaic, aer_liquid, XT);
+    calculate_XT(mosaic, aer_curr, XT);
 
     ordinal_type iXT_case = 0;
     if (XT >= 1.9999 || XT < 0.0) {
@@ -170,11 +170,7 @@
       form_nh4msa(mosaic, electrolyte, store);
       form_msa(mosaic, electrolyte, store);
 
-      if (store(mosaic.iso4_a) == 0.0) {
-        degas_hno3(mosaic, jp, electrolyte, store, aer_curr, aer_solid, aer_liquid, aer_total, gas);
-        degas_hcl(mosaic, jp, electrolyte, store, aer_curr, aer_solid, aer_liquid, aer_total, gas);
-        degas_nh3(mosaic, jp, electrolyte, store, aer_curr, aer_solid, aer_liquid, aer_total, gas);
-      } else {
+      if (store(mosaic.iso4_a) != 0.0) { // goto 10 otherwise
         real_type XT_prime = (store(mosaic.ina_a) + store(mosaic.inh4_a)) / store(mosaic.iso4_a);
         real_type XNa_prime = 0.5*store(mosaic.ina_a) / store(mosaic.iso4_a) + 1.0;
         if (XT_prime >= XNa_prime) {
@@ -184,16 +180,16 @@
             XNH4_prime = store(mosaic.inh4_a) / store(mosaic.iso4_a);
           }
 
-          if (XNH4_prime > 1.5) {
+          if (XNH4_prime >= 1.5) {
             form_nh4so4_lvcite(mosaic, electrolyte, store);
           } else {
             form_lvcite_nh4hso4(mosaic, electrolyte, store);
           }
 
-        } else if (XT_prime > 1) {
+        } else if (XT_prime >= 1.0) {
           form_nh4hso4(mosaic, electrolyte, store);
           form_na2so4_nahso4(mosaic, electrolyte, store);
-        } else if (XT_prime < 1) {
+        } else if (XT_prime < 1.0) {
           form_nahso4(mosaic, electrolyte, store);
           form_nh4hso4(mosaic, electrolyte, store);
           form_h2so4(mosaic, electrolyte, store);
@@ -276,7 +272,7 @@
     }
 
     real_type XT = 0.0;
-    calculate_XT(mosaic, aer_liquid, XT);
+    calculate_XT(mosaic, aer_curr, XT);
 
     ordinal_type iXT_case = 0;
     if (XT >= 1.9999 || XT < 0.0) {
@@ -335,17 +331,7 @@
       form_nh4msa(mosaic, electrolyte, store);
       form_msa(mosaic, electrolyte, store);
 
-      if (store(mosaic.iso4_a) == 0.0) {
-        if (jp == mosaic.jsolid) {
-          degas_hno3(mosaic, jp, electrolyte, store, aer_curr, aer_solid, aer_liquid, aer_total, gas);
-          degas_hcl(mosaic, jp, electrolyte, store, aer_curr, aer_solid, aer_liquid, aer_total, gas);
-          degas_nh3(mosaic, jp, electrolyte, store, aer_curr, aer_solid, aer_liquid, aer_total, gas);
-        } else {
-          form_hno3(mosaic, electrolyte, store);
-          form_hcl(mosaic, electrolyte, store);
-          degas_nh3(mosaic, jp, electrolyte, store, aer_curr, aer_solid, aer_liquid, aer_total, gas);
-        }
-      } else {
+      if (store(mosaic.iso4_a) != 0.0) { // goto 10 otherwise
         real_type XT_prime = (store(mosaic.ina_a) + store(mosaic.inh4_a)) / store(mosaic.iso4_a);
         real_type XNa_prime = 0.5*store(mosaic.ina_a) / store(mosaic.iso4_a) + 1.0;
         if (XT_prime >= XNa_prime) {
@@ -355,16 +341,16 @@
             XNH4_prime = store(mosaic.inh4_a) / store(mosaic.iso4_a);
           }
 
-          if (XNH4_prime > 1.5) {
+          if (XNH4_prime >= 1.5) {
             form_nh4so4_lvcite(mosaic, electrolyte, store);
           } else {
             form_lvcite_nh4hso4(mosaic, electrolyte, store);
           }
 
-        } else if (XT_prime > 1) {
+        } else if (XT_prime >= 1.0) {
           form_nh4hso4(mosaic, electrolyte, store);
           form_na2so4_nahso4(mosaic, electrolyte, store);
-        } else if (XT_prime < 1) {
+        } else if (XT_prime < 1.0) {
           form_nahso4(mosaic, electrolyte, store);
           form_nh4hso4(mosaic, electrolyte, store);
           form_h2so4(mosaic, electrolyte, store);

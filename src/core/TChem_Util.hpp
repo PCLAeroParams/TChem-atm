@@ -504,6 +504,7 @@ using real_type_0d_view = Tines::value_type_0d_view<real_type, interf_device_typ
 using real_type_1d_view = Tines::value_type_1d_view<real_type, interf_device_type>;
 using real_type_2d_view = Tines::value_type_2d_view<real_type, interf_device_type>;
 using real_type_3d_view = Tines::value_type_3d_view<real_type, interf_device_type>;
+using real_type_4d_view = Tines::value_type_4d_view<real_type, interf_device_type>;
 
 using ordinal_type_0d_view = Tines::value_type_0d_view<ordinal_type, interf_device_type>;
 using ordinal_type_1d_view = Tines::value_type_1d_view<ordinal_type, interf_device_type>;

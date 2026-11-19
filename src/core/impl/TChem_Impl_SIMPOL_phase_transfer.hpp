@@ -40,6 +40,7 @@ struct SIMPOL_single_particle
   using real_type = scalar_type;
   /// sacado is value type
   using value_type_1d_view_type = Tines::value_type_1d_view<value_type,device_type>;
+  using value_type_2d_view_type = Tines::value_type_2d_view<value_type,device_type>;
   using real_type_1d_view_type = Tines::value_type_1d_view<real_type,device_type>;
   using ordinal_type_1d_view_type = Tines::value_type_1d_view<ordinal_type,device_type>;
   using aerosol_model_data_type= AerosolModel_ConstData<device_type>;
@@ -51,6 +52,8 @@ struct SIMPOL_single_particle
     ordinal_type workspace_size=0;
     return workspace_size;
   }
+
+
   // update RHS
   template<typename MemberType>
   KOKKOS_INLINE_FUNCTION static
@@ -67,66 +70,139 @@ struct SIMPOL_single_particle
   {
 
   const SIMPOL_PhaseTransferType simpol_params = amcd.simpol_params(i_simpol);
-  ordinal_type GAS_SPEC_=simpol_params.gas_sp_index;
-  ordinal_type AERO_SPEC_i_phase=simpol_params.aerosol_sp_index;
-  real_type DIFF_COEFF_=simpol_params.diffusion_coeff;
-  real_type MW_=simpol_params.molecular_weight;
+  value_type gas_transfer;
+  value_type part_transfer;
 
-  using SIMPOL_constant_type
-   = TChem::Impl::SIMPOL_constant<real_type, device_type >;
+  SIMPOL_single_particle::compute_net_transfer_rate(member, i_part, number_conc,
+    t, p, state, amcd, simpol_params, gas_transfer, part_transfer);
 
-  using single_part_utils_type = Single_particle_utils<value_type, device_type >;
+  ordinal_type GAS_SPEC_= simpol_params.gas_sp_index;
+  ordinal_type AERO_SPEC_i_phase = simpol_params.aerosol_sp_index;
+  
+  // Change in the gas-phase is evaporation - condensation (ppm/s)
+  Kokkos::atomic_add(&omega(GAS_SPEC_), gas_transfer);
+  Kokkos::atomic_add(&omega(AERO_SPEC_i_phase+i_part*amcd.nSpec), part_transfer);
 
-     // aerosol phase (m3/#/s)
-  real_type mfp_m =0.0;
-  real_type alpha= 0.0;
-  real_type EQUIL_CONST_=0.0;
-  real_type KGM3_TO_PPM_=0.0;
-  SIMPOL_constant_type::team_invoke( member, t, p, alpha,
-    mfp_m, KGM3_TO_PPM_, EQUIL_CONST_, simpol_params);
-
-  // Compute radius
-  value_type radius =1;
-  single_part_utils_type::effective_radius(member, i_part, t, p,
-                  state,
-                  radius,
-                  amcd);
+  } // team_invoke
 
 
-   // Get the particle number concentration (#/m3)
-   // Get the total mass of the aerosol phase (kg/mol)
-   value_type aero_phase_avg_MW=0;
-   // Get the total mass of the aerosol phase (kg/m3)
-   value_type aero_phase_mass=0;
-   single_part_utils_type::aero_phase_get_mass(member,
-                       i_part,
-                       state,
-                       aero_phase_avg_MW,
-                       aero_phase_mass,
-                       amcd );
+  // compute contribution of simpol species j within particle i to gas phase tendency
+  // along with particle tendencies.
+  // Required for Schur-complement based preconditioner to build the Jacobian block diagonal
+  // of within-particle interactions and particle-gas interactions (upper boarder of
+  // Jacobian).   
+  template<typename MemberType>
+  KOKKOS_INLINE_FUNCTION static
+  void team_invoke_per_particle_gas_contrib(const MemberType& member,
+    const ordinal_type i_part,
+    const ordinal_type i_simpol,
+    const real_type& t,
+    const real_type& p,
+    const real_type_1d_view_type& number_conc,
+    const value_type_1d_view_type& state,
+    const value_type_1d_view_type& particle_tendency,
+    const value_type_2d_view_type& gas_tendency_contrib,
+    const aerosol_model_data_type& amcd
+    )
+  {
+
+  const SIMPOL_PhaseTransferType simpol_params = amcd.simpol_params(i_simpol);
+  value_type gas_transfer;
+  value_type part_transfer;
+
+  SIMPOL_single_particle::compute_net_transfer_rate(member, i_part, number_conc,
+    t, p, state, amcd, simpol_params, gas_transfer, part_transfer);
+
+  ordinal_type GAS_SPEC_= simpol_params.gas_sp_index;
+  ordinal_type AERO_SPEC_i_phase = simpol_params.aerosol_sp_index;
+  
+  // Change in the gas-phase is evaporation - condensation (ppm/s)
+  Kokkos::atomic_add(&gas_tendency_contrib(i_part, GAS_SPEC_), gas_transfer);
+  Kokkos::atomic_add(&particle_tendency(AERO_SPEC_i_phase+i_part*amcd.nSpec), part_transfer);
+
+  } // team_invoke_per_particle_gas_contrib
 
 
-   // Calculate the rate constant for diffusion limited mass transfer to the
+  // Calculate the net condensation rate between the gas and particle phase 
+  // for particle i_part and corresponding gas phase species
+  template<typename MemberType>
+  KOKKOS_INLINE_FUNCTION static
+  void compute_net_transfer_rate(const MemberType& member,
+    const ordinal_type i_part,
+    const real_type_1d_view_type& number_conc,
+    const real_type& t,
+    const real_type& p,
+    const value_type_1d_view_type& state,
+    const aerosol_model_data_type& amcd,
+    const SIMPOL_PhaseTransferType& simpol_params,
+    value_type& gas_transfer,
+    value_type& part_transfer
+    )
+    {
+    
+    ordinal_type GAS_SPEC_= simpol_params.gas_sp_index;
+    ordinal_type AERO_SPEC_i_phase = simpol_params.aerosol_sp_index;
+    real_type DIFF_COEFF_=simpol_params.diffusion_coeff;
+    real_type MW_=simpol_params.molecular_weight;
 
-   value_type cond_rate =
-   single_part_utils_type::gas_aerosol_transition_rxn_rate_constant(DIFF_COEFF_,
-    mfp_m, radius, alpha);
+    using SIMPOL_constant_type
+    = TChem::Impl::SIMPOL_constant<real_type, device_type >;
 
-  //FIXME: to be done
-  // Get the activity coefficient (if one exists)
-  value_type act_coeff = 1.0;
-  // if (AERO_ACT_ID_(i_phase) > -1) {
-  //   act_coeff = state[AERO_ACT_ID_(i_phase)];
-  // }
-  // Calculate the evaporation rate constant (ppm_x*m^3/kg_x/s)
-  value_type evap_rate =
-        cond_rate *  act_coeff * (EQUIL_CONST_ * aero_phase_avg_MW / aero_phase_mass);
+    using single_part_utils_type = Single_particle_utils<value_type, device_type >;
 
-  // Calculate the evaporation and condensation rates
-  cond_rate *= state(GAS_SPEC_);
-  evap_rate *= state(AERO_SPEC_i_phase+i_part*amcd.nSpec);
-  // // per-particle mass concentration rates
-  value_type diff = - evap_rate + cond_rate;
+      // aerosol phase (m3/#/s)
+    real_type mfp_m =0.0;
+    real_type alpha= 0.0;
+    real_type EQUIL_CONST_=0.0;
+    real_type KGM3_TO_PPM_=0.0;
+    SIMPOL_constant_type::team_invoke( member, t, p, alpha,
+      mfp_m, KGM3_TO_PPM_, EQUIL_CONST_, simpol_params);
+
+    // Compute radius
+    value_type radius =1;
+    single_part_utils_type::effective_radius(member, i_part, t, p,
+                    state,
+                    radius,
+                    amcd);
+
+
+    // Get the particle number concentration (#/m3)
+    // Get the total mass of the aerosol phase (kg/mol)
+    value_type aero_phase_avg_MW=0;
+    // Get the total mass of the aerosol phase (kg/m3)
+    value_type aero_phase_mass=0;
+    single_part_utils_type::aero_phase_get_mass(member,
+                        i_part,
+                        state,
+                        aero_phase_avg_MW,
+                        aero_phase_mass,
+                        amcd );
+
+
+    // Calculate the rate constant for diffusion limited mass transfer to the
+
+    value_type cond_rate =
+    single_part_utils_type::gas_aerosol_transition_rxn_rate_constant(DIFF_COEFF_,
+      mfp_m, radius, alpha);
+
+    //FIXME: to be done
+    // Get the activity coefficient (if one exists)
+    value_type act_coeff = 1.0;
+    // if (AERO_ACT_ID_(i_phase) > -1) {
+    //   act_coeff = state[AERO_ACT_ID_(i_phase)];
+    // }
+    // Calculate the evaporation rate constant (ppm_x*m^3/kg_x/s)
+    value_type evap_rate =
+          cond_rate *  act_coeff * (EQUIL_CONST_ * aero_phase_avg_MW / aero_phase_mass);
+
+    // Calculate the evaporation and condensation rates
+    cond_rate *= state(GAS_SPEC_);
+    evap_rate *= state(AERO_SPEC_i_phase+i_part*amcd.nSpec);
+    // // per-particle mass concentration rates
+    value_type diff = - evap_rate + cond_rate;
+
+    gas_transfer =  -number_conc(i_part) * diff;
+    part_transfer = diff / KGM3_TO_PPM_;
 
 #if defined(TCHEM_ENABLE_SERIAL_TEST_OUTPUT)
   printf("radius %e \n", radius);
@@ -142,10 +218,8 @@ struct SIMPOL_single_particle
   printf("A evap_rate %e \n", evap_rate);
   printf("A cond_rate %e \n", cond_rate);
 #endif
-  // Change in the gas-phase is evaporation - condensation (ppm/s)
-  Kokkos::atomic_add(&omega(GAS_SPEC_), -number_conc(i_part) * diff);
-  Kokkos::atomic_add(&omega(AERO_SPEC_i_phase+i_part*amcd.nSpec), diff / KGM3_TO_PPM_);
-  }
+  
+  } // compute_net_transfer_rate
 
 };
 

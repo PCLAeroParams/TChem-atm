@@ -26,7 +26,7 @@ Sandia National Laboratories, New Mexico/Livermore, NM/CA, USA
 #include <sundials/sundials_logger.h>
 
 #include "TChem_Impl_AerosolChemistryRHS.hpp" // AerosolChemistryRHS
-#include "TChem_AerosolChemistry_CVODE_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
+#include "TChem_AerosolChemistry_CVODE_K_BatchedGMRES.hpp" // SUNLinearSolverContent_BatchedGMRES
 
 
 using ordinal_type = TChem::ordinal_type;
@@ -311,9 +311,9 @@ int main(int argc, char *argv[]) {
     // Create UserData
     TChem::UserData udata;
 
-    udata.nbatches = nBatch;
-    udata.num_concentration = num_concentration;
-    udata.batchSize=number_of_equations;
+    udata.n_systems = nBatch;
+    udata.aero_num_conc = num_concentration;
+    udata.system_size =number_of_equations;
     udata.kmcd=kmcd;
     udata.amcd=amcd;
 
@@ -426,7 +426,7 @@ int main(int argc, char *argv[]) {
     if (solver_type == 0) // Kokkos Batched Dense (LU-based solver)
     {
       // Create Kokkos dense block diagonal matrix
-      A = std::make_unique<MatType>(udata.nbatches, udata.batchSize, udata.batchSize, sunctx);
+      A = std::make_unique<MatType>(udata.n_systems, udata.system_size, udata.system_size, sunctx);
 
       // Create Kokkos batched dense linear solver
       LS = std::make_unique<LSType>(sunctx);
@@ -473,8 +473,11 @@ int main(int argc, char *argv[]) {
       ordinal_type system_size = number_of_equations;
       ordinal_type n_systems = static_cast<ordinal_type>(nBatch); // nBatch was defined int so need to convert to ordinal_type to ensure correct type passed to linear solver
 
+      // turn preconditioning off (TODO could pass this as a command line arg)
+      int pretype = SUN_PREC_NONE;
       // Create linear solver
-      SUNLinearSolver bgmr = TChem::SUNLinSol_BatchedGMRES(y, rhs_object, system_size, n_systems, bgmr_max_iter, policy, sunctx);
+      SUNLinearSolver bgmr = TChem::SUNLinSol_BatchedGMRES(
+        y, pretype, bgmr_max_iter, system_size, n_systems, rhs_object, policy, sunctx);
       if (check_ptr(bgmr, "SUNLinSol_BatchedGMRES")) { return 1; }
       // Diagnostic printing (once per Newton solve, turn off/on with --verbose)
       TChem::SUNLinSol_BatchedGMRESSetVerbose(bgmr, verbose);
@@ -511,7 +514,7 @@ int main(int argc, char *argv[]) {
     sunrealtype tout = T0 + dTout;
 
     // Initial output
-    real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.nbatches, udata.batchSize);
+    real_type_2d_view_host_type y2d_h((y.HostView()).data(), udata.n_systems, udata.system_size);
     sundials::kokkos::CopyFromDevice(y);
     Kokkos::fence();
 

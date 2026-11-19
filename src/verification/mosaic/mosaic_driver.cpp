@@ -231,6 +231,10 @@ void ASTEM_calculate_dtmax(Ensemble *ensemble);
 
 void ASTEM_semi_volatiles(Ensemble *ensemble);
 
+void ASTEM_dtmax_soa(Ensemble *ensemble);
+
+void ASTEM_secondary_organics(Ensemble *ensemble);
+
 int main(int argc, char **argv) {
   if (argc == 1) {
     usage();
@@ -450,6 +454,10 @@ int main(int argc, char **argv) {
       ASTEM_calculate_dtmax(ensemble);
     } else if (func_name == "ASTEM_semi_volatiles") {
       ASTEM_semi_volatiles(ensemble);
+    } else if (func_name == "ASTEM_dtmax_soa") {
+      ASTEM_dtmax_soa(ensemble);
+    } else if (func_name == "ASTEM_secondary_organics") {
+      ASTEM_secondary_organics(ensemble);
     } else {
       std::cerr << "Error: Function name '" << func_name
                 << "' does not have an implemented test!" << std::endl;

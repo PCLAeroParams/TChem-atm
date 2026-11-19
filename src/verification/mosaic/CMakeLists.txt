@@ -113,6 +113,8 @@ add_executable(${DRIVER_NAME}.x
                ASTEM_update_phase_eqblm.cpp
                ASTEM_calculate_dtmax.cpp
                ASTEM_semi_volatiles.cpp
+               ASTEM_dtmax_soa.cpp
+               ASTEM_secondary_organics.cpp
 )
 
 

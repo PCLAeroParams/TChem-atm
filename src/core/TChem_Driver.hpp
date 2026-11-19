@@ -93,6 +93,13 @@ public:
    real_type_2d_view_device _const_tracers_device;
    real_type_1d_view_device _temperature_device;
    real_type_1d_view_device _pressure_device;
+   real_type_3d_view_device _Jgg_device;
+   real_type_4d_view_device _Jgp_device;
+   real_type_4d_view_device _Jpg_device;
+   real_type_4d_view_device _Jpp_device;
+   real_type_4d_view_device _D_device;
+   real_type_3d_view_device _S_device;
+   real_type_4d_view_device _W_device;
    void createDeviceWorkViews();
 
    // Integrate a single time step
@@ -100,6 +107,7 @@ public:
 
    // Time integration information
    ordinal_type _linear_solver; // Linear solver attached to CVODE
+   bool _ls_precon; // Enable preconditioning for Krylov linear solvers
    real_type _atol_newton; // Absolute tolerance used in Newton solver
    real_type _rtol_newton; // Relative tolerance used in Newton solver
    real_type _dtmin; // Minimum time step size (s).

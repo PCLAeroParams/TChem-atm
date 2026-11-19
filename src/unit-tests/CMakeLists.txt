@@ -18,6 +18,8 @@ FOREACH(TCHEM_ATM_TEST_SOURCES ${TCHEM_ATM_TEST_SOURCES} )
         DESTINATION "${CMAKE_INSTALL_PREFIX}/${TCHEM_ATM_INSTALL_TEST_PATH}")
 
   ADD_TEST(${TCHEM_ATM_TEST_NAME} ${TCHEM_ATM_TEST_EXE})
+  # Shared working directory and output files (kmod.echo): never run in parallel
+  SET_TESTS_PROPERTIES(${TCHEM_ATM_TEST_NAME} PROPERTIES RESOURCE_LOCK unit-tests_working_directory)
 ENDFOREACH()
 
 FILE(COPY references

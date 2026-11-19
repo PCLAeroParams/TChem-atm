@@ -40,3 +40,7 @@ ADD_TEST(validate_CB05CL_AE5_${TEST_NAME} python3 ${VALIDATION_SCRIPT}
     -t_file=${OUTPUT_NAME_TEST}
     -check_norms=True
     -error=${PASSING_ERROR})
+
+# The validation reads the run's output: run it only after the run succeeds
+SET_TESTS_PROPERTIES(run_CB05CL_AE5_${TEST_NAME} PROPERTIES FIXTURES_SETUP run_CB05CL_AE5_${TEST_NAME})
+SET_TESTS_PROPERTIES(validate_CB05CL_AE5_${TEST_NAME} PROPERTIES FIXTURES_REQUIRED run_CB05CL_AE5_${TEST_NAME})
